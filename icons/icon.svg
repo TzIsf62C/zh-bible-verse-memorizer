@@ -1,0 +1,27 @@
+<svg width="512" height="512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2d72d9;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1a4f8f;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="512" height="512" fill="url(#grad)" rx="100"/>
+  
+  <!-- Book icon -->
+  <rect x="140" y="120" width="232" height="272" fill="#ffffff" rx="8"/>
+  <rect x="156" y="136" width="200" height="240" fill="#2d72d9" rx="4"/>
+  
+  <!-- Pages -->
+  <line x1="256" y1="136" x2="256" y2="376" stroke="#ffffff" stroke-width="3"/>
+  <line x1="186" y1="180" x2="236" y2="180" stroke="#ffffff" stroke-width="2" opacity="0.7"/>
+  <line x1="186" y1="210" x2="236" y2="210" stroke="#ffffff" stroke-width="2" opacity="0.7"/>
+  <line x1="186" y1="240" x2="236" y2="240" stroke="#ffffff" stroke-width="2" opacity="0.7"/>
+  <line x1="276" y1="180" x2="326" y2="180" stroke="#ffffff" stroke-width="2" opacity="0.7"/>
+  <line x1="276" y1="210" x2="326" y2="210" stroke="#ffffff" stroke-width="2" opacity="0.7"/>
+  <line x1="276" y1="240" x2="326" y2="240" stroke="#ffffff" stroke-width="2" opacity="0.7"/>
+  
+  <!-- Chinese character "圣" (holy) stylized -->
+  <text x="256" y="330" font-family="Arial, sans-serif" font-size="80" font-weight="bold" fill="#ffffff" text-anchor="middle">圣</text>
+</svg>

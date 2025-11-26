@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZH Bible Verse Memorizer | 圣经经文背诵</title>
+  
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json">
+  
+  <!-- Theme color -->
+  <meta name="theme-color" content="#2d72d9">
+  
+  <!-- Apple Touch Icons -->
+  <link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152x152.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192x192.png">
+  
+  <!-- iOS specific -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ZH 圣经背诵">
+  
+  <!-- Favicons -->
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-192x192.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="icons/icon-192x192.png">
+  
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <h1>ZH Bible Verse Memorizer<br>圣经经文背诵</h1>
+    <div class="nav-buttons">
+      <button id="addVerseBtn" data-i18n="add_verse">Add Verse</button>
+      <button id="learnBtn" data-i18n="learn">Learn</button>
+      <button id="collectionsBtn" data-i18n="collections">Collections</button>
+      <button id="reviewBtn" data-i18n="review">Review</button>
+      <button id="exportBtn" data-i18n="export_import">Export & Import</button>
+      <button id="settingsBtn" title="Settings">⚙️ <span data-i18n="settings">Settings</span></button>
+    </div>
+<div id="addVersePanel" class="panel" style="display:none;">
+  <h2 data-i18n="add_verse_title">Add Verse</h2>
+  
+  <div class="verse-input-section">
+    <label for="verseText" data-i18n="chinese_verse_text">Chinese Verse Text</label>
+    <textarea id="verseText" rows="3"></textarea>
+    
+    <div class="reference-inputs">
+      <div class="input-group" style="position:relative;">
+        <label for="bookNameInput" data-i18n="chinese_book_name">Chinese Book Name</label>
+        <input id="bookNameInput" type="text" autocomplete="off">
+        <div id="bookSuggestions" class="autocomplete-suggestions"></div>
+      </div>
+      
+      <div class="input-row">
+        <div class="input-group half">
+          <label for="chapterNumber" data-i18n="chapter">Chapter</label>
+          <input id="chapterNumber" type="number" min="1">
+        </div>
+        <div class="input-group half">
+          <label for="verseNumber" data-i18n="verse">Verse</label>
+          <input id="verseNumber" type="number" min="1">
+        </div>
+      </div>
+    </div>
+    
+    <div class="pinyin-inputs">
+      <div class="input-group">
+        <label for="verseInitials" data-i18n="pinyin_initials_verse">Pinyin Initials for Verse</label>
+        <input id="verseInitials" type="text">
+        <small class="helper-text" data-i18n="pinyin_helper">Type the first letter of each character's pinyin</small>
+      </div>
+      
+      <div class="input-group">
+        <label for="bookInitials" data-i18n="pinyin_initials_book">Pinyin Initials for Book Name</label>
+        <input id="bookInitials" type="text">
+      </div>
+    </div>
+  </div>
+
+  <div id="saveStatus"></div>
+
+  <div class="input-group">
+    <label for="addToCollectionSelect" data-i18n="add_to_collection_optional">Add to collection (optional)</label>
+    <select id="addToCollectionSelect">
+      <option value="" data-i18n="none">(none)</option>
+    </select>
+  </div>
+
+  <div class="action-buttons">
+    <button id="saveVerseBtn" data-i18n="save_verse">Save Verse</button>
+    <button id="clearFormBtn" data-i18n="clear_form">Clear Form</button>
+  </div>
+
+  <div id="addVerseList" class="verse-list"></div>
+
+  <div id="bulkActions" style="display:none; margin-top:10px;">
+    <button id="bulkAddToCollectionBtn" data-i18n="add_selected_to_collection">Add selected to collection</button>
+    <button id="bulkDeleteBtn" data-i18n="delete_selected">Delete selected</button>
+  </div>
+</div>
+<div id="learnPanel" class="panel" style="display:none;">
+  <div id="reviewModeHiddenControls">
+  <h2 data-i18n="learn_mode">Learn Mode</h2>
+
+    <div class="difficulty-controls">
+      <button id="basicMode" class="mode-btn active" data-i18n="basic">Basic</button>
+      <button id="intermediateMode" class="mode-btn" data-i18n="intermediate">Intermediate</button>
+      <button id="advancedMode" class="mode-btn" data-i18n="advanced">Advanced</button>
+    </div></div>
+    <div class="learning-controls">
+    <label for="verseSelector" data-i18n="select_verse">Select Verse</label>
+    <select id="verseSelector"></select>
+    <div class="sound-control">
+      <button id="muteToggle" class="mute-btn" aria-pressed="true" title="Toggle sound">🔇 <span data-i18n="sound_off">Sound Off</span></button>
+    </div>
+  </div>
+
+  <div id="learnVerseDisplay" class="verse-display"></div>
+
+  <div class="input-section">
+    <input id="learnInput" type="text" 
+           autocomplete="off" 
+           spellcheck="false"
+           placeholder="" />
+    <div id="learnFeedback"></div>
+    <div id="progressDisplay"></div>
+  </div>
+
+  <div class="control-buttons">
+    <button id="learnRetryBtn" style="display:none;" data-i18n="retry">Retry</button>
+    <button id="learnNextBtn" style="display:none;" data-i18n="next">Next</button>
+  </div>
+  <!-- Accuracy modal -->
+  <div id="accuracyModal" class="modal" aria-hidden="true">
+    <div class="modal-overlay"></div>
+    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <h3 id="modalTitle">Result</h3>
+      <div id="modalMessage" class="modal-message"></div>
+      <div id="modalAccuracy" class="modal-accuracy"></div>
+      <div class="modal-buttons">
+        <button id="modalRetryBtn" data-i18n="retry">Retry</button>
+        <button id="modalNextBtn" data-i18n="next">Next</button>
+      </div>
+    </div>
+  </div>
+  <div id="review-type-modal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal-content">
+        <p id="review-type-message" class="modal-message"></p>
+
+        <div class="modal-actions">
+            <button id="review-type-single-btn" class="btn btn-primary"></button>
+
+            <button id="review-type-individual-btn" class="btn btn-secondary"></button>
+        </div>
+        
+        </div>
+  </div>
+</div>
+
+  <div id="reviewPanel" class="panel" style="display:none;">
+  <h2 data-i18n="review_mode">Review Mode</h2>
+  <div class="collection-review">
+    <label data-i18n="select_collection">Select a collection</label>
+    <div id="reviewCollectionsList" class="verse-list"></div>
+    <div style="margin-top:8px;">
+      <button id="reviewCollectionBtn" data-i18n="review_collection_learned">Review Collection (learned only)</button>
+    </div>
+  </div>
+  <label for="reviewVerseList" data-i18n="or_select_individual">Or select individual verses</label>
+  <div id="reviewVerseList" class="verse-list"></div>
+  <div class="review-controls">
+    <button id="startReviewBtn" data-i18n="review_verses">Review verses</button>
+    <div id="reviewProgress"></div>
+  </div>
+</div>
+
+<div id="collectionsPanel" class="panel" style="display:none;">
+  <h2 data-i18n="collections_title">Collections</h2>
+  <div class="create-collection">
+    <label for="newCollectionTitle" data-i18n="new_collection_title">New Collection Title</label>
+    <input id="newCollectionTitle" type="text" />
+    <button id="createCollectionBtn" data-i18n="create_collection">Create Collection</button>
+  </div>
+  <div id="collectionsList" class="verse-list" style="margin-top:16px;"></div>
+
+  <div id="collectionDetail" style="display:none; margin-top:12px;">
+    <h3 id="collectionDetailTitle"></h3>
+    <label for="addVerseToCollection">Add verse to collection</label>
+    <select id="addVerseToCollection"></select>
+    <button id="addToCollectionBtn" data-i18n="add">Add</button>
+    <div id="collectionVerses" class="verse-list" style="margin-top:12px;"></div>
+  </div>
+</div>
+
+<div id="exportImportPanel" class="panel" style="display:none;">
+  <h2 data-i18n="export_import_title">Export & Import</h2>
+  <div class="export-section">
+    <div class="input-group">
+      <label data-i18n="select_export">Select what to export</label>
+      <div id="exportSelectionTree" class="export-tree">
+        <div class="tree-item">
+          <label>
+            <input type="checkbox" id="exportAllVerses" checked>
+            <strong data-i18n="all_verses">All verses</strong>
+          </label>
+          <div id="exportCollectionsList" class="tree-children"></div>
+        </div>
+      </div>
+    </div>
+    <div class="input-group" style="margin-top:8px;">
+      <label>
+        <input type="checkbox" id="exportIncludeReview" checked>
+        <span data-i18n="include_review_data">Include review data (last reviewed, due dates)</span>
+      </label>
+    </div>
+    <div class="input-group" style="margin-top:8px;">
+      <label>
+        <input type="checkbox" id="exportIncludeCollections" checked>
+        <span data-i18n="include_collection_data">Include collection data (titles, verse order)</span>
+      </label>
+    </div>
+    <button id="downloadBtn" style="margin-top:10px;" data-i18n="download_data">Download Data</button>
+  </div>
+  <div class="import-section">
+    <input type="file" id="importFile" accept=".json" />
+    <div class="input-group" style="margin-top:8px;">
+      <label>
+        <input type="checkbox" id="importIncludeReview" checked>
+        <span data-i18n="import_review_data">Import review data (last reviewed, due dates)</span>
+      </label>
+    </div>
+    <div class="input-group" style="margin-top:8px;">
+      <label>
+        <input type="checkbox" id="importIncludeCollections" checked>
+        <span data-i18n="import_collection_data">Import collection data (titles, verse order)</span>
+      </label>
+    </div>
+    <button id="importDataBtn" style="margin-top:10px;" data-i18n="import_data">Import Data</button>
+  </div>
+</div>
+
+<!-- Bulk-add modal used by Add Verse panel bulk actions -->
+<div id="bulkAddModal" class="modal" aria-hidden="true" style="display:none;">
+  <div class="modal-overlay"></div>
+  <div class="modal-content" role="dialog" aria-modal="true">
+    <h3 data-i18n="add_selected_to_collection">Add selected to collection</h3>
+    <div>
+      <label for="bulkAddCollectionSelect" data-i18n="choose_collection">Choose collection</label>
+      <select id="bulkAddCollectionSelect"></select>
+    </div>
+    <div id="bulkCreateNew" style="display:none; margin-top:8px;">
+      <label for="bulkNewCollectionName" data-i18n="new_collection_name">New collection name</label>
+      <input id="bulkNewCollectionName" type="text" />
+    </div>
+    <div style="margin-top:12px;">
+      <button id="bulkAddConfirmBtn" data-i18n="confirm">Confirm</button>
+      <button id="bulkAddCancelBtn" data-i18n="cancel">Cancel</button>
+    </div>
+  </div>
+</div>
+
+  </div>
+  <!-- Settings Panel (panel style like others) -->
+  <div id="settingsPanel" class="panel" style="display:none;">
+    <h2 data-i18n="settings">Settings</h2>
+    <div class="input-group">
+      <label data-i18n="theme">Theme</label>
+      <div>
+        <label><input type="radio" name="themeOption" value="system" checked> <span data-i18n="theme_system">System</span></label>
+      </div>
+      <div>
+        <label><input type="radio" name="themeOption" value="light"> <span data-i18n="theme_light">Light</span></label>
+      </div>
+      <div>
+        <label><input type="radio" name="themeOption" value="dark"> <span data-i18n="theme_dark">Dark</span></label>
+      </div>
+    </div>
+    <div class="input-group">
+      <label data-i18n-special="language_label">Language / 语言</label>
+      <div>
+        <label><input type="radio" name="languageOption" value="english" checked> <span data-i18n-special="lang_english">English</span></label>
+      </div>
+      <div>
+        <label><input type="radio" name="languageOption" value="simplified"> <span data-i18n-special="lang_simplified">Simplified / 简体</span></label>
+      </div>
+      <div>
+        <label><input type="radio" name="languageOption" value="traditional"> <span data-i18n-special="lang_traditional">Traditional / 繁體</span></label>
+      </div>
+    </div>
+    <div class="action-buttons">
+      <button id="settingsSaveBtn" data-i18n-special="save_settings">Save Settings</button>
+    </div>
+  </div>
+  <script src="script.js"></script>
+  
+  <!-- PWA Service Worker Registration -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then((registration) => {
+            console.log('ServiceWorker registration successful:', registration.scope);
+          })
+          .catch((error) => {
+            console.log('ServiceWorker registration failed:', error);
+          });
+      });
+    }
+  </script>
+  
+<!-- Review Mode Selection Modal -->
+<div id="reviewModeModal" class="modal" aria-hidden="true">
+  <div class="modal-content">
+    <h2 data-i18n="choose_review_mode">Choose Review Mode</h2>
+    <button id="reviewIndividuallyBtn" data-i18n="review_individually">Review verses individually</button>
+    <button id="reviewSingleTextBtn" data-i18n="review_single_text">Review as a single text</button>
+  </div>
+</div>
+<!-- End Review Mode Selection Modal -->
+</body>
+</html>
