@@ -1,0 +1,602 @@
+/* Modal overlay for review mode selection */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.7);
+  justify-content: center;
+  align-items: center;
+}
+
+.modal.open {
+  display: flex;
+}
+
+.modal-content {
+  background: var(--panel-background);
+  padding: 32px 24px;
+  border-radius: 8px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.3);
+  text-align: center;
+}
+
+.modal-content h2 {
+  margin-bottom: 24px;
+  color: var(--correct-color);
+}
+
+.modal-content button {
+  margin: 12px 16px;
+  min-width: 220px;
+  font-size: 18px;
+}
+/* Theme variables: default to dark, override via data-theme or media query */
+:root {
+  --background-color: #1a1a1a;
+  --panel-background: #222;
+  --text-color: #cccccc;
+  --correct-color: #ffffff;
+  --error-color: #ff0000;
+  --accent-color: #2d72d9;
+  --hover-color: #2256aa;
+  --input-background: #333;
+  --input-border: #444;
+  --card-background: #333;
+}
+
+/* Light theme variables */
+[data-theme="light"] {
+  --background-color: #f7f7f7;
+  --panel-background: #ffffff;
+  --text-color: #222222;
+  --correct-color: #000000;
+  --error-color: #cc0000;
+  --accent-color: #5c9aeb;
+  --hover-color: #4589e0;
+  --input-background: #ffffff;
+  --input-border: #cccccc;
+  --card-background: #f0f0f0;
+}
+
+/* Dark theme variables (explicit for manual override) */
+[data-theme="dark"] {
+  --background-color: #1a1a1a;
+  --panel-background: #222;
+  --text-color: #cccccc;
+  --correct-color: #ffffff;
+  --error-color: #ff0000;
+  --accent-color: #2d72d9;
+  --hover-color: #2256aa;
+  --input-background: #333;
+  --input-border: #444;
+  --card-background: #333;
+}
+
+/* Prefer system if no manual override (handled via JS by data-theme), but add media fallback */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    --background-color: #f7f7f7;
+    --panel-background: #ffffff;
+    --text-color: #222222;
+    --correct-color: #000000;
+    --error-color: #c62828;
+    --accent-color: #5c9aeb;
+    --hover-color: #4589e0;
+    --input-background: #ffffff;
+    --input-border: #cccccc;
+    --card-background: #f0f0f0;
+  }
+}
+
+body {
+  background: var(--background-color);
+  color: var(--text-color);
+  font-family: "Kaiti", "STKaiti", "华文楷体", serif;
+  font-size: 16px;
+  line-height: 24px;
+  margin: 0;
+  padding: 0;
+}
+
+#app {
+  max-width: 1200px;
+  margin: 40px auto;
+  padding: 24px;
+  background: var(--panel-background);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+button {
+  background: var(--accent-color);
+  color: var(--correct-color);
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  margin: 8px 8px 8px 0;
+  padding: 8px 20px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+button:hover {
+  background: var(--hover-color);
+}
+
+h1, h2 {
+  color: var(--correct-color);
+  margin-bottom: 20px;
+}
+
+input[type="text"],
+input[type="number"],
+textarea {
+  width: 100%;
+  padding: 10px;
+  margin: 8px 0;
+  background: var(--input-background);
+  color: var(--text-color);
+  border: 1px solid var(--input-border);
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--accent-color);
+}
+
+label {
+  display: block;
+  margin: 12px 0 4px;
+  color: var(--text-color);
+}
+
+#verseList > div {
+  padding: 12px;
+  margin: 8px 0;
+  background: var(--card-background);
+  border-radius: 4px;
+  border-left: 4px solid var(--accent-color);
+}
+
+.verse-character {
+    display: inline-block;
+    margin: 0 2px;
+    font-size: 20px;
+    transition: color 0.2s ease;
+}
+
+/* Style for the autocomplete suggestions box */
+.autocomplete-suggestions {
+    position: absolute;
+    z-index: 10; /* Ensure it floats above other elements */
+    width: 100%;
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid var(--input-border);
+    background-color: var(--input-background);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+    top: 100%; 
+    left: 0;
+    display: none; /* Initially hidden */
+}
+
+/* Style for individual suggestion items */
+.suggestion-item {
+    padding: 8px 10px;
+    cursor: pointer;
+    color: var(--text-color);
+    border-bottom: 1px solid var(--input-border);
+    background-color: var(--input-background);
+}
+
+/* Style for hover and active selection */
+.suggestion-item:hover, .suggestion-item.active {
+    background-color: var(--hover-color); /* Use the button hover color for consistency */
+    color: var(--correct-color); /* White text on hover */
+}
+
+/* Ensure the last item doesn't have a bottom border inside the box */
+.autocomplete-suggestions .suggestion-item:last-child {
+    border-bottom: none;
+}
+
+/* Not-yet-typed characters: darker gray for higher contrast with white-correct */
+.verse-character {
+  color: var(--text-color);
+  opacity: 0.5;
+}
+
+.verse-character.punctuation {
+    color: var(--text-color);
+    opacity: 0.7;
+    margin: 0;
+}
+
+.verse-character.punctuation.hidden {
+    visibility: hidden;
+}
+
+.verse-character.correct {
+    color: var(--correct-color);
+    opacity: 1;
+}
+
+.verse-character.incorrect {
+    color: var(--error-color);
+    opacity: 1;
+}
+
+.verse-character.hidden {
+    visibility: hidden;
+}
+
+.reference-inline {
+    color: var(--correct-color);
+    font-weight: 600;
+}
+
+#learnFeedback {
+  padding: 8px;
+  margin: 8px 0;
+  border-radius: 4px;
+}
+
+#learnFeedback.error {
+  background: rgba(255,68,68,0.1);
+  color: var(--error-color);
+}
+
+#learnFeedback.success {
+  background: rgba(68,255,68,0.1);
+  color: #4f4;
+}
+
+/* Modal styles for accuracy alert */
+.modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+}
+.modal.open { display: block; }
+.modal-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+}
+.modal-content {
+  position: relative;
+  max-width: 520px;
+  margin: 10% auto;
+  background: var(--panel-background);
+  padding: 20px;
+  border-radius: 8px;
+  color: var(--text-color);
+  box-shadow: 0 6px 24px rgba(0,0,0,0.3);
+}
+.modal-message { margin: 12px 0; font-size: 18px; }
+.modal-accuracy { font-weight: bold; margin-bottom: 16px; }
+.modal-buttons { display: flex; gap: 10px; justify-content: flex-end; }
+.modal-buttons button { padding: 8px 14px; }
+
+/* Smooth fade for verse selector to prevent cheating */
+#verseSelector {
+  transition: opacity 0.35s ease;
+}
+
+select {
+  width: 100%;
+  padding: 8px;
+  margin: 8px 0;
+  background: var(--input-background);
+  color: var(--text-color);
+  border: 1px solid var(--input-border);
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 16px;
+}
+
+.nav-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 20px 0;
+  justify-content: center;
+}
+
+.panel {
+  margin-top: 20px;
+  padding: 20px;
+  background: var(--panel-background);
+  border-radius: 8px;
+}
+
+.verse-input-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.input-row {
+  display: flex;
+  gap: 16px;
+}
+
+.input-group {
+  margin-bottom: 16px;
+}
+
+.input-group.half {
+  flex: 1;
+}
+
+.helper-text {
+  display: block;
+  color: var(--text-color);
+  opacity: 0.6;
+  margin-top: 4px;
+  font-size: 14px;
+}
+
+.difficulty-controls {
+  display: flex;
+  gap: 10px;
+  margin: 16px 0;
+}
+
+.sound-control {
+  margin-top: 8px;
+}
+
+.mute-btn {
+  background: transparent;
+  color: var(--text-color);
+  border: 1px solid var(--input-border);
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.mute-btn:hover {
+  background: rgba(255,255,255,0.03);
+}
+
+.mode-btn {
+  flex: 1;
+  opacity: 0.7;
+}
+
+.mode-btn.active {
+  opacity: 1;
+  background: var(--accent-color);
+}
+
+.verse-display {
+  font-family: "Kaiti", "STKaiti", "华文楷体", serif;
+  font-size: 20px;
+  line-height: 32px;
+  margin: 20px 0;
+  padding: 16px;
+  background: var(--card-background);
+  border-radius: 8px;
+  white-space: pre-wrap;
+}
+
+.input-section {
+  margin: 20px 0;
+}
+
+#progressDisplay {
+  height: 4px;
+  background: var(--input-background);
+  border-radius: 2px;
+  margin: 10px 0;
+  overflow: hidden;
+}
+
+#progressDisplay .bar {
+  height: 100%;
+  background: var(--accent-color);
+  transition: width 0.3s ease;
+}
+
+.verse-list {
+  max-height: 400px;
+  overflow-y: auto;
+  margin: 20px 0;
+}
+
+.verse-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  margin: 8px 0;
+  background: var(--card-background);
+  border-radius: 4px;
+  border-left: 4px solid var(--accent-color);
+}
+
+.verse-item .reference {
+  font-weight: bold;
+  color: var(--correct-color);
+}
+
+.verse-item .verse-content {
+  flex: 1;
+  text-align: left; /* ensure verse text is left aligned */
+}
+
+.verse-item .button-container {
+  margin-left: 12px;
+  display: flex;
+  gap: 8px;
+}
+
+.collection-tags { margin-top:6px; }
+.collection-tag { display:inline-block; background: rgba(45,114,217,0.12); color: var(--correct-color); padding:4px 8px; border-radius:12px; font-size:13px; margin-right:6px; }
+
+.verse-item .last-reviewed {
+  font-size: 14px;
+  color: var(--text-color);
+}
+
+.action-buttons {
+  display: flex;
+  gap: 10px;
+  margin: 20px 0;
+}
+
+.export-section,
+.import-section {
+  margin: 20px 0;
+  padding: 16px;
+  background: var(--card-background);
+  border-radius: 8px;
+}
+
+#importFile {
+  margin: 10px 0;
+}
+
+/* Collections UI */
+.create-collection input[type="text"] { max-width: 360px; display: inline-block; margin-right:8px; }
+.collection-review { margin: 12px 0; }
+.collection-item { display:flex; justify-content:space-between; align-items:center; padding:8px; margin:6px 0; background:var(--card-background); border-radius:6px; }
+.collection-item .actions button { margin-left:8px; }
+.collection-verses-item { display:flex; justify-content:space-between; align-items:center; padding:8px; margin:6px 0; background:var(--card-background); border-radius:6px; }
+.collection-controls { display:flex; gap:8px; }
+
+/* Expandable collection items in review panel */
+.review-collection-item {
+  background: var(--card-background);
+  border-radius: 6px;
+  margin: 6px 0;
+  overflow: hidden;
+}
+
+.review-collection-header {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  cursor: pointer;
+  gap: 10px;
+}
+
+.review-collection-header:hover {
+  background: var(--input-background);
+}
+
+.collection-expand-icon {
+  font-size: 14px;
+  transition: transform 0.2s;
+  user-select: none;
+  min-width: 16px;
+}
+
+.collection-expand-icon.expanded {
+  transform: rotate(90deg);
+}
+
+.collection-checkbox {
+  margin: 0;
+}
+
+.collection-title {
+  flex: 1;
+  font-weight: 500;
+}
+
+.collection-verse-count {
+  color: var(--text-color);
+  opacity: 0.6;
+  font-size: 0.9em;
+}
+
+.collection-verses-list {
+  display: none;
+  padding: 0 10px 10px 36px;
+  background: var(--input-background);
+}
+
+.collection-verses-list.expanded {
+  display: block;
+}
+
+.collection-verse-item {
+  padding: 6px 8px;
+  margin: 4px 0;
+  background: var(--card-background);
+  border-radius: 4px;
+  font-size: 0.95em;
+  color: var(--text-color);
+}
+
+.collection-verse-item .verse-ref {
+  color: var(--text-color);
+  opacity: 0.7;
+  margin-right: 8px;
+}
+
+/* Due date status indicators */
+.overdue {
+  color: #ff4444;
+  font-weight: 500;
+}
+
+.due-soon {
+  color: #ff9800;
+  font-weight: 500;
+}
+
+.due-future {
+  color: #4caf50;
+}
+
+/* Export tree structure */
+.export-tree {
+  background: var(--card-background);
+  border-radius: 6px;
+  padding: 12px;
+  margin: 8px 0;
+}
+
+.tree-item {
+  margin: 6px 0;
+}
+
+.tree-item label {
+  display: flex;
+  align-items: center;
+  margin: 4px 0;
+  cursor: pointer;
+  user-select: none;
+}
+
+.tree-item input[type="checkbox"] {
+  margin: 0 8px 0 0;
+  width: auto;
+  cursor: pointer;
+}
+
+.tree-children {
+  margin-left: 24px;
+  padding-left: 12px;
+  border-left: 2px solid var(--input-border);
+}
+
+.tree-children .tree-item {
+  margin: 4px 0;
+  font-size: 0.95em;
+}

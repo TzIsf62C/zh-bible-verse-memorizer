@@ -1,0 +1,188 @@
+// Simple HTML file to generate PWA icons using Canvas API
+// Open this file in a browser and click the button to download all icons
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>PWA Icon Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #2d72d9;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px 0;
+        }
+        button:hover {
+            background: #1a5fb8;
+        }
+        #status {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        canvas {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>PWA Icon Generator</h1>
+        <p>Click the button below to generate and download all required PWA icons.</p>
+        <button onclick="generateIcons()">Generate All Icons</button>
+        <div id="status"></div>
+        <canvas id="canvas"></canvas>
+    </div>
+
+    <script>
+        function generateIcon(size) {
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = size;
+            canvas.height = size;
+            
+            // Create gradient background
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#2d72d9');
+            gradient.addColorStop(1, '#1a4f8f');
+            
+            // Background with rounded corners
+            ctx.fillStyle = gradient;
+            roundRect(ctx, 0, 0, size, size, size * 0.195);
+            ctx.fill();
+            
+            // Calculate proportions
+            const bookWidth = size * 0.453;
+            const bookHeight = size * 0.531;
+            const bookX = (size - bookWidth) / 2;
+            const bookY = size * 0.234;
+            
+            // White book background
+            ctx.fillStyle = '#ffffff';
+            roundRect(ctx, bookX, bookY, bookWidth, bookHeight, size * 0.016);
+            ctx.fill();
+            
+            // Blue inner rectangle
+            const innerPadding = size * 0.031;
+            ctx.fillStyle = '#2d72d9';
+            roundRect(ctx, bookX + innerPadding, bookY + innerPadding, 
+                     bookWidth - 2 * innerPadding, bookHeight - 2 * innerPadding, size * 0.008);
+            ctx.fill();
+            
+            // Center line
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = size * 0.006;
+            ctx.beginPath();
+            ctx.moveTo(size / 2, bookY + innerPadding);
+            ctx.lineTo(size / 2, bookY + bookHeight - innerPadding);
+            ctx.stroke();
+            
+            // Left page lines
+            const lineY = bookY + size * 0.117;
+            const lineSpacing = size * 0.059;
+            const leftLineX1 = size * 0.363;
+            const leftLineX2 = size * 0.461;
+            
+            ctx.lineWidth = size * 0.004;
+            ctx.globalAlpha = 0.7;
+            for (let i = 0; i < 3; i++) {
+                ctx.beginPath();
+                ctx.moveTo(leftLineX1, lineY + i * lineSpacing);
+                ctx.lineTo(leftLineX2, lineY + i * lineSpacing);
+                ctx.stroke();
+            }
+            
+            // Right page lines
+            const rightLineX1 = size * 0.539;
+            const rightLineX2 = size * 0.637;
+            for (let i = 0; i < 3; i++) {
+                ctx.beginPath();
+                ctx.moveTo(rightLineX1, lineY + i * lineSpacing);
+                ctx.lineTo(rightLineX2, lineY + i * lineSpacing);
+                ctx.stroke();
+            }
+            ctx.globalAlpha = 1.0;
+            
+            // Chinese character "圣"
+            ctx.fillStyle = '#ffffff';
+            ctx.font = `bold ${size * 0.156}px Arial, sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('圣', size / 2, bookY + bookHeight * 0.79);
+            
+            return canvas.toDataURL('image/png');
+        }
+        
+        function roundRect(ctx, x, y, width, height, radius) {
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + width - radius, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+            ctx.lineTo(x + width, y + height - radius);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            ctx.lineTo(x + radius, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+            ctx.closePath();
+        }
+        
+        function downloadImage(dataUrl, filename) {
+            const link = document.createElement('a');
+            link.href = dataUrl;
+            link.download = filename;
+            link.click();
+        }
+        
+        function generateIcons() {
+            const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+            const status = document.getElementById('status');
+            status.className = 'info';
+            status.textContent = 'Generating icons...';
+            
+            let generated = 0;
+            sizes.forEach((size, index) => {
+                setTimeout(() => {
+                    const dataUrl = generateIcon(size);
+                    downloadImage(dataUrl, `icon-${size}x${size}.png`);
+                    generated++;
+                    
+                    status.textContent = `Generated ${generated} of ${sizes.length} icons...`;
+                    
+                    if (generated === sizes.length) {
+                        status.className = 'success';
+                        status.textContent = `✓ Successfully generated all ${sizes.length} icons! Save them to the 'icons' folder.`;
+                    }
+                }, index * 300); // Delay to allow browser to process downloads
+            });
+        }
+    </script>
+</body>
+</html>
