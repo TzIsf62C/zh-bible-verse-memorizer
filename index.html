@@ -17,6 +17,7 @@
   
   <!-- iOS specific -->
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="ZH 圣经背诵">
   
@@ -33,7 +34,7 @@
       <button id="addVerseBtn" data-i18n="add_verse">Add Verse</button>
       <button id="learnBtn" data-i18n="learn">Learn</button>
       <button id="collectionsBtn" data-i18n="collections">Collections</button>
-      <button id="reviewBtn" data-i18n="review">Review</button>
+      <button id="reviewBtn" data-i18n="review">Review<span id="reviewBadge" class="badge" style="display:none;"></span></button>
       <button id="exportBtn" data-i18n="export_import">Export & Import</button>
       <button id="settingsBtn" title="Settings">⚙️ <span data-i18n="settings">Settings</span></button>
     </div>
@@ -41,43 +42,48 @@
   <h2 data-i18n="add_verse_title">Add Verse</h2>
   
   <div class="verse-input-section">
-    <label for="verseText" data-i18n="chinese_verse_text">Chinese Verse Text</label>
-    <textarea id="verseText" rows="3"></textarea>
-    
     <div class="reference-inputs">
       <div class="input-group" style="position:relative;">
         <label for="bookNameInput" data-i18n="chinese_book_name">Chinese Book Name</label>
-        <input id="bookNameInput" type="text" autocomplete="off">
+        <input id="bookNameInput" type="text" autocomplete="off" autocorrect="off" spellcheck="false" autocapitalize="none">
         <div id="bookSuggestions" class="autocomplete-suggestions"></div>
       </div>
       
       <div class="input-row">
         <div class="input-group half">
           <label for="chapterNumber" data-i18n="chapter">Chapter</label>
-          <input id="chapterNumber" type="number" min="1">
+          <input id="chapterNumber" type="number" min="1" autocomplete="off">
         </div>
         <div class="input-group half">
           <label for="verseNumber" data-i18n="verse">Verse</label>
-          <input id="verseNumber" type="number" min="1">
+          <input id="verseNumber" type="number" min="1" autocomplete="off">
         </div>
       </div>
     </div>
     
+    <label for="verseText" data-i18n="chinese_verse_text">Chinese Verse Text</label>
+    <textarea id="verseText" rows="3" autocomplete="off" autocorrect="off" spellcheck="false" autocapitalize="none"></textarea>
+    
     <div class="pinyin-inputs">
       <div class="input-group">
         <label for="verseInitials" data-i18n="pinyin_initials_verse">Pinyin Initials for Verse</label>
-        <input id="verseInitials" type="text">
+        <input id="verseInitials" type="text" autocomplete="off" autocorrect="off" spellcheck="false" autocapitalize="none">
         <small class="helper-text" data-i18n="pinyin_helper">Type the first letter of each character's pinyin</small>
       </div>
       
       <div class="input-group">
         <label for="bookInitials" data-i18n="pinyin_initials_book">Pinyin Initials for Book Name</label>
-        <input id="bookInitials" type="text">
+        <input id="bookInitials" type="text" autocomplete="off" autocorrect="off" spellcheck="false" autocapitalize="none">
       </div>
     </div>
   </div>
 
   <div id="saveStatus"></div>
+
+  <div class="input-group">
+    <label for="bibleVersion" data-i18n="bible_version_optional">Bible version (optional)</label>
+    <input id="bibleVersion" type="text" autocomplete="off" autocorrect="off" spellcheck="false" autocapitalize="none" placeholder="">
+  </div>
 
   <div class="input-group">
     <label for="addToCollectionSelect" data-i18n="add_to_collection_optional">Add to collection (optional)</label>
@@ -108,7 +114,7 @@
       <button id="advancedMode" class="mode-btn" data-i18n="advanced">Advanced</button>
     </div></div>
     <div class="learning-controls">
-    <label for="verseSelector" data-i18n="select_verse">Select Verse</label>
+    <label id="verseSelectorLabel" for="verseSelector" data-i18n="select_verse">Select Verse</label>
     <select id="verseSelector"></select>
     <div class="sound-control">
       <button id="muteToggle" class="mute-btn" aria-pressed="true" title="Toggle sound">🔇 <span data-i18n="sound_off">Sound Off</span></button>
@@ -120,7 +126,9 @@
   <div class="input-section">
     <input id="learnInput" type="text" 
            autocomplete="off" 
+           autocorrect="off"
            spellcheck="false"
+           autocapitalize="none"
            placeholder="" />
     <div id="learnFeedback"></div>
     <div id="progressDisplay"></div>
@@ -134,7 +142,7 @@
   <div id="accuracyModal" class="modal" aria-hidden="true">
     <div class="modal-overlay"></div>
     <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-      <h3 id="modalTitle">Result</h3>
+      <h3 id="modalTitle" data-i18n="result">Result</h3>
       <div id="modalMessage" class="modal-message"></div>
       <div id="modalAccuracy" class="modal-accuracy"></div>
       <div class="modal-buttons">
@@ -222,7 +230,11 @@
     <button id="downloadBtn" style="margin-top:10px;" data-i18n="download_data">Download Data</button>
   </div>
   <div class="import-section">
-    <input type="file" id="importFile" accept=".json" />
+    <label for="importFile" class="file-input-label">
+      <span id="importFileLabel" data-i18n="choose_file">Choose File</span>
+    </label>
+    <input type="file" id="importFile" accept=".json" style="display:none;" />
+    <div id="importFileName" class="file-name-display" data-i18n="no_file_selected">No file selected</div>
     <div class="input-group" style="margin-top:8px;">
       <label>
         <input type="checkbox" id="importIncludeReview" checked>
@@ -287,8 +299,19 @@
         <label><input type="radio" name="languageOption" value="traditional"> <span data-i18n-special="lang_traditional">Traditional / 繁體</span></label>
       </div>
     </div>
+    <div class="input-group">
+      <label for="defaultBibleVersion" data-i18n="default_bible_version">Default Bible Version</label>
+      <input id="defaultBibleVersion" type="text" autocomplete="off" autocorrect="off" spellcheck="false" autocapitalize="none" placeholder="">
+    </div>
     <div class="action-buttons">
       <button id="settingsSaveBtn" data-i18n-special="save_settings">Save Settings</button>
+    </div>
+    <div class="input-group" style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border-color);">
+      <label data-i18n="clear_all_data">Clear All Data</label>
+      <p style="font-size: 0.9em; color: var(--text-secondary); margin: 8px 0;">
+        <span data-i18n="clear_data_warning">This will permanently delete all verses, collections, and review data from this device.</span>
+      </p>
+      <button id="clearDataBtn" style="background-color: #dc3545; color: white;" data-i18n="clear_all_data_btn">Clear All Data</button>
     </div>
   </div>
   <script src="script.js"></script>
@@ -317,5 +340,19 @@
   </div>
 </div>
 <!-- End Review Mode Selection Modal -->
+
+<!-- Reset Review Data Modal -->
+<div id="resetReviewDataModal" class="modal" aria-hidden="true">
+  <div class="modal-overlay"></div>
+  <div class="modal-content" role="dialog" aria-modal="true">
+    <h3 data-i18n="reset_review_data_title">Reset Review Data?</h3>
+    <p data-i18n="reset_review_data_message">This verse has existing review history. Would you like to reset the review data?</p>
+    <div class="modal-buttons">
+      <button id="resetReviewYesBtn" data-i18n="yes">Yes</button>
+      <button id="resetReviewNoBtn" data-i18n="no">No</button>
+    </div>
+  </div>
+</div>
+<!-- End Reset Review Data Modal -->
 </body>
 </html>

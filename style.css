@@ -1,3 +1,12 @@
+/* Web Font for offline Chinese text support */
+@font-face {
+  font-family: 'Noto Sans SC';
+  src: url('./fonts/NotoSansSC-Regular.otf') format('opentype');
+  font-display: swap;
+  font-weight: normal;
+  font-style: normal;
+}
+
 /* Modal overlay for review mode selection */
 .modal {
   display: none;
@@ -22,6 +31,8 @@
   border-radius: 8px;
   box-shadow: 0 2px 16px rgba(0,0,0,0.3);
   text-align: center;
+  max-width: 90vw;
+  margin: 0 16px;
 }
 
 .modal-content h2 {
@@ -30,9 +41,21 @@
 }
 
 .modal-content button {
-  margin: 12px 16px;
-  min-width: 220px;
-  font-size: 18px;
+  margin: 12px 8px;
+  min-width: 120px;
+  font-size: 16px;
+}
+
+@media (min-width: 768px) {
+  .modal-content {
+    max-width: 520px;
+  }
+  
+  .modal-content button {
+    margin: 12px 16px;
+    min-width: 180px;
+    font-size: 18px;
+  }
 }
 /* Theme variables: default to dark, override via data-theme or media query */
 :root {
@@ -95,11 +118,12 @@
 body {
   background: var(--background-color);
   color: var(--text-color);
-  font-family: "Kaiti", "STKaiti", "华文楷体", serif;
+  font-family: 'Noto Sans SC', 'Kaiti', 'KaiTi', '楷体', 'Kaiti SC', 'STKaiti', sans-serif;
   font-size: 16px;
   line-height: 24px;
   margin: 0;
   padding: 0;
+  overscroll-behavior: contain;
 }
 
 #app {
@@ -109,6 +133,26 @@ body {
   background: var(--panel-background);
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  overscroll-behavior: contain;
+}
+
+@media (max-width: 768px) {
+  #app {
+    margin: 0;
+    padding: 12px 12px 16px 12px;
+    border-radius: 0;
+  }
+  
+  /* Hide title on mobile to save screen space */
+  #app > h1 {
+    display: none;
+  }
+  
+  /* Move navigation to top and make more compact */
+  .nav-buttons {
+    margin: 0 0 12px 0;
+    padding: 0;
+  }
 }
 
 button {
@@ -125,6 +169,23 @@ button {
 
 button:hover {
   background: var(--hover-color);
+}
+
+/* Badge for notification counts */
+.badge {
+  display: inline-block;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  margin-left: 6px;
+  background: #ff4444;
+  color: white;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: bold;
+  line-height: 20px;
+  text-align: center;
+  vertical-align: middle;
 }
 
 h1, h2 {
@@ -276,7 +337,8 @@ label {
 }
 .modal-content {
   position: relative;
-  max-width: 520px;
+  max-width: 90%;
+  width: 520px;
   margin: 10% auto;
   background: var(--panel-background);
   padding: 20px;
@@ -284,10 +346,33 @@ label {
   color: var(--text-color);
   box-shadow: 0 6px 24px rgba(0,0,0,0.3);
 }
-.modal-message { margin: 12px 0; font-size: 18px; }
-.modal-accuracy { font-weight: bold; margin-bottom: 16px; }
-.modal-buttons { display: flex; gap: 10px; justify-content: flex-end; }
-.modal-buttons button { padding: 8px 14px; }
+.modal-message { margin: 12px 0; font-size: 16px; }
+.modal-accuracy { font-weight: bold; margin-bottom: 16px; font-size: 16px; }
+.modal-buttons { 
+  display: flex; 
+  flex-wrap: wrap;
+  gap: 10px; 
+  justify-content: center;
+}
+.modal-buttons button { 
+  padding: 10px 16px;
+  margin: 0;
+  flex: 1;
+  min-width: 100px;
+  max-width: 200px;
+}
+
+@media (min-width: 768px) {
+  .modal-message { font-size: 18px; }
+  .modal-accuracy { font-size: 18px; }
+  .modal-buttons {
+    justify-content: flex-end;
+  }
+  .modal-buttons button {
+    flex: 0;
+    min-width: 120px;
+  }
+}
 
 /* Smooth fade for verse selector to prevent cheating */
 #verseSelector {
@@ -312,6 +397,65 @@ select {
   gap: 10px;
   margin: 20px 0;
   justify-content: center;
+}
+
+@media (max-width: 768px) {
+  .nav-buttons {
+    gap: 8px;
+  }
+  
+  .nav-buttons button {
+    font-size: 14px;
+    padding: 8px 12px;
+  }
+  
+  /* Make difficulty controls buttons smaller and centered on mobile */
+  .difficulty-controls {
+    justify-content: center;
+  }
+  
+  .difficulty-controls .mode-btn {
+    font-size: 14px;
+    padding: 8px 12px;
+  }
+  
+  /* Stack collection items vertically on narrow screens */
+  .collection-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .collection-item .actions {
+    align-self: stretch;
+    display: flex;
+    justify-content: flex-end;
+  }
+  
+  /* Stack verse items vertically on narrow screens */
+  .verse-item {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+  
+  .verse-item input[type="checkbox"] {
+    order: -1;
+    align-self: flex-start;
+    margin-top: 2px;
+  }
+  
+  .verse-item .verse-content {
+    flex: 1 1 100%;
+    order: 0;
+  }
+  
+  .verse-item .button-container {
+    margin-left: 0;
+    flex: 1 1 100%;
+    order: 1;
+    justify-content: flex-end;
+  }
 }
 
 .panel {
@@ -383,7 +527,7 @@ select {
 }
 
 .verse-display {
-  font-family: "Kaiti", "STKaiti", "华文楷体", serif;
+  font-family: 'Noto Sans SC', 'Kaiti', 'KaiTi', '楷体', 'Kaiti SC', 'STKaiti', sans-serif;
   font-size: 20px;
   line-height: 32px;
   margin: 20px 0;
@@ -464,6 +608,30 @@ select {
   padding: 16px;
   background: var(--card-background);
   border-radius: 8px;
+}
+
+.file-input-label {
+  display: inline-block;
+  background: var(--accent-color);
+  color: var(--correct-color);
+  padding: 8px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  margin: 10px 0;
+  transition: background 0.2s;
+}
+
+.file-input-label:hover {
+  background: var(--hover-color);
+}
+
+.file-name-display {
+  display: inline-block;
+  margin-left: 12px;
+  color: var(--text-color);
+  opacity: 0.7;
+  font-size: 14px;
 }
 
 #importFile {

@@ -1,7 +1,7 @@
-CBM Version 0.7
+CBM Version 0.8
 This version has these features working:
     Add verse
-    Collections
+    Manage Collections
     Learn verse
         Basic
         Intermediate
@@ -11,7 +11,9 @@ This version has these features working:
         Collection
             Individually
             As a Single text
-        Spaced-repetition due dates
+        Spaced-repetition 
+            Displays due dates
+            A badge on the review button indicates number of verses due
     Export/import 
         Successfully transfers added verses, collections, and learner data 
         according to selected options.
@@ -22,4 +24,3 @@ This version has these features working:
 
 Areas for future development: 
     Settings to handle zhuyin
-    Convert to PWA
