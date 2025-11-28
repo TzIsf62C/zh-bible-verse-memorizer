@@ -1,6 +1,6 @@
-# ZH Bible Verse Memorizer PWA
+# ZH Bible Verse Memorizer PWA (Version 0.8)
 
-A Progressive Web App for memorizing Chinese Bible verses with spaced repetition.
+A Progressive Web App for memorizing Chinese Bible verses with spaced repetition. This App is inspired by the Bible Memory App (https://biblememory.com/). I would recommend that app if you are memorizing Bible verses in English.
 
 ## 🚀 Features
 
@@ -47,6 +47,12 @@ A Progressive Web App for memorizing Chinese Bible verses with spaced repetition
 
 ## 🎯 How to Use
 
+### First Time Setup
+- **Automatic Settings**: On first launch, the app automatically opens the Settings screen
+- **Language Detection**: Language preference is automatically detected from your system settings (English, Simplified Chinese, or Traditional Chinese)
+- **Default Bible Version**: Configure your preferred Bible version (e.g., 和合本, ESV, NIV)
+- **Theme Selection**: Choose between System, Light, or Dark theme
+
 ### Adding Verses
 1. Click **"Add Verse"** button
 2. Enter the Chinese verse text
@@ -59,7 +65,7 @@ A Progressive Web App for memorizing Chinese Bible verses with spaced repetition
 ### Learning Mode
 1. Click **"Learn"** button
 2. Select a verse from the dropdown
-3. Choose difficulty level:
+3. Progress through three stages:
    - **Basic**: See full text, type initials
    - **Intermediate**: See alternating characters
    - **Advanced**: Type from memory
@@ -68,89 +74,27 @@ A Progressive Web App for memorizing Chinese Bible verses with spaced repetition
 ### Review Mode
 1. Click **"Review"** button
 2. Select verses or a collection to review
-3. The app uses spaced repetition to optimize learning
+3. Choose your review mode:
+   - **Individual Mode**: Review verses one at a time with full feedback and accuracy tracking
+   - **Single-Text Mode**: Review multiple verses as one continuous passage
+4. The app uses spaced repetition to optimize learning and schedule reviews
 
-### Collections
+### Organize Verses in Collections
 1. Click **"Collections"** button
-2. Create collections to organize verses by topic
+2. Create collections to organize verses by topic or passage (a verse can be in more than one collection)
 3. Add verses to collections
-4. Review entire collections at once
+4. Review entire collections at once with either individual or single-text mode
+5. Use collections for themed study or sequential passages
 
-## 🔧 Technical Setup
-
-### Prerequisites
-- A web server (local or remote)
-- Modern web browser with PWA support
-
-### Generating Icons
-
-You need to generate the PWA icons before deploying:
-
-**Option 1: Using the HTML Generator (Recommended)**
-1. Open `generate-icons.html` in your browser
-2. Click "Generate All Icons"
-3. Save all downloaded PNG files to the `icons/` folder
-
-**Option 2: Using Command Line (requires ImageMagick or librsvg)**
-```bash
-# Install dependencies (macOS)
-brew install librsvg
-
-# Generate icons
-./generate-icons.sh
-```
-
-**Option 3: Manual Creation**
-Use any image editor to create PNG files from `icons/icon.svg` at these sizes:
-- 72x72, 96x96, 128x128, 144x144, 152x152, 192x192, 384x384, 512x512
-
-### Local Testing
-
-1. **Simple HTTP Server (Python)**
-   ```bash
-   # Python 3
-   python3 -m http.server 8000
-   
-   # Then visit: http://localhost:8000
-   ```
-
-2. **Node.js HTTP Server**
-   ```bash
-   npx http-server -p 8000
-   
-   # Then visit: http://localhost:8000
-   ```
-
-3. **VS Code Live Server**
-   - Install "Live Server" extension
-   - Right-click `index.html`
-   - Select "Open with Live Server"
-
-### Deployment
-
-#### GitHub Pages
-1. Create a new repository
-2. Upload all files
-3. Go to Settings → Pages
-4. Select main branch and save
-5. Access at `https://username.github.io/repo-name`
-
-#### Netlify
-1. Drag and drop the folder to Netlify
-2. Or connect your Git repository
-3. Deploy automatically
-
-#### Vercel
-```bash
-npm i -g vercel
-vercel
-```
 
 ## 🔒 Privacy & Data
 
-- All data is stored locally in your browser's localStorage
-- No data is sent to any server
-- Export your data regularly as backup using the Export feature
+- **Local Storage Only**: All data is stored locally in your browser's localStorage
+- **No Server Communication**: No data is sent to any server
+- **Regular Backups**: Export your data regularly as backup using the Export & Import feature
+- **Smart Import Merging**: When importing verses that already exist, the version with the most recent review date is automatically kept to preserve your progress
+- **Selective Export**: Export all verses or specific collections, with options to include/exclude review data
+- **Clear All Data**: Option available in Settings to completely reset the app (use with caution - this action cannot be undone)
 
 ## 🌐 Browser Compatibility
 
@@ -205,7 +149,13 @@ For issues or questions, refer to the app's repository or documentation.
 
 ## 📄 License
 
-This app is provided as-is for personal use.
+Copyright © 2025 TzIsf62C
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ---
 

@@ -14,6 +14,7 @@ window.onload = function () {
   const settingsBtn = document.getElementById('settingsBtn');
   const settingsPanel = document.getElementById('settingsPanel');
   const settingsSaveBtn = document.getElementById('settingsSaveBtn');
+  const clearDataBtn = document.getElementById('clearDataBtn');
   const saveVerseBtn = document.getElementById('saveVerseBtn');
   const clearFormBtn = document.getElementById('clearFormBtn');
   const saveStatus = document.getElementById('saveStatus');
@@ -27,6 +28,7 @@ window.onload = function () {
   const downloadBtn = document.getElementById('downloadBtn');
   const importDataBtn = document.getElementById('importDataBtn');
   const importFile = document.getElementById('importFile');
+  const importFileName = document.getElementById('importFileName');
   const exportCollectionsSelect = document.getElementById('exportCollectionsSelect');
   const exportIncludeReview = document.getElementById('exportIncludeReview');
   const importIncludeReview = document.getElementById('importIncludeReview');
@@ -117,6 +119,7 @@ window.onload = function () {
         theme_system: "System",
         theme_light: "Light",
         theme_dark: "Dark",
+        default_bible_version: "Default Bible Version",
         save_settings: "Save Settings",
         // Add Verse Panel
         add_verse_title: "Add Verse",
@@ -127,6 +130,7 @@ window.onload = function () {
         pinyin_initials_verse: "Pinyin Initials for Verse",
         pinyin_helper: "Type the first letter of each character's pinyin",
         pinyin_initials_book: "Pinyin Initials for Book Name",
+        bible_version_optional: "Bible version (optional)",
         add_to_collection_optional: "Add to collection (optional)",
         none: "(none)",
         save_verse: "Save Verse",
@@ -176,6 +180,8 @@ window.onload = function () {
         import_collection_data: "Import collection data (titles, verse order)",
         download_data: "Download Data",
         import_data: "Import Data",
+        choose_file: "Choose File",
+        no_file_selected: "No file selected",
         // Bulk Actions
         confirm: "Confirm",
         cancel: "Cancel",
@@ -196,6 +202,7 @@ window.onload = function () {
         hours: "hours",
         learned: "learned",
         verses: "verses",
+        result: "Result",
         accuracy: "Accuracy",
         incorrect_input: "Incorrect input for \"{char}\" (position {pos}). Expected \"{expected}\".",
         due_count: "{count} due",
@@ -232,7 +239,15 @@ window.onload = function () {
         fill_all_fields: "Please fill in all fields completely.",
         chapter_verse_numbers: "Chapter and Verse must be numbers.",
         verse_saved: "Verse saved!",
-        verse_updated: "Verse updated!"
+        verse_updated: "Verse updated!",
+        reset_review_data_title: "Reset Review Data?",
+        reset_review_data_message: "This verse has existing review history. Would you like to reset the review data?",
+        yes: "Yes",
+        no: "No",
+        clear_all_data: "Clear All Data",
+        clear_data_warning: "This will permanently delete all verses, collections, and review data from this device.",
+        clear_all_data_btn: "Clear All Data",
+        clear_data_confirm: "Are you sure you want to clear all data?\n\nThis will permanently delete:\n• All verses\n• All collections\n• All review progress\n• All settings\n\nThis action cannot be undone."
       },
       simplified: {
         app_title: "ZH Bible Verse Memorizer",
@@ -253,6 +268,7 @@ window.onload = function () {
         theme_system: "系统",
         theme_light: "亮色",
         theme_dark: "暗色",
+        default_bible_version: "默认圣经版本",
         save_settings: "Save Settings / 保存设置",
         // Add Verse Panel
         add_verse_title: "添加经文",
@@ -263,6 +279,7 @@ window.onload = function () {
         pinyin_initials_verse: "经文拼音首字母",
         pinyin_helper: "输入每个汉字拼音的首字母",
         pinyin_initials_book: "书名拼音首字母",
+        bible_version_optional: "圣经版本（可选）",
         add_to_collection_optional: "可选：加入集合",
         none: "无",
         save_verse: "保存经文",
@@ -312,6 +329,8 @@ window.onload = function () {
         import_collection_data: "导入集合数据",
         download_data: "下载数据",
         import_data: "导入数据",
+        choose_file: "选择文件",
+        no_file_selected: "未选择文件",
         // Bulk Actions
         confirm: "确定",
         cancel: "取消",
@@ -332,6 +351,7 @@ window.onload = function () {
         hours: "小时",
         learned: "已学习",
         verses: "节",
+        result: "结果",
         accuracy: "正确率",
         incorrect_input: "在\"{char}\"处输入错误（第{pos}个），应该是\"{expected}\"。",
         due_count: "{count} 个待复习",
@@ -362,13 +382,21 @@ window.onload = function () {
         great_job_continue: "做得好！让我们继续复习下一节。",
         great_job_intermediate: "做得好！现在您可以在带提示的情况下朗诵，接下来让我们熟练掌握它。",
         great_job_basic: "做得好！既然您对这节经文已有熟悉，可以尝试背诵它。",
-        nice_try: "做得不错！目标是超过90%",
+        nice_try: "差一点就成功了！目标是超过90%",
         congratulations_reviewed: "恭喜！你已成功複習了",
         congratulations_reviewed_count: "恭喜！你已成功複習了 {count} 節經文！",
         fill_all_fields: "请输入完整的经文各项内容。",
         chapter_verse_numbers: "章节和节号必须是数字。",
         verse_saved: "经文已保存！",
-        verse_updated: "经文已更新！"
+        verse_updated: "经文已更新！",
+        reset_review_data_title: "重置复习数据？",
+        reset_review_data_message: "此经文已有复习记录。您想重置复习数据吗？",
+        yes: "是",
+        no: "否",
+        clear_all_data: "清除所有数据",
+        clear_data_warning: "这将永久删除此设备上的所有经文、集合和复习数据。",
+        clear_all_data_btn: "清除所有数据",
+        clear_data_confirm: "您确定要清除所有数据吗？\n\n这将永久删除：\n• 所有经文\n• 所有集合\n• 所有复习进度\n• 所有设置\n\n此操作无法撤消。"
       },
       traditional: {
         app_title: "ZH Bible Verse Memorizer",
@@ -389,6 +417,7 @@ window.onload = function () {
         theme_system: "系統",
         theme_light: "亮色",
         theme_dark: "暗色",
+        default_bible_version: "默認聖經版本",
         save_settings: "Save Settings / 保存設置",
         // Add Verse Panel
         add_verse_title: "添加經文",
@@ -399,6 +428,7 @@ window.onload = function () {
         pinyin_initials_verse: "經文拼音首字母",
         pinyin_helper: "輸入每個漢字拼音的首字母",
         pinyin_initials_book: "書名拼音首字母",
+        bible_version_optional: "聖經版本（可選）",
         add_to_collection_optional: "可選：加入集合",
         none: "無",
         save_verse: "保存經文",
@@ -448,6 +478,8 @@ window.onload = function () {
         import_collection_data: "導入集合數據",
         download_data: "下載數據",
         import_data: "導入數據",
+        choose_file: "選擇文件",
+        no_file_selected: "未選擇文件",
         // Bulk Actions
         confirm: "確定",
         cancel: "取消",
@@ -468,6 +500,7 @@ window.onload = function () {
         hours: "小時",
         learned: "已學習",
         verses: "節",
+        result: "結果",
         accuracy: "正確率",
         incorrect_input: "在\"{char}\"處輸入錯誤（第{pos}個），應該是\"{expected}\"。",
         due_count: "{count} 個待複習",
@@ -498,13 +531,21 @@ window.onload = function () {
         great_job_continue: "做得好！讓我們繼續複習下一節。",
         great_job_intermediate: "做得好！現在您可以在帶提示的情況下朗誦，接下來讓我們熟練掌握它。",
         great_job_basic: "做得好！既然您對這節經文已有熟悉，可以嘗試背誦它。",
-        nice_try: "做得不錯！目標是超過90%",
+        nice_try: "差一點就成功了！目標是超過90%",
         congratulations_reviewed: "恭喜！你已成功複習了",
         congratulations_reviewed_count: "恭喜！你已成功複習了 {count} 節經文！",
         fill_all_fields: "請輸入完整的經文各項內容。",
         chapter_verse_numbers: "章節和節號必須是數字。",
         verse_saved: "經文已保存！",
-        verse_updated: "經文已更新！"
+        verse_updated: "經文已更新！",
+        reset_review_data_title: "重置複習數據？",
+        reset_review_data_message: "此經文已有複習記錄。您想重置複習數據嗎？",
+        yes: "是",
+        no: "否",
+        clear_all_data: "清除所有數據",
+        clear_data_warning: "這將永久刪除此設備上的所有經文、集合和複習數據。",
+        clear_all_data_btn: "清除所有數據",
+        clear_data_confirm: "您確定要清除所有數據嗎？\n\n這將永久刪除：\n• 所有經文\n• 所有集合\n• 所有複習進度\n• 所有設置\n\n此操作無法撤消。"
       }
     };
 
@@ -538,13 +579,45 @@ window.onload = function () {
       // Apply all other translations (single language)
       document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
-        el.textContent = t(key, savedLang);
+        // Special handling for Review button to preserve badge
+        if (el.id === 'reviewBtn') {
+          const badge = el.querySelector('#reviewBadge');
+          el.textContent = t(key, savedLang);
+          if (badge) {
+            el.appendChild(badge); // Re-append the badge after setting text
+          }
+        } else {
+          el.textContent = t(key, savedLang);
+        }
       });
     }
 
     function initLanguage() {
       const saved = localStorage.getItem('languagePreference');
-      const choice = saved || 'english';
+      let choice;
+      
+      if (saved) {
+        // Use saved preference
+        choice = saved;
+      } else {
+        // Detect system language on first visit
+        const systemLang = navigator.language || navigator.userLanguage;
+        
+        if (systemLang.startsWith('zh-Hans') || systemLang.startsWith('zh-CN') || systemLang === 'zh-SG') {
+          // Simplified Chinese regions
+          choice = 'simplified';
+        } else if (systemLang.startsWith('zh-Hant') || systemLang.startsWith('zh-TW') || systemLang.startsWith('zh-HK') || systemLang.startsWith('zh-MO')) {
+          // Traditional Chinese regions
+          choice = 'traditional';
+        } else if (systemLang.startsWith('zh')) {
+          // Generic Chinese, default to simplified
+          choice = 'simplified';
+        } else {
+          // Default to English for all other languages
+          choice = 'english';
+        }
+      }
+      
       applyLanguage(choice);
       const radios = document.querySelectorAll('input[name="languageOption"]');
       radios.forEach(r => { r.checked = (r.value === choice); });
@@ -556,6 +629,11 @@ window.onload = function () {
     if (settingsBtn && settingsPanel) {
       settingsBtn.addEventListener('click', () => {
         showPanel(settingsPanel);
+        // Load default Bible version from localStorage
+        const defaultBibleVersionInput = document.getElementById('defaultBibleVersion');
+        if (defaultBibleVersionInput) {
+          defaultBibleVersionInput.value = localStorage.getItem('defaultBibleVersion') || '';
+        }
       });
     }
     if (settingsSaveBtn && settingsPanel) {
@@ -571,6 +649,12 @@ window.onload = function () {
         localStorage.setItem('languagePreference', langVal);
         applyLanguage(langVal);
         
+        // Save default Bible version
+        const defaultBibleVersionInput = document.getElementById('defaultBibleVersion');
+        if (defaultBibleVersionInput) {
+          localStorage.setItem('defaultBibleVersion', defaultBibleVersionInput.value.trim());
+        }
+        
         // If language changed, rebuild bible books and refresh displays
         if (previousLang !== langVal) {
           rebuildBibleBooks();
@@ -581,6 +665,23 @@ window.onload = function () {
         }
       });
     }
+
+    // Clear All Data button handler
+    if (clearDataBtn) {
+      clearDataBtn.addEventListener('click', () => {
+        const currentLang = localStorage.getItem('languagePreference') || 'english';
+        const confirmMessage = t('clear_data_confirm', currentLang);
+        
+        if (confirm(confirmMessage)) {
+          // Clear all localStorage data
+          localStorage.clear();
+          
+          // Reload the page to reset the app
+          window.location.reload();
+        }
+      });
+    }
+
   // --- BIBLE BOOKS DATA WITH SIMPLIFIED AND TRADITIONAL ---
   const BIBLE_BOOKS_DATA = [
     { simplified: "创世记", traditional: "創世記", pinyin: "chuangshiji", initials: "CSJ" },
@@ -860,8 +961,9 @@ window.onload = function () {
     const diffTime = due.getTime() - now.getTime();
     const msPerHour = 1000 * 60 * 60;
     const msPerDay = msPerHour * 24;
-    const days = Math.floor(diffTime / msPerDay);
-    const hours = Math.floor(diffTime / msPerHour);
+    // Use Math.trunc to round towards zero (not down) so overdue by 3 hours shows as 0 days, not -1 days
+    const days = Math.trunc(diffTime / msPerDay);
+    const hours = Math.trunc(diffTime / msPerHour);
     return { days, hours, milliseconds: diffTime };
   }
 
@@ -874,6 +976,45 @@ window.onload = function () {
       if (!v.dueDate) return true; // Consider verses without dueDate as due
       return new Date(v.dueDate) <= now;
     }).length;
+  }
+
+  // Function to update review button badge with due count
+  function updateReviewBadge() {
+    const verses = JSON.parse(localStorage.getItem('verses') || '[]');
+    const learnedVerses = verses.filter(v => v && v.lastReviewed);
+    const now = new Date();
+    
+    console.log('updateReviewBadge: Total verses:', verses.length, 'Learned:', learnedVerses.length);
+    
+    const dueCount = learnedVerses.filter(v => {
+      if (!v.dueDate) {
+        console.log('Verse without dueDate (counting as due):', v.bookName, v.chapterNumber + ':' + v.verseNumber);
+        return true; // Consider verses without dueDate as due
+      }
+      const due = new Date(v.dueDate) <= now;
+      if (due) {
+        console.log('Due verse:', v.bookName, v.chapterNumber + ':' + v.verseNumber, 'Due:', v.dueDate);
+      }
+      return due;
+    }).length;
+    
+    console.log('Total due count:', dueCount);
+    
+    const badge = document.getElementById('reviewBadge');
+    const reviewBtn = document.getElementById('reviewBtn');
+    
+    console.log('Badge element:', badge, 'Review button:', reviewBtn);
+    
+    if (badge && reviewBtn) {
+      if (dueCount > 0) {
+        badge.textContent = dueCount;
+        badge.style.display = 'inline-block';
+        console.log('Badge updated with count:', dueCount);
+      } else {
+        badge.style.display = 'none';
+        console.log('No due verses, badge hidden');
+      }
+    }
   }
 
 
@@ -927,7 +1068,8 @@ window.onload = function () {
       buttonContainer.className = 'button-container';
 
       const editBtn = document.createElement('button');
-      editBtn.textContent = t('edit');
+      editBtn.textContent = '✏️';
+      editBtn.title = t('edit');
       editBtn.addEventListener('click', () => {
         const allVerses = JSON.parse(localStorage.getItem('verses') || '[]');
         editIndex = allVerses.findIndex(verse => verse.id === v.id);
@@ -937,6 +1079,7 @@ window.onload = function () {
         document.getElementById('verseNumber').value = v.verseNumber;
         document.getElementById('verseInitials').value = v.verseInitials;
         document.getElementById('bookInitials').value = v.bookInitials;
+        document.getElementById('bibleVersion').value = v.bibleVersion || '';
         // If this verse belongs to a collection, pre-select that collection in the add panel select
         const cols = getCollections();
         let found = null;
@@ -947,7 +1090,8 @@ window.onload = function () {
       });
 
       const deleteBtn = document.createElement('button');
-      deleteBtn.textContent = t('delete');
+      deleteBtn.textContent = '❌';
+      deleteBtn.title = t('delete');
       deleteBtn.addEventListener('click', () => {
         if (confirm(t('delete_confirmation'))) {
           const allVerses = JSON.parse(localStorage.getItem('verses') || '[]');
@@ -956,12 +1100,24 @@ window.onload = function () {
             allVerses.splice(verseIndex, 1);
             localStorage.setItem('verses', JSON.stringify(allVerses));
             loadVersesForEdit();
+            updateReviewBadge();
           }
         }
       });
 
   verseContent.appendChild(reference);
   verseContent.appendChild(text);
+  // append bible version (if any)
+  if (v.bibleVersion) {
+    const version = document.createElement('div');
+    version.className = 'bible-version';
+    version.textContent = v.bibleVersion;
+    version.style.fontSize = '0.9em';
+    version.style.color = '#888';
+    version.style.fontStyle = 'italic';
+    version.style.marginTop = '4px';
+    verseContent.appendChild(version);
+  }
   // append tags (if any)
   if (tagsDiv && tagsDiv.children.length > 0) verseContent.appendChild(tagsDiv);
       buttonContainer.appendChild(editBtn);
@@ -1050,7 +1206,13 @@ window.onload = function () {
           const dueInfo = getDaysUntilDue(verse.dueDate);
           if (dueInfo !== null) {
             if (dueInfo.milliseconds < 0) {
-              reviewText += ` <span class="overdue">(${t('days_overdue').replace('{count}', Math.abs(dueInfo.days))})</span>`;
+              const overdueDays = Math.abs(dueInfo.days);
+              if (overdueDays >= 1) {
+                reviewText += ` <span class="overdue">(${t('days_overdue').replace('{count}', overdueDays)})</span>`;
+              } else {
+                // Less than 24 hours overdue - show as "Due today"
+                reviewText += ` <span class="due-soon">(${t('due_today')})</span>`;
+              }
             } else if (dueInfo.days === 0 && dueInfo.hours >= 1 && dueInfo.hours <= 23) {
               // Less than 24 hours: show hours
               if (dueInfo.hours === 1) {
@@ -1102,6 +1264,7 @@ window.onload = function () {
       return;
     }
 
+    // Sort by due date for display in the review list
     learned.sort((a, b) => {
       const now = new Date();
       const aDue = a.dueDate ? new Date(a.dueDate) : now;
@@ -1142,7 +1305,13 @@ window.onload = function () {
         const dueInfo = getDaysUntilDue(verse.dueDate);
         if (dueInfo !== null) {
           if (dueInfo.milliseconds < 0) {
-            reviewText += ` <span class="overdue">(${t('days_overdue').replace('{count}', Math.abs(dueInfo.days))})</span>`;
+            const overdueDays = Math.abs(dueInfo.days);
+            if (overdueDays >= 1) {
+              reviewText += ` <span class="overdue">(${t('days_overdue').replace('{count}', overdueDays)})</span>`;
+            } else {
+              // Less than 24 hours overdue - show as "Due today"
+              reviewText += ` <span class="due-soon">(${t('due_today')})</span>`;
+            }
           } else if (dueInfo.days === 0 && dueInfo.hours >= 1 && dueInfo.hours <= 23) {
             // Less than 24 hours: show hours
             if (dueInfo.hours === 1) {
@@ -1192,7 +1361,8 @@ window.onload = function () {
       viewBtn.textContent = t('view');
       viewBtn.addEventListener('click', () => viewCollection(c.id));
       const editBtn = document.createElement('button');
-      editBtn.textContent = t('rename');
+      editBtn.textContent = '✏️';
+      editBtn.title = t('rename');
       editBtn.addEventListener('click', () => {
         const newTitle = prompt(t('new_collection_title'), c.title);
         if (newTitle === null) return;
@@ -1204,7 +1374,8 @@ window.onload = function () {
         loadCollectionsForReview();
       });
       const delBtn = document.createElement('button');
-      delBtn.textContent = t('delete');
+      delBtn.textContent = '❌';
+      delBtn.title = t('delete');
       delBtn.addEventListener('click', () => {
         if (!confirm(t('delete_confirmation'))) return;
         const updated = cols.filter(x => x.id !== c.id);
@@ -1275,7 +1446,7 @@ window.onload = function () {
       controls.className = 'collection-controls';
       const up = document.createElement('button'); up.textContent = '↑';
       const down = document.createElement('button'); down.textContent = '↓';
-      const remove = document.createElement('button'); remove.textContent = t('remove');
+      const remove = document.createElement('button'); remove.textContent = '❌'; remove.title = t('remove');
       up.addEventListener('click', () => { if (idx>0) { [col.verseIds[idx-1], col.verseIds[idx]] = [col.verseIds[idx], col.verseIds[idx-1]]; saveAndRerender(col); } });
       down.addEventListener('click', () => { if (idx < col.verseIds.length-1) { [col.verseIds[idx+1], col.verseIds[idx]] = [col.verseIds[idx], col.verseIds[idx+1]]; saveAndRerender(col); } });
       remove.addEventListener('click', () => { col.verseIds.splice(idx,1); saveAndRerender(col); });
@@ -1304,9 +1475,12 @@ window.onload = function () {
       return;
     }
 
+    // Sort selected verses by Biblical order
+    const sortedSelectedVerses = sortVersesByBibleOrder(selectedVerses);
+
     // Start an individual-verse review session (selected verses behave like a playlist)
     reviewCollectionMode = 'individual';
-    reviewVerses = selectedVerses;
+    reviewVerses = sortedSelectedVerses;
     reviewSuccessCount = 0;
 
     // Populate the verseSelector with only the selected verses so the reference is visible and can fade
@@ -1318,8 +1492,17 @@ window.onload = function () {
         opt.textContent = `${v.bookName} ${v.chapterNumber}:${v.verseNumber}`;
         verseSelector.appendChild(opt);
       });
-      try { verseSelector.selectedIndex = 0; verseSelector.style.display = 'block'; verseSelector.style.opacity = '1'; } catch (e) {}
+      try { 
+        verseSelector.selectedIndex = 0; 
+        verseSelector.style.display = 'block'; 
+        verseSelector.style.opacity = '1';
+        verseSelector.disabled = true; // Disable during review to prevent changing verses
+      } catch (e) {}
     }
+
+    // Hide the verse selector label during review
+    const verseSelectorLabel = document.getElementById('verseSelectorLabel');
+    if (verseSelectorLabel) verseSelectorLabel.style.display = 'none';
 
     currentVerse = reviewVerses[0];
     singleTextPrev = [];
@@ -1618,9 +1801,9 @@ function populateBookDatalist() {
           // **NEW: Final display update and persistent message**
             renderSingleTextReview(); // Re-render one last time
             learnInput.disabled = true; // Disable input since session is complete
-          alert(`Congratulations! You have successfully reviewed ${reviewedCount} verses!\n恭喜！你已成功複習了 ${reviewedCount} 節經文！`
-);
-learnInput.style.display = 'none';
+            updateReviewBadge(); // Update badge after single-text review
+            alert(t('congratulations_reviewed_count').replace('{count}', reviewedCount));
+            learnInput.style.display = 'none';
         }
       }, 500);
     }
@@ -1666,9 +1849,11 @@ learnInput.style.display = 'none';
         individuallyBtn.onclick = function() {
           reviewModeModal.classList.remove('open');
           reviewModeModal.setAttribute('aria-hidden', 'true');
+          // Sort collection verses by Biblical order
+          const sortedList = sortVersesByBibleOrder(list);
           // Start individual-verse review session
           reviewCollectionMode = 'individual';
-          reviewVerses = list;
+          reviewVerses = sortedList;
           reviewSuccessCount = 0;
           if (verseSelector) {
             verseSelector.innerHTML = '';
@@ -1678,8 +1863,17 @@ learnInput.style.display = 'none';
               opt.textContent = `${v.bookName} ${v.chapterNumber}:${v.verseNumber}`;
               verseSelector.appendChild(opt);
             });
-            try { verseSelector.selectedIndex = 0; verseSelector.style.display = 'block'; verseSelector.style.opacity = '1'; } catch (e) {}
+            try { 
+              verseSelector.selectedIndex = 0; 
+              verseSelector.style.display = 'block'; 
+              verseSelector.style.opacity = '1';
+              verseSelector.disabled = true; // Disable during review to prevent changing verses
+            } catch (e) {}
           }
+          // Hide the verse selector label during review
+          const verseSelectorLabel = document.getElementById('verseSelectorLabel');
+          if (verseSelectorLabel) verseSelectorLabel.style.display = 'none';
+          
           currentVerse = reviewVerses[0];
           singleTextPrev = [];
           singleTextReviewIndex = 0;
@@ -1706,6 +1900,8 @@ learnInput.style.display = 'none';
     document.getElementById('verseNumber').value = '';
     document.getElementById('verseInitials').value = '';
     document.getElementById('bookInitials').value = '';
+    // Auto-populate Bible version with default value
+    document.getElementById('bibleVersion').value = localStorage.getItem('defaultBibleVersion') || '';
     editIndex = null;
     saveVerseBtn.textContent = t('save_verse');
     saveStatus.textContent = '';
@@ -1714,6 +1910,11 @@ learnInput.style.display = 'none';
   addVerseBtn.addEventListener('click', () => {
     showPanel(addVersePanel);
     clearForm();
+    // Auto-populate Bible version with default value if it's empty
+    const bibleVersionInput = document.getElementById('bibleVersion');
+    if (bibleVersionInput && !bibleVersionInput.value) {
+      bibleVersionInput.value = localStorage.getItem('defaultBibleVersion') || '';
+    }
   });
 
   clearFormBtn.addEventListener('click', clearForm);
@@ -1725,19 +1926,66 @@ learnInput.style.display = 'none';
     const verseNumber = document.getElementById('verseNumber').value.trim();
     const verseInitials = document.getElementById('verseInitials').value.trim();
     const bookInitials = document.getElementById('bookInitials').value.trim();
+    const bibleVersion = document.getElementById('bibleVersion').value.trim();
 
     if (!verseText || !bookName || !chapterNumber || !verseNumber || !verseInitials || !bookInitials) {
-      saveStatus.textContent = '请输入完整的经文各项内容。 / Please fill in all fields completely.';
+      saveStatus.textContent = t('fill_all_fields');
       saveStatus.style.color = 'red';
       return;
     }
     if (isNaN(chapterNumber) || isNaN(verseNumber)) {
-      saveStatus.textContent = '章节和节号必须是数字。 / Chapter and Verse must be numbers.';
+      saveStatus.textContent = t('chapter_verse_numbers');
       saveStatus.style.color = 'red';
       return;
     }
 
     let verses = JSON.parse(localStorage.getItem('verses') || '[]');
+    
+    // Check if we're editing and if the verse has review data
+    if (editIndex !== null && verses[editIndex]) {
+      const existingVerse = verses[editIndex];
+      const hasReviewData = existingVerse.lastReviewed || existingVerse.dueDate || existingVerse.interval || existingVerse.repetitions;
+      
+      if (hasReviewData) {
+        // Show modal to ask user if they want to reset review data
+        const resetModal = document.getElementById('resetReviewDataModal');
+        const yesBtn = document.getElementById('resetReviewYesBtn');
+        const noBtn = document.getElementById('resetReviewNoBtn');
+        
+        if (resetModal) {
+          resetModal.setAttribute('aria-hidden', 'false');
+          resetModal.classList.add('open');
+          
+          // Remove old event listeners
+          const newYesBtn = yesBtn.cloneNode(true);
+          const newNoBtn = noBtn.cloneNode(true);
+          yesBtn.parentNode.replaceChild(newYesBtn, yesBtn);
+          noBtn.parentNode.replaceChild(newNoBtn, noBtn);
+          
+          // Yes - reset review data
+          newYesBtn.onclick = () => {
+            resetModal.setAttribute('aria-hidden', 'true');
+            resetModal.classList.remove('open');
+            saveVerseWithReviewData(verseText, bookName, chapterNumber, verseNumber, verseInitials, bookInitials, bibleVersion, verses, true);
+          };
+          
+          // No - preserve review data
+          newNoBtn.onclick = () => {
+            resetModal.setAttribute('aria-hidden', 'true');
+            resetModal.classList.remove('open');
+            saveVerseWithReviewData(verseText, bookName, chapterNumber, verseNumber, verseInitials, bookInitials, bibleVersion, verses, false);
+          };
+        }
+        return; // Exit here, modal handlers will complete the save
+      }
+    }
+    
+    // No review data to worry about, proceed with normal save
+    saveVerseWithReviewData(verseText, bookName, chapterNumber, verseNumber, verseInitials, bookInitials, bibleVersion, verses, true);
+  });
+
+  // Helper function to save verse with or without preserving review data
+  function saveVerseWithReviewData(verseText, bookName, chapterNumber, verseNumber, verseInitials, bookInitials, bibleVersion, verses, resetReviewData) {
     const verseData = {
       verseText,
       bookName,
@@ -1745,12 +1993,23 @@ learnInput.style.display = 'none';
       verseNumber,
       verseInitials,
       bookInitials,
+      bibleVersion: bibleVersion || '',
       lastReviewed: null,
       id: Date.now().toString(),
     };
+    
     if (editIndex !== null) {
       // preserve id if present
       verseData.id = verses[editIndex].id || verseData.id;
+      
+      // If NOT resetting review data, preserve the existing review fields
+      if (!resetReviewData && verses[editIndex]) {
+        if (verses[editIndex].lastReviewed) verseData.lastReviewed = verses[editIndex].lastReviewed;
+        if (verses[editIndex].dueDate) verseData.dueDate = verses[editIndex].dueDate;
+        if (verses[editIndex].interval) verseData.interval = verses[editIndex].interval;
+        if (verses[editIndex].repetitions) verseData.repetitions = verses[editIndex].repetitions;
+      }
+      
       verses[editIndex] = verseData;
       editIndex = null;
       saveVerseBtn.textContent = t('save_verse');
@@ -1784,7 +2043,9 @@ learnInput.style.display = 'none';
     clearForm();
     // refresh collections UI
     renderCollectionsList();
-  });
+    // Update review badge
+    updateReviewBadge();
+  }
 
   function loadUnlearnedVerses() {
     const verses = JSON.parse(localStorage.getItem('verses') || '[]');
@@ -1912,7 +2173,12 @@ learnInput.style.display = 'none';
     } catch (e) { /* ignore DOM errors */ }
 
     renderVerseDisplay();
-    learnInput.focus();
+    
+    // Delay focus to ensure all state is cleared and display is rendered
+    // This prevents keyboard from appearing and immediately dismissing on mobile
+    setTimeout(() => {
+      learnInput.focus();
+    }, 100);
   }
 
   function renderVerseDisplay() {
@@ -2188,15 +2454,25 @@ learnInput.style.display = 'none';
         }
       }
     } else {
-      modalMessage.textContent = "Nice Try! Aim for greater than 90% / 做得不错！目标是超过90%";
+      modalMessage.textContent = t('nice_try');
       modalNextBtn.style.display = 'none';
       if (modalRetryBtn) modalRetryBtn.style.display = 'inline-block';
     }
-    modalAccuracy.textContent = `Accuracy: ${accuracy.toFixed(1)}%`;
+    modalAccuracy.textContent = `${t('accuracy')}: ${accuracy.toFixed(1)}%`;
 
     // show modal and prevent outside click close
     accuracyModal.classList.add('open');
-    accuracyModal.setAttribute('aria-hidden', 'false');
+    accuracyModal.removeAttribute('aria-hidden');
+    
+    // Set focus to the appropriate button AFTER showing modal
+    setTimeout(() => {
+      if (success && modalNextBtn) {
+        modalNextBtn.focus();
+      } else if (modalRetryBtn) {
+        modalRetryBtn.focus();
+      }
+    }, 100);
+    
     // ensure input is disabled until modal action
     learnInput.disabled = true;
   }
@@ -2327,6 +2603,7 @@ learnInput.style.display = 'none';
               currentVerse = null;
               showPanel(reviewPanel);
               loadVersesForReview(); // Refresh with updated lastReviewed times
+              updateReviewBadge();
               if (verseSelector) verseSelector.style.display = 'block'; // restore selector
               alert(`${t('congratulations_reviewed')} ${totalReviewed} ${t('verses')}`);
             }
@@ -2349,7 +2626,14 @@ learnInput.style.display = 'none';
             currentVerse = null;
             showPanel(reviewPanel);
             loadVersesForReview(); // Refresh with updated lastReviewed times
-            if (verseSelector) verseSelector.style.display = 'block'; // Show verse selector again
+            updateReviewBadge();
+            if (verseSelector) {
+              verseSelector.style.display = 'block'; // Show verse selector again
+              verseSelector.disabled = false; // Re-enable selector when review is complete
+            }
+            // Show the verse selector label again
+            const verseSelectorLabel = document.getElementById('verseSelectorLabel');
+            if (verseSelectorLabel) verseSelectorLabel.style.display = '';
           }
           return;
         }
@@ -2514,9 +2798,9 @@ learnInput.style.display = 'none';
 
       // Always show accuracy in feedback
       if (learnFeedback.textContent) {
-        learnFeedback.textContent += `\nAccuracy: ${totalAccuracy.toFixed(1)}% / 正确率：${totalAccuracy.toFixed(1)}%`;
+        learnFeedback.textContent += `\n${t('accuracy')}: ${totalAccuracy.toFixed(1)}%`;
       } else {
-        learnFeedback.textContent = `Accuracy: ${totalAccuracy.toFixed(1)}% / 正确率：${totalAccuracy.toFixed(1)}%`;
+        learnFeedback.textContent = `${t('accuracy')}: ${totalAccuracy.toFixed(1)}%`;
       }
 
       // Require 90% accuracy for all stages
@@ -2593,7 +2877,14 @@ learnInput.style.display = 'none';
           currentVerse = null;
           showPanel(reviewPanel);
           loadVersesForReview(); // Refresh with updated lastReviewed times
-          if (verseSelector) verseSelector.style.display = 'block';
+          updateReviewBadge();
+          if (verseSelector) {
+            verseSelector.style.display = 'block';
+            verseSelector.disabled = false; // Re-enable selector
+          }
+          // Show the verse selector label again
+          const verseSelectorLabel = document.getElementById('verseSelectorLabel');
+          if (verseSelectorLabel) verseSelectorLabel.style.display = '';
           alert(`${t('congratulations_reviewed')} ${totalReviewed} ${t('verses')}`);
         }
       } else {
@@ -2701,23 +2992,25 @@ learnInput.style.display = 'none';
 
 
 verseSelector.addEventListener('change', () => {
+    // Prevent verse changes during review mode
+    if (reviewCollectionMode === 'individual' && reviewVerses && reviewVerses.length > 0) {
+        // Reset to current verse index to prevent the selector from visually changing
+        const currentIndex = reviewVerses.findIndex(v => 
+          v.bookName === currentVerse.bookName && 
+          v.chapterNumber === currentVerse.chapterNumber &&
+          v.verseNumber === currentVerse.verseNumber
+        );
+        if (currentIndex !== -1) {
+          verseSelector.selectedIndex = currentIndex;
+        }
+        return; // Exit early - don't allow verse changes during review
+    }
+    
     // Ensure the selected value is parsed as an integer index
     const selectedIdx = parseInt(verseSelector.value, 10);
     
-    // If we're in individual review mode the selector contains the reviewVerses
-    if (reviewCollectionMode === 'individual' && reviewVerses && reviewVerses.length > 0) {
-        // Here, the value is confirmed to be the index of the reviewVerses array.
-        // We ensure we don't go out of bounds.
-        const idx = selectedIdx >= 0 && selectedIdx < reviewVerses.length ? selectedIdx : 0;
-        window.currentVerse = reviewVerses[idx];
-        
-        // Reset state
-        learnInput.value = '';
-        userInput = '';
-        prevUserInputLength = 0;
-        startLearnMode(window.currentVerse);
-        return;
-    }
+    // Blur the selector to prevent keyboard issues on mobile
+    verseSelector.blur();
 
     // Default behavior: the selector contains indices for the unlearned verses array.
     const verses = JSON.parse(localStorage.getItem('verses') || '[]');
@@ -2803,6 +3096,9 @@ function showPanel(panelToShow) {
     populateCollectionSelector();
   });
 
+  // Initialize review badge on page load
+  updateReviewBadge();
+
   learnBtn.addEventListener('click', () => {
     // Hide all panels, then show the learnPanel
     document.querySelectorAll('.panel').forEach(p => p.style.display = 'none');
@@ -2834,11 +3130,13 @@ function showPanel(panelToShow) {
         learnFeedback.className = '';
     }
     if (verseSelector) {
-        verseSelector.style.display = 'block';
-        verseSelector.style.opacity = '1';
+      verseSelector.style.display = 'block';
+      verseSelector.style.opacity = '1';
+      verseSelector.disabled = false; // Ensure selector is enabled in learn mode
     }
-    
-    // 4. Load the default set of unlearned verses and start basic mode
+    // Ensure verse selector label is visible in learn mode
+    const verseSelectorLabel = document.getElementById('verseSelectorLabel');
+    if (verseSelectorLabel) verseSelectorLabel.style.display = '';    // 4. Load the default set of unlearned verses and start basic mode
     loadUnlearnedVerses(); 
     
     // 5. CRITICAL FIX: Ensure the learning mode is set to 'basic' 
@@ -2850,6 +3148,7 @@ function showPanel(panelToShow) {
     showPanel(reviewPanel);
     loadVersesForReview();
     loadCollectionsForReview();
+    updateReviewBadge();
   });
 
   exportBtn.addEventListener('click', () => {
@@ -2891,7 +3190,7 @@ function showPanel(panelToShow) {
         uncollectedCheckbox.dataset.collectionId = '__uncollected__';
         uncollectedCheckbox.checked = true;
         uncollectedLabel.appendChild(uncollectedCheckbox);
-        uncollectedLabel.appendChild(document.createTextNode(` Not in a collection / 未分组 (${uncollectedCount} verses)`));
+        uncollectedLabel.appendChild(document.createTextNode(` ${t('not_in_collection')} (${uncollectedCount} ${t('verses')})`));
         uncollectedItem.appendChild(uncollectedLabel);
         exportCollectionsList.appendChild(uncollectedItem);
         
@@ -3004,6 +3303,15 @@ function showPanel(panelToShow) {
     URL.revokeObjectURL(url);
   });
 
+  // Update file name display when file is selected
+  importFile.addEventListener('change', (e) => {
+    if (e.target.files && e.target.files.length > 0) {
+      importFileName.textContent = e.target.files[0].name;
+    } else {
+      importFileName.textContent = t('no_file_selected');
+    }
+  });
+
   importDataBtn.addEventListener('click', () => {
     const file = importFile.files[0];
     if (!file) {
@@ -3030,12 +3338,27 @@ function showPanel(panelToShow) {
             delete iv.repetitions;
             delete iv.dueDate;
           }
-          const isDuplicate = currentVerses.some(v => 
+          
+          // Find if this verse already exists
+          const existingVerseIndex = currentVerses.findIndex(v => 
             v.bookName === importedVerse.bookName &&
             v.chapterNumber === importedVerse.chapterNumber &&
             v.verseNumber === importedVerse.verseNumber
           );
-          if (!isDuplicate) {
+          
+          if (existingVerseIndex !== -1) {
+            // Verse exists - check which has more recent review data
+            const existingVerse = currentVerses[existingVerseIndex];
+            const existingReviewDate = existingVerse.lastReviewed ? new Date(existingVerse.lastReviewed) : null;
+            const importedReviewDate = iv.lastReviewed ? new Date(iv.lastReviewed) : null;
+            
+            // Replace with imported verse if it has more recent review data
+            if (importedReviewDate && (!existingReviewDate || importedReviewDate > existingReviewDate)) {
+              mergedVerses[existingVerseIndex] = iv;
+            }
+            // Otherwise keep existing verse (already in mergedVerses)
+          } else {
+            // New verse - add it
             mergedVerses.push(iv);
           }
         });
@@ -3075,6 +3398,7 @@ function showPanel(panelToShow) {
 
         alert(t('import_successful'));
         loadVersesForEdit();
+        updateReviewBadge();
       } catch (error) {
         alert(t('error_importing') + ': ' + error.message);
       }
@@ -3137,6 +3461,7 @@ function showPanel(panelToShow) {
       verses = verses.filter(v => !ids.includes(v.id));
       localStorage.setItem('verses', JSON.stringify(verses));
       loadVersesForEdit();
+      updateReviewBadge();
       renderCollectionsList();
       populateCollectionSelector();
       if (bulkActions) bulkActions.style.display = 'none';
@@ -3170,7 +3495,7 @@ function showPanel(panelToShow) {
   if (bulkAddConfirmBtn) {
     bulkAddConfirmBtn.addEventListener('click', () => {
       const checked = Array.from(document.querySelectorAll('.add-verse-checkbox:checked'));
-      if (checked.length === 0) { alert('Please select at least one verse / 请选择至少一节经文'); return; }
+      if (checked.length === 0) { alert(t('select_at_least_one')); return; }
       let chosen = bulkAddCollectionSelect ? bulkAddCollectionSelect.value : '';
       let cols = getCollections();
       if (!chosen) { alert(t('select_or_create_collection')); return; }
@@ -3200,6 +3525,66 @@ function showPanel(panelToShow) {
       alert(t('verses_added_to_collection'));
     });
   }
+
+  // Setup input scroll behavior for mobile keyboards
+  // Track scroll position to prevent iOS aggressive centering
+  let savedScrollY = 0;
+  
+  window.addEventListener('scroll', () => {
+    savedScrollY = window.scrollY;
+  });
+  
+  function setupInputScrollBehavior() {
+    const inputs = document.querySelectorAll('#addVersePanel input, #addVersePanel textarea');
+    
+    inputs.forEach(input => {
+      input.addEventListener('focus', (e) => {
+        // Prevent iOS default centering by maintaining current scroll position
+        const targetScrollY = savedScrollY;
+        
+        // Small delay to override iOS behavior
+        setTimeout(() => {
+          window.scrollTo(0, targetScrollY);
+        }, 0);
+        
+        // Additional check after keyboard animation
+        setTimeout(() => {
+          const element = e.target;
+          const rect = element.getBoundingClientRect();
+          
+          // Only scroll if the input is not visible above keyboard
+          // Assume keyboard takes up bottom ~40% of viewport
+          const keyboardTop = window.innerHeight * 0.6;
+          
+          if (rect.bottom > keyboardTop) {
+            // Scroll just enough to show the input above keyboard with padding
+            const overflow = rect.bottom - keyboardTop + 20;
+            window.scrollTo(0, window.scrollY + overflow);
+          } else if (rect.top < 0) {
+            // If input is above viewport, scroll it into view at top
+            window.scrollTo(0, window.scrollY + rect.top - 20);
+          }
+        }, 300);
+      });
+    });
+  }
+
+  setupInputScrollBehavior();
+
+  // Check if first time user and show settings (must be at end after all initialization)
+  function checkFirstTimeUser() {
+    const hasVisitedBefore = localStorage.getItem('hasVisitedBefore');
+    
+    if (!hasVisitedBefore) {
+      // First time user - show settings panel
+      showPanel(settingsPanel);
+      
+      // Mark that user has visited
+      localStorage.setItem('hasVisitedBefore', 'true');
+    }
+  }
+  
+  checkFirstTimeUser();
 
   // (initialization at top of file already performed)
 };
