@@ -62,6 +62,243 @@ window.onload = function () {
   const bulkNewCollectionName = document.getElementById('bulkNewCollectionName');
   const bulkAddConfirmBtn = document.getElementById('bulkAddConfirmBtn');
   const bulkAddCancelBtn = document.getElementById('bulkAddCancelBtn');
+  // Change Interval Modal
+  const changeIntervalBtn = document.getElementById('changeIntervalBtn');
+  const changeIntervalModal = document.getElementById('changeIntervalModal');
+  const intervalUpBtn = document.getElementById('intervalUpBtn');
+  const intervalDownBtn = document.getElementById('intervalDownBtn');
+  const intervalValue = document.getElementById('intervalValue');
+  const intervalDaysDisplay = document.getElementById('intervalDaysDisplay');
+  const intervalConfirmBtn = document.getElementById('intervalConfirmBtn');
+  const intervalCancelBtn = document.getElementById('intervalCancelBtn');
+  let currentInterval = 1;
+  // Onscreen Keyboards
+  const zhuyinKeyboard = document.getElementById('zhuyinKeyboard');
+  const cangjieKeyboard = document.getElementById('cangjieKeyboard');
+  const numericKeyboard = document.getElementById('numericKeyboard');
+  const verseInitials = document.getElementById('verseInitials');
+  const bookInitials = document.getElementById('bookInitials');
+  const bibleVersion = document.getElementById('bibleVersion');
+  const defaultBibleVersion = document.getElementById('defaultBibleVersion');
+  let activeInput = null;
+  let hiddenElements = []; // Track hidden elements to restore later
+  
+  // Onscreen Keyboard Functions
+  function hideAllKeyboards() {
+    zhuyinKeyboard.style.display = 'none';
+    cangjieKeyboard.style.display = 'none';
+    numericKeyboard.style.display = 'none';
+    
+    // Restore all hidden elements
+    hiddenElements.forEach(el => {
+      el.style.display = el.dataset.originalDisplay || '';
+      delete el.dataset.originalDisplay;
+    });
+    hiddenElements = [];
+    
+    if (activeInput) {
+      activeInput.readOnly = false;
+    }
+    activeInput = null;
+  }
+
+  function showZhuyinKeyboard() {
+    hideAllKeyboards();
+    zhuyinKeyboard.style.display = 'block';
+  }
+
+  function showCangjieKeyboard() {
+    hideAllKeyboards();
+    cangjieKeyboard.style.display = 'block';
+  }
+
+  function showNumericKeyboard() {
+    hideAllKeyboards();
+    numericKeyboard.style.display = 'block';
+  }
+
+  function hideElementsBetweenInputAndKeyboard(input, keyboard) {
+    // Clear any previously hidden elements
+    hiddenElements.forEach(el => {
+      el.style.display = el.dataset.originalDisplay || '';
+      delete el.dataset.originalDisplay;
+    });
+    hiddenElements = [];
+    
+    // Get all siblings after the input's parent container
+    let currentElement = input;
+    
+    // Navigate up to find the containing panel or major section
+    while (currentElement && !currentElement.classList.contains('panel')) {
+      currentElement = currentElement.parentElement;
+    }
+    
+    if (!currentElement) return;
+    
+    // Hide all direct children of the panel that come after the input
+    let foundInput = false;
+    const children = Array.from(currentElement.children);
+    
+    for (let child of children) {
+      // Check if this element or its descendants contain the input
+      if (child.contains(input) || child === input) {
+        foundInput = true;
+        continue;
+      }
+      
+      // Hide elements that come after the input
+      if (foundInput && child !== keyboard && !child.classList.contains('onscreen-keyboard')) {
+        child.dataset.originalDisplay = child.style.display || '';
+        child.style.display = 'none';
+        hiddenElements.push(child);
+      }
+    }
+  }
+
+  function showKeyboardForInput(input, forceKeyboardType) {
+    const method = forceKeyboardType || localStorage.getItem('inputMethod') || 'pinyin';
+    if (input.id === 'bookNameInput' || input.id === 'newCollectionTitle' || input.id === 'verseText' || input.id === 'bibleVersion' || input.id === 'defaultBibleVersion') {
+      hideAllKeyboards();
+      input.readOnly = false;
+      return;
+    }
+    if (method === 'numeric' || input.type === 'number' || input.id === 'chapterNumber' || input.id === 'verseNumber') {
+      showNumericKeyboard();
+      activeInput = input;
+      input.readOnly = (input.id === 'learnInput');
+      
+      // Ensure cursor is at the end for non-readonly inputs (but not for number type which doesn't support selection)
+      if (!input.readOnly && input.type !== 'number') {
+        setTimeout(() => {
+          const len = input.value.length;
+          input.setSelectionRange(len, len);
+        }, 0);
+      }
+      
+      // Hide backspace button only for learnInput
+      const backspaceButtons = document.querySelectorAll('.onscreen-keyboard .backspace');
+      backspaceButtons.forEach(btn => {
+        if (input.id === 'learnInput') {
+          btn.style.display = 'none';
+        } else {
+          btn.style.display = '';
+        }
+      });
+      
+      hideElementsBetweenInputAndKeyboard(input, numericKeyboard);
+      input.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+    if (method === 'pinyin') {
+      hideAllKeyboards();
+      input.readOnly = false;
+      return;
+    }
+    // Zhuyin or Cangjie
+    let keyboard;
+    if (method === 'zhuyin') {
+      showZhuyinKeyboard();
+      keyboard = zhuyinKeyboard;
+    } else if (method === 'cangjie') {
+      showCangjieKeyboard();
+      keyboard = cangjieKeyboard;
+    }
+    
+    activeInput = input;
+    // Only make learnInput read-only, allow cursor positioning for other inputs
+    input.readOnly = (input.id === 'learnInput');
+    
+    // Hide backspace button if this is learn input
+    const backspaceButtons = document.querySelectorAll('.onscreen-keyboard .backspace');
+    backspaceButtons.forEach(btn => {
+      if (input.id === 'learnInput') {
+        btn.style.display = 'none';
+      } else {
+        btn.style.display = '';
+      }
+    });
+    
+    if (keyboard) {
+      hideElementsBetweenInputAndKeyboard(input, keyboard);
+      input.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  // Keyboard Event Listeners
+  function handleKeyboardClick(e, keyboard) {
+    if (e.target.classList.contains('key') && !e.target.classList.contains('unused')) {
+      const value = e.target.textContent.trim();
+      if (activeInput) {
+        if (value === 'Backspace' || value === '⌫') {
+          // Don't allow backspace in learn/review mode
+          if (activeInput.id === 'learnInput') {
+            return;
+          }
+          // Delete character before cursor or from end
+          const start = activeInput.selectionStart || 0;
+          const end = activeInput.selectionEnd || 0;
+          if (start !== end) {
+            // Delete selection
+            activeInput.value = activeInput.value.slice(0, start) + activeInput.value.slice(end);
+            setTimeout(() => {
+              activeInput.focus();
+              activeInput.setSelectionRange(start, start);
+            }, 0);
+          } else if (start > 0) {
+            // Delete character before cursor
+            activeInput.value = activeInput.value.slice(0, start - 1) + activeInput.value.slice(start);
+            setTimeout(() => {
+              activeInput.focus();
+              activeInput.setSelectionRange(start - 1, start - 1);
+            }, 0);
+          }
+          // Trigger input event
+          activeInput.dispatchEvent(new Event('input', { bubbles: true }));
+        } else if (value === 'Space') {
+          if (activeInput.id === 'learnInput') {
+            // Append for learnInput
+            activeInput.value = activeInput.value + ' ';
+            activeInput.setSelectionRange(activeInput.value.length, activeInput.value.length);
+          } else {
+            // Insert at cursor for other inputs
+            const start = activeInput.selectionStart;
+            activeInput.value = activeInput.value.slice(0, start) + ' ' + activeInput.value.slice(start);
+            activeInput.setSelectionRange(start + 1, start + 1);
+          }
+          // Trigger input event
+          activeInput.dispatchEvent(new Event('input', { bubbles: true }));
+        } else if (value === 'Enter' || value === '✔') {
+          activeInput.blur();
+          hideAllKeyboards();
+        } else {
+          if (activeInput.id === 'learnInput') {
+            // Always append at the end for learnInput (left-to-right input)
+            activeInput.value = activeInput.value + value;
+            activeInput.setSelectionRange(activeInput.value.length, activeInput.value.length);
+          } else {
+            // Insert at cursor position for other inputs (including chapter/verse numbers)
+            const start = activeInput.selectionStart || 0;
+            const end = activeInput.selectionEnd || 0;
+            const currentValue = activeInput.value;
+            activeInput.value = currentValue.slice(0, start) + value + currentValue.slice(end);
+            const newPosition = start + value.length;
+            // Force focus and cursor position update
+            setTimeout(() => {
+              activeInput.focus();
+              activeInput.setSelectionRange(newPosition, newPosition);
+            }, 0);
+          }
+          // Trigger input event
+          activeInput.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+      }
+    }
+  }
+
+  zhuyinKeyboard.addEventListener('click', (e) => handleKeyboardClick(e, zhuyinKeyboard));
+  cangjieKeyboard.addEventListener('click', (e) => handleKeyboardClick(e, cangjieKeyboard));
+  numericKeyboard.addEventListener('click', (e) => handleKeyboardClick(e, numericKeyboard));
+
   // --- ENHANCED BOOK DATA FOR PINYIN SEARCH ---
     // THEME MANAGEMENT
     function getSystemTheme() {
@@ -119,6 +356,10 @@ window.onload = function () {
         theme_system: "System",
         theme_light: "Light",
         theme_dark: "Dark",
+        input_method: "Input Method",
+        input_pinyin: "Pinyin",
+        input_zhuyin: "Zhuyin (注音)",
+        input_cangjie: "Cangjie (倉頡)",
         default_bible_version: "Default Bible Version",
         save_settings: "Save Settings",
         // Add Verse Panel
@@ -130,6 +371,12 @@ window.onload = function () {
         pinyin_initials_verse: "Pinyin Initials for Verse",
         pinyin_helper: "Type the first letter of each character's pinyin",
         pinyin_initials_book: "Pinyin Initials for Book Name",
+        zhuyin_initials_verse: "Zhuyin initials for Verse",
+        zhuyin_helper: "Type the first symbol of each character's Zhuyin",
+        zhuyin_initials_book: "Zhuyin initials for Book Name",
+        cangjie_initials_verse: "Cangjie radicals for Verse",
+        cangjie_helper: "Type the first radical of each character's Cangjie",
+        cangjie_initials_book: "Cangjie radicals for Book Name",
         bible_version_optional: "Bible version (optional)",
         add_to_collection_optional: "Add to collection (optional)",
         none: "(none)",
@@ -158,6 +405,10 @@ window.onload = function () {
         review_collection_learned: "Review Collection (learned only)",
         or_select_individual: "Or select individual verses",
         review_verses: "Review verses",
+        change_interval: "Change Review Interval",
+        change_interval_title: "Change Review Interval",
+        interval_label: "Interval:",
+        review_in_days: "Review in {count} Day(s)",
         choose_review_mode: "Choose Review Mode",
         review_individually: "Review verses individually",
         review_single_text: "Review as a single text",
@@ -268,6 +519,10 @@ window.onload = function () {
         theme_system: "系统",
         theme_light: "亮色",
         theme_dark: "暗色",
+        input_method: "输入法",
+        input_pinyin: "拼音",
+        input_zhuyin: "注音",
+        input_cangjie: "仓颉",
         default_bible_version: "默认圣经版本",
         save_settings: "Save Settings / 保存设置",
         // Add Verse Panel
@@ -279,6 +534,12 @@ window.onload = function () {
         pinyin_initials_verse: "经文拼音首字母",
         pinyin_helper: "输入每个汉字拼音的首字母",
         pinyin_initials_book: "书名拼音首字母",
+        zhuyin_initials_verse: "经文注音首码",
+        zhuyin_helper: "输入每个汉字的注音首码",
+        zhuyin_initials_book: "书名注音首码",
+        cangjie_initials_verse: "经文仓颉字根",
+        cangjie_helper: "输入每个汉字的仓颉首字根",
+        cangjie_initials_book: "书名仓颉字根",
         bible_version_optional: "圣经版本（可选）",
         add_to_collection_optional: "可选：加入集合",
         none: "无",
@@ -307,6 +568,10 @@ window.onload = function () {
         review_collection_learned: "复习集合（仅已学习）",
         or_select_individual: "或选择单个经文",
         review_verses: "开始复习经文",
+        change_interval: "更改复习间隔",
+        change_interval_title: "更改复习间隔",
+        interval_label: "间隔：",
+        review_in_days: "{count} 天后复习",
         choose_review_mode: "选择复习方式",
         review_individually: "逐节复习",
         review_single_text: "单段复习",
@@ -417,6 +682,10 @@ window.onload = function () {
         theme_system: "系統",
         theme_light: "亮色",
         theme_dark: "暗色",
+        input_method: "輸入法",
+        input_pinyin: "拼音",
+        input_zhuyin: "注音",
+        input_cangjie: "倉頡",
         default_bible_version: "默認聖經版本",
         save_settings: "Save Settings / 保存設置",
         // Add Verse Panel
@@ -428,6 +697,12 @@ window.onload = function () {
         pinyin_initials_verse: "經文拼音首字母",
         pinyin_helper: "輸入每個漢字拼音的首字母",
         pinyin_initials_book: "書名拼音首字母",
+        zhuyin_initials_verse: "經文注音首碼",
+        zhuyin_helper: "輸入每個漢字的注音首碼",
+        zhuyin_initials_book: "書名注音首碼",
+        cangjie_initials_verse: "經文倉頡字根",
+        cangjie_helper: "輸入每個漢字的倉頡首字根",
+        cangjie_initials_book: "書名倉頡字根",
         bible_version_optional: "聖經版本（可選）",
         add_to_collection_optional: "可選：加入集合",
         none: "無",
@@ -456,6 +731,10 @@ window.onload = function () {
         review_collection_learned: "複習集合（僅已學習）",
         or_select_individual: "或選擇單個經文",
         review_verses: "開始複習經文",
+        change_interval: "更改複習間隔",
+        change_interval_title: "更改複習間隔",
+        interval_label: "間隔：",
+        review_in_days: "{count} 天後複習",
         choose_review_mode: "選擇複習方式",
         review_individually: "逐節複習",
         review_single_text: "單段複習",
@@ -623,7 +902,48 @@ window.onload = function () {
       radios.forEach(r => { r.checked = (r.value === choice); });
     }
 
+    function updateInputMethodLabels() {
+      const inputMethod = localStorage.getItem('inputMethod') || 'pinyin';
+      const lang = localStorage.getItem('languagePreference') || 'english';
+      
+      // Update the three labels based on input method
+      const verseInitialsLabel = document.querySelector('label[for="verseInitials"]');
+      const verseHelperText = document.querySelector('#verseInitials + .helper-text');
+      const bookInitialsLabel = document.querySelector('label[for="bookInitials"]');
+      
+      if (verseInitialsLabel) {
+        verseInitialsLabel.textContent = t(`${inputMethod}_initials_verse`, lang);
+      }
+      if (verseHelperText) {
+        verseHelperText.textContent = t(`${inputMethod}_helper`, lang);
+      }
+      if (bookInitialsLabel) {
+        bookInitialsLabel.textContent = t(`${inputMethod}_initials_book`, lang);
+      }
+      
+      // Update the learn input placeholder with the helper text
+      updateLearnInputPlaceholder();
+    }
+    
+    function updateLearnInputPlaceholder() {
+      const inputMethod = localStorage.getItem('inputMethod') || 'pinyin';
+      const lang = localStorage.getItem('languagePreference') || 'english';
+      
+      if (learnInput) {
+        learnInput.placeholder = t(`${inputMethod}_helper`, lang);
+      }
+    }
+
+    function initInputMethod() {
+      const saved = localStorage.getItem('inputMethod');
+      const choice = saved || 'pinyin';
+      const radios = document.querySelectorAll('input[name="inputMethodOption"]');
+      radios.forEach(r => { r.checked = (r.value === choice); });
+      updateInputMethodLabels();
+    }
+
     initLanguage();
+    initInputMethod();
 
     // Settings panel handlers
     if (settingsBtn && settingsPanel) {
@@ -634,6 +954,11 @@ window.onload = function () {
         if (defaultBibleVersionInput) {
           defaultBibleVersionInput.value = localStorage.getItem('defaultBibleVersion') || '';
         }
+        
+        // Load input method radios
+        const inputMethodRadios = document.querySelectorAll('input[name="inputMethodOption"]');
+        const savedInputMethod = localStorage.getItem('inputMethod') || 'pinyin';
+        inputMethodRadios.forEach(r => { r.checked = (r.value === savedInputMethod); });
       });
     }
     if (settingsSaveBtn && settingsPanel) {
@@ -653,6 +978,17 @@ window.onload = function () {
         const defaultBibleVersionInput = document.getElementById('defaultBibleVersion');
         if (defaultBibleVersionInput) {
           localStorage.setItem('defaultBibleVersion', defaultBibleVersionInput.value.trim());
+        }
+        
+        // Save input method
+        const selectedInputMethod = document.querySelector('input[name="inputMethodOption"]:checked');
+        const inputMethodVal = selectedInputMethod ? selectedInputMethod.value : 'pinyin';
+        const previousInputMethod = localStorage.getItem('inputMethod');
+        localStorage.setItem('inputMethod', inputMethodVal);
+        
+        // Update input method labels if language or input method changed
+        if (previousLang !== langVal || previousInputMethod !== inputMethodVal) {
+          updateInputMethodLabels();
         }
         
         // If language changed, rebuild bible books and refresh displays
@@ -684,72 +1020,72 @@ window.onload = function () {
 
   // --- BIBLE BOOKS DATA WITH SIMPLIFIED AND TRADITIONAL ---
   const BIBLE_BOOKS_DATA = [
-    { simplified: "创世记", traditional: "創世記", pinyin: "chuangshiji", initials: "CSJ" },
-    { simplified: "出埃及记", traditional: "出埃及記", pinyin: "chuaiaijiji", initials: "CAJJ" },
-    { simplified: "利未记", traditional: "利未記", pinyin: "liweiji", initials: "LWJ" },
-    { simplified: "民数记", traditional: "民數記", pinyin: "minshuji", initials: "MSJ" },
-    { simplified: "申命记", traditional: "申命記", pinyin: "shenmingji", initials: "SMJ" },
-    { simplified: "约书亚记", traditional: "約書亞記", pinyin: "yueshuji", initials: "YSYJ" },
-    { simplified: "士师记", traditional: "士師記", pinyin: "shishiji", initials: "SSJ" },
-    { simplified: "路得记", traditional: "路得記", pinyin: "ludeji", initials: "LDJ" },
-    { simplified: "撒母耳记上", traditional: "撒母耳記上", pinyin: "samuerjishang", initials: "SMEJS" },
-    { simplified: "撒母耳记下", traditional: "撒母耳記下", pinyin: "samuerjixia", initials: "SMEJX" },
-    { simplified: "列王纪上", traditional: "列王紀上", pinyin: "liewangjishang", initials: "LWJS" },
-    { simplified: "列王纪下", traditional: "列王紀下", pinyin: "liewangjixia", initials: "LWJX" },
-    { simplified: "历代志上", traditional: "歷代志上", pinyin: "lidaizhishang", initials: "LDZS" },
-    { simplified: "历代志下", traditional: "歷代志下", pinyin: "lidaizhixia", initials: "LDZX" },
-    { simplified: "以斯拉记", traditional: "以斯拉記", pinyin: "yisilaji", initials: "YSLJ" },
-    { simplified: "尼希米记", traditional: "尼希米記", pinyin: "niximiji", initials: "NXMJ" },
-    { simplified: "以斯帖记", traditional: "以斯帖記", pinyin: "yisitiejie", initials: "YSTJ" },
-    { simplified: "约伯记", traditional: "約伯記", pinyin: "yueboji", initials: "YBJ" },
-    { simplified: "诗篇", traditional: "詩篇", pinyin: "shipian", initials: "SP" },
-    { simplified: "箴言", traditional: "箴言", pinyin: "zhenyan", initials: "ZY" },
-    { simplified: "传道书", traditional: "傳道書", pinyin: "chuandaoshu", initials: "CDS" },
-    { simplified: "雅歌", traditional: "雅歌", pinyin: "yage", initials: "YG" },
-    { simplified: "以赛亚书", traditional: "以賽亞書", pinyin: "yisaiyashu", initials: "YSYS" },
-    { simplified: "耶利米书", traditional: "耶利米書", pinyin: "yelimishu", initials: "YLMS" },
-    { simplified: "耶利米哀歌", traditional: "耶利米哀歌", pinyin: "yelimiaige", initials: "YLMAG" },
-    { simplified: "以西结书", traditional: "以西結書", pinyin: "yixiejieshu", initials: "YXJS" },
-    { simplified: "但以理书", traditional: "但以理書", pinyin: "danyilishu", initials: "DYLS" },
-    { simplified: "何西阿书", traditional: "何西阿書", pinyin: "hexiaoshu", initials: "HXAS" },
-    { simplified: "约珥书", traditional: "約珥書", pinyin: "yuerhushu", initials: "YES" },
-    { simplified: "阿摩司书", traditional: "阿摩司書", pinyin: "amosishu", initials: "AMSS" },
-    { simplified: "俄巴底亚书", traditional: "俄巴底亞書", pinyin: "ebadiyashu", initials: "EBDYS" },
-    { simplified: "约拿书", traditional: "約拿書", pinyin: "yuonashu", initials: "YNS" },
-    { simplified: "弥迦书", traditional: "彌迦書", pinyin: "mijiashu", initials: "MJS" },
-    { simplified: "那鸿书", traditional: "那鴻書", pinyin: "nahongshu", initials: "NHS" },
-    { simplified: "哈巴谷书", traditional: "哈巴谷書", pinyin: "habagushu", initials: "HBGS" },
-    { simplified: "西番雅书", traditional: "西番雅書", pinyin: "xifanyashu", initials: "XFYS" },
-    { simplified: "哈该书", traditional: "哈該書", pinyin: "hagaishu", initials: "HGS" },
-    { simplified: "撒迦利亚书", traditional: "撒迦利亞書", pinyin: "sajialiyashu", initials: "SJLYS" },
-    { simplified: "玛拉基书", traditional: "瑪拉基書", pinyin: "malajishu", initials: "MLJS" },
-    { simplified: "马太福音", traditional: "馬太福音", pinyin: "mataifuyin", initials: "MTFY" },
-    { simplified: "马可福音", traditional: "馬可福音", pinyin: "makefuyin", initials: "MKFY" },
-    { simplified: "路加福音", traditional: "路加福音", pinyin: "lujiafuyin", initials: "LJFY" },
-    { simplified: "约翰福音", traditional: "約翰福音", pinyin: "yuohanfuyin", initials: "YHFY" },
-    { simplified: "使徒行传", traditional: "使徒行傳", pinyin: "shiduhangzhuan", initials: "STXZ" },
-    { simplified: "罗马书", traditional: "羅馬書", pinyin: "luomashu", initials: "LMS" },
-    { simplified: "哥林多前书", traditional: "哥林多前書", pinyin: "gelinduoqianshu", initials: "GLDQS" },
-    { simplified: "哥林多后书", traditional: "哥林多後書", pinyin: "gelinduohoushu", initials: "GLDHS" },
-    { simplified: "加拉太书", traditional: "加拉太書", pinyin: "jialataishu", initials: "JLTS" },
-    { simplified: "以弗所书", traditional: "以弗所書", pinyin: "yifuosuoshu", initials: "YFSS" },
-    { simplified: "腓立比书", traditional: "腓立比書", pinyin: "feilibishu", initials: "FLBS" },
-    { simplified: "歌罗西书", traditional: "歌羅西書", pinyin: "geluoxishu", initials: "GLXS" },
-    { simplified: "帖撒罗尼迦前书", traditional: "帖撒羅尼迦前書", pinyin: "tiesaluonijiaqianshu", initials: "TSLNJQS" },
-    { simplified: "帖撒罗尼迦后书", traditional: "帖撒羅尼迦後書", pinyin: "tiesaluonijiahoushu", initials: "TSLNJHS" },
-    { simplified: "提摩太前书", traditional: "提摩太前書", pinyin: "timotaiqianshu", initials: "TMTQS" },
-    { simplified: "提摩太后书", traditional: "提摩太後書", pinyin: "timotaihoushu", initials: "TMTHS" },
-    { simplified: "提多书", traditional: "提多書", pinyin: "tiduoshu", initials: "TDS" },
-    { simplified: "腓利门书", traditional: "腓利門書", pinyin: "feilimenshu", initials: "FLMS" },
-    { simplified: "希伯来书", traditional: "希伯來書", pinyin: "xibolaishu", initials: "XBLS" },
-    { simplified: "雅各书", traditional: "雅各書", pinyin: "yageshu", initials: "YGS" },
-    { simplified: "彼得前书", traditional: "彼得前書", pinyin: "bideqianshu", initials: "BDQS" },
-    { simplified: "彼得后书", traditional: "彼得後書", pinyin: "bidehoushu", initials: "BDHS" },
-    { simplified: "约翰壹书", traditional: "約翰壹書", pinyin: "yuohanyishu", initials: "YHYS" },
-    { simplified: "约翰贰书", traditional: "約翰貳書", pinyin: "yuohanershu", initials: "YHES" },
-    { simplified: "约翰参书", traditional: "約翰參書", pinyin: "yuohansanshu", initials: "YHSS" },
-    { simplified: "犹大书", traditional: "猶大書", pinyin: "youdashu", initials: "YDS" },
-    { simplified: "启示录", traditional: "啟示錄", pinyin: "qishilu", initials: "QSL" }
+    { simplified: "创世记", traditional: "創世記", pinyin: "chuangshiji", initials: "CSJ", zhuyinInitials: "ㄔㄕㄐ", cangjieInitials: "人心卜" },
+    { simplified: "出埃及记", traditional: "出埃及記", pinyin: "chuaiaijiji", initials: "CAJJ", zhuyinInitials: "ㄔㄞㄐㄐ", cangjieInitials: "山土弓卜" },
+    { simplified: "利未记", traditional: "利未記", pinyin: "liweiji", initials: "LWJ", zhuyinInitials: "ㄌㄨㄐ", cangjieInitials: "竹十卜" },
+    { simplified: "民数记", traditional: "民數記", pinyin: "minshuji", initials: "MSJ", zhuyinInitials: "ㄇㄕㄐ", cangjieInitials: "口中卜" },
+    { simplified: "申命记", traditional: "申命記", pinyin: "shenmingji", initials: "SMJ", zhuyinInitials: "ㄕㄇㄐ", cangjieInitials: "中人卜" },
+    { simplified: "约书亚记", traditional: "約書亞記", pinyin: "yueshuji", initials: "YSYJ", zhuyinInitials: "ㄩㄕㄧㄐ", cangjieInitials: "女中一卜" },
+    { simplified: "士师记", traditional: "士師記", pinyin: "shishiji", initials: "SSJ", zhuyinInitials: "ㄕㄕㄐ", cangjieInitials: "十竹卜" },
+    { simplified: "路得记", traditional: "路得記", pinyin: "ludeji", initials: "LDJ", zhuyinInitials: "ㄌㄉㄐ", cangjieInitials: "口竹卜" },
+    { simplified: "撒母耳记上", traditional: "撒母耳記上", pinyin: "samuerjishang", initials: "SMEJS", zhuyinInitials: "ㄙㄇㄦㄐㄕ", cangjieInitials: "手田尸卜卜" },
+    { simplified: "撒母耳记下", traditional: "撒母耳記下", pinyin: "samuerjixia", initials: "SMEJX", zhuyinInitials: "ㄙㄇㄦㄐㄒ", cangjieInitials: "手田尸卜一" },
+    { simplified: "列王纪上", traditional: "列王紀上", pinyin: "liewangjishang", initials: "LWJS", zhuyinInitials: "ㄌㄨㄐㄕ", cangjieInitials: "一一女卜" },
+    { simplified: "列王纪下", traditional: "列王紀下", pinyin: "liewangjixia", initials: "LWJX", zhuyinInitials: "ㄌㄨㄐㄒ", cangjieInitials: "一一女一" },
+    { simplified: "历代志上", traditional: "歷代志上", pinyin: "lidaizhishang", initials: "LDZS", zhuyinInitials: "ㄌㄉㄓㄕ", cangjieInitials: "一人土卜" },
+    { simplified: "历代志下", traditional: "歷代志下", pinyin: "lidaizhixia", initials: "LDZX", zhuyinInitials: "ㄌㄉㄓㄒ", cangjieInitials: "一人土一" },
+    { simplified: "以斯拉记", traditional: "以斯拉記", pinyin: "yisilaji", initials: "YSLJ", zhuyinInitials: "ㄧㄙㄌㄐ", cangjieInitials: "女廿手卜" },
+    { simplified: "尼希米记", traditional: "尼希米記", pinyin: "niximiji", initials: "NXMJ", zhuyinInitials: "ㄋㄒㄇㄐ", cangjieInitials: "尸大火卜" },
+    { simplified: "以斯帖记", traditional: "以斯帖記", pinyin: "yisitiejie", initials: "YSTJ", zhuyinInitials: "ㄧㄙㄊㄐ", cangjieInitials: "女廿中卜" },
+    { simplified: "约伯记", traditional: "約伯記", pinyin: "yueboji", initials: "YBJ", zhuyinInitials: "ㄩㄅㄐ", cangjieInitials: "女人卜" },
+    { simplified: "诗篇", traditional: "詩篇", pinyin: "shipian", initials: "SP", zhuyinInitials: "ㄕㄆ", cangjieInitials: "卜竹" },
+    { simplified: "箴言", traditional: "箴言", pinyin: "zhenyan", initials: "ZY", zhuyinInitials: "ㄓㄧ", cangjieInitials: "竹卜" },
+    { simplified: "传道书", traditional: "傳道書", pinyin: "chuandaoshu", initials: "CDS", zhuyinInitials: "ㄔㄉㄕ", cangjieInitials: "人卜中" },
+    { simplified: "雅歌", traditional: "雅歌", pinyin: "yage", initials: "YG", zhuyinInitials: "ㄧㄍ", cangjieInitials: "一一" },
+    { simplified: "以赛亚书", traditional: "以賽亞書", pinyin: "yisaiyashu", initials: "YSYS", zhuyinInitials: "ㄧㄙㄧㄕ", cangjieInitials: "女十一中" },
+    { simplified: "耶利米书", traditional: "耶利米書", pinyin: "yelimishu", initials: "YLMS", zhuyinInitials: "ㄧㄌㄇㄕ", cangjieInitials: "尸竹火中" },
+    { simplified: "耶利米哀歌", traditional: "耶利米哀歌", pinyin: "yelimiaige", initials: "YLMAG", zhuyinInitials: "ㄧㄌㄇㄞㄍ", cangjieInitials: "尸竹火卜一" },
+    { simplified: "以西结书", traditional: "以西結書", pinyin: "yixiejieshu", initials: "YXJS", zhuyinInitials: "ㄧㄒㄐㄕ", cangjieInitials: "女一女中" },
+    { simplified: "但以理书", traditional: "但以理書", pinyin: "danyilishu", initials: "DYLS", zhuyinInitials: "ㄉㄧㄌㄕ", cangjieInitials: "人女一中" },
+    { simplified: "何西阿书", traditional: "何西阿書", pinyin: "hexiaoshu", initials: "HXAS", zhuyinInitials: "ㄏㄒㄚㄕ", cangjieInitials: "人一弓中" },
+    { simplified: "约珥书", traditional: "約珥書", pinyin: "yuerhushu", initials: "YES", zhuyinInitials: "ㄩㄦㄕ", cangjieInitials: "女一中" },
+    { simplified: "阿摩司书", traditional: "阿摩司書", pinyin: "amosishu", initials: "AMSS", zhuyinInitials: "ㄚㄇㄙㄕ", cangjieInitials: "弓戈尸中" },
+    { simplified: "俄巴底亚书", traditional: "俄巴底亞書", pinyin: "ebadiyashu", initials: "EBDYS", zhuyinInitials: "ㄜㄅㄉㄧㄕ", cangjieInitials: "人日戈一中" },
+    { simplified: "约拿书", traditional: "約拿書", pinyin: "yuonashu", initials: "YNS", zhuyinInitials: "ㄩㄋㄕ", cangjieInitials: "女人中" },
+    { simplified: "弥迦书", traditional: "彌迦書", pinyin: "mijiashu", initials: "MJS", zhuyinInitials: "ㄇㄐㄕ", cangjieInitials: "弓卜中" },
+    { simplified: "那鸿书", traditional: "那鴻書", pinyin: "nahongshu", initials: "NHS", zhuyinInitials: "ㄋㄏㄕ", cangjieInitials: "尸水中" },
+    { simplified: "哈巴谷书", traditional: "哈巴谷書", pinyin: "habagushu", initials: "HBGS", zhuyinInitials: "ㄏㄅㄍㄕ", cangjieInitials: "口日金中" },
+    { simplified: "西番雅书", traditional: "西番雅書", pinyin: "xifanyashu", initials: "XFYS", zhuyinInitials: "ㄒㄈㄧㄕ", cangjieInitials: "一竹一中" },
+    { simplified: "哈该书", traditional: "哈該書", pinyin: "hagaishu", initials: "HGS", zhuyinInitials: "ㄏㄍㄕ", cangjieInitials: "口卜中" },
+    { simplified: "撒迦利亚书", traditional: "撒迦利亞書", pinyin: "sajialiyashu", initials: "SJLYS", zhuyinInitials: "ㄙㄐㄌㄧㄕ", cangjieInitials: "手卜竹一中" },
+    { simplified: "玛拉基书", traditional: "瑪拉基書", pinyin: "malajishu", initials: "MLJS", zhuyinInitials: "ㄇㄌㄐㄕ", cangjieInitials: "一手廿中" },
+    { simplified: "马太福音", traditional: "馬太福音", pinyin: "mataifuyin", initials: "MTFY", zhuyinInitials: "ㄇㄊㄈㄧ", cangjieInitials: "尸大戈卜" },
+    { simplified: "马可福音", traditional: "馬可福音", pinyin: "makefuyin", initials: "MKFY", zhuyinInitials: "ㄇㄎㄈㄧ", cangjieInitials: "尸一戈卜" },
+    { simplified: "路加福音", traditional: "路加福音", pinyin: "lujiafuyin", initials: "LJFY", zhuyinInitials: "ㄌㄐㄈㄧ", cangjieInitials: "口大戈卜" },
+    { simplified: "约翰福音", traditional: "約翰福音", pinyin: "yuohanfuyin", initials: "YHFY", zhuyinInitials: "ㄩㄏㄈㄧ", cangjieInitials: "女十戈卜" },
+    { simplified: "使徒行传", traditional: "使徒行傳", pinyin: "shiduhangzhuan", initials: "STXZ", zhuyinInitials: "ㄕㄊㄒㄔ", cangjieInitials: "人竹竹人" },
+    { simplified: "罗马书", traditional: "羅馬書", pinyin: "luomashu", initials: "LMS", zhuyinInitials: "ㄌㄇㄕ", cangjieInitials: "田尸中" },
+    { simplified: "哥林多前书", traditional: "哥林多前書", pinyin: "gelinduoqianshu", initials: "GLDQS", zhuyinInitials: "ㄍㄌㄉㄑㄕ", cangjieInitials: "一木弓廿中" },
+    { simplified: "哥林多后书", traditional: "哥林多後書", pinyin: "gelinduohoushu", initials: "GLDHS", zhuyinInitials: "ㄍㄌㄉㄏㄕ", cangjieInitials: "一木弓竹中" },
+    { simplified: "加拉太书", traditional: "加拉太書", pinyin: "jialataishu", initials: "JLTS", zhuyinInitials: "ㄐㄌㄊㄕ", cangjieInitials: "大手大中" },
+    { simplified: "以弗所书", traditional: "以弗所書", pinyin: "yifuosuoshu", initials: "YFSS", zhuyinInitials: "ㄧㄈㄙㄕ", cangjieInitials: "女中竹中" },
+    { simplified: "腓立比书", traditional: "腓立比書", pinyin: "feilibishu", initials: "FLBS", zhuyinInitials: "ㄈㄌㄅㄕ", cangjieInitials: "月卜心中" },
+    { simplified: "歌罗西书", traditional: "歌羅西書", pinyin: "geluoxishu", initials: "GLXS", zhuyinInitials: "ㄍㄌㄒㄕ", cangjieInitials: "一田一中" },
+    { simplified: "帖撒罗尼迦前书", traditional: "帖撒羅尼迦前書", pinyin: "tiesaluonijiaqianshu", initials: "TSLNJQS", zhuyinInitials: "ㄊㄙㄌㄋㄐㄑㄕ", cangjieInitials: "中手田尸卜廿中" },
+    { simplified: "帖撒罗尼迦后书", traditional: "帖撒羅尼迦後書", pinyin: "tiesaluonijiahoushu", initials: "TSLNJHS", zhuyinInitials: "ㄊㄙㄌㄋㄐㄏㄕ", cangjieInitials: "中手田尸卜竹中" },
+    { simplified: "提摩太前书", traditional: "提摩太前書", pinyin: "timotaiqianshu", initials: "TMTQS", zhuyinInitials: "ㄊㄇㄊㄑㄕ", cangjieInitials: "手戈大廿中" },
+    { simplified: "提摩太后书", traditional: "提摩太後書", pinyin: "timotaihoushu", initials: "TMTHS", zhuyinInitials: "ㄊㄇㄊㄏㄕ", cangjieInitials: "手戈大竹中" },
+    { simplified: "提多书", traditional: "提多書", pinyin: "tiduoshu", initials: "TDS", zhuyinInitials: "ㄊㄉㄕ", cangjieInitials: "手弓中" },
+    { simplified: "腓利门书", traditional: "腓利門書", pinyin: "feilimenshu", initials: "FLMS", zhuyinInitials: "ㄈㄌㄇㄕ", cangjieInitials: "月竹日中" },
+    { simplified: "希伯来书", traditional: "希伯來書", pinyin: "xibolaishu", initials: "XBLS", zhuyinInitials: "ㄒㄅㄌㄕ", cangjieInitials: "大人木中" },
+    { simplified: "雅各书", traditional: "雅各書", pinyin: "yageshu", initials: "YGS", zhuyinInitials: "ㄧㄍㄕ", cangjieInitials: "一竹中" },
+    { simplified: "彼得前书", traditional: "彼得前書", pinyin: "bideqianshu", initials: "BDQS", zhuyinInitials: "ㄅㄉㄑㄕ", cangjieInitials: "竹竹廿中" },
+    { simplified: "彼得后书", traditional: "彼得後書", pinyin: "bidehoushu", initials: "BDHS", zhuyinInitials: "ㄅㄉㄏㄕ", cangjieInitials: "竹竹竹中" },
+    { simplified: "约翰壹书", traditional: "約翰壹書", pinyin: "yuohanyishu", initials: "YHYS", zhuyinInitials: "ㄩㄏㄧㄕ", cangjieInitials: "女十土中" },
+    { simplified: "约翰贰书", traditional: "約翰貳書", pinyin: "yuohanershu", initials: "YHES", zhuyinInitials: "ㄩㄏㄦㄕ", cangjieInitials: "女十戈中" },
+    { simplified: "约翰参书", traditional: "約翰參書", pinyin: "yuohansanshu", initials: "YHSS", zhuyinInitials: "ㄩㄏㄘㄕ", cangjieInitials: "女十戈中" },
+    { simplified: "犹大书", traditional: "猶大書", pinyin: "youdashu", initials: "YDS", zhuyinInitials: "ㄧㄉㄕ", cangjieInitials: "手大中" },
+    { simplified: "启示录", traditional: "啟示錄", pinyin: "qishilu", initials: "QSL", zhuyinInitials: "ㄑㄕㄌ", cangjieInitials: "竹一女" }
   ];
   
   // CHINESE_BIBLE_BOOKS maintains compatibility: books display in current language setting, but remain Chinese
@@ -758,7 +1094,9 @@ window.onload = function () {
     return {
       hanzi: lang === 'traditional' ? b.traditional : b.simplified,
       pinyin: b.pinyin,
-      initials: b.initials
+      initials: b.initials,
+      zhuyinInitials: b.zhuyinInitials,
+      cangjieInitials: b.cangjieInitials
     };
   });
 
@@ -769,7 +1107,9 @@ window.onload = function () {
       return {
         hanzi: lang === 'traditional' ? b.traditional : b.simplified,
         pinyin: b.pinyin,
-        initials: b.initials
+        initials: b.initials,
+        zhuyinInitials: b.zhuyinInitials,
+        cangjieInitials: b.cangjieInitials
       };
     });
   }
@@ -844,7 +1184,16 @@ window.onload = function () {
                 // 2. NEW: Automatically fill the Book Initials input
                 const bookInitialsInput = document.getElementById('bookInitials'); // Assumes this is the correct ID
                 if (bookInitialsInput) {
-                    bookInitialsInput.value = item.dataset.bookInitials;
+                  const method = localStorage.getItem('inputMethod') || 'pinyin';
+                  let initials;
+                  if (method === 'pinyin') {
+                    initials = book.initials;
+                  } else if (method === 'zhuyin') {
+                    initials = book.zhuyinInitials;
+                  } else if (method === 'cangjie') {
+                    initials = book.cangjieInitials;
+                  }
+                  bookInitialsInput.value = initials;
                 }
 
                 bookSuggestions.style.display = 'none'; // Hide suggestions after selection
@@ -1336,6 +1685,20 @@ window.onload = function () {
       verseItem.appendChild(content);
       reviewList.appendChild(verseItem);
     });
+    
+    // Show/hide change interval button based on checkbox selection
+    updateChangeIntervalButtonVisibility();
+  }
+  
+  // Show/hide change interval button when checkboxes change
+  function updateChangeIntervalButtonVisibility() {
+    if (reviewVerseList) {
+      const checkboxes = reviewVerseList.querySelectorAll('.verse-checkbox');
+      const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
+      if (changeIntervalBtn) {
+        changeIntervalBtn.style.display = anyChecked ? 'inline-block' : 'none';
+      }
+    }
   }
 
   // Collections storage helpers
@@ -2124,6 +2487,8 @@ function populateBookDatalist() {
     currentVerse = verse;
     learnInput.value = ''; // Clear the input field element
     learnInput.style.display = ''; // Ensure input field is visible
+    // Update placeholder with appropriate helper text
+    updateLearnInputPlaceholder();
     prevUserInputLength = 0;
     learnInput.disabled = false;
     learnFeedback.textContent = '';
@@ -2215,7 +2580,10 @@ function populateBookDatalist() {
         if (hiddenByStage) {
           if (userInput.length > map) {
             // user has typed this index — reveal with correct/incorrect styling
-            className += userInput[map].toLowerCase() === expected.toLowerCase() ? ' correct' : ' incorrect';
+            const method = localStorage.getItem('inputMethod') || 'pinyin';
+            const typedChar = method === 'pinyin' ? userInput[map].toLowerCase() : userInput[map];
+            const expectedChar = method === 'pinyin' ? expected.toLowerCase() : expected;
+            className += typedChar === expectedChar ? ' correct' : ' incorrect';
             displayHTML += `<span class="${className}">${char}</span>`;
           } else {
             // keep hidden
@@ -2227,7 +2595,10 @@ function populateBookDatalist() {
 
         // Not hidden: if user has typed for this index, mark correct/incorrect normally
         if (userInput.length > map) {
-          className += userInput[map].toLowerCase() === expected.toLowerCase() ? ' correct' : ' incorrect';
+          const method = localStorage.getItem('inputMethod') || 'pinyin';
+          const typedChar = method === 'pinyin' ? userInput[map].toLowerCase() : userInput[map];
+          const expectedChar = method === 'pinyin' ? expected.toLowerCase() : expected;
+          className += typedChar === expectedChar ? ' correct' : ' incorrect';
         }
 
         displayHTML += `<span class="${className}">${char}</span>`;
@@ -2403,7 +2774,15 @@ function populateBookDatalist() {
   const modalNextBtn = document.getElementById('modalNextBtn');
 
   function showAccuracyModal(success, accuracy) {
-    if (!accuracyModal) return;
+    console.log('showAccuracyModal called:', { accuracyModal, success, accuracy });
+    if (!accuracyModal) {
+      console.error('accuracyModal element not found!');
+      return;
+    }
+    
+    // Hide keyboards when showing modal
+    hideAllKeyboards();
+    
     // set texts
     if (success) {
       // Choose message and button label. Prioritize review-mode decisions
@@ -2670,15 +3049,35 @@ function populateBookDatalist() {
         return;
     }
 
-    const inputStr = learnInput.value.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const method = localStorage.getItem('inputMethod') || 'pinyin';
+    let inputStr;
+    if (method === 'pinyin') {
+      inputStr = learnInput.value.toLowerCase().replace(/[^a-z0-9]/g, '');
+    } else {
+      // For Zhuyin and Cangjie, keep all characters including Chinese/symbols
+      inputStr = learnInput.value.replace(/\s/g, ''); // Only remove spaces
+    }
     const prevLen = prevUserInputLength;
     userInput = inputStr;
+    
+    // Debug logging for completion detection
+    console.log('Input event:', {
+      method,
+      userInputLength: userInput.length,
+      learnFullInitialsLength: learnFullInitials.length,
+      userInput,
+      learnFullInitials,
+      match: userInput.length === learnFullInitials.length
+    });
+    
     // Play buzzer for any newly-typed incorrect characters when unmuted
     if (userInput.length > prevLen) {
       for (let j = prevLen; j < userInput.length; j++) {
-        const expected = learnFullInitials[j] ? learnFullInitials[j].toLowerCase() : null;
+        const expected = learnFullInitials[j];
         const typed = userInput[j];
-        if (expected && typed !== expected) {
+        const expectedNorm = method === 'pinyin' ? (expected ? expected.toLowerCase() : null) : expected;
+        const typedNorm = method === 'pinyin' ? typed : typed;
+        if (expectedNorm && typedNorm !== expectedNorm) {
           if (!isMuted) playBuzzer();
           break; // play once per input event
         }
@@ -2686,6 +3085,44 @@ function populateBookDatalist() {
     }
 
     prevUserInputLength = userInput.length;
+
+    // Auto-switch keyboard for non-Pinyin methods when next character is a digit
+    console.log('Checking auto-switch:', {
+      method,
+      activeInputId: activeInput ? activeInput.id : null,
+      learnInputId: learnInput ? learnInput.id : null,
+      match: activeInput === learnInput,
+      userInputLength: userInput.length,
+      learnFullInitialsLength: learnFullInitials.length
+    });
+    
+    if (method !== 'pinyin' && activeInput === learnInput && userInput.length < learnFullInitials.length) {
+      const nextExpected = learnFullInitials[userInput.length];
+      const isNextDigit = /[0-9]/.test(nextExpected);
+      const numericVisible = numericKeyboard && numericKeyboard.style.display === 'block';
+      const zhuyinVisible = zhuyinKeyboard && zhuyinKeyboard.style.display === 'block';
+      const cangjieVisible = cangjieKeyboard && cangjieKeyboard.style.display === 'block';
+      
+      console.log('Auto-switch check:', {
+        nextExpected,
+        isNextDigit,
+        numericVisible,
+        zhuyinVisible,
+        cangjieVisible
+      });
+      
+      if (isNextDigit && !numericVisible) {
+        // Next character is a digit but numeric keyboard not showing - switch to it
+        console.log('Switching to numeric keyboard, next expected:', nextExpected);
+        hideAllKeyboards();
+        showKeyboardForInput(learnInput, 'numeric');
+      } else if (!isNextDigit && numericVisible) {
+        // Numeric keyboard is showing but next character is not a digit - switch back
+        console.log('Switching back to', method, 'keyboard, next expected:', nextExpected);
+        hideAllKeyboards();
+        showKeyboardForInput(learnInput);
+      }
+    }
 
     renderVerseDisplay();
     updateFeedback();
@@ -2697,15 +3134,18 @@ function populateBookDatalist() {
     let correctCount = 0;
     const totalInputsRequired = learnFullInitials.length;
     const chars = [...learnFullText];
+    const method = localStorage.getItem('inputMethod') || 'pinyin';
     // Count correct inputs and find the most recent (latest) error index and mapping
     let mappedCharIndex = -1;
     let latestErrorIndex = -1;
     let latestErrorChar = '';
     for (let i = 0; i < userInput.length; i++) {
-      const expected = learnFullInitials[i].toLowerCase();
-      const typed = userInput[i].toLowerCase();
+      const expected = learnFullInitials[i];
+      const typed = userInput[i];
+      const expectedNorm = method === 'pinyin' ? expected.toLowerCase() : expected;
+      const typedNorm = method === 'pinyin' ? typed.toLowerCase() : typed;
       const mapping = (window.inputIndexToCharIndex && window.inputIndexToCharIndex[i] !== undefined) ? window.inputIndexToCharIndex[i] : -1;
-      if (typed === expected) {
+      if (typedNorm === expectedNorm) {
         correctCount++;
       } else {
         // record as latest error (we overwrite so final value is the most recent error position)
@@ -2773,6 +3213,13 @@ function populateBookDatalist() {
 
     // Check if verse is complete
     if (userInput.length === totalInputsRequired) {
+      console.log('Completion detected!', {
+        userInputLength: userInput.length,
+        totalInputsRequired,
+        reviewCollectionMode,
+        reviewVersesLength: reviewVerses ? reviewVerses.length : 0
+      });
+      
       // For single-text review mode we only calculate accuracy on the verse text (not reference)
       let verseOnlyAccuracy = 0;
       let totalAccuracy = 0;
@@ -2889,6 +3336,7 @@ function populateBookDatalist() {
         }
       } else {
         // For individual verse review: show modal with retry/next options
+        console.log('Showing accuracy modal:', { success, totalAccuracy, reviewCollectionMode });
         showAccuracyModal(success, totalAccuracy);
         learnInput.disabled = true;
       }
@@ -3058,6 +3506,9 @@ function hideAllPanels() {
 }
 
 function showPanel(panelToShow) {
+  // Hide keyboards when switching panels
+  hideAllKeyboards();
+  
   // NEW: Restore header and controls if we are going to learnPanel
   if (panelToShow === learnPanel) {
     if (reviewModeHiddenControls) reviewModeHiddenControls.style.display = 'block';
@@ -3150,6 +3601,127 @@ function showPanel(panelToShow) {
     loadCollectionsForReview();
     updateReviewBadge();
   });
+
+  // Event delegation for review verse checkboxes
+  if (reviewVerseList) {
+    reviewVerseList.addEventListener('change', (e) => {
+      if (e.target.classList.contains('verse-checkbox')) {
+        updateChangeIntervalButtonVisibility();
+      }
+    });
+  }
+
+  // Change Interval Modal functionality
+  function updateIntervalDisplay() {
+    intervalValue.textContent = currentInterval;
+    const days = calculateDaysFromInterval(currentInterval);
+    const lang = localStorage.getItem('languagePreference') || 'english';
+    intervalDaysDisplay.textContent = t('review_in_days', lang).replace('{count}', days);
+  }
+
+  function calculateDaysFromInterval(interval) {
+    // Using same spaced repetition algorithm as the app
+    // interval 1 = 1 day, interval 2 = 3 days, interval 3 = 7 days, etc.
+    if (interval === 1) return 1;
+    if (interval === 2) return 3;
+    if (interval === 3) return 7;
+    if (interval === 4) return 16;
+    if (interval === 5) return 35;
+    return Math.round(35 * Math.pow(2, interval - 5));
+  }
+
+  if (changeIntervalBtn) {
+    changeIntervalBtn.addEventListener('click', () => {
+      currentInterval = 1;
+      updateIntervalDisplay();
+      changeIntervalModal.style.display = 'block';
+      changeIntervalModal.classList.add('open');
+      changeIntervalModal.setAttribute('aria-hidden', 'false');
+    });
+  }
+
+  if (intervalUpBtn) {
+    intervalUpBtn.addEventListener('click', () => {
+      if (currentInterval < 20) { // Reasonable max
+        currentInterval++;
+        updateIntervalDisplay();
+      }
+    });
+  }
+
+  if (intervalDownBtn) {
+    intervalDownBtn.addEventListener('click', () => {
+      if (currentInterval > 1) {
+        currentInterval--;
+        updateIntervalDisplay();
+      }
+    });
+  }
+
+  if (intervalConfirmBtn) {
+    intervalConfirmBtn.addEventListener('click', () => {
+      // Get selected verses
+      const checkboxes = reviewVerseList.querySelectorAll('.verse-checkbox:checked');
+      if (checkboxes.length === 0) {
+        changeIntervalModal.style.display = 'none';
+        changeIntervalModal.classList.remove('open');
+        changeIntervalModal.setAttribute('aria-hidden', 'true');
+        return;
+      }
+
+      // Update intervals for selected verses
+      const verses = JSON.parse(localStorage.getItem('verses') || '[]');
+      let updateCount = 0;
+
+      checkboxes.forEach(checkbox => {
+        try {
+          const verseData = JSON.parse(checkbox.dataset.verse);
+          const verseIndex = verses.findIndex(v => 
+            v.bookName === verseData.bookName &&
+            v.chapterNumber === verseData.chapterNumber &&
+            v.verseNumber === verseData.verseNumber
+          );
+
+          if (verseIndex !== -1) {
+            verses[verseIndex].interval = currentInterval;
+            verses[verseIndex].repetitions = currentInterval;
+            
+            // Calculate new due date
+            const days = calculateDaysFromInterval(currentInterval);
+            const newDueDate = new Date();
+            newDueDate.setDate(newDueDate.getDate() + days);
+            verses[verseIndex].dueDate = newDueDate.toISOString();
+            
+            updateCount++;
+          }
+        } catch (e) {
+          console.error('Error updating verse interval:', e);
+        }
+      });
+
+      // Save updated verses
+      localStorage.setItem('verses', JSON.stringify(verses));
+
+      // Close modal and refresh
+      changeIntervalModal.style.display = 'none';
+      changeIntervalModal.classList.remove('open');
+      changeIntervalModal.setAttribute('aria-hidden', 'true');
+
+      // Uncheck all boxes and refresh list
+      checkboxes.forEach(cb => cb.checked = false);
+      loadVersesForReview();
+      updateReviewBadge();
+      updateChangeIntervalButtonVisibility();
+    });
+  }
+
+  if (intervalCancelBtn) {
+    intervalCancelBtn.addEventListener('click', () => {
+      changeIntervalModal.style.display = 'none';
+      changeIntervalModal.classList.remove('open');
+      changeIntervalModal.setAttribute('aria-hidden', 'true');
+    });
+  }
 
   exportBtn.addEventListener('click', () => {
     showPanel(exportImportPanel);
@@ -3571,20 +4143,225 @@ function showPanel(panelToShow) {
 
   setupInputScrollBehavior();
 
-  // Check if first time user and show settings (must be at end after all initialization)
+  // Onboarding Flow for First-Time Users
+  const onboardingLanguageModal = document.getElementById('onboardingLanguageModal');
+  const onboardingInputMethodModal = document.getElementById('onboardingInputMethodModal');
+  const onboardingInputMethodTitle = document.getElementById('onboardingInputMethodTitle');
+
+  const inputMethodTitles = {
+    english: 'Choose Input Method',
+    simplified: '选择输入法',
+    traditional: '選擇輸入法'
+  };
+
+  function showOnboardingLanguageModal() {
+    onboardingLanguageModal.style.display = 'block';
+    onboardingLanguageModal.classList.add('open');
+    onboardingLanguageModal.setAttribute('aria-hidden', 'false');
+  }
+
+  function hideOnboardingLanguageModal() {
+    onboardingLanguageModal.style.display = 'none';
+    onboardingLanguageModal.classList.remove('open');
+    onboardingLanguageModal.setAttribute('aria-hidden', 'true');
+  }
+
+  function showOnboardingInputMethodModal(language) {
+    // Set the title based on language
+    onboardingInputMethodTitle.textContent = inputMethodTitles[language];
+    
+    // Apply translations to the buttons
+    applyLanguage(language);
+    
+    onboardingInputMethodModal.style.display = 'block';
+    onboardingInputMethodModal.classList.add('open');
+    onboardingInputMethodModal.setAttribute('aria-hidden', 'false');
+  }
+
+  function hideOnboardingInputMethodModal() {
+    onboardingInputMethodModal.style.display = 'none';
+    onboardingInputMethodModal.classList.remove('open');
+    onboardingInputMethodModal.setAttribute('aria-hidden', 'true');
+  }
+
+  async function loadSampleVerses(inputMethod) {
+    const fileMap = {
+      'pinyin': 'PY-Samples.json',
+      'zhuyin': 'ZY-Samples.json',
+      'cangjie': 'CJ-Samples.json'
+    };
+
+    const fileName = fileMap[inputMethod];
+    if (!fileName) return;
+
+    try {
+      const response = await fetch(fileName);
+      const data = await response.json();
+
+      if (data.verses && data.verses.length > 0) {
+        // Import verses
+        const currentVerses = JSON.parse(localStorage.getItem('verses') || '[]');
+        const mergedVerses = [...currentVerses, ...data.verses];
+        localStorage.setItem('verses', JSON.stringify(mergedVerses));
+      }
+
+      if (data.collections && data.collections.length > 0) {
+        // Import collections
+        const currentCollections = getCollections();
+        
+        // Build lookup from verse ref -> id
+        const allVerses = JSON.parse(localStorage.getItem('verses') || '[]');
+        function findIdByRef(ref) {
+          const v = allVerses.find(x => 
+            x.bookName === ref.bookName && 
+            String(x.chapterNumber) === String(ref.chapterNumber) && 
+            String(x.verseNumber) === String(ref.verseNumber)
+          );
+          return v ? v.id : null;
+        }
+
+        data.collections.forEach(ic => {
+          const ids = (ic.verseRefs || []).map(findIdByRef).filter(Boolean);
+          if (ids.length > 0) {
+            currentCollections.push({
+              id: Date.now().toString() + Math.random().toString(36).slice(2, 8),
+              title: ic.title,
+              verseIds: ids
+            });
+          }
+        });
+        
+        saveCollections(currentCollections);
+      }
+
+      // Refresh UI
+      renderVerseSelector();
+      renderAddVerseList();
+    } catch (error) {
+      console.error('Error loading sample verses:', error);
+    }
+  }
+
+  // Language selection handlers
+  document.getElementById('onboardingLangEnglish').addEventListener('click', () => {
+    localStorage.setItem('languagePreference', 'english');
+    hideOnboardingLanguageModal();
+    showOnboardingInputMethodModal('english');
+  });
+
+  document.getElementById('onboardingLangSimplified').addEventListener('click', () => {
+    localStorage.setItem('languagePreference', 'simplified');
+    hideOnboardingLanguageModal();
+    showOnboardingInputMethodModal('simplified');
+  });
+
+  document.getElementById('onboardingLangTraditional').addEventListener('click', () => {
+    localStorage.setItem('languagePreference', 'traditional');
+    hideOnboardingLanguageModal();
+    showOnboardingInputMethodModal('traditional');
+  });
+
+  // Input method selection handlers
+  document.getElementById('onboardingInputPinyin').addEventListener('click', async () => {
+    localStorage.setItem('inputMethod', 'pinyin');
+    hideOnboardingInputMethodModal();
+    await loadSampleVerses('pinyin');
+    updateInputMethodLabels();
+    applyLanguage();
+    showPanel(learnPanel);
+    // Populate the verse selector and start learn mode with the newly loaded verses
+    const unlearnedList = populateUnlearnedSelector();
+    if (unlearnedList && unlearnedList.length > 0) {
+      startLearnMode(unlearnedList[0]);
+      setLearningStage('basic');
+    }
+    localStorage.setItem('hasVisitedBefore', 'true');
+  });
+
+  document.getElementById('onboardingInputZhuyin').addEventListener('click', async () => {
+    localStorage.setItem('inputMethod', 'zhuyin');
+    hideOnboardingInputMethodModal();
+    await loadSampleVerses('zhuyin');
+    updateInputMethodLabels();
+    applyLanguage();
+    showPanel(learnPanel);
+    // Populate the verse selector and start learn mode with the newly loaded verses
+    const unlearnedList = populateUnlearnedSelector();
+    if (unlearnedList && unlearnedList.length > 0) {
+      startLearnMode(unlearnedList[0]);
+      setLearningStage('basic');
+    }
+    localStorage.setItem('hasVisitedBefore', 'true');
+  });
+
+  document.getElementById('onboardingInputCangjie').addEventListener('click', async () => {
+    localStorage.setItem('inputMethod', 'cangjie');
+    hideOnboardingInputMethodModal();
+    await loadSampleVerses('cangjie');
+    updateInputMethodLabels();
+    applyLanguage();
+    showPanel(learnPanel);
+    // Populate the verse selector and start learn mode with the newly loaded verses
+    const unlearnedList = populateUnlearnedSelector();
+    if (unlearnedList && unlearnedList.length > 0) {
+      startLearnMode(unlearnedList[0]);
+      setLearningStage('basic');
+    }
+    localStorage.setItem('hasVisitedBefore', 'true');
+  });
+
+  // Check if first time user and show onboarding (must be at end after all initialization)
   function checkFirstTimeUser() {
     const hasVisitedBefore = localStorage.getItem('hasVisitedBefore');
     
     if (!hasVisitedBefore) {
-      // First time user - show settings panel
-      showPanel(settingsPanel);
-      
-      // Mark that user has visited
-      localStorage.setItem('hasVisitedBefore', 'true');
+      // First time user - show onboarding flow
+      showOnboardingLanguageModal();
     }
   }
   
   checkFirstTimeUser();
+
+  // Prevent native keyboard from appearing for non-Pinyin input methods
+  function preventNativeKeyboard(e) {
+    const method = localStorage.getItem('inputMethod') || 'pinyin';
+    const input = e.target;
+    // Only prevent for inputs that use onscreen keyboards
+    if (method !== 'pinyin' && 
+        (input.id === 'verseInitials' || input.id === 'bookInitials' || 
+         input.id === 'learnInput' || input.type === 'number')) {
+      e.target.setAttribute('inputmode', 'none');
+    }
+  }
+
+  // Input Focus Listeners
+  learnInput.addEventListener('focus', () => showKeyboardForInput(learnInput));
+  learnInput.addEventListener('touchstart', preventNativeKeyboard);
+  learnInput.addEventListener('mousedown', preventNativeKeyboard);
+  
+  verseText.addEventListener('focus', () => showKeyboardForInput(verseText));
+  
+  verseInitials.addEventListener('focus', () => showKeyboardForInput(verseInitials));
+  verseInitials.addEventListener('touchstart', preventNativeKeyboard);
+  verseInitials.addEventListener('mousedown', preventNativeKeyboard);
+  
+  bookInitials.addEventListener('focus', () => showKeyboardForInput(bookInitials));
+  bookInitials.addEventListener('touchstart', preventNativeKeyboard);
+  bookInitials.addEventListener('mousedown', preventNativeKeyboard);
+  
+  bibleVersion.addEventListener('focus', () => showKeyboardForInput(bibleVersion));
+  defaultBibleVersion.addEventListener('focus', () => showKeyboardForInput(defaultBibleVersion));
+  
+  chapterNumber.addEventListener('focus', () => showKeyboardForInput(chapterNumber));
+  chapterNumber.addEventListener('touchstart', preventNativeKeyboard);
+  chapterNumber.addEventListener('mousedown', preventNativeKeyboard);
+  
+  verseNumber.addEventListener('focus', () => showKeyboardForInput(verseNumber));
+  verseNumber.addEventListener('touchstart', preventNativeKeyboard);
+  verseNumber.addEventListener('mousedown', preventNativeKeyboard);
+  
+  bookNameInput.addEventListener('focus', () => showKeyboardForInput(bookNameInput));
+  newCollectionTitle.addEventListener('focus', () => showKeyboardForInput(newCollectionTitle));
 
   // (initialization at top of file already performed)
 };

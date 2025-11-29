@@ -11,7 +11,7 @@
 .modal {
   display: none;
   position: fixed;
-  z-index: 1000;
+  z-index: 2000;
   left: 0;
   top: 0;
   width: 100vw;
@@ -38,6 +38,7 @@
 .modal-content h2 {
   margin-bottom: 24px;
   color: var(--correct-color);
+  line-height: 1.6;
 }
 
 .modal-content button {
@@ -327,7 +328,7 @@ label {
   display: none;
   position: fixed;
   inset: 0;
-  z-index: 1000;
+  z-index: 2000;
 }
 .modal.open { display: block; }
 .modal-overlay {
@@ -372,6 +373,130 @@ label {
     flex: 0;
     min-width: 120px;
   }
+}
+
+/* Onboarding Modal Styles */
+.onboarding-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.onboarding-btn {
+  padding: 14px 20px;
+  font-size: 16px;
+  font-weight: 500;
+  background-color: var(--button-background);
+  color: var(--button-text);
+  border: 2px solid var(--button-background);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.onboarding-btn:hover {
+  background-color: var(--button-hover);
+  border-color: var(--button-hover);
+}
+
+.onboarding-btn:active {
+  transform: scale(0.98);
+}
+
+/* Change Interval Modal Styles */
+.interval-controls {
+  margin: 20px 0;
+  text-align: center;
+}
+
+.interval-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.interval-display label {
+  font-size: 14px;
+  font-weight: 500;
+  margin: 0;
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.interval-adjuster {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--input-background);
+  border: 1px solid var(--input-border);
+  border-radius: 8px;
+  padding: 6px 10px;
+}
+
+.interval-btn {
+  background: var(--button-background);
+  color: var(--button-text);
+  border: none;
+  border-radius: 4px;
+  width: 28px;
+  height: 28px;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.interval-btn:hover {
+  background: var(--button-hover);
+}
+
+.interval-btn:active {
+  transform: scale(0.95);
+}
+
+.interval-value {
+  font-size: 20px;
+  font-weight: 600;
+  min-width: 35px;
+  text-align: center;
+  color: var(--text-color);
+}
+
+.interval-days {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-top: 8px;
+  padding: 0 10px;
+}
+}
+
+.confirm-btn {
+  background-color: #28a745 !important;
+  color: white !important;
+  font-size: 20px;
+  min-width: 60px;
+}
+
+.confirm-btn:hover {
+  background-color: #218838 !important;
+}
+
+.review-controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.review-controls button {
+  margin: 0;
 }
 
 /* Smooth fade for verse selector to prevent cheating */
@@ -539,6 +664,11 @@ select {
 
 .input-section {
   margin: 20px 0;
+}
+
+#learnInput::placeholder {
+  font-size: 14px;
+  opacity: 0.65;
 }
 
 #progressDisplay {
@@ -767,4 +897,66 @@ select {
 .tree-children .tree-item {
   margin: 4px 0;
   font-size: 0.95em;
+}
+
+/* Onscreen Keyboards */
+.onscreen-keyboard {
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--panel-background);
+  border-top: 1px solid var(--border-color);
+  padding: 20px 10px;
+  z-index: 1001;
+  margin-top: 10px;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.keyboard-row {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.onscreen-keyboard button {
+  background: var(--button-background);
+  color: var(--button-text);
+  border: 1px solid var(--border-color);
+  padding: 8px 4px;
+  margin: 2px 1px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  min-width: 28px;
+  touch-action: manipulation;
+}
+
+#numericKeyboard button {
+  padding: 8px 20px;
+  margin: 2px;
+  min-width: 60px;
+  font-size: 18px;
+}
+
+.onscreen-keyboard button:hover {
+  background: var(--button-hover);
+}
+
+.onscreen-keyboard .space {
+  flex: 1;
+}
+
+.onscreen-keyboard .backspace {
+  background: #dc3545;
+  color: white;
+  touch-action: manipulation;
+}
+
+.onscreen-keyboard .enter {
+  background: #28a745;
+  color: white;
+  touch-action: manipulation;
 }

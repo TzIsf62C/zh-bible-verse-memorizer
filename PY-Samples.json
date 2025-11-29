@@ -1,0 +1,59 @@
+{
+  "type": "cbm-export",
+  "version": 2,
+  "generatedAt": "2025-11-29T02:54:40.305Z",
+  "verses": [
+    {
+      "verseText": "你們得救是本乎恩，也因着信；這並不是出於自己，而是　神所賜的；",
+      "bookName": "以弗所書",
+      "chapterNumber": "2",
+      "verseNumber": "8",
+      "verseInitials": "nmdjsbheyyzxzbbscyzjessscd",
+      "bookInitials": "YFSS",
+      "bibleVersion": "RCUV",
+      "id": "1764382320002"
+    },
+    {
+      "verseText": "也不是出於行為，免得有人自誇。",
+      "bookName": "以弗所書",
+      "chapterNumber": "2",
+      "verseNumber": "9",
+      "verseInitials": "ybscyxwmdyrzk",
+      "bookInitials": "YFSS",
+      "bibleVersion": "RCUV",
+      "id": "1764382431930"
+    },
+    {
+      "verseText": "我們是他所造之物，在基督耶穌裏創造的，為要使我們行善，就是　神早已預備好要我們做的。",
+      "bookName": "以弗所書",
+      "chapterNumber": "2",
+      "verseNumber": "10",
+      "verseInitials": "wmstszzwzjdysczdwyswmxsjsszyybhywmzd",
+      "bookInitials": "YFSS",
+      "bibleVersion": "RCUV",
+      "id": "1764382526795"
+    }
+  ],
+  "collections": [
+    {
+      "title": "拼音例子",
+      "verseRefs": [
+        {
+          "bookName": "以弗所書",
+          "chapterNumber": "2",
+          "verseNumber": "8"
+        },
+        {
+          "bookName": "以弗所書",
+          "chapterNumber": "2",
+          "verseNumber": "9"
+        },
+        {
+          "bookName": "以弗所書",
+          "chapterNumber": "2",
+          "verseNumber": "10"
+        }
+      ]
+    }
+  ]
+}
