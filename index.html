@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, user-scalable=0">
   <title>ZH Bible Verse Memorizer | 圣经经文背诵</title>
   
   <!-- PWA Manifest -->
@@ -52,11 +52,11 @@
       <div class="input-row">
         <div class="input-group half">
           <label for="chapterNumber" data-i18n="chapter">Chapter</label>
-          <input id="chapterNumber" type="number" min="1" autocomplete="off">
+          <input id="chapterNumber" type="text" pattern="[0-9]*" min="1" autocomplete="off" inputmode="none">
         </div>
         <div class="input-group half">
           <label for="verseNumber" data-i18n="verse">Verse</label>
-          <input id="verseNumber" type="number" min="1" autocomplete="off">
+          <input id="verseNumber" type="text" pattern="[0-9]*" min="1" autocomplete="off" inputmode="none">
         </div>
       </div>
     </div>
@@ -66,13 +66,13 @@
     
     <div class="pinyin-inputs">
       <div class="input-group">
-        <label for="verseInitials" data-i18n="pinyin_initials_verse">Pinyin Initials for Verse</label>
+        <label for="verseInitials">Pinyin Initials for Verse</label>
         <input id="verseInitials" type="text" autocomplete="off" autocorrect="off" spellcheck="false" autocapitalize="none">
-        <small class="helper-text" data-i18n="pinyin_helper">Type the first letter of each character's pinyin</small>
+        <small class="helper-text">Type the first letter of each character's pinyin</small>
       </div>
       
       <div class="input-group">
-        <label for="bookInitials" data-i18n="pinyin_initials_book">Pinyin Initials for Book Name</label>
+        <label for="bookInitials">Pinyin Initials for Book Name</label>
         <input id="bookInitials" type="text" autocomplete="off" autocorrect="off" spellcheck="false" autocapitalize="none">
       </div>
     </div>
@@ -178,6 +178,7 @@
   <div id="reviewVerseList" class="verse-list"></div>
   <div class="review-controls">
     <button id="startReviewBtn" data-i18n="review_verses">Review verses</button>
+    <button id="changeIntervalBtn" data-i18n="change_interval" style="display:none;">Change Review Interval</button>
     <div id="reviewProgress"></div>
   </div>
 </div>
@@ -300,6 +301,18 @@
       </div>
     </div>
     <div class="input-group">
+      <label data-i18n="input_method">Input Method</label>
+      <div>
+        <label><input type="radio" name="inputMethodOption" value="pinyin" checked> <span data-i18n="input_pinyin">Pinyin</span></label>
+      </div>
+      <div>
+        <label><input type="radio" name="inputMethodOption" value="zhuyin"> <span data-i18n="input_zhuyin">Zhuyin (注音)</span></label>
+      </div>
+      <div>
+        <label><input type="radio" name="inputMethodOption" value="cangjie"> <span data-i18n="input_cangjie">Cangjie (倉頡)</span></label>
+      </div>
+    </div>
+    <div class="input-group">
       <label for="defaultBibleVersion" data-i18n="default_bible_version">Default Bible Version</label>
       <input id="defaultBibleVersion" type="text" autocomplete="off" autocorrect="off" spellcheck="false" autocapitalize="none" placeholder="">
     </div>
@@ -313,7 +326,131 @@
       </p>
       <button id="clearDataBtn" style="background-color: #dc3545; color: white;" data-i18n="clear_all_data_btn">Clear All Data</button>
     </div>
+    <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border-color); text-align: center; font-size: 0.85em; color: var(--text-secondary);">
+      <div style="margin-bottom: 4px;">ZH Bible Verse Memorizer PWA (Version 0.9)</div>
+      <div>Copyright © 2025 TzIsf62C</div>
+    </div>
   </div>
+
+  <!-- Onscreen Keyboards -->
+  <div id="zhuyinKeyboard" class="onscreen-keyboard" style="display:none;">
+    <div class="keyboard-row">
+      <button class="key">ㄅ</button>
+      <button class="key">ㄉ</button>
+      <button class="key">ˇ</button>
+      <button class="key">ˋ</button>
+      <button class="key">ㄓ</button>
+      <button class="key">ˊ</button>
+      <button class="key">˙</button>
+      <button class="key">ㄚ</button>
+      <button class="key">ㄞ</button>
+      <button class="key">ㄢ</button>
+      <button class="key">ㄦ</button>
+    </div>
+    <div class="keyboard-row">
+      <button class="key">ㄆ</button>
+      <button class="key">ㄊ</button>
+      <button class="key">ㄍ</button>
+      <button class="key">ㄐ</button>
+      <button class="key">ㄔ</button>
+      <button class="key">ㄗ</button>
+      <button class="key">ㄧ</button>
+      <button class="key">ㄛ</button>
+      <button class="key">ㄟ</button>
+      <button class="key">ㄣ</button>
+    </div>
+    <div class="keyboard-row">
+      <button class="key">ㄇ</button>
+      <button class="key">ㄋ</button>
+      <button class="key">ㄎ</button>
+      <button class="key">ㄑ</button>
+      <button class="key">ㄕ</button>
+      <button class="key">ㄘ</button>
+      <button class="key">ㄨ</button>
+      <button class="key">ㄜ</button>
+      <button class="key">ㄠ</button>
+      <button class="key">ㄤ</button>
+    </div>
+    <div class="keyboard-row">
+      <button class="key">ㄈ</button>
+      <button class="key">ㄌ</button>
+      <button class="key">ㄏ</button>
+      <button class="key">ㄒ</button>
+      <button class="key">ㄖ</button>
+      <button class="key">ㄙ</button>
+      <button class="key">ㄩ</button>
+      <button class="key">ㄝ</button>
+      <button class="key">ㄡ</button>
+      <button class="key">ㄥ</button>
+      <button class="key backspace">⌫</button>
+    </div>
+    <div class="keyboard-row">
+      <button class="key enter">✔</button>
+    </div>
+  </div>
+
+  <div id="cangjieKeyboard" class="onscreen-keyboard" style="display:none;">
+    <div class="keyboard-row">
+      <button class="key">手</button>
+      <button class="key">田</button>
+      <button class="key">水</button>
+      <button class="key">口</button>
+      <button class="key">廿</button>
+      <button class="key">卜</button>
+      <button class="key">山</button>
+      <button class="key">戈</button>
+      <button class="key">人</button>
+      <button class="key">心</button>
+    </div>
+    <div class="keyboard-row">
+      <button class="key">日</button>
+      <button class="key">尸</button>
+      <button class="key">木</button>
+      <button class="key">火</button>
+      <button class="key">土</button>
+      <button class="key">竹</button>
+      <button class="key">十</button>
+      <button class="key">大</button>
+      <button class="key">中</button>
+    </div>
+    <div class="keyboard-row">
+      <button class="key">重</button>
+      <button class="key">難</button>
+      <button class="key">金</button>
+      <button class="key">女</button>
+      <button class="key">月</button>
+      <button class="key">弓</button>
+      <button class="key">一</button>
+      <button class="key backspace">⌫</button>
+    </div>
+    <div class="keyboard-row">
+      <button class="key enter">✔</button>
+    </div>
+  </div>
+
+  <div id="numericKeyboard" class="onscreen-keyboard" style="display:none;">
+    <div class="keyboard-row">
+      <button class="key">1</button>
+      <button class="key">2</button>
+      <button class="key">3</button>
+    </div>
+    <div class="keyboard-row">
+      <button class="key">4</button>
+      <button class="key">5</button>
+      <button class="key">6</button>
+    </div>
+    <div class="keyboard-row">
+      <button class="key">7</button>
+      <button class="key">8</button>
+      <button class="key">9</button>
+    </div>
+    <div class="keyboard-row">
+      <button class="key backspace">⌫</button>
+      <button class="key">0</button>
+      <button class="key enter">✔</button>
+    </div>
+  </div>
+
   <script src="script.js"></script>
   
   <!-- PWA Service Worker Registration -->
@@ -354,5 +491,187 @@
   </div>
 </div>
 <!-- End Reset Review Data Modal -->
+
+<!-- Onboarding Modals -->
+<div id="onboardingLanguageModal" class="modal" aria-hidden="true">
+  <div class="modal-overlay"></div>
+  <div class="modal-content" role="dialog" aria-modal="true">
+    <img src="icons/icon-192x192.png" alt="App Icon" style="width: 80px; height: 80px; margin: 0 auto 16px; display: block;">
+    <div style="text-align: center; margin-bottom: 24px;">
+      <div style="font-size: 18px; font-weight: 600; margin-bottom: 4px;">ZH Bible Verse Memorizer</div>
+      <div style="font-size: 16px; color: var(--text-secondary);">圣经经文背诵</div>
+    </div>
+    <h2>Set Language<br>设定语言 / 設定語言</h2>
+    <div class="onboarding-options">
+      <button id="onboardingLangEnglish" class="onboarding-btn" data-lang="english">English</button>
+      <button id="onboardingLangSimplified" class="onboarding-btn" data-lang="simplified">简体中文</button>
+      <button id="onboardingLangTraditional" class="onboarding-btn" data-lang="traditional">繁體中文</button>
+    </div>
+  </div>
+</div>
+
+<div id="onboardingInputMethodModal" class="modal" aria-hidden="true">
+  <div class="modal-overlay"></div>
+  <div class="modal-content" role="dialog" aria-modal="true">
+    <h2 id="onboardingInputMethodTitle"></h2>
+    <div class="onboarding-options">
+      <button id="onboardingInputPinyin" class="onboarding-btn" data-method="pinyin" data-i18n="input_pinyin">Pinyin</button>
+      <button id="onboardingInputZhuyin" class="onboarding-btn" data-method="zhuyin" data-i18n="input_zhuyin">Zhuyin (注音)</button>
+      <button id="onboardingInputCangjie" class="onboarding-btn" data-method="cangjie" data-i18n="input_cangjie">Cangjie (倉頡)</button>
+    </div>
+  </div>
+</div>
+<!-- End Onboarding Modals -->
+
+<!-- Change Interval Modal -->
+<div id="changeIntervalModal" class="modal" aria-hidden="true">
+  <div class="modal-overlay"></div>
+  <div class="modal-content" role="dialog" aria-modal="true">
+    <h3 data-i18n="change_interval_title">Change Review Interval</h3>
+    <div class="interval-controls">
+      <div class="interval-display">
+        <label data-i18n="interval_label">Interval:</label>
+        <div class="interval-adjuster">
+          <button id="intervalDownBtn" class="interval-btn">▼</button>
+          <span id="intervalValue" class="interval-value">1</span>
+          <button id="intervalUpBtn" class="interval-btn">▲</button>
+        </div>
+      </div>
+      <div id="intervalDaysDisplay" class="interval-days">Review in 1 Day(s)</div>
+    </div>
+    <div class="modal-buttons">
+      <button id="intervalConfirmBtn" class="confirm-btn">✔</button>
+      <button id="intervalCancelBtn" data-i18n="cancel">Cancel</button>
+    </div>
+  </div>
+</div>
+<!-- End Change Interval Modal -->
+
+<!-- Onscreen Keyboards -->
+<div id="zhuyinKeyboard" class="onscreen-keyboard" style="display:none;">
+  <div class="keyboard-row">
+    <button class="key">ㄅ</button>
+    <button class="key">ㄆ</button>
+    <button class="key">ㄇ</button>
+    <button class="key">ㄈ</button>
+    <button class="key">ㄉ</button>
+    <button class="key">ㄊ</button>
+    <button class="key">ㄋ</button>
+    <button class="key">ㄌ</button>
+  </div>
+  <div class="keyboard-row">
+    <button class="key">ㄍ</button>
+    <button class="key">ㄎ</button>
+    <button class="key">ㄏ</button>
+    <button class="key">ㄐ</button>
+    <button class="key">ㄑ</button>
+    <button class="key">ㄒ</button>
+    <button class="key">ㄓ</button>
+    <button class="key">ㄔ</button>
+  </div>
+  <div class="keyboard-row">
+    <button class="key">ㄕ</button>
+    <button class="key">ㄖ</button>
+    <button class="key">ㄗ</button>
+    <button class="key">ㄘ</button>
+    <button class="key">ㄙ</button>
+    <button class="key">ㄚ</button>
+    <button class="key">ㄛ</button>
+    <button class="key">ㄜ</button>
+  </div>
+  <div class="keyboard-row">
+    <button class="key">ㄞ</button>
+    <button class="key">ㄟ</button>
+    <button class="key">ㄠ</button>
+    <button class="key">ㄡ</button>
+    <button class="key">ㄢ</button>
+    <button class="key">ㄣ</button>
+    <button class="key">ㄤ</button>
+    <button class="key">ㄥ</button>
+  </div>
+  <div class="keyboard-row">
+    <button class="key">ㄦ</button>
+    <button class="key">Backspace</button>
+    <button class="key">Space</button>
+    <button class="key">Enter</button>
+  </div>
+</div>
+
+<div id="cangjieKeyboard" class="onscreen-keyboard" style="display:none;">
+  <div class="keyboard-row">
+    <button class="key">日</button>
+    <button class="key">月</button>
+    <button class="key">金</button>
+    <button class="key">木</button>
+    <button class="key">水</button>
+    <button class="key">火</button>
+    <button class="key">土</button>
+    <button class="key">竹</button>
+  </div>
+  <div class="keyboard-row">
+    <button class="key">戈</button>
+    <button class="key">十</button>
+    <button class="key">大</button>
+    <button class="key">中</button>
+    <button class="key">一</button>
+    <button class="key">弓</button>
+    <button class="key">人</button>
+    <button class="key">心</button>
+  </div>
+  <div class="keyboard-row">
+    <button class="key">手</button>
+    <button class="key">口</button>
+    <button class="key">尸</button>
+    <button class="key">廿</button>
+    <button class="key">山</button>
+    <button class="key">女</button>
+    <button class="key">田</button>
+    <button class="key">難</button>
+  </div>
+  <div class="keyboard-row">
+    <button class="key">卜</button>
+    <button class="key">重</button>
+    <button class="key unused"> </button>
+    <button class="key unused"> </button>
+    <button class="key unused"> </button>
+    <button class="key unused"> </button>
+    <button class="key">Backspace</button>
+    <button class="key">Space</button>
+  </div>
+  <div class="keyboard-row">
+    <button class="key unused"> </button>
+    <button class="key unused"> </button>
+    <button class="key unused"> </button>
+    <button class="key unused"> </button>
+    <button class="key unused"> </button>
+    <button class="key unused"> </button>
+    <button class="key unused"> </button>
+    <button class="key">Enter</button>
+  </div>
+</div>
+
+<div id="numericKeyboard" class="onscreen-keyboard" style="display:none;">
+  <div class="keyboard-row">
+    <button class="key">1</button>
+    <button class="key">2</button>
+    <button class="key">3</button>
+  </div>
+  <div class="keyboard-row">
+    <button class="key">4</button>
+    <button class="key">5</button>
+    <button class="key">6</button>
+  </div>
+  <div class="keyboard-row">
+    <button class="key">7</button>
+    <button class="key">8</button>
+    <button class="key">9</button>
+  </div>
+  <div class="keyboard-row">
+    <button class="key">0</button>
+    <button class="key">Backspace</button>
+    <button class="key">Enter</button>
+  </div>
+</div>
+
 </body>
 </html>

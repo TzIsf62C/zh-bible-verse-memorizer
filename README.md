@@ -1,4 +1,4 @@
-# ZH Bible Verse Memorizer PWA (Version 0.8)
+# ZH Bible Verse Memorizer PWA (Version 0.9)
 
 A Progressive Web App for memorizing Chinese Bible verses with spaced repetition. This App is inspired by the Bible Memory App (https://biblememory.com/). I would recommend that app if you are memorizing Bible verses in English.
 
@@ -9,8 +9,10 @@ A Progressive Web App for memorizing Chinese Bible verses with spaced repetition
 - 💻 **Desktop Support**: Also works on Mac and PC
 - 📦 **Installable**: Can be installed as a standalone app
 - 🔄 **Spaced Repetition**: Smart learning algorithm to optimize memory retention
+- 🎓 **Onboarding Flow**: First-time user experience with language selection, input method setup, and sample verses
 - 🌐 **Multi-language**: English, Simplified Chinese, Traditional Chinese
 - 🎨 **Theme Support**: Light, Dark, and System themes
+- ⌨️ **Input Methods**: Support for Pinyin, Zhuyin (注音), and Cangjie (倉頡) with onscreen keyboards
 
 ## 📲 Installation Instructions
 
@@ -48,28 +50,33 @@ A Progressive Web App for memorizing Chinese Bible verses with spaced repetition
 ## 🎯 How to Use
 
 ### First Time Setup
-- **Automatic Settings**: On first launch, the app automatically opens the Settings screen
-- **Language Detection**: Language preference is automatically detected from your system settings (English, Simplified Chinese, or Traditional Chinese)
-- **Default Bible Version**: Configure your preferred Bible version (e.g., 和合本, ESV, NIV)
-- **Theme Selection**: Choose between System, Light, or Dark theme
+- **Onboarding Flow**: On first launch, the app guides you through a quick setup:
+  1. **Language Selection**: Choose your preferred language (English, Simplified Chinese, or Traditional Chinese)
+  2. **Input Method Selection**: Choose between Pinyin (Latin letters), Zhuyin (注音), or Cangjie (倉頡)
+  3. **Sample Verses**: The app automatically loads sample verses based on your chosen input method
+  4. **Ready to Learn**: You'll be taken directly to the Learn panel to start practicing immediately
+- **Default Bible Version**: Configure your preferred Bible version in Settings (e.g., 和合本, ESV, NIV)
+- **Theme Selection**: Choose between System, Light, or Dark theme in Settings
+- **Input Methods**: Non-Pinyin methods (Zhuyin and Cangjie) use onscreen keyboards for single-keystroke memorization
 
 ### Adding Verses
 1. Click **"Add Verse"** button
 2. Enter the Chinese verse text
 3. Enter the book name (autocomplete available)
 4. Enter chapter and verse numbers
-5. Enter pinyin initials for the verse and book name
+5. Enter initials for the verse and book name (based on selected input method)
 6. Optionally add to a collection
 7. Click **"Save Verse"**
 
 ### Learning Mode
 1. Click **"Learn"** button
-2. Select a verse from the dropdown
-3. Progress through three stages:
+2. Select a verse from the dropdown (or use the sample verses provided on first launch)
+3. See helpful placeholder text in the input field that guides you based on your chosen input method
+4. Progress through three stages:
    - **Basic**: See full text, type initials
    - **Intermediate**: See alternating characters
    - **Advanced**: Type from memory
-4. Type the pinyin initials to complete the verse
+5. Type the initials to complete the verse (using onscreen keyboard if Zhuyin or Cangjie selected)
 
 ### Review Mode
 1. Click **"Review"** button
@@ -78,6 +85,14 @@ A Progressive Web App for memorizing Chinese Bible verses with spaced repetition
    - **Individual Mode**: Review verses one at a time with full feedback and accuracy tracking
    - **Single-Text Mode**: Review multiple verses as one continuous passage
 4. The app uses spaced repetition to optimize learning and schedule reviews
+
+### Manual Interval Control
+1. In the **Review** panel, select one or more verses using the checkboxes
+2. Click **"Change Review Interval"** button (appears when verses are selected)
+3. Use the ▲/▼ buttons to adjust the interval level
+4. The "Review in X Day(s)" display updates automatically based on the spaced repetition algorithm
+5. Click the green **✔** button to apply the new interval to all selected verses
+6. This feature is useful when making typing errors prevents you from achieving the 90% accuracy threshold needed to advance the interval automatically
 
 ### Organize Verses in Collections
 1. Click **"Collections"** button
