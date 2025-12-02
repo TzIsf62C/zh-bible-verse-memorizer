@@ -1,7 +1,8 @@
 {
   "name": "ZH Bible Verse Memorizer",
-  "short_name": "ZH 圣经背诵",
-  "description": "Chinese Bible verse memorization app with spaced repetition",
+  "short_name": "聖經背誦",
+  "version": "0.9.1",
+  "description": "Memorize Chinese Bible verses using spaced repetition. Supports Pinyin, Zhuyin, and Cangjie input methods.",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#1a1a1a",
@@ -58,7 +59,7 @@
     }
   ],
   "categories": ["education", "lifestyle", "utilities"],
-  "lang": "zh-CN",
+  "lang": "zh",
   "dir": "ltr",
   "scope": "./",
   "prefer_related_applications": false
