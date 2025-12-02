@@ -1,5 +1,5 @@
 // Service Worker for ZH Bible Verse Memorizer
-const CACHE_NAME = 'zh-bible-memorizer-v0.8';
+const CACHE_NAME = 'zh-bible-memorizer-v0.9.1';
 const urlsToCache = [
   './',
   './index.html',

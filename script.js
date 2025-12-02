@@ -13,18 +13,21 @@ window.onload = function () {
   const exportImportPanel = document.getElementById('exportImportPanel');
   const settingsBtn = document.getElementById('settingsBtn');
   const settingsPanel = document.getElementById('settingsPanel');
-  const settingsSaveBtn = document.getElementById('settingsSaveBtn');
   const clearDataBtn = document.getElementById('clearDataBtn');
   const saveVerseBtn = document.getElementById('saveVerseBtn');
+  let originalVerseValues = null; // Track original values when editing
+  let activeNavButton = null; // Track which navigation button is currently active
   const clearFormBtn = document.getElementById('clearFormBtn');
   const saveStatus = document.getElementById('saveStatus');
   const verseSelector = document.getElementById('verseSelector');
+  const learnHelperText = document.getElementById('learnHelperText');
   const learnVerseDisplay = document.getElementById('learnVerseDisplay');
   const learnInput = document.getElementById('learnInput');
   const learnFeedback = document.getElementById('learnFeedback');
   const learnNextBtn = document.getElementById('learnNextBtn');
   const learnRetryBtn = document.getElementById('learnRetryBtn');
   const startReviewBtn = document.getElementById('startReviewBtn');
+  const reviewDueBtn = document.getElementById('reviewDueBtn');
   const downloadBtn = document.getElementById('downloadBtn');
   const importDataBtn = document.getElementById('importDataBtn');
   const importFile = document.getElementById('importFile');
@@ -72,9 +75,40 @@ window.onload = function () {
   const intervalConfirmBtn = document.getElementById('intervalConfirmBtn');
   const intervalCancelBtn = document.getElementById('intervalCancelBtn');
   let currentInterval = 1;
+  // Backup Reminder Modal
+  const backupReminderModal = document.getElementById('backupReminderModal');
+  const backupReminderGotItBtn = document.getElementById('backupReminderGotItBtn');
+  const backupReminderExportBtn = document.getElementById('backupReminderExportBtn');
+  const backupReminderToggle = document.getElementById('backupReminderToggle');
+
+  // Tutorial Modals
+  const tutorialIntroModal = document.getElementById('tutorialIntroModal');
+  const tutorialBasicModal = document.getElementById('tutorialBasicModal');
+  const tutorialIntermediateModal = document.getElementById('tutorialIntermediateModal');
+  const tutorialAdvancedModal = document.getElementById('tutorialAdvancedModal');
+  const tutorialIntroStart = document.getElementById('tutorialIntroStart');
+  const tutorialIntroSkip = document.getElementById('tutorialIntroSkip');
+  const tutorialBasicContinue = document.getElementById('tutorialBasicContinue');
+  const tutorialIntermediateContinue = document.getElementById('tutorialIntermediateContinue');
+  const tutorialAdvancedBegin = document.getElementById('tutorialAdvancedBegin');
+
+  // Physical keyboard mappings for onscreen keyboards
+  const zhuyinKeyMap = {
+    '1': 'ㄅ', '2': 'ㄉ', '3': 'ˇ', '4': 'ˋ', '5': 'ㄓ', '6': 'ˊ', '7': '˙', '8': 'ㄚ', '9': 'ㄞ', '0': 'ㄢ', '-': 'ㄦ',
+    'q': 'ㄆ', 'w': 'ㄊ', 'e': 'ㄍ', 'r': 'ㄐ', 't': 'ㄔ', 'y': 'ㄗ', 'u': 'ㄧ', 'i': 'ㄛ', 'o': 'ㄟ', 'p': 'ㄣ',
+    'a': 'ㄇ', 's': 'ㄋ', 'd': 'ㄎ', 'f': 'ㄑ', 'g': 'ㄕ', 'h': 'ㄘ', 'j': 'ㄨ', 'k': 'ㄜ', 'l': 'ㄠ', ';': 'ㄤ',
+    'z': 'ㄈ', 'x': 'ㄌ', 'c': 'ㄏ', 'v': 'ㄒ', 'b': 'ㄖ', 'n': 'ㄙ', 'm': 'ㄩ', ',': 'ㄝ', '.': 'ㄡ', '/': 'ㄥ'
+  };
+
+  const cangjieKeyMap = {
+    'q': '手', 'w': '田', 'e': '水', 'r': '口', 't': '廿', 'y': '卜', 'u': '山', 'i': '戈', 'o': '人', 'p': '心',
+    'a': '日', 's': '尸', 'd': '木', 'f': '火', 'g': '土', 'h': '竹', 'j': '十', 'k': '大', 'l': '中',
+    'z': '重', 'x': '難', 'c': '金', 'v': '女', 'b': '月', 'n': '弓', 'm': '一'
+  };
   // Onscreen Keyboards
   const zhuyinKeyboard = document.getElementById('zhuyinKeyboard');
   const cangjieKeyboard = document.getElementById('cangjieKeyboard');
+  const pinyinKeyboard = document.getElementById('pinyinKeyboard');
   const numericKeyboard = document.getElementById('numericKeyboard');
   const verseInitials = document.getElementById('verseInitials');
   const bookInitials = document.getElementById('bookInitials');
@@ -87,6 +121,7 @@ window.onload = function () {
   function hideAllKeyboards() {
     zhuyinKeyboard.style.display = 'none';
     cangjieKeyboard.style.display = 'none';
+    pinyinKeyboard.style.display = 'none';
     numericKeyboard.style.display = 'none';
     
     // Restore all hidden elements
@@ -110,6 +145,13 @@ window.onload = function () {
   function showCangjieKeyboard() {
     hideAllKeyboards();
     cangjieKeyboard.style.display = 'block';
+  }
+
+  function showPinyinKeyboard() {
+    console.log('showPinyinKeyboard called');
+    hideAllKeyboards();
+    pinyinKeyboard.style.display = 'block';
+    console.log('Pinyin keyboard display after setting:', pinyinKeyboard.style.display);
   }
 
   function showNumericKeyboard() {
@@ -156,11 +198,25 @@ window.onload = function () {
   }
 
   function showKeyboardForInput(input, forceKeyboardType) {
+    console.log('showKeyboardForInput called:', { inputId: input?.id, forceKeyboardType, activeInput: activeInput?.id });
     const method = forceKeyboardType || localStorage.getItem('inputMethod') || 'pinyin';
     if (input.id === 'bookNameInput' || input.id === 'newCollectionTitle' || input.id === 'verseText' || input.id === 'bibleVersion' || input.id === 'defaultBibleVersion') {
       hideAllKeyboards();
       input.readOnly = false;
       return;
+    }
+    
+    // Helper function to scroll content when learnInput is focused
+    function scrollToLearnContent() {
+      if (input.id === 'learnInput') {
+        setTimeout(() => {
+          const progressDisplay = document.getElementById('progressDisplay');
+          if (progressDisplay) {
+            // Scroll progressDisplay to the center/bottom of viewport so it's visible above keyboard
+            progressDisplay.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 300); // Delay to allow keyboard animation
+      }
     }
     if (method === 'numeric' || input.type === 'number' || input.id === 'chapterNumber' || input.id === 'verseNumber') {
       showNumericKeyboard();
@@ -175,9 +231,17 @@ window.onload = function () {
         }, 0);
       }
       
-      // Hide backspace button only for learnInput
+      // Hide backspace and enter buttons for learnInput
       const backspaceButtons = document.querySelectorAll('.onscreen-keyboard .backspace');
+      const enterButtons = document.querySelectorAll('.onscreen-keyboard .enter');
       backspaceButtons.forEach(btn => {
+        if (input.id === 'learnInput') {
+          btn.style.display = 'none';
+        } else {
+          btn.style.display = '';
+        }
+      });
+      enterButtons.forEach(btn => {
         if (input.id === 'learnInput') {
           btn.style.display = 'none';
         } else {
@@ -186,10 +250,39 @@ window.onload = function () {
       });
       
       hideElementsBetweenInputAndKeyboard(input, numericKeyboard);
-      input.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      scrollToLearnContent();
       return;
     }
     if (method === 'pinyin') {
+      // Show pinyin keyboard for verseInitials, bookInitials, and learnInput
+      if (input.id === 'verseInitials' || input.id === 'bookInitials' || input.id === 'learnInput') {
+        console.log('Showing pinyin keyboard for', input.id);
+        showPinyinKeyboard();
+        activeInput = input;
+        input.readOnly = (input.id === 'learnInput');
+        
+        // Hide backspace and enter buttons for learnInput
+        const backspaceButtons = document.querySelectorAll('.onscreen-keyboard .backspace');
+        const enterButtons = document.querySelectorAll('.onscreen-keyboard .enter');
+        backspaceButtons.forEach(btn => {
+          if (input.id === 'learnInput') {
+            btn.style.display = 'none';
+          } else {
+            btn.style.display = '';
+          }
+        });
+        enterButtons.forEach(btn => {
+          if (input.id === 'learnInput') {
+            btn.style.display = 'none';
+          } else {
+            btn.style.display = '';
+          }
+        });
+        
+        hideElementsBetweenInputAndKeyboard(input, pinyinKeyboard);
+        scrollToLearnContent();
+        return;
+      }
       hideAllKeyboards();
       input.readOnly = false;
       return;
@@ -205,12 +298,21 @@ window.onload = function () {
     }
     
     activeInput = input;
-    // Only make learnInput read-only, allow cursor positioning for other inputs
+    // Only make learnInput read-only for all keyboards
+    // For verseInitials and bookInitials, the inputmode="none" in HTML prevents native keyboard
     input.readOnly = (input.id === 'learnInput');
     
-    // Hide backspace button if this is learn input
+    // Hide backspace and enter buttons if this is learn input
     const backspaceButtons = document.querySelectorAll('.onscreen-keyboard .backspace');
+    const enterButtons = document.querySelectorAll('.onscreen-keyboard .enter');
     backspaceButtons.forEach(btn => {
+      if (input.id === 'learnInput') {
+        btn.style.display = 'none';
+      } else {
+        btn.style.display = '';
+      }
+    });
+    enterButtons.forEach(btn => {
       if (input.id === 'learnInput') {
         btn.style.display = 'none';
       } else {
@@ -220,7 +322,7 @@ window.onload = function () {
     
     if (keyboard) {
       hideElementsBetweenInputAndKeyboard(input, keyboard);
-      input.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      scrollToLearnContent();
     }
   }
 
@@ -297,7 +399,93 @@ window.onload = function () {
 
   zhuyinKeyboard.addEventListener('click', (e) => handleKeyboardClick(e, zhuyinKeyboard));
   cangjieKeyboard.addEventListener('click', (e) => handleKeyboardClick(e, cangjieKeyboard));
+  pinyinKeyboard.addEventListener('click', (e) => handleKeyboardClick(e, pinyinKeyboard));
   numericKeyboard.addEventListener('click', (e) => handleKeyboardClick(e, numericKeyboard));
+
+  // Physical keyboard support
+  document.addEventListener('keydown', (e) => {
+    // Only handle physical keyboard when an onscreen keyboard is visible and activeInput exists
+    if (!activeInput) return;
+    
+    const zhuyinVisible = zhuyinKeyboard && zhuyinKeyboard.style.display === 'block';
+    const cangjieVisible = cangjieKeyboard && cangjieKeyboard.style.display === 'block';
+    const pinyinVisible = pinyinKeyboard && pinyinKeyboard.style.display === 'block';
+    const numericVisible = numericKeyboard && numericKeyboard.style.display === 'block';
+    
+    if (!zhuyinVisible && !cangjieVisible && !pinyinVisible && !numericVisible) {
+      return; // No onscreen keyboard visible, let browser handle it
+    }
+    
+    let mappedValue = null;
+    const key = e.key;
+    const keyLower = key.toLowerCase();
+    
+    // Handle backspace/delete
+    if (key === 'Backspace' || key === 'Delete') {
+      e.preventDefault();
+      // Don't allow backspace in learn/review mode
+      if (activeInput.id === 'learnInput') {
+        return;
+      }
+      // Simulate backspace click
+      const backspaceBtn = document.querySelector(`#${zhuyinVisible ? 'zhuyinKeyboard' : cangjieVisible ? 'cangjieKeyboard' : pinyinVisible ? 'pinyinKeyboard' : 'numericKeyboard'} .key.backspace`);
+      if (backspaceBtn) backspaceBtn.click();
+      return;
+    }
+    
+    // Handle enter/return
+    if (key === 'Enter') {
+      e.preventDefault();
+      const enterBtn = document.querySelector(`#${zhuyinVisible ? 'zhuyinKeyboard' : cangjieVisible ? 'cangjieKeyboard' : pinyinVisible ? 'pinyinKeyboard' : 'numericKeyboard'} .key.enter`);
+      if (enterBtn) enterBtn.click();
+      return;
+    }
+    
+    // Map keys based on which keyboard is visible
+    if (zhuyinVisible) {
+      // Zhuyin keyboard mapping
+      if (zhuyinKeyMap[keyLower] || zhuyinKeyMap[key]) {
+        mappedValue = zhuyinKeyMap[keyLower] || zhuyinKeyMap[key];
+      }
+    } else if (cangjieVisible) {
+      // Cangjie keyboard mapping
+      if (cangjieKeyMap[keyLower]) {
+        mappedValue = cangjieKeyMap[keyLower];
+      }
+    } else if (pinyinVisible) {
+      // Pinyin keyboard - direct a-z mapping
+      if (/^[a-z]$/.test(keyLower)) {
+        mappedValue = keyLower;
+      }
+    } else if (numericVisible) {
+      // Numeric keyboard - direct 0-9 mapping
+      if (/^[0-9]$/.test(key)) {
+        mappedValue = key;
+      }
+    }
+    
+    // If we have a mapped value, prevent default and insert it
+    if (mappedValue) {
+      e.preventDefault();
+      
+      if (activeInput.id === 'learnInput') {
+        // Always append at the end for learnInput
+        activeInput.value = activeInput.value + mappedValue;
+        activeInput.setSelectionRange(activeInput.value.length, activeInput.value.length);
+      } else {
+        // Insert at cursor position for other inputs
+        const start = activeInput.selectionStart || 0;
+        const end = activeInput.selectionEnd || 0;
+        const currentValue = activeInput.value;
+        activeInput.value = currentValue.slice(0, start) + mappedValue + currentValue.slice(end);
+        const newPosition = start + mappedValue.length;
+        activeInput.setSelectionRange(newPosition, newPosition);
+      }
+      
+      // Trigger input event
+      activeInput.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+  });
 
   // --- ENHANCED BOOK DATA FOR PINYIN SEARCH ---
     // THEME MANAGEMENT
@@ -396,11 +584,15 @@ window.onload = function () {
         sound_off: "Sound Off",
         sound_on: "Sound On",
         toggle_sound: "Toggle sound",
+        vibration_feedback: "Vibration Feedback",
+        enable_vibration: "Enable vibration on error",
+        vibration_note: "Note: Vibration is only available on Android devices.",
         retry: "Retry",
         next: "Next",
         finish: "Finish",
         // Review Panel
         review_mode: "Review Mode",
+        review_due_verses: "Review Due Verses",
         select_collection: "Select a collection",
         review_collection_learned: "Review Collection (learned only)",
         or_select_individual: "Or select individual verses",
@@ -443,8 +635,10 @@ window.onload = function () {
         not_reviewed_yet: "Not reviewed yet",
         days_ago: "days ago",
         due_in_days: "Due in {count} days",
+        due_in_day: "Due in 1 day",
         due_in_hours: "Due in {count} hours",
         due_in_hour: "Due in 1 hour",
+        due_in_minutes: "Due in {count} minutes",
         due_today: "Due today",
         days_overdue: "{count} days overdue",
         day: "day",
@@ -479,6 +673,7 @@ window.onload = function () {
         completed_all_verses: "Congratulations! You have completed all new verses.",
         select_file_to_import: "Please select a file to import",
         import_successful: "Import successful",
+        select_verse_to_change_interval: "Please select at least one verse to change the review interval",
         error_importing: "Error importing file",
         congratulations_mastered: "Congratulations you have mastered this verse!",
         great_job_continue: "Great job! Let's continue with the next verse.",
@@ -498,7 +693,39 @@ window.onload = function () {
         clear_all_data: "Clear All Data",
         clear_data_warning: "This will permanently delete all verses, collections, and review data from this device.",
         clear_all_data_btn: "Clear All Data",
-        clear_data_confirm: "Are you sure you want to clear all data?\n\nThis will permanently delete:\n• All verses\n• All collections\n• All review progress\n• All settings\n\nThis action cannot be undone."
+        clear_data_confirm: "Are you sure you want to clear all data?\n\nThis will permanently delete:\n• All verses\n• All collections\n• All review progress\n• All settings\n\nThis action cannot be undone.",
+        backup_reminders: "Backup Reminders",
+        enable_backup_reminders: "Enable periodic backup reminders",
+        backup_reminder_frequency: "Reminds you to export your data weekly (first month) then monthly",
+        backup_reminder_title: "⚠️ Backup Reminder",
+        backup_reminder_message: "Your verses and progress are stored locally on this device. If you clear your browser data or uninstall the app, all data will be lost. Please export your data regularly as a backup!",
+        backup_reminder_how: "How to backup:",
+        backup_reminder_steps: "Go to Export & Import → Download Data → Save the file to a safe location (cloud storage recommended)",
+        backup_reminder_got_it: "Got it!",
+        backup_reminder_export_now: "Export Now",
+        // PWA Installation
+        install_app_title: "Install App",
+        skip: "Skip",
+        continue: "Continue",
+        install_ios_safari: "To install this app on your iPhone/iPad:<br><br>1. Tap the <strong>Share</strong> button <span style='font-size: 20px;'>⎋</span> at the bottom of the screen<br>2. Scroll down and tap <strong>Add to Home Screen</strong> <span style='font-size: 20px;'>➕</span><br>3. Tap <strong>Add</strong> in the top right corner<br><br>The app will then work offline and feel like a native app!",
+        install_android_chrome: "To install this app on your Android device:<br><br>1. Tap the <strong>menu</strong> button <span style='font-size: 20px;'>⋮</span> in the top right<br>2. Tap <strong>Add to Home screen</strong> or <strong>Install app</strong><br>3. Tap <strong>Add</strong> or <strong>Install</strong><br><br>The app will then work offline and feel like a native app!",
+        install_desktop: "To install this app on your computer:<br><br>1. Look for the <strong>install</strong> icon <span style='font-size: 20px;'>⊕</span> in your browser's address bar<br>2. Click it and select <strong>Install</strong><br><br>The app will open in its own window and work offline!",
+        install_browser_generic: "To install this app:<br><br>Use your browser's menu to select <strong>Add to Home Screen</strong> or <strong>Install App</strong>.<br><br>Once installed, the app will work offline and feel like a native app!",
+        // Learning Mode Tutorial
+        tutorial_intro_title: "Learning Method",
+        tutorial_intro_desc: "This app uses a three-stage memorization method to help you learn Bible verses:",
+        tutorial_intro_basic: "Full text visible with hints",
+        tutorial_intro_intermediate: "Every other character hidden",
+        tutorial_intro_advanced: "Pure recall with no hints",
+        tutorial_start: "Start Tutorial",
+        tutorial_basic_title: "Basic Stage",
+        tutorial_basic_desc: "The verse text is fully displayed. Type the first key for each character according to your input method.",
+        tutorial_basic_note: "Characters will change color as you type.",
+        tutorial_intermediate_title: "Intermediate Stage",
+        tutorial_intermediate_desc: "Every other character is hidden. Type a key for each character, even the hidden ones. They will appear as you type.",
+        tutorial_advanced_title: "Advanced Stage",
+        tutorial_advanced_desc: "No text is shown. The characters will appear as you type the correct keys.",
+        begin: "Begin"
       },
       simplified: {
         app_title: "ZH Bible Verse Memorizer",
@@ -559,11 +786,15 @@ window.onload = function () {
         sound_off: "静音",
         sound_on: "有声音",
         toggle_sound: "切换声音",
+        vibration_feedback: "振动反馈",
+        enable_vibration: "错误时启用振动",
+        vibration_note: "注意：振动功能仅在安卓设备上可用。",
         retry: "重试",
         next: "继续",
         finish: "完成",
         // Review Panel
         review_mode: "复习模式",
+        review_due_verses: "复习到期经文",
         select_collection: "选择一个集合",
         review_collection_learned: "复习集合（仅已学习）",
         or_select_individual: "或选择单个经文",
@@ -606,8 +837,10 @@ window.onload = function () {
         not_reviewed_yet: "尚未复习",
         days_ago: "天前",
         due_in_days: "{count} 天后到期",
+        due_in_day: "1 天后到期",
         due_in_hours: "{count} 小时后到期",
         due_in_hour: "1 小时后到期",
+        due_in_minutes: "{count} 分钟后到期",
         due_today: "今天到期",
         days_overdue: "{count} 天逾期",
         day: "天",
@@ -642,6 +875,7 @@ window.onload = function () {
         completed_all_verses: "恭喜！您已完成所有新经文。",
         select_file_to_import: "请选择要导入的文件",
         import_successful: "导入成功",
+        select_verse_to_change_interval: "请至少选择一节经文以更改复习间隔",
         error_importing: "导入文件时出错",
         congratulations_mastered: "恭喜，您已掌握此经文！",
         great_job_continue: "做得好！让我们继续复习下一节。",
@@ -661,7 +895,39 @@ window.onload = function () {
         clear_all_data: "清除所有数据",
         clear_data_warning: "这将永久删除此设备上的所有经文、集合和复习数据。",
         clear_all_data_btn: "清除所有数据",
-        clear_data_confirm: "您确定要清除所有数据吗？\n\n这将永久删除：\n• 所有经文\n• 所有集合\n• 所有复习进度\n• 所有设置\n\n此操作无法撤消。"
+        clear_data_confirm: "您确定要清除所有数据吗？\n\n这将永久删除：\n• 所有经文\n• 所有集合\n• 所有复习进度\n• 所有设置\n\n此操作无法撤消。",
+        backup_reminders: "备份提醒",
+        enable_backup_reminders: "启用定期备份提醒",
+        backup_reminder_frequency: "第一个月每周提醒一次，之后每月提醒一次",
+        backup_reminder_title: "⚠️ 备份提醒",
+        backup_reminder_message: "您的经文和学习进度存储在此设备上。如果您清除浏览器数据或卸载应用，所有数据都将丢失。请定期导出数据作为备份！",
+        backup_reminder_how: "如何备份：",
+        backup_reminder_steps: "前往'导出导入' → '下载数据' → 将文件保存到安全位置（建议使用云存储）",
+        backup_reminder_got_it: "知道了！",
+        backup_reminder_export_now: "立即导出",
+        // PWA Installation
+        install_app_title: "安装应用",
+        skip: "跳过",
+        continue: "继续",
+        install_ios_safari: "在 iPhone/iPad 上安装此应用：<br><br>1. 点击屏幕底部的<strong>分享</strong>按钮 <span style='font-size: 20px;'>⎋</span><br>2. 向下滚动并点击<strong>添加到主屏幕</strong> <span style='font-size: 20px;'>➕</span><br>3. 点击右上角的<strong>添加</strong><br><br>应用程序将离线工作，感觉就像原生应用！",
+        install_android_chrome: "在安卓设备上安装此应用：<br><br>1. 点击右上角的<strong>菜单</strong>按钮 <span style='font-size: 20px;'>⋮</span><br>2. 点击<strong>添加到主屏幕</strong>或<strong>安装应用</strong><br>3. 点击<strong>添加</strong>或<strong>安装</strong><br><br>应用程序将离线工作，感觉就像原生应用！",
+        install_desktop: "在电脑上安装此应用：<br><br>1. 在浏览器地址栏中查找<strong>安装</strong>图标 <span style='font-size: 20px;'>⊕</span><br>2. 点击它并选择<strong>安装</strong><br><br>应用程序将在自己的窗口中打开并离线工作！",
+        install_browser_generic: "安装此应用：<br><br>使用浏览器菜单选择<strong>添加到主屏幕</strong>或<strong>安装应用</strong>。<br><br>安装后，应用程序将离线工作，感觉就像原生应用！",
+        // Learning Mode Tutorial
+        tutorial_intro_title: "学习方法",
+        tutorial_intro_desc: "此应用使用三阶段记忆法帮助您学习圣经经文：",
+        tutorial_intro_basic: "完整文本可见，带提示",
+        tutorial_intro_intermediate: "每隔一个字符隐藏",
+        tutorial_intro_advanced: "纯粹回忆，无提示",
+        tutorial_start: "开始教程",
+        tutorial_basic_title: "基础阶段",
+        tutorial_basic_desc: "经文完全显示。根据您的输入法，为每个字符输入第一个键。",
+        tutorial_basic_note: "输入时字符会改变颜色。",
+        tutorial_intermediate_title: "中级阶段",
+        tutorial_intermediate_desc: "每隔一个字符会被隐藏。为每个字符输入一个键，即使是隐藏的字符。它们会在您输入时出现。",
+        tutorial_advanced_title: "高级阶段",
+        tutorial_advanced_desc: "不显示文本。当您输入正确的键时，字符会出现。",
+        begin: "开始"
       },
       traditional: {
         app_title: "ZH Bible Verse Memorizer",
@@ -722,11 +988,15 @@ window.onload = function () {
         sound_off: "靜音",
         sound_on: "有聲音",
         toggle_sound: "切換聲音",
+        vibration_feedback: "振動回饋",
+        enable_vibration: "錯誤時啟用振動",
+        vibration_note: "注意：振動功能僅在安卓裝置上可用。",
         retry: "重試",
         next: "繼續",
         finish: "完成",
         // Review Panel
         review_mode: "複習模式",
+        review_due_verses: "複習到期經文",
         select_collection: "選擇一個集合",
         review_collection_learned: "複習集合（僅已學習）",
         or_select_individual: "或選擇單個經文",
@@ -769,8 +1039,10 @@ window.onload = function () {
         not_reviewed_yet: "尚未複習",
         days_ago: "天前",
         due_in_days: "{count} 天後到期",
+        due_in_day: "1 天後到期",
         due_in_hours: "{count} 小時後到期",
         due_in_hour: "1 小時後到期",
+        due_in_minutes: "{count} 分鐘後到期",
         due_today: "今天到期",
         days_overdue: "{count} 天逾期",
         day: "天",
@@ -805,6 +1077,7 @@ window.onload = function () {
         completed_all_verses: "恭喜！您已完成所有新經文。",
         select_file_to_import: "請選擇要導入的文件",
         import_successful: "導入成功",
+        select_verse_to_change_interval: "請至少選擇一節經文以更改複習間隔",
         error_importing: "導入文件時出錯",
         congratulations_mastered: "恭喜，您已掌握此經文！",
         great_job_continue: "做得好！讓我們繼續複習下一節。",
@@ -824,7 +1097,39 @@ window.onload = function () {
         clear_all_data: "清除所有數據",
         clear_data_warning: "這將永久刪除此設備上的所有經文、集合和複習數據。",
         clear_all_data_btn: "清除所有數據",
-        clear_data_confirm: "您確定要清除所有數據嗎？\n\n這將永久刪除：\n• 所有經文\n• 所有集合\n• 所有複習進度\n• 所有設置\n\n此操作無法撤消。"
+        clear_data_confirm: "您確定要清除所有數據嗎？\n\n這將永久刪除：\n• 所有經文\n• 所有集合\n• 所有複習進度\n• 所有設置\n\n此操作無法撤消。",
+        backup_reminders: "備份提醒",
+        enable_backup_reminders: "啟用定期備份提醒",
+        backup_reminder_frequency: "第一個月每週提醒一次，之後每月提醒一次",
+        backup_reminder_title: "⚠️ 備份提醒",
+        backup_reminder_message: "您的經文和學習進度存儲在此設備上。如果您清除瀏覽器數據或卸載應用，所有數據都將丟失。請定期導出數據作為備份！",
+        backup_reminder_how: "如何備份：",
+        backup_reminder_steps: "前往'導出導入' → '下載數據' → 將文件保存到安全位置（建議使用雲存儲）",
+        backup_reminder_got_it: "知道了！",
+        backup_reminder_export_now: "立即導出",
+        // PWA Installation
+        install_app_title: "安裝應用",
+        skip: "跳過",
+        continue: "繼續",
+        install_ios_safari: "在 iPhone/iPad 上安裝此應用：<br><br>1. 點擊屏幕底部的<strong>分享</strong>按鈕 <span style='font-size: 20px;'>⎋</span><br>2. 向下滾動並點擊<strong>加入主畫面</strong> <span style='font-size: 20px;'>➕</span><br>3. 點擊右上角的<strong>加入</strong><br><br>應用程式將離線工作，感覺就像原生應用！",
+        install_android_chrome: "在安卓設備上安裝此應用：<br><br>1. 點擊右上角的<strong>選單</strong>按鈕 <span style='font-size: 20px;'>⋮</span><br>2. 點擊<strong>加到主畫面</strong>或<strong>安裝應用程式</strong><br>3. 點擊<strong>加入</strong>或<strong>安裝</strong><br><br>應用程式將離線工作，感覺就像原生應用！",
+        install_desktop: "在電腦上安裝此應用：<br><br>1. 在瀏覽器地址欄中查找<strong>安裝</strong>圖標 <span style='font-size: 20px;'>⊕</span><br>2. 點擊它並選擇<strong>安裝</strong><br><br>應用程式將在自己的窗口中打開並離線工作！",
+        install_browser_generic: "安裝此應用：<br><br>使用瀏覽器選單選擇<strong>加到主畫面</strong>或<strong>安裝應用程式</strong>。<br><br>安裝後，應用程式將離線工作，感覺就像原生應用！",
+        // Learning Mode Tutorial
+        tutorial_intro_title: "學習方法",
+        tutorial_intro_desc: "此應用使用三階段記憶法幫助您學習聖經經文：",
+        tutorial_intro_basic: "完整文字可見，帶提示",
+        tutorial_intro_intermediate: "每隔一個字元隱藏",
+        tutorial_intro_advanced: "純粹回憶，無提示",
+        tutorial_start: "開始教程",
+        tutorial_basic_title: "基礎階段",
+        tutorial_basic_desc: "經文完全顯示。根據您的輸入法，為每個字元輸入第一個鍵。",
+        tutorial_basic_note: "輸入時字元會改變顏色。",
+        tutorial_intermediate_title: "中級階段",
+        tutorial_intermediate_desc: "每隔一個字元會被隱藏。為每個字元輸入一個鍵，即使是隱藏的字元。它們會在您輸入時出現。",
+        tutorial_advanced_title: "高級階段",
+        tutorial_advanced_desc: "不顯示文字。當您輸入正確的鍵時，字元會出現。",
+        begin: "開始"
       }
     };
 
@@ -929,8 +1234,9 @@ window.onload = function () {
       const inputMethod = localStorage.getItem('inputMethod') || 'pinyin';
       const lang = localStorage.getItem('languagePreference') || 'english';
       
-      if (learnInput) {
-        learnInput.placeholder = t(`${inputMethod}_helper`, lang);
+      // Set helper text above verse display instead of input placeholder
+      if (learnHelperText) {
+        learnHelperText.textContent = t(`${inputMethod}_helper`, lang);
       }
     }
 
@@ -948,6 +1254,7 @@ window.onload = function () {
     // Settings panel handlers
     if (settingsBtn && settingsPanel) {
       settingsBtn.addEventListener('click', () => {
+        setActiveNavButton(settingsBtn);
         showPanel(settingsPanel);
         // Load default Bible version from localStorage
         const defaultBibleVersionInput = document.getElementById('defaultBibleVersion');
@@ -959,37 +1266,41 @@ window.onload = function () {
         const inputMethodRadios = document.querySelectorAll('input[name="inputMethodOption"]');
         const savedInputMethod = localStorage.getItem('inputMethod') || 'pinyin';
         inputMethodRadios.forEach(r => { r.checked = (r.value === savedInputMethod); });
+        
+        // Load vibration toggle
+        const vibrationToggle = document.getElementById('vibrationToggle');
+        if (vibrationToggle) {
+          const savedVibration = localStorage.getItem('vibrationEnabled') === 'true';
+          vibrationToggle.checked = savedVibration;
+        }
+        
+        // Load backup reminder toggle
+        if (backupReminderToggle) {
+          const savedBackupReminder = localStorage.getItem('backupReminderEnabled');
+          // Default to enabled if not set
+          backupReminderToggle.checked = savedBackupReminder === null ? true : savedBackupReminder === 'true';
+        }
       });
     }
-    if (settingsSaveBtn && settingsPanel) {
-      settingsSaveBtn.addEventListener('click', () => {
-        const selectedTheme = document.querySelector('input[name="themeOption"]:checked');
-        const themeVal = selectedTheme ? selectedTheme.value : 'system';
+    
+    // Auto-save theme changes
+    const themeRadios = document.querySelectorAll('input[name="themeOption"]');
+    themeRadios.forEach(radio => {
+      radio.addEventListener('change', (e) => {
+        const themeVal = e.target.value;
         localStorage.setItem('themePreference', themeVal);
         applyTheme(themeVal);
-        
-        const selectedLang = document.querySelector('input[name="languageOption"]:checked');
-        const langVal = selectedLang ? selectedLang.value : 'english';
+      });
+    });
+    
+    // Auto-save language changes
+    const languageRadios = document.querySelectorAll('input[name="languageOption"]');
+    languageRadios.forEach(radio => {
+      radio.addEventListener('change', (e) => {
+        const langVal = e.target.value;
         const previousLang = localStorage.getItem('languagePreference');
         localStorage.setItem('languagePreference', langVal);
         applyLanguage(langVal);
-        
-        // Save default Bible version
-        const defaultBibleVersionInput = document.getElementById('defaultBibleVersion');
-        if (defaultBibleVersionInput) {
-          localStorage.setItem('defaultBibleVersion', defaultBibleVersionInput.value.trim());
-        }
-        
-        // Save input method
-        const selectedInputMethod = document.querySelector('input[name="inputMethodOption"]:checked');
-        const inputMethodVal = selectedInputMethod ? selectedInputMethod.value : 'pinyin';
-        const previousInputMethod = localStorage.getItem('inputMethod');
-        localStorage.setItem('inputMethod', inputMethodVal);
-        
-        // Update input method labels if language or input method changed
-        if (previousLang !== langVal || previousInputMethod !== inputMethodVal) {
-          updateInputMethodLabels();
-        }
         
         // If language changed, rebuild bible books and refresh displays
         if (previousLang !== langVal) {
@@ -999,6 +1310,48 @@ window.onload = function () {
           loadCollectionsForReview();
           populateCollectionSelector();
         }
+      });
+    });
+    
+    // Auto-save input method changes
+    const inputMethodRadios = document.querySelectorAll('input[name="inputMethodOption"]');
+    inputMethodRadios.forEach(radio => {
+      radio.addEventListener('change', (e) => {
+        const inputMethodVal = e.target.value;
+        const previousInputMethod = localStorage.getItem('inputMethod');
+        localStorage.setItem('inputMethod', inputMethodVal);
+        
+        // Update input method labels if input method changed
+        if (previousInputMethod !== inputMethodVal) {
+          updateInputMethodLabels();
+        }
+      });
+    });
+    
+    // Auto-save vibration setting
+    const vibrationToggle = document.getElementById('vibrationToggle');
+    if (vibrationToggle) {
+      vibrationToggle.addEventListener('change', (e) => {
+        localStorage.setItem('vibrationEnabled', e.target.checked.toString());
+        isVibrationEnabled = e.target.checked;
+      });
+    }
+    
+    // Auto-save backup reminder setting
+    if (backupReminderToggle) {
+      backupReminderToggle.addEventListener('change', (e) => {
+        localStorage.setItem('backupReminderEnabled', e.target.checked.toString());
+      });
+    }
+    
+    // Auto-save default Bible version (on blur/change)
+    const defaultBibleVersionInput = document.getElementById('defaultBibleVersion');
+    if (defaultBibleVersionInput) {
+      defaultBibleVersionInput.addEventListener('blur', (e) => {
+        localStorage.setItem('defaultBibleVersion', e.target.value.trim());
+      });
+      defaultBibleVersionInput.addEventListener('change', (e) => {
+        localStorage.setItem('defaultBibleVersion', e.target.value.trim());
       });
     }
 
@@ -1245,6 +1598,16 @@ window.onload = function () {
   let audioCtx = null;
   let isMuted = true; // default: muted (no sound)
   let prevUserInputLength = 0;
+  // Vibration state
+  let isVibrationEnabled = false; // default: vibration off
+  
+  // Load vibration setting from localStorage on page load
+  (function initVibration() {
+    const saved = localStorage.getItem('vibrationEnabled');
+    if (saved === 'true') {
+      isVibrationEnabled = true;
+    }
+  })();
   // Modal / completion state
   let pendingCompletion = { success: false, accuracy: 0 };
   // Track last displayed error so help text updates when a new error occurs
@@ -1302,18 +1665,19 @@ window.onload = function () {
     return card;
   }
 
-  // Helper: floor-based days/hours until due so <24h shows hours
+  // Helper: floor-based days/hours/minutes until due
   function getDaysUntilDue(dueDate) {
     if (!dueDate) return null;
     const now = new Date();
     const due = new Date(dueDate);
     const diffTime = due.getTime() - now.getTime();
-    const msPerHour = 1000 * 60 * 60;
+    const msPerMinute = 1000 * 60;
+    const msPerHour = msPerMinute * 60;
     const msPerDay = msPerHour * 24;
-    // Use Math.trunc to round towards zero (not down) so overdue by 3 hours shows as 0 days, not -1 days
-    const days = Math.trunc(diffTime / msPerDay);
-    const hours = Math.trunc(diffTime / msPerHour);
-    return { days, hours, milliseconds: diffTime };
+    const days = Math.floor(diffTime / msPerDay);
+    const hours = Math.floor(diffTime / msPerHour);
+    const minutes = Math.floor(diffTime / msPerMinute);
+    return { days, hours, minutes, milliseconds: diffTime };
   }
 
   // Helper function to count due verses in a collection
@@ -1333,35 +1697,23 @@ window.onload = function () {
     const learnedVerses = verses.filter(v => v && v.lastReviewed);
     const now = new Date();
     
-    console.log('updateReviewBadge: Total verses:', verses.length, 'Learned:', learnedVerses.length);
-    
     const dueCount = learnedVerses.filter(v => {
       if (!v.dueDate) {
-        console.log('Verse without dueDate (counting as due):', v.bookName, v.chapterNumber + ':' + v.verseNumber);
         return true; // Consider verses without dueDate as due
       }
       const due = new Date(v.dueDate) <= now;
-      if (due) {
-        console.log('Due verse:', v.bookName, v.chapterNumber + ':' + v.verseNumber, 'Due:', v.dueDate);
-      }
       return due;
     }).length;
     
-    console.log('Total due count:', dueCount);
-    
     const badge = document.getElementById('reviewBadge');
     const reviewBtn = document.getElementById('reviewBtn');
-    
-    console.log('Badge element:', badge, 'Review button:', reviewBtn);
     
     if (badge && reviewBtn) {
       if (dueCount > 0) {
         badge.textContent = dueCount;
         badge.style.display = 'inline-block';
-        console.log('Badge updated with count:', dueCount);
       } else {
         badge.style.display = 'none';
-        console.log('No due verses, badge hidden');
       }
     }
   }
@@ -1429,6 +1781,16 @@ window.onload = function () {
         document.getElementById('verseInitials').value = v.verseInitials;
         document.getElementById('bookInitials').value = v.bookInitials;
         document.getElementById('bibleVersion').value = v.bibleVersion || '';
+        // Store original values for change detection
+        originalVerseValues = {
+          verseText: v.verseText,
+          bookName: v.bookName,
+          chapterNumber: v.chapterNumber,
+          verseNumber: v.verseNumber,
+          verseInitials: v.verseInitials,
+          bookInitials: v.bookInitials,
+          bibleVersion: v.bibleVersion || ''
+        };
         // If this verse belongs to a collection, pre-select that collection in the add panel select
         const cols = getCollections();
         let found = null;
@@ -1436,6 +1798,8 @@ window.onload = function () {
         try { if (addToCollectionSelect) addToCollectionSelect.value = found || ''; } catch (e) {}
         showPanel(addVersePanel);
         saveVerseBtn.textContent = t('update_verse');
+        // Dim the Update Verse button initially
+        saveVerseBtn.classList.add('dimmed');
       });
 
       const deleteBtn = document.createElement('button');
@@ -1517,6 +1881,10 @@ window.onload = function () {
       checkbox.type = 'checkbox';
       checkbox.className = 'collection-checkbox';
       checkbox.dataset.collectionId = col.id;
+      // Update Review Collection button opacity when selection changes
+      checkbox.addEventListener('change', () => {
+        updateReviewCollectionButtonOpacity();
+      });
       
       const title = document.createElement('span');
       title.className = 'collection-title';
@@ -1555,24 +1923,34 @@ window.onload = function () {
           const dueInfo = getDaysUntilDue(verse.dueDate);
           if (dueInfo !== null) {
             if (dueInfo.milliseconds < 0) {
-              const overdueDays = Math.abs(dueInfo.days);
-              if (overdueDays >= 1) {
+              // Overdue
+              if (dueInfo.days <= -2) {
+                // More than 24 hours overdue (2+ days)
+                const overdueDays = Math.abs(dueInfo.days);
                 reviewText += ` <span class="overdue">(${t('days_overdue').replace('{count}', overdueDays)})</span>`;
               } else {
-                // Less than 24 hours overdue - show as "Due today"
+                // Less than 24 hours overdue (0-24 hours) - show as "Due Today"
                 reviewText += ` <span class="due-soon">(${t('due_today')})</span>`;
               }
-            } else if (dueInfo.days === 0 && dueInfo.hours >= 1 && dueInfo.hours <= 23) {
-              // Less than 24 hours: show hours
-              if (dueInfo.hours === 1) {
-                reviewText += ` <span class="due-soon">(${t('due_in_hour')})</span>`;
+            } else if (dueInfo.days >= 1) {
+              // Due in 1 or more days (>= 24 hours)
+              if (dueInfo.days === 1) {
+                reviewText += ` <span class="due-future">(${t('due_in_day')})</span>`;
               } else {
-                reviewText += ` <span class="due-soon">(${t('due_in_hours').replace('{count}', dueInfo.hours)})</span>`;
+                reviewText += ` <span class="due-future">(${t('due_in_days').replace('{count}', dueInfo.days)})</span>`;
               }
-            } else if (dueInfo.days === 0) {
-              reviewText += ` <span class="due-soon">(${t('due_today')})</span>`;
+            } else if (dueInfo.hours >= 2) {
+              // Due in 2-23 hours
+              reviewText += ` <span class="due-soon">(${t('due_in_hours').replace('{count}', dueInfo.hours)})</span>`;
+            } else if (dueInfo.hours === 1) {
+              // Due in 1 hour (1h to <2h)
+              reviewText += ` <span class="due-soon">(${t('due_in_hour')})</span>`;
+            } else if (dueInfo.minutes >= 1) {
+              // Due in 1-59 minutes
+              reviewText += ` <span class="due-soon">(${t('due_in_minutes').replace('{count}', dueInfo.minutes)})</span>`;
             } else {
-              reviewText += ` <span class="due-future">(${t('due_in_days').replace('{count}', dueInfo.days)})</span>`;
+              // Due now (0 minutes)
+              reviewText += ` <span class="due-soon">(${t('due_today')})</span>`;
             }
           }
           lastReviewed.innerHTML = reviewText;
@@ -1596,6 +1974,9 @@ window.onload = function () {
       collectionItem.appendChild(versesList);
       reviewCollectionsList.appendChild(collectionItem);
     });
+
+    // Update the opacity hint on initial render
+    updateReviewCollectionButtonOpacity();
   }
 
   function loadVersesForReview() {
@@ -1610,7 +1991,20 @@ window.onload = function () {
       empty.className = 'verse-item';
       empty.textContent = t('no_learned_verses');
       reviewList.appendChild(empty);
+      // Hide Review Due button if no learned verses
+      if (reviewDueBtn) reviewDueBtn.style.display = 'none';
       return;
+    }
+
+    // Check for due verses and show/hide Review Due button
+    const now = new Date();
+    const dueVerses = learned.filter(v => {
+      if (!v.dueDate) return true; // Consider verses without dueDate as due
+      return new Date(v.dueDate) <= now;
+    });
+    
+    if (reviewDueBtn) {
+      reviewDueBtn.style.display = dueVerses.length > 0 ? 'block' : 'none';
     }
 
     // Sort by due date for display in the review list
@@ -1636,6 +2030,10 @@ window.onload = function () {
   checkbox.type = 'checkbox';
   checkbox.className = 'verse-checkbox';
   checkbox.dataset.verse = JSON.stringify(verse);
+    // Update button opacity states when selection changes
+    checkbox.addEventListener('change', () => {
+      updateChangeIntervalButtonVisibility();
+    });
       
       const content = document.createElement('div');
       content.className = 'verse-content';
@@ -1654,24 +2052,34 @@ window.onload = function () {
         const dueInfo = getDaysUntilDue(verse.dueDate);
         if (dueInfo !== null) {
           if (dueInfo.milliseconds < 0) {
-            const overdueDays = Math.abs(dueInfo.days);
-            if (overdueDays >= 1) {
+            // Overdue
+            if (dueInfo.days <= -2) {
+              // More than 24 hours overdue (2+ days)
+              const overdueDays = Math.abs(dueInfo.days);
               reviewText += ` <span class="overdue">(${t('days_overdue').replace('{count}', overdueDays)})</span>`;
             } else {
-              // Less than 24 hours overdue - show as "Due today"
+              // Less than 24 hours overdue (0-24 hours) - show as "Due Today"
               reviewText += ` <span class="due-soon">(${t('due_today')})</span>`;
             }
-          } else if (dueInfo.days === 0 && dueInfo.hours >= 1 && dueInfo.hours <= 23) {
-            // Less than 24 hours: show hours
-            if (dueInfo.hours === 1) {
-              reviewText += ` <span class="due-soon">(${t('due_in_hour')})</span>`;
+          } else if (dueInfo.days >= 1) {
+            // Due in 1 or more days (>= 24 hours)
+            if (dueInfo.days === 1) {
+              reviewText += ` <span class="due-future">(${t('due_in_day')})</span>`;
             } else {
-              reviewText += ` <span class="due-soon">(${t('due_in_hours').replace('{count}', dueInfo.hours)})</span>`;
+              reviewText += ` <span class="due-future">(${t('due_in_days').replace('{count}', dueInfo.days)})</span>`;
             }
-          } else if (dueInfo.days === 0) {
-            reviewText += ` <span class="due-soon">(${t('due_today')})</span>`;
+          } else if (dueInfo.hours >= 2) {
+            // Due in 2-23 hours
+            reviewText += ` <span class="due-soon">(${t('due_in_hours').replace('{count}', dueInfo.hours)})</span>`;
+          } else if (dueInfo.hours === 1) {
+            // Due in 1 hour (1h to <2h)
+            reviewText += ` <span class="due-soon">(${t('due_in_hour')})</span>`;
+          } else if (dueInfo.minutes >= 1) {
+            // Due in 1-59 minutes
+            reviewText += ` <span class="due-soon">(${t('due_in_minutes').replace('{count}', dueInfo.minutes)})</span>`;
           } else {
-            reviewText += ` <span class="due-future">(${t('due_in_days').replace('{count}', dueInfo.days)})</span>`;
+            // Due now (0 minutes)
+            reviewText += ` <span class="due-soon">(${t('due_today')})</span>`;
           }
         }
         lastReviewed.innerHTML = reviewText;
@@ -1685,6 +2093,9 @@ window.onload = function () {
       verseItem.appendChild(content);
       reviewList.appendChild(verseItem);
     });
+
+    // Update button states on initial render
+    updateChangeIntervalButtonVisibility();
     
     // Show/hide change interval button based on checkbox selection
     updateChangeIntervalButtonVisibility();
@@ -1696,7 +2107,31 @@ window.onload = function () {
       const checkboxes = reviewVerseList.querySelectorAll('.verse-checkbox');
       const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
       if (changeIntervalBtn) {
-        changeIntervalBtn.style.display = anyChecked ? 'inline-block' : 'none';
+        // Always visible; apply hint opacity when none selected
+        if (anyChecked) {
+          changeIntervalBtn.classList.remove('btn-disabled-hint');
+        } else {
+          changeIntervalBtn.classList.add('btn-disabled-hint');
+        }
+      }
+      if (startReviewBtn) {
+        if (anyChecked) {
+          startReviewBtn.classList.remove('btn-disabled-hint');
+        } else {
+          startReviewBtn.classList.add('btn-disabled-hint');
+        }
+      }
+    }
+  }
+
+  // Update Review Collection button opacity depending on collection checkbox selection
+  function updateReviewCollectionButtonOpacity() {
+    if (reviewCollectionsList && reviewCollectionBtn) {
+      const anyChecked = !!reviewCollectionsList.querySelector('.collection-checkbox:checked');
+      if (anyChecked) {
+        reviewCollectionBtn.classList.remove('btn-disabled-hint');
+      } else {
+        reviewCollectionBtn.classList.add('btn-disabled-hint');
       }
     }
   }
@@ -1997,6 +2432,7 @@ function populateBookDatalist() {
           if (typeof isMuted !== 'undefined' && typeof playBuzzer === 'function' && !isMuted) {
             playBuzzer();
           }
+          vibrateOnError();
           break;
         }
       }
@@ -2177,6 +2613,12 @@ function populateBookDatalist() {
   // Replace the reviewCollectionBtn click handler to use a modal for mode selection
   if (typeof reviewCollectionBtn !== 'undefined' && reviewCollectionBtn) {
     reviewCollectionBtn.addEventListener('click', function(e) {
+      // Require at least one collection selected
+      const anyChecked = !!document.querySelector('.collection-checkbox:checked');
+      if (!anyChecked) {
+        alert(t('select_collection_to_review'));
+        return;
+      }
       // Get selected collection from checkbox
       const selectedCheckbox = document.querySelector('.collection-checkbox:checked');
       if (!selectedCheckbox) {
@@ -2266,7 +2708,9 @@ function populateBookDatalist() {
     // Auto-populate Bible version with default value
     document.getElementById('bibleVersion').value = localStorage.getItem('defaultBibleVersion') || '';
     editIndex = null;
+    originalVerseValues = null;
     saveVerseBtn.textContent = t('save_verse');
+    saveVerseBtn.classList.remove('dimmed');
     saveStatus.textContent = '';
   }
 
@@ -2281,6 +2725,88 @@ function populateBookDatalist() {
   });
 
   clearFormBtn.addEventListener('click', clearForm);
+
+  // Detect changes to verse fields when editing
+  function checkForVerseChanges() {
+    if (!originalVerseValues) return; // Not in edit mode
+    
+    const currentValues = {
+      verseText: document.getElementById('verseText').value,
+      bookName: document.getElementById('bookNameInput').value,
+      chapterNumber: document.getElementById('chapterNumber').value,
+      verseNumber: document.getElementById('verseNumber').value,
+      verseInitials: document.getElementById('verseInitials').value,
+      bookInitials: document.getElementById('bookInitials').value,
+      bibleVersion: document.getElementById('bibleVersion').value
+    };
+    
+    // Check if any field has changed
+    const hasChanges = Object.keys(originalVerseValues).some(
+      key => originalVerseValues[key] !== currentValues[key]
+    );
+    
+    // Enable/disable button based on changes
+    if (hasChanges) {
+      saveVerseBtn.classList.remove('dimmed');
+    } else {
+      saveVerseBtn.classList.add('dimmed');
+    }
+  }
+
+  // Check if there are unsaved changes in the add verse form
+  function hasUnsavedChanges() {
+    const verseText = document.getElementById('verseText').value.trim();
+    const bookName = document.getElementById('bookNameInput').value.trim();
+    const chapterNumber = document.getElementById('chapterNumber').value.trim();
+    const verseNumber = document.getElementById('verseNumber').value.trim();
+    const verseInitials = document.getElementById('verseInitials').value.trim();
+    const bookInitials = document.getElementById('bookInitials').value.trim();
+    const bibleVersion = document.getElementById('bibleVersion').value.trim();
+    const defaultBibleVersion = localStorage.getItem('defaultBibleVersion') || '';
+    
+    // If editing, check if any field differs from original
+    if (originalVerseValues) {
+      return verseText !== originalVerseValues.verseText ||
+             bookName !== originalVerseValues.bookName ||
+             chapterNumber !== originalVerseValues.chapterNumber ||
+             verseNumber !== originalVerseValues.verseNumber ||
+             verseInitials !== originalVerseValues.verseInitials ||
+             bookInitials !== originalVerseValues.bookInitials ||
+             bibleVersion !== originalVerseValues.bibleVersion;
+    }
+    
+    // If adding new verse, check if any field has content (except bibleVersion if it's just the default)
+    return verseText !== '' ||
+           bookName !== '' ||
+           chapterNumber !== '' ||
+           verseNumber !== '' ||
+           verseInitials !== '' ||
+           bookInitials !== '' ||
+           (bibleVersion !== '' && bibleVersion !== defaultBibleVersion);
+  }
+
+  // Set active navigation button and disable it, enable all others
+  function setActiveNavButton(button) {
+    // Re-enable the previously active button
+    if (activeNavButton && activeNavButton !== button) {
+      activeNavButton.classList.remove('active-nav');
+    }
+    
+    // Set the new active button
+    activeNavButton = button;
+    if (button) {
+      button.classList.add('active-nav');
+    }
+  }
+
+  // Add change listeners to all verse input fields
+  document.getElementById('verseText').addEventListener('input', checkForVerseChanges);
+  document.getElementById('bookNameInput').addEventListener('input', checkForVerseChanges);
+  document.getElementById('chapterNumber').addEventListener('input', checkForVerseChanges);
+  document.getElementById('verseNumber').addEventListener('input', checkForVerseChanges);
+  document.getElementById('verseInitials').addEventListener('input', checkForVerseChanges);
+  document.getElementById('bookInitials').addEventListener('input', checkForVerseChanges);
+  document.getElementById('bibleVersion').addEventListener('input', checkForVerseChanges);
 
   saveVerseBtn.addEventListener('click', () => {
     const verseText = document.getElementById('verseText').value.trim();
@@ -2374,9 +2900,11 @@ function populateBookDatalist() {
       }
       
       verses[editIndex] = verseData;
-      editIndex = null;
-      saveVerseBtn.textContent = t('save_verse');
       saveStatus.textContent = t('verse_updated');
+      // Clear form and return to add verse state after updating
+      setTimeout(() => {
+        clearForm();
+      }, 1000); // Give user time to see the success message
     } else {
       verses.push(verseData);
       saveStatus.textContent = t('verse_saved');
@@ -2486,8 +3014,7 @@ function populateBookDatalist() {
     // Existing resets that are still necessary:
     currentVerse = verse;
     learnInput.value = ''; // Clear the input field element
-    learnInput.style.display = ''; // Ensure input field is visible
-    // Update placeholder with appropriate helper text
+    // Update helper text above verse display
     updateLearnInputPlaceholder();
     prevUserInputLength = 0;
     learnInput.disabled = false;
@@ -2542,6 +3069,7 @@ function populateBookDatalist() {
     // Delay focus to ensure all state is cleared and display is rendered
     // This prevents keyboard from appearing and immediately dismissing on mobile
     setTimeout(() => {
+      console.log('startLearnMode: focusing learnInput');
       learnInput.focus();
     }, 100);
   }
@@ -2639,10 +3167,10 @@ function populateBookDatalist() {
 
         // --- STAGE LOGIC (Modified Advanced Mode) ---
         if (learningStage === 'intermediate' && prevMap !== null) {
-            // Intermediate: show if it's the right variant (odd/even)
+            // Intermediate: show if it's the right variant (odd/even) OR if user has typed the preceding character
             const isOdd = ((prevMap + 1) % 2) === 1;
             const visibleByVariant = (intermediateVariant === 'odd') ? isOdd : !isOdd;
-            if (visibleByVariant) shown = true;
+            if (visibleByVariant || userInput.length > prevMap) shown = true;
         } else if (learningStage === 'advanced') { 
             // Request 1: In advanced: show if previous input-required character has been typed (regardless of correctness)
             if (prevMap !== null && userInput.length > prevMap) {
@@ -2659,9 +3187,13 @@ function populateBookDatalist() {
         }
         
         // --- COLOR LOGIC (Modified to fulfill Request 1) ---
-        // Request 1: Punctuation is displayed as 'correct' (white) if it is shown
+        // Initial punctuation (no preceding input-required chars) should display as correct (white) immediately
+        // to signal users don't need to type it.
+        // Other punctuation is displayed as 'correct' (white) if it is shown
         // AND the nearest preceding input-required character has been typed, regardless of correctness.
-        if (shown && prevMap !== null && userInput.length > prevMap) {
+        if (isInitialPunct) {
+            className = 'verse-character correct';
+        } else if (shown && prevMap !== null && userInput.length > prevMap) {
             className = 'verse-character correct';
         }
         
@@ -2766,6 +3298,17 @@ function populateBookDatalist() {
     }
   }
 
+  // Vibrate on error (Android only)
+  function vibrateOnError() {
+    if (isVibrationEnabled && navigator.vibrate) {
+      try {
+        navigator.vibrate(100); // vibrate for 100ms
+      } catch (e) {
+        // ignore vibration errors
+      }
+    }
+  }
+
   // Accuracy modal elements
   const accuracyModal = document.getElementById('accuracyModal');
   const modalMessage = document.getElementById('modalMessage');
@@ -2834,7 +3377,13 @@ function populateBookDatalist() {
       }
     } else {
       modalMessage.textContent = t('nice_try');
-      modalNextBtn.style.display = 'none';
+      // In review mode, show both Retry and Next buttons for failed attempts
+      if (reviewVerses && reviewVerses.length > 0) {
+        modalNextBtn.style.display = 'inline-block';
+        if (modalNextBtn) modalNextBtn.textContent = t('next');
+      } else {
+        modalNextBtn.style.display = 'none';
+      }
       if (modalRetryBtn) modalRetryBtn.style.display = 'inline-block';
     }
     modalAccuracy.textContent = `${t('accuracy')}: ${accuracy.toFixed(1)}%`;
@@ -2857,6 +3406,7 @@ function populateBookDatalist() {
   }
 
   function closeAccuracyModal() {
+    console.log('closeAccuracyModal called');
     if (!accuracyModal) return;
     accuracyModal.classList.remove('open');
     accuracyModal.setAttribute('aria-hidden', 'true');
@@ -3018,6 +3568,8 @@ function populateBookDatalist() {
         }
 
         // Not in review - reset to basic learning mode
+        console.log('Finish button: Not in review, closing modal and starting next verse');
+        closeAccuracyModal();
         userInput = '';
         prevUserInputLength = 0;
         learnInput.value = '';
@@ -3030,6 +3582,10 @@ function populateBookDatalist() {
         if (list && list.length > 0) {
           currentVerse = list[0];
           startLearnMode(currentVerse);
+          // Explicitly show keyboard after startLearnMode since showPanel hides it
+          setTimeout(() => {
+            showKeyboardForInput(learnInput);
+          }, 150);
         } else {
           try { if (verseSelector) verseSelector.focus(); } catch (e) {}
         }
@@ -3079,6 +3635,7 @@ function populateBookDatalist() {
         const typedNorm = method === 'pinyin' ? typed : typed;
         if (expectedNorm && typedNorm !== expectedNorm) {
           if (!isMuted) playBuzzer();
+          vibrateOnError();
           break; // play once per input event
         }
       }
@@ -3086,39 +3643,21 @@ function populateBookDatalist() {
 
     prevUserInputLength = userInput.length;
 
-    // Auto-switch keyboard for non-Pinyin methods when next character is a digit
-    console.log('Checking auto-switch:', {
-      method,
-      activeInputId: activeInput ? activeInput.id : null,
-      learnInputId: learnInput ? learnInput.id : null,
-      match: activeInput === learnInput,
-      userInputLength: userInput.length,
-      learnFullInitialsLength: learnFullInitials.length
-    });
-    
-    if (method !== 'pinyin' && activeInput === learnInput && userInput.length < learnFullInitials.length) {
+    // Auto-switch keyboard when next character is a digit
+    if (activeInput === learnInput && userInput.length < learnFullInitials.length) {
       const nextExpected = learnFullInitials[userInput.length];
       const isNextDigit = /[0-9]/.test(nextExpected);
       const numericVisible = numericKeyboard && numericKeyboard.style.display === 'block';
       const zhuyinVisible = zhuyinKeyboard && zhuyinKeyboard.style.display === 'block';
       const cangjieVisible = cangjieKeyboard && cangjieKeyboard.style.display === 'block';
-      
-      console.log('Auto-switch check:', {
-        nextExpected,
-        isNextDigit,
-        numericVisible,
-        zhuyinVisible,
-        cangjieVisible
-      });
+      const pinyinVisible = pinyinKeyboard && pinyinKeyboard.style.display === 'block';
       
       if (isNextDigit && !numericVisible) {
         // Next character is a digit but numeric keyboard not showing - switch to it
-        console.log('Switching to numeric keyboard, next expected:', nextExpected);
         hideAllKeyboards();
         showKeyboardForInput(learnInput, 'numeric');
       } else if (!isNextDigit && numericVisible) {
         // Numeric keyboard is showing but next character is not a digit - switch back
-        console.log('Switching back to', method, 'keyboard, next expected:', nextExpected);
         hideAllKeyboards();
         showKeyboardForInput(learnInput);
       }
@@ -3361,6 +3900,13 @@ function populateBookDatalist() {
     learnFeedback.className = '';
     learnRetryBtn.style.display = 'none';
     learnNextBtn.style.display = 'none';
+    
+    // Ensure verse selector is visible during review retry
+    if (reviewVerses && reviewVerses.length > 0 && verseSelector) {
+      verseSelector.style.display = 'block';
+      verseSelector.style.opacity = '1';
+    }
+    
     renderVerseDisplay();
     learnInput.focus();
   });
@@ -3386,9 +3932,21 @@ function populateBookDatalist() {
     }
 
     if (currentVerse) {
+      // Clear input field and reset state when switching modes to prevent cheating
+      userInput = '';
+      learnInput.value = '';
+      learnInput.disabled = false;
+      lastErrorIndex = null;
+      lastErrorChar = null;
+      learnFeedback.textContent = '';
+      learnFeedback.className = '';
+      learnRetryBtn.style.display = 'none';
+      learnNextBtn.style.display = 'none';
+      
       // Ensure verse selector is visible when changing stages (avoid lingering faded state)
       try { if (verseSelector) verseSelector.style.opacity = '1'; } catch (e) {}
       renderVerseDisplay();
+      learnInput.focus();
     }
   }
 
@@ -3506,6 +4064,25 @@ function hideAllPanels() {
 }
 
 function showPanel(panelToShow) {
+  // Check for unsaved changes when leaving addVersePanel
+  if (addVersePanel && addVersePanel.style.display === 'block' && panelToShow !== addVersePanel) {
+    if (hasUnsavedChanges()) {
+      const lang = localStorage.getItem('languagePreference') || 'english';
+      let message;
+      if (lang === 'simplified') {
+        message = '您有未保存的更改。确定要离开此页面吗？';
+      } else if (lang === 'traditional') {
+        message = '您有未保存的更改。確定要離開此頁面嗎？';
+      } else {
+        message = 'You have unsaved changes. Are you sure you want to leave this page?';
+      }
+      
+      if (!confirm(message)) {
+        return; // User chose to stay, don't change panels
+      }
+    }
+  }
+  
   // Hide keyboards when switching panels
   hideAllKeyboards();
   
@@ -3524,7 +4101,7 @@ function showPanel(panelToShow) {
             if (learnInput) {
                 learnInput.value = '';
                 learnInput.disabled = false;
-                learnInput.style.display = 'block'; // Restore visibility of the input field
+                // Keep input field hidden - it's invisible by design
             }
             if (learnFeedback) {
                 learnFeedback.textContent = ''; // Clear the congratulatory message
@@ -3542,6 +4119,7 @@ function showPanel(panelToShow) {
 
   // Navigation Event Listeners
   addVerseBtn.addEventListener('click', () => {
+    setActiveNavButton(addVerseBtn);
     showPanel(addVersePanel);
     loadVersesForEdit();
     populateCollectionSelector();
@@ -3551,6 +4129,7 @@ function showPanel(panelToShow) {
   updateReviewBadge();
 
   learnBtn.addEventListener('click', () => {
+    setActiveNavButton(learnBtn);
     // Hide all panels, then show the learnPanel
     document.querySelectorAll('.panel').forEach(p => p.style.display = 'none');
     learnPanel.style.display = 'block';
@@ -3574,7 +4153,7 @@ function showPanel(panelToShow) {
     if (learnInput) {
         learnInput.value = '';
         learnInput.disabled = false;
-        learnInput.style.display = 'block';
+        // Keep input field hidden - it's invisible by design
     }
     if (learnFeedback) {
         learnFeedback.textContent = '';
@@ -3596,11 +4175,110 @@ function showPanel(panelToShow) {
   });
 
   reviewBtn.addEventListener('click', () => {
+    setActiveNavButton(reviewBtn);
     showPanel(reviewPanel);
     loadVersesForReview();
     loadCollectionsForReview();
     updateReviewBadge();
   });
+
+  // Review Due Verses button handler
+  if (reviewDueBtn) {
+    reviewDueBtn.addEventListener('click', () => {
+      const verses = JSON.parse(localStorage.getItem('verses') || '[]');
+      const now = new Date();
+      const dueVerses = verses.filter(v => {
+        if (!v || !v.lastReviewed) return false;
+        if (!v.dueDate) return true; // Consider verses without dueDate as due
+        return new Date(v.dueDate) <= now;
+      });
+
+      if (dueVerses.length === 0) {
+        alert(t('no_learned_verses'));
+        return;
+      }
+
+      // If only one verse, start review directly in advanced mode
+      if (dueVerses.length === 1) {
+        reviewCollectionMode = 'individual';
+        reviewVerses = dueVerses;
+        reviewSuccessCount = 0;
+        currentVerse = dueVerses[0];
+        singleTextPrev = [];
+        singleTextReviewIndex = 0;
+        setLearningStage('advanced');
+        showPanel(learnPanel);
+        startLearnMode(currentVerse);
+        if (reviewModeHiddenControls) reviewModeHiddenControls.style.display = 'none';
+        if (verseSelector) {
+          verseSelector.innerHTML = '';
+          const opt = document.createElement('option');
+          opt.value = 0;
+          opt.textContent = `${currentVerse.bookName} ${currentVerse.chapterNumber}:${currentVerse.verseNumber}`;
+          verseSelector.appendChild(opt);
+          verseSelector.style.display = 'block';
+          verseSelector.style.opacity = '1';
+          verseSelector.disabled = true;
+        }
+        const verseSelectorLabel = document.getElementById('verseSelectorLabel');
+        if (verseSelectorLabel) verseSelectorLabel.style.display = 'none';
+        return;
+      }
+
+      // Multiple verses - show review mode modal
+      const reviewModeModal = document.getElementById('reviewModeModal');
+      if (reviewModeModal) {
+        reviewModeModal.classList.add('open');
+        reviewModeModal.setAttribute('aria-hidden', 'false');
+
+        const individuallyBtn = document.getElementById('reviewIndividuallyBtn');
+        const singleTextBtn = document.getElementById('reviewSingleTextBtn');
+
+        // Remove previous listeners
+        individuallyBtn.onclick = null;
+        singleTextBtn.onclick = null;
+
+        individuallyBtn.onclick = function() {
+          reviewModeModal.classList.remove('open');
+          reviewModeModal.setAttribute('aria-hidden', 'true');
+          // Sort due verses by Biblical order
+          const sortedList = sortVersesByBibleOrder(dueVerses);
+          reviewCollectionMode = 'individual';
+          reviewVerses = sortedList;
+          reviewSuccessCount = 0;
+          if (verseSelector) {
+            verseSelector.innerHTML = '';
+            reviewVerses.forEach((v, idx) => {
+              const opt = document.createElement('option');
+              opt.value = idx;
+              opt.textContent = `${v.bookName} ${v.chapterNumber}:${v.verseNumber}`;
+              verseSelector.appendChild(opt);
+            });
+            verseSelector.selectedIndex = 0;
+            verseSelector.style.display = 'block';
+            verseSelector.style.opacity = '1';
+            verseSelector.disabled = true;
+          }
+          const verseSelectorLabel = document.getElementById('verseSelectorLabel');
+          if (verseSelectorLabel) verseSelectorLabel.style.display = 'none';
+          
+          currentVerse = reviewVerses[0];
+          singleTextPrev = [];
+          singleTextReviewIndex = 0;
+          setLearningStage('advanced');
+          showPanel(learnPanel);
+          startLearnMode(currentVerse);
+          if (reviewModeHiddenControls) reviewModeHiddenControls.style.display = 'none';
+        };
+
+        singleTextBtn.onclick = function() {
+          reviewModeModal.classList.remove('open');
+          reviewModeModal.setAttribute('aria-hidden', 'true');
+          startSingleTextReviewSession(dueVerses);
+        };
+      }
+    });
+  }
 
   // Event delegation for review verse checkboxes
   if (reviewVerseList) {
@@ -3632,6 +4310,12 @@ function showPanel(panelToShow) {
 
   if (changeIntervalBtn) {
     changeIntervalBtn.addEventListener('click', () => {
+      const selectedVerses = Array.from(document.querySelectorAll('.verse-checkbox:checked'))
+        .map(checkbox => JSON.parse(checkbox.dataset.verse));
+      if (selectedVerses.length === 0) {
+        alert(t('select_verse_to_change_interval'));
+        return;
+      }
       currentInterval = 1;
       updateIntervalDisplay();
       changeIntervalModal.style.display = 'block';
@@ -3724,6 +4408,7 @@ function showPanel(panelToShow) {
   }
 
   exportBtn.addEventListener('click', () => {
+    setActiveNavButton(exportBtn);
     showPanel(exportImportPanel);
     // Populate export collections tree with available collections
     try {
@@ -3981,6 +4666,7 @@ function showPanel(panelToShow) {
   // Collections event wiring
   if (collectionsBtn) {
     collectionsBtn.addEventListener('click', () => {
+      setActiveNavButton(collectionsBtn);
       showPanel(collectionsPanel);
       renderCollectionsList();
       populateCollectionSelector();
@@ -4145,6 +4831,10 @@ function showPanel(panelToShow) {
 
   // Onboarding Flow for First-Time Users
   const onboardingLanguageModal = document.getElementById('onboardingLanguageModal');
+  const onboardingInstallModal = document.getElementById('onboardingInstallModal');
+  const onboardingInstallTitle = document.getElementById('onboardingInstallTitle');
+  const onboardingInstallInstructions = document.getElementById('onboardingInstallInstructions');
+  const onboardingInstallSkip = document.getElementById('onboardingInstallSkip');
   const onboardingInputMethodModal = document.getElementById('onboardingInputMethodModal');
   const onboardingInputMethodTitle = document.getElementById('onboardingInputMethodTitle');
 
@@ -4164,6 +4854,57 @@ function showPanel(panelToShow) {
     onboardingLanguageModal.style.display = 'none';
     onboardingLanguageModal.classList.remove('open');
     onboardingLanguageModal.setAttribute('aria-hidden', 'true');
+  }
+
+  // Check if app is running in standalone mode (already installed)
+  function isStandalone() {
+    return window.matchMedia('(display-mode: standalone)').matches || 
+           window.navigator.standalone === true;
+  }
+
+  // Detect platform for installation instructions
+  function detectPlatform() {
+    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+    
+    // iOS Safari
+    if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
+      return 'ios_safari';
+    }
+    
+    // Android Chrome
+    if (/android/i.test(userAgent)) {
+      return 'android_chrome';
+    }
+    
+    // Desktop (Windows, Mac, Linux)
+    if (!/mobile/i.test(userAgent)) {
+      return 'desktop';
+    }
+    
+    // Fallback for other browsers/devices
+    return 'browser_generic';
+  }
+
+  function showOnboardingInstallModal(language) {
+    const platform = detectPlatform();
+    
+    // Update title and button text
+    onboardingInstallTitle.textContent = t('install_app_title', language);
+    onboardingInstallSkip.textContent = t('skip', language);
+    
+    // Set instructions based on detected platform
+    onboardingInstallInstructions.innerHTML = t(`install_${platform}`, language);
+    
+    // Show modal
+    onboardingInstallModal.style.display = 'block';
+    onboardingInstallModal.classList.add('open');
+    onboardingInstallModal.setAttribute('aria-hidden', 'false');
+  }
+
+  function hideOnboardingInstallModal() {
+    onboardingInstallModal.style.display = 'none';
+    onboardingInstallModal.classList.remove('open');
+    onboardingInstallModal.setAttribute('aria-hidden', 'true');
   }
 
   function showOnboardingInputMethodModal(language) {
@@ -4233,10 +4974,6 @@ function showPanel(panelToShow) {
         
         saveCollections(currentCollections);
       }
-
-      // Refresh UI
-      renderVerseSelector();
-      renderAddVerseList();
     } catch (error) {
       console.error('Error loading sample verses:', error);
     }
@@ -4246,19 +4983,50 @@ function showPanel(panelToShow) {
   document.getElementById('onboardingLangEnglish').addEventListener('click', () => {
     localStorage.setItem('languagePreference', 'english');
     hideOnboardingLanguageModal();
-    showOnboardingInputMethodModal('english');
+    
+    // Check if app is already installed (standalone mode)
+    if (isStandalone()) {
+      // Skip install modal, go directly to input method
+      showOnboardingInputMethodModal('english');
+    } else {
+      // Show install instructions
+      showOnboardingInstallModal('english');
+    }
   });
 
   document.getElementById('onboardingLangSimplified').addEventListener('click', () => {
     localStorage.setItem('languagePreference', 'simplified');
     hideOnboardingLanguageModal();
-    showOnboardingInputMethodModal('simplified');
+    
+    // Check if app is already installed (standalone mode)
+    if (isStandalone()) {
+      // Skip install modal, go directly to input method
+      showOnboardingInputMethodModal('simplified');
+    } else {
+      // Show install instructions
+      showOnboardingInstallModal('simplified');
+    }
   });
 
   document.getElementById('onboardingLangTraditional').addEventListener('click', () => {
     localStorage.setItem('languagePreference', 'traditional');
     hideOnboardingLanguageModal();
-    showOnboardingInputMethodModal('traditional');
+    
+    // Check if app is already installed (standalone mode)
+    if (isStandalone()) {
+      // Skip install modal, go directly to input method
+      showOnboardingInputMethodModal('traditional');
+    } else {
+      // Show install instructions
+      showOnboardingInstallModal('traditional');
+    }
+  });
+
+  // Install modal button handlers
+  onboardingInstallSkip.addEventListener('click', () => {
+    const language = localStorage.getItem('languagePreference') || 'english';
+    hideOnboardingInstallModal();
+    showOnboardingInputMethodModal(language);
   });
 
   // Input method selection handlers
@@ -4268,14 +5036,31 @@ function showPanel(panelToShow) {
     await loadSampleVerses('pinyin');
     updateInputMethodLabels();
     applyLanguage();
-    showPanel(learnPanel);
-    // Populate the verse selector and start learn mode with the newly loaded verses
-    const unlearnedList = populateUnlearnedSelector();
-    if (unlearnedList && unlearnedList.length > 0) {
-      startLearnMode(unlearnedList[0]);
-      setLearningStage('basic');
-    }
     localStorage.setItem('hasVisitedBefore', 'true');
+    
+    // Show backup reminder on first visit
+    const now = new Date().getTime();
+    localStorage.setItem('firstBackupReminder', now.toString());
+    localStorage.setItem('lastBackupReminder', now.toString());
+    showBackupReminderModal(true); // true = onboarding mode, hides Export Now button
+    
+    // After user dismisses backup reminder, show tutorial intro
+    const onModalClose = () => {
+      showTutorialIntroModal();
+    };
+    
+    // Update event listeners to call onModalClose
+    backupReminderGotItBtn.removeEventListener('click', hideBackupReminderModal);
+    backupReminderGotItBtn.addEventListener('click', () => {
+      hideBackupReminderModal();
+      onModalClose();
+    }, { once: true });
+    
+    backupReminderExportBtn.removeEventListener('click', hideBackupReminderModal);
+    backupReminderExportBtn.addEventListener('click', () => {
+      hideBackupReminderModal();
+      showPanel(exportImportPanel);
+    }, { once: true });
   });
 
   document.getElementById('onboardingInputZhuyin').addEventListener('click', async () => {
@@ -4284,14 +5069,31 @@ function showPanel(panelToShow) {
     await loadSampleVerses('zhuyin');
     updateInputMethodLabels();
     applyLanguage();
-    showPanel(learnPanel);
-    // Populate the verse selector and start learn mode with the newly loaded verses
-    const unlearnedList = populateUnlearnedSelector();
-    if (unlearnedList && unlearnedList.length > 0) {
-      startLearnMode(unlearnedList[0]);
-      setLearningStage('basic');
-    }
     localStorage.setItem('hasVisitedBefore', 'true');
+    
+    // Show backup reminder on first visit
+    const now = new Date().getTime();
+    localStorage.setItem('firstBackupReminder', now.toString());
+    localStorage.setItem('lastBackupReminder', now.toString());
+    showBackupReminderModal(true); // true = onboarding mode, hides Export Now button
+    
+    // After user dismisses backup reminder, show tutorial intro
+    const onModalClose = () => {
+      showTutorialIntroModal();
+    };
+    
+    // Update event listeners to call onModalClose
+    backupReminderGotItBtn.removeEventListener('click', hideBackupReminderModal);
+    backupReminderGotItBtn.addEventListener('click', () => {
+      hideBackupReminderModal();
+      onModalClose();
+    }, { once: true });
+    
+    backupReminderExportBtn.removeEventListener('click', hideBackupReminderModal);
+    backupReminderExportBtn.addEventListener('click', () => {
+      hideBackupReminderModal();
+      showPanel(exportImportPanel);
+    }, { once: true });
   });
 
   document.getElementById('onboardingInputCangjie').addEventListener('click', async () => {
@@ -4300,14 +5102,31 @@ function showPanel(panelToShow) {
     await loadSampleVerses('cangjie');
     updateInputMethodLabels();
     applyLanguage();
-    showPanel(learnPanel);
-    // Populate the verse selector and start learn mode with the newly loaded verses
-    const unlearnedList = populateUnlearnedSelector();
-    if (unlearnedList && unlearnedList.length > 0) {
-      startLearnMode(unlearnedList[0]);
-      setLearningStage('basic');
-    }
     localStorage.setItem('hasVisitedBefore', 'true');
+    
+    // Show backup reminder on first visit
+    const now = new Date().getTime();
+    localStorage.setItem('firstBackupReminder', now.toString());
+    localStorage.setItem('lastBackupReminder', now.toString());
+    showBackupReminderModal(true); // true = onboarding mode, hides Export Now button
+    
+    // After user dismisses backup reminder, show tutorial intro
+    const onModalClose = () => {
+      showTutorialIntroModal();
+    };
+    
+    // Update event listeners to call onModalClose
+    backupReminderGotItBtn.removeEventListener('click', hideBackupReminderModal);
+    backupReminderGotItBtn.addEventListener('click', () => {
+      hideBackupReminderModal();
+      onModalClose();
+    }, { once: true });
+    
+    backupReminderExportBtn.removeEventListener('click', hideBackupReminderModal);
+    backupReminderExportBtn.addEventListener('click', () => {
+      hideBackupReminderModal();
+      showPanel(exportImportPanel);
+    }, { once: true });
   });
 
   // Check if first time user and show onboarding (must be at end after all initialization)
@@ -4317,48 +5136,286 @@ function showPanel(panelToShow) {
     if (!hasVisitedBefore) {
       // First time user - show onboarding flow
       showOnboardingLanguageModal();
+    } else {
+      // Check if we should show backup reminder
+      checkBackupReminder();
     }
+  }
+  
+  // Backup Reminder Functions
+  function showBackupReminderModal(isOnboarding = false) {
+    if (!backupReminderModal) return;
+    backupReminderModal.style.display = 'flex';
+    backupReminderModal.classList.add('open');
+    backupReminderModal.setAttribute('aria-hidden', 'false');
+    
+    // Show/hide "Export Now" button based on context
+    if (backupReminderExportBtn) {
+      backupReminderExportBtn.style.display = isOnboarding ? 'none' : 'inline-block';
+    }
+  }
+  
+  function hideBackupReminderModal() {
+    if (!backupReminderModal) return;
+    backupReminderModal.style.display = 'none';
+    backupReminderModal.classList.remove('open');
+    backupReminderModal.setAttribute('aria-hidden', 'true');
+    
+    // Reset "Export Now" button to hidden (default state)
+    if (backupReminderExportBtn) {
+      backupReminderExportBtn.style.display = 'none';
+    }
+  }
+  
+  function checkBackupReminder() {
+    const isEnabled = localStorage.getItem('backupReminderEnabled');
+    // Default to enabled if not set
+    if (isEnabled === 'false') return;
+    
+    const lastReminder = localStorage.getItem('lastBackupReminder');
+    const now = new Date().getTime();
+    
+    if (!lastReminder) {
+      // Never shown before - show it now
+      showBackupReminderModal();
+      localStorage.setItem('lastBackupReminder', now.toString());
+      return;
+    }
+    
+    const daysSinceLastReminder = (now - parseInt(lastReminder)) / (1000 * 60 * 60 * 24);
+    const firstReminderDate = parseInt(localStorage.getItem('firstBackupReminder') || lastReminder);
+    const daysSinceFirstReminder = (now - firstReminderDate) / (1000 * 60 * 60 * 24);
+    
+    // Show weekly for first 30 days, then monthly
+    const reminderInterval = daysSinceFirstReminder < 30 ? 7 : 30;
+    
+    if (daysSinceLastReminder >= reminderInterval) {
+      showBackupReminderModal();
+      localStorage.setItem('lastBackupReminder', now.toString());
+    }
+  }
+  
+  // Tutorial Modal Functions
+  let tutorialAnimationInterval = null;
+  
+  function showTutorialIntroModal() {
+    tutorialIntroModal.style.display = 'block';
+    tutorialIntroModal.classList.add('open');
+    tutorialIntroModal.setAttribute('aria-hidden', 'false');
+  }
+  
+  function hideTutorialIntroModal() {
+    tutorialIntroModal.style.display = 'none';
+    tutorialIntroModal.classList.remove('open');
+    tutorialIntroModal.setAttribute('aria-hidden', 'true');
+  }
+  
+  // Get keystroke mappings for the selected input method
+  function getTutorialKeystrokes() {
+    const inputMethod = localStorage.getItem('inputMethod') || 'pinyin';
+    const keyMappings = {
+      'pinyin': ['y', 'h', 'h', 'y', 'e', 'h'],
+      'zhuyin': ['ㄧ', 'ㄏ', 'ㄏ', 'ㄧ', 'ㄣ', 'ㄏ'],
+      'cangjie': ['尸', '竹', '廿', '大', '田', '十']
+    };
+    return keyMappings[inputMethod] || keyMappings['pinyin'];
+  }
+  
+  function startTutorialAnimation(stage) {
+    // Stop any existing animation
+    if (tutorialAnimationInterval) {
+      clearInterval(tutorialAnimationInterval);
+    }
+    
+    const chars = document.querySelectorAll(`#tutorial${stage}Chars .tutorial-char`);
+    const keysContainer = document.getElementById(`tutorial${stage}Keys`);
+    const keystrokes = getTutorialKeystrokes();
+    
+    let currentIndex = 0;
+    
+    function animateStep() {
+      // Reset all characters
+      chars.forEach((char, idx) => {
+        if (stage === 'Basic') {
+          char.classList.remove('tutorial-typed');
+          char.classList.remove('tutorial-hidden');
+        } else if (stage === 'Intermediate') {
+          char.classList.remove('tutorial-typed');
+          if (idx % 2 === 1) {
+            char.classList.add('tutorial-hidden');
+          } else {
+            char.classList.remove('tutorial-hidden');
+          }
+        } else if (stage === 'Advanced') {
+          char.classList.remove('tutorial-typed');
+          char.classList.add('tutorial-hidden');
+        }
+      });
+      
+      // Clear and setup keystrokes (all present but hidden)
+      keysContainer.innerHTML = '';
+      keystrokes.forEach(key => {
+        const keySpan = document.createElement('span');
+        keySpan.textContent = key;
+        keysContainer.appendChild(keySpan);
+      });
+      const keySpans = keysContainer.querySelectorAll('span');
+      
+      currentIndex = 0;
+      
+      // Animate typing
+      const typingInterval = setInterval(() => {
+        if (currentIndex >= chars.length) {
+          clearInterval(typingInterval);
+          // Wait 1 second before restarting loop
+          setTimeout(animateStep, 1000);
+          return;
+        }
+        
+        // Show keystroke
+        keySpans[currentIndex].classList.add('visible');
+        
+        // Reveal character and mark as typed
+        chars[currentIndex].classList.remove('tutorial-hidden');
+        chars[currentIndex].classList.add('tutorial-typed');
+        
+        currentIndex++;
+      }, 500);
+    }
+    
+    animateStep();
+  }
+  
+  function showTutorialBasicModal() {
+    tutorialBasicModal.style.display = 'block';
+    tutorialBasicModal.classList.add('open');
+    tutorialBasicModal.setAttribute('aria-hidden', 'false');
+    startTutorialAnimation('Basic');
+  }
+  
+  function hideTutorialBasicModal() {
+    tutorialBasicModal.style.display = 'none';
+    tutorialBasicModal.classList.remove('open');
+    tutorialBasicModal.setAttribute('aria-hidden', 'true');
+    if (tutorialAnimationInterval) {
+      clearInterval(tutorialAnimationInterval);
+    }
+  }
+  
+  function showTutorialIntermediateModal() {
+    tutorialIntermediateModal.style.display = 'block';
+    tutorialIntermediateModal.classList.add('open');
+    tutorialIntermediateModal.setAttribute('aria-hidden', 'false');
+    startTutorialAnimation('Intermediate');
+  }
+  
+  function hideTutorialIntermediateModal() {
+    tutorialIntermediateModal.style.display = 'none';
+    tutorialIntermediateModal.classList.remove('open');
+    tutorialIntermediateModal.setAttribute('aria-hidden', 'true');
+    if (tutorialAnimationInterval) {
+      clearInterval(tutorialAnimationInterval);
+    }
+  }
+  
+  function showTutorialAdvancedModal() {
+    tutorialAdvancedModal.style.display = 'block';
+    tutorialAdvancedModal.classList.add('open');
+    tutorialAdvancedModal.setAttribute('aria-hidden', 'false');
+    startTutorialAnimation('Advanced');
+  }
+  
+  function hideTutorialAdvancedModal() {
+    tutorialAdvancedModal.style.display = 'none';
+    tutorialAdvancedModal.classList.remove('open');
+    tutorialAdvancedModal.setAttribute('aria-hidden', 'true');
+    if (tutorialAnimationInterval) {
+      clearInterval(tutorialAnimationInterval);
+    }
+  }
+  
+  // Tutorial Event Listeners
+  if (tutorialIntroStart) {
+    tutorialIntroStart.addEventListener('click', () => {
+      hideTutorialIntroModal();
+      showTutorialBasicModal();
+    });
+  }
+  
+  if (tutorialIntroSkip) {
+    tutorialIntroSkip.addEventListener('click', () => {
+      hideTutorialIntroModal();
+      localStorage.setItem('hasCompletedOnboarding', 'true');
+      showPanel(learnPanel);
+      const unlearnedList = populateUnlearnedSelector();
+      if (unlearnedList && unlearnedList.length > 0) {
+        startLearnMode(unlearnedList[0]);
+        setLearningStage('basic');
+      }
+    });
+  }
+  
+  if (tutorialBasicContinue) {
+    tutorialBasicContinue.addEventListener('click', () => {
+      hideTutorialBasicModal();
+      showTutorialIntermediateModal();
+    });
+  }
+  
+  if (tutorialIntermediateContinue) {
+    tutorialIntermediateContinue.addEventListener('click', () => {
+      hideTutorialIntermediateModal();
+      showTutorialAdvancedModal();
+    });
+  }
+  
+  if (tutorialAdvancedBegin) {
+    tutorialAdvancedBegin.addEventListener('click', () => {
+      hideTutorialAdvancedModal();
+      localStorage.setItem('hasCompletedOnboarding', 'true');
+      showPanel(learnPanel);
+      const unlearnedList = populateUnlearnedSelector();
+      if (unlearnedList && unlearnedList.length > 0) {
+        startLearnMode(unlearnedList[0]);
+        setLearningStage('basic');
+      }
+    });
+  }
+  
+  // Backup Reminder Modal Event Listeners
+  if (backupReminderGotItBtn) {
+    backupReminderGotItBtn.addEventListener('click', () => {
+      hideBackupReminderModal();
+    });
+  }
+  
+  if (backupReminderExportBtn) {
+    backupReminderExportBtn.addEventListener('click', () => {
+      hideBackupReminderModal();
+      showPanel(exportImportPanel);
+    });
   }
   
   checkFirstTimeUser();
 
-  // Prevent native keyboard from appearing for non-Pinyin input methods
-  function preventNativeKeyboard(e) {
-    const method = localStorage.getItem('inputMethod') || 'pinyin';
-    const input = e.target;
-    // Only prevent for inputs that use onscreen keyboards
-    if (method !== 'pinyin' && 
-        (input.id === 'verseInitials' || input.id === 'bookInitials' || 
-         input.id === 'learnInput' || input.type === 'number')) {
-      e.target.setAttribute('inputmode', 'none');
-    }
-  }
-
   // Input Focus Listeners
-  learnInput.addEventListener('focus', () => showKeyboardForInput(learnInput));
-  learnInput.addEventListener('touchstart', preventNativeKeyboard);
-  learnInput.addEventListener('mousedown', preventNativeKeyboard);
+  learnInput.addEventListener('focus', () => {
+    console.log('learnInput focus event triggered');
+    showKeyboardForInput(learnInput);
+  });
   
   verseText.addEventListener('focus', () => showKeyboardForInput(verseText));
   
   verseInitials.addEventListener('focus', () => showKeyboardForInput(verseInitials));
-  verseInitials.addEventListener('touchstart', preventNativeKeyboard);
-  verseInitials.addEventListener('mousedown', preventNativeKeyboard);
   
   bookInitials.addEventListener('focus', () => showKeyboardForInput(bookInitials));
-  bookInitials.addEventListener('touchstart', preventNativeKeyboard);
-  bookInitials.addEventListener('mousedown', preventNativeKeyboard);
   
   bibleVersion.addEventListener('focus', () => showKeyboardForInput(bibleVersion));
   defaultBibleVersion.addEventListener('focus', () => showKeyboardForInput(defaultBibleVersion));
   
   chapterNumber.addEventListener('focus', () => showKeyboardForInput(chapterNumber));
-  chapterNumber.addEventListener('touchstart', preventNativeKeyboard);
-  chapterNumber.addEventListener('mousedown', preventNativeKeyboard);
   
   verseNumber.addEventListener('focus', () => showKeyboardForInput(verseNumber));
-  verseNumber.addEventListener('touchstart', preventNativeKeyboard);
-  verseNumber.addEventListener('mousedown', preventNativeKeyboard);
   
   bookNameInput.addEventListener('focus', () => showKeyboardForInput(bookNameInput));
   newCollectionTitle.addEventListener('focus', () => showKeyboardForInput(newCollectionTitle));

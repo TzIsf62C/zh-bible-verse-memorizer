@@ -45,7 +45,7 @@
     <div class="reference-inputs">
       <div class="input-group" style="position:relative;">
         <label for="bookNameInput" data-i18n="chinese_book_name">Chinese Book Name</label>
-        <input id="bookNameInput" type="text" autocomplete="off" autocorrect="off" spellcheck="false" autocapitalize="none">
+        <input id="bookNameInput" type="text" name="off" autocomplete="off" autocorrect="off" spellcheck="false" autocapitalize="none">
         <div id="bookSuggestions" class="autocomplete-suggestions"></div>
       </div>
       
@@ -67,13 +67,13 @@
     <div class="pinyin-inputs">
       <div class="input-group">
         <label for="verseInitials">Pinyin Initials for Verse</label>
-        <input id="verseInitials" type="text" autocomplete="off" autocorrect="off" spellcheck="false" autocapitalize="none">
+        <input id="verseInitials" type="text" name="off" autocomplete="off" autocorrect="off" spellcheck="false" autocapitalize="none" inputmode="none">
         <small class="helper-text">Type the first letter of each character's pinyin</small>
       </div>
       
       <div class="input-group">
         <label for="bookInitials">Pinyin Initials for Book Name</label>
-        <input id="bookInitials" type="text" autocomplete="off" autocorrect="off" spellcheck="false" autocapitalize="none">
+        <input id="bookInitials" type="text" name="off" autocomplete="off" autocorrect="off" spellcheck="false" autocapitalize="none" inputmode="none">
       </div>
     </div>
   </div>
@@ -115,21 +115,24 @@
     </div></div>
     <div class="learning-controls">
     <label id="verseSelectorLabel" for="verseSelector" data-i18n="select_verse">Select Verse</label>
-    <select id="verseSelector"></select>
-    <div class="sound-control">
+    <div class="selector-row">
+      <select id="verseSelector"></select>
       <button id="muteToggle" class="mute-btn" aria-pressed="true" title="Toggle sound">🔇 <span data-i18n="sound_off">Sound Off</span></button>
     </div>
   </div>
 
+  <div id="learnHelperText" class="learn-helper-text"></div>
   <div id="learnVerseDisplay" class="verse-display"></div>
 
   <div class="input-section">
     <input id="learnInput" type="text" 
+           name="off"
            autocomplete="off" 
            autocorrect="off"
            spellcheck="false"
            autocapitalize="none"
-           placeholder="" />
+           placeholder=""
+           class="visually-hidden-input" />
     <div id="learnFeedback"></div>
     <div id="progressDisplay"></div>
   </div>
@@ -167,6 +170,9 @@
 
   <div id="reviewPanel" class="panel" style="display:none;">
   <h2 data-i18n="review_mode">Review Mode</h2>
+  <div style="margin-bottom: 16px;">
+    <button id="reviewDueBtn" data-i18n="review_due_verses" style="background: #d32f2f; display: none;">Review Due Verses</button>
+  </div>
   <div class="collection-review">
     <label data-i18n="select_collection">Select a collection</label>
     <div id="reviewCollectionsList" class="verse-list"></div>
@@ -178,7 +184,7 @@
   <div id="reviewVerseList" class="verse-list"></div>
   <div class="review-controls">
     <button id="startReviewBtn" data-i18n="review_verses">Review verses</button>
-    <button id="changeIntervalBtn" data-i18n="change_interval" style="display:none;">Change Review Interval</button>
+    <button id="changeIntervalBtn" data-i18n="change_interval">Change Review Interval</button>
     <div id="reviewProgress"></div>
   </div>
 </div>
@@ -313,11 +319,26 @@
       </div>
     </div>
     <div class="input-group">
+      <label data-i18n="vibration_feedback">Vibration Feedback</label>
+      <div>
+        <label><input type="checkbox" id="vibrationToggle"> <span data-i18n="enable_vibration">Enable vibration on error</span></label>
+      </div>
+      <p style="font-size: 0.85em; color: var(--text-secondary); margin: 4px 0 0 0;">
+        <span data-i18n="vibration_note">Note: Vibration is only available on Android devices.</span>
+      </p>
+    </div>
+    <div class="input-group">
+      <label data-i18n="backup_reminders">Backup Reminders</label>
+      <div>
+        <label><input type="checkbox" id="backupReminderToggle" checked> <span data-i18n="enable_backup_reminders">Enable periodic backup reminders</span></label>
+      </div>
+      <p style="font-size: 0.85em; color: var(--text-secondary); margin: 4px 0 0 0;">
+        <span data-i18n="backup_reminder_frequency">Reminds you to export your data weekly (first month) then monthly</span>
+      </p>
+    </div>
+    <div class="input-group">
       <label for="defaultBibleVersion" data-i18n="default_bible_version">Default Bible Version</label>
       <input id="defaultBibleVersion" type="text" autocomplete="off" autocorrect="off" spellcheck="false" autocapitalize="none" placeholder="">
-    </div>
-    <div class="action-buttons">
-      <button id="settingsSaveBtn" data-i18n-special="save_settings">Save Settings</button>
     </div>
     <div class="input-group" style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border-color);">
       <label data-i18n="clear_all_data">Clear All Data</label>
@@ -327,7 +348,7 @@
       <button id="clearDataBtn" style="background-color: #dc3545; color: white;" data-i18n="clear_all_data_btn">Clear All Data</button>
     </div>
     <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border-color); text-align: center; font-size: 0.85em; color: var(--text-secondary);">
-      <div style="margin-bottom: 4px;">ZH Bible Verse Memorizer PWA (Version 0.9)</div>
+      <div style="margin-bottom: 4px;">ZH Bible Verse Memorizer PWA (Version 0.9.1)</div>
       <div>Copyright © 2025 TzIsf62C</div>
     </div>
   </div>
@@ -428,6 +449,45 @@
     </div>
   </div>
 
+  <div id="pinyinKeyboard" class="onscreen-keyboard" style="display:none;">
+    <div class="keyboard-row">
+      <button class="key">q</button>
+      <button class="key">w</button>
+      <button class="key">e</button>
+      <button class="key">r</button>
+      <button class="key">t</button>
+      <button class="key">y</button>
+      <button class="key">u</button>
+      <button class="key">i</button>
+      <button class="key">o</button>
+      <button class="key">p</button>
+    </div>
+    <div class="keyboard-row">
+      <button class="key">a</button>
+      <button class="key">s</button>
+      <button class="key">d</button>
+      <button class="key">f</button>
+      <button class="key">g</button>
+      <button class="key">h</button>
+      <button class="key">j</button>
+      <button class="key">k</button>
+      <button class="key">l</button>
+    </div>
+    <div class="keyboard-row">
+      <button class="key">z</button>
+      <button class="key">x</button>
+      <button class="key">c</button>
+      <button class="key">v</button>
+      <button class="key">b</button>
+      <button class="key">n</button>
+      <button class="key">m</button>
+      <button class="key backspace">⌫</button>
+    </div>
+    <div class="keyboard-row">
+      <button class="key enter">✔</button>
+    </div>
+  </div>
+
   <div id="numericKeyboard" class="onscreen-keyboard" style="display:none;">
     <div class="keyboard-row">
       <button class="key">1</button>
@@ -510,6 +570,17 @@
   </div>
 </div>
 
+<div id="onboardingInstallModal" class="modal" aria-hidden="true">
+  <div class="modal-overlay"></div>
+  <div class="modal-content" role="dialog" aria-modal="true">
+    <h2 id="onboardingInstallTitle" data-i18n="install_app_title">Install App</h2>
+    <div id="onboardingInstallInstructions" style="margin: 20px 0; line-height: 1.6;"></div>
+    <div class="onboarding-options">
+      <button id="onboardingInstallSkip" class="onboarding-btn" data-i18n="skip">Skip</button>
+    </div>
+  </div>
+</div>
+
 <div id="onboardingInputMethodModal" class="modal" aria-hidden="true">
   <div class="modal-overlay"></div>
   <div class="modal-content" role="dialog" aria-modal="true">
@@ -522,6 +593,160 @@
   </div>
 </div>
 <!-- End Onboarding Modals -->
+
+<!-- Learning Mode Tutorial Modals -->
+<div id="tutorialIntroModal" class="modal" aria-hidden="true">
+  <div class="modal-overlay"></div>
+  <div class="modal-content" role="dialog" aria-modal="true">
+    <h2 id="tutorialIntroTitle" data-i18n="tutorial_intro_title">Learning Method</h2>
+    <p id="tutorialIntroDesc" data-i18n="tutorial_intro_desc">This app uses a three-stage memorization method to help you learn Bible verses:</p>
+    
+    <div class="tutorial-stages-list">
+      <div class="tutorial-stage-item">
+        <div class="tutorial-stage-number">1</div>
+        <div class="tutorial-stage-info">
+          <h3 data-i18n="basic">Basic</h3>
+          <p data-i18n="tutorial_intro_basic">Full text visible with hints</p>
+        </div>
+      </div>
+      <div class="tutorial-stage-item">
+        <div class="tutorial-stage-number">2</div>
+        <div class="tutorial-stage-info">
+          <h3 data-i18n="intermediate">Intermediate</h3>
+          <p data-i18n="tutorial_intro_intermediate">Every other character hidden</p>
+        </div>
+      </div>
+      <div class="tutorial-stage-item">
+        <div class="tutorial-stage-number">3</div>
+        <div class="tutorial-stage-info">
+          <h3 data-i18n="advanced">Advanced</h3>
+          <p data-i18n="tutorial_intro_advanced">Pure recall with no hints</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="onboarding-options">
+      <button id="tutorialIntroStart" class="onboarding-btn tutorial-start-btn" data-i18n="tutorial_start">Start Tutorial</button>
+      <button id="tutorialIntroSkip" class="onboarding-btn" data-i18n="skip">Skip</button>
+    </div>
+  </div>
+</div>
+
+<div id="tutorialBasicModal" class="modal" aria-hidden="true">
+  <div class="modal-overlay"></div>
+  <div class="modal-content" role="dialog" aria-modal="true">
+    <h2 id="tutorialBasicTitle" data-i18n="tutorial_basic_title">Basic Stage</h2>
+    <p id="tutorialBasicDesc" data-i18n="tutorial_basic_desc">The verse text is fully displayed. Type the first key for each character according to your input method.</p>
+    
+    <div class="tutorial-example">
+      <div id="tutorialBasicChars" class="tutorial-chars">
+        <span class="tutorial-char" data-index="0">耶</span>
+        <span class="tutorial-char" data-index="1">和</span>
+        <span class="tutorial-char" data-index="2">華</span>
+        <span class="tutorial-char" data-index="3">有</span>
+        <span class="tutorial-char" data-index="4">恩</span>
+        <span class="tutorial-char" data-index="5">惠</span>
+      </div>
+      <div class="tutorial-arrows">
+        <span>↑</span>
+        <span>↑</span>
+        <span>↑</span>
+        <span>↑</span>
+        <span>↑</span>
+        <span>↑</span>
+      </div>
+      <div id="tutorialBasicKeys" class="tutorial-keys"></div>
+    </div>
+    
+    <p id="tutorialBasicNote" data-i18n="tutorial_basic_note">Characters will change color as you type.</p>
+    <div class="onboarding-options">
+      <button id="tutorialBasicContinue" class="onboarding-btn" data-i18n="continue">Continue</button>
+    </div>
+  </div>
+</div>
+
+<div id="tutorialIntermediateModal" class="modal" aria-hidden="true">
+  <div class="modal-overlay"></div>
+  <div class="modal-content" role="dialog" aria-modal="true">
+    <h2 id="tutorialIntermediateTitle" data-i18n="tutorial_intermediate_title">Intermediate Stage</h2>
+    <p id="tutorialIntermediateDesc" data-i18n="tutorial_intermediate_desc">Every other character is hidden. Type a key for each character, even the hidden ones. They will appear as you type.</p>
+    
+    <div class="tutorial-example">
+      <div id="tutorialIntermediateChars" class="tutorial-chars">
+        <span class="tutorial-char" data-index="0">耶</span>
+        <span class="tutorial-char tutorial-hidden" data-index="1">和</span>
+        <span class="tutorial-char" data-index="2">華</span>
+        <span class="tutorial-char tutorial-hidden" data-index="3">有</span>
+        <span class="tutorial-char" data-index="4">恩</span>
+        <span class="tutorial-char tutorial-hidden" data-index="5">惠</span>
+      </div>
+      <div class="tutorial-arrows">
+        <span>↑</span>
+        <span>↑</span>
+        <span>↑</span>
+        <span>↑</span>
+        <span>↑</span>
+        <span>↑</span>
+      </div>
+      <div id="tutorialIntermediateKeys" class="tutorial-keys"></div>
+    </div>
+    
+    <div class="onboarding-options">
+      <button id="tutorialIntermediateContinue" class="onboarding-btn" data-i18n="continue">Continue</button>
+    </div>
+  </div>
+</div>
+
+<div id="tutorialAdvancedModal" class="modal" aria-hidden="true">
+  <div class="modal-overlay"></div>
+  <div class="modal-content" role="dialog" aria-modal="true">
+    <h2 id="tutorialAdvancedTitle" data-i18n="tutorial_advanced_title">Advanced Stage</h2>
+    <p id="tutorialAdvancedDesc" data-i18n="tutorial_advanced_desc">No text is shown. The characters will appear as you type the correct keys.</p>
+    
+    <div class="tutorial-example">
+      <div id="tutorialAdvancedChars" class="tutorial-chars">
+        <span class="tutorial-char tutorial-hidden" data-index="0">耶</span>
+        <span class="tutorial-char tutorial-hidden" data-index="1">和</span>
+        <span class="tutorial-char tutorial-hidden" data-index="2">華</span>
+        <span class="tutorial-char tutorial-hidden" data-index="3">有</span>
+        <span class="tutorial-char tutorial-hidden" data-index="4">恩</span>
+        <span class="tutorial-char tutorial-hidden" data-index="5">惠</span>
+      </div>
+      <div class="tutorial-arrows">
+        <span>↑</span>
+        <span>↑</span>
+        <span>↑</span>
+        <span>↑</span>
+        <span>↑</span>
+        <span>↑</span>
+      </div>
+      <div id="tutorialAdvancedKeys" class="tutorial-keys"></div>
+    </div>
+    
+    <div class="onboarding-options">
+      <button id="tutorialAdvancedBegin" class="onboarding-btn" data-i18n="begin">Begin</button>
+    </div>
+  </div>
+</div>
+<!-- End Tutorial Modals -->
+
+<!-- Backup Reminder Modal -->
+<div id="backupReminderModal" class="modal" aria-hidden="true">
+  <div class="modal-overlay"></div>
+  <div class="modal-content" role="dialog" aria-modal="true">
+    <h2 data-i18n="backup_reminder_title">⚠️ Backup Reminder</h2>
+    <p data-i18n="backup_reminder_message">Your verses and progress are stored locally on this device. If you clear your browser data or uninstall the app, all data will be lost. Please export your data regularly as a backup!</p>
+    <div style="margin-top: 16px; padding: 12px; background: var(--card-background); border-radius: 4px; font-size: 0.9em;">
+      <p style="margin: 0 0 8px 0;"><strong data-i18n="backup_reminder_how">How to backup:</strong></p>
+      <p style="margin: 0;" data-i18n="backup_reminder_steps">Go to Export & Import → Download Data → Save the file to a safe location (cloud storage recommended)</p>
+    </div>
+    <div class="modal-buttons" style="margin-top: 24px;">
+      <button id="backupReminderGotItBtn" data-i18n="backup_reminder_got_it">Got it!</button>
+      <button id="backupReminderExportBtn" data-i18n="backup_reminder_export_now" style="display: none;">Export Now</button>
+    </div>
+  </div>
+</div>
+<!-- End Backup Reminder Modal -->
 
 <!-- Change Interval Modal -->
 <div id="changeIntervalModal" class="modal" aria-hidden="true">

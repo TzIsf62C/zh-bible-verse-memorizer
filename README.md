@@ -1,177 +1,406 @@
-# ZH Bible Verse Memorizer PWA (Version 0.9)
+# ZH Bible Verse Memorizer PWA
+
+**Version 0.9.1** | **License: MIT**
 
 A Progressive Web App for memorizing Chinese Bible verses with spaced repetition. This App is inspired by the Bible Memory App (https://biblememory.com/). I would recommend that app if you are memorizing Bible verses in English.
 
-## 🚀 Features
+---
 
-- ✅ **Offline Support**: Works completely offline once installed
-- 📱 **Mobile-First Design**: Optimized for iOS and Android devices
-- 💻 **Desktop Support**: Also works on Mac and PC
-- 📦 **Installable**: Can be installed as a standalone app
-- 🔄 **Spaced Repetition**: Smart learning algorithm to optimize memory retention
-- 🎓 **Onboarding Flow**: First-time user experience with language selection, input method setup, and sample verses
-- 🌐 **Multi-language**: English, Simplified Chinese, Traditional Chinese
-- 🎨 **Theme Support**: Light, Dark, and System themes
-- ⌨️ **Input Methods**: Support for Pinyin, Zhuyin (注音), and Cangjie (倉頡) with onscreen keyboards
+## 📋 Table of Contents
 
-## 📲 Installation Instructions
-
-### iOS (iPhone/iPad)
-
-1. Open Safari browser and navigate to the app URL
-2. Tap the **Share** button (square with arrow pointing up)
-3. Scroll down and tap **"Add to Home Screen"**
-4. Tap **"Add"** in the top right corner
-5. The app icon will appear on your home screen
-6. Tap the icon to launch the app in standalone mode
-
-### Android
-
-1. Open Chrome browser and navigate to the app URL
-2. Tap the **three dots menu** (⋮) in the top right
-3. Tap **"Add to Home screen"** or **"Install app"**
-4. Tap **"Add"** or **"Install"**
-5. The app icon will appear on your home screen
-6. Tap the icon to launch the app
-
-### Windows/Mac Desktop
-
-#### Chrome, Edge, or Brave:
-1. Navigate to the app URL
-2. Click the **install icon** (⊕) in the address bar, or
-3. Click the **three dots menu** (⋮) → **"Install [App Name]"**
-4. The app will open in its own window
-
-#### Safari (Mac):
-1. Open Safari and navigate to the app URL
-2. Go to **File** → **"Add to Dock"**
-3. The app will be added to your Dock
-
-## 🎯 How to Use
-
-### First Time Setup
-- **Onboarding Flow**: On first launch, the app guides you through a quick setup:
-  1. **Language Selection**: Choose your preferred language (English, Simplified Chinese, or Traditional Chinese)
-  2. **Input Method Selection**: Choose between Pinyin (Latin letters), Zhuyin (注音), or Cangjie (倉頡)
-  3. **Sample Verses**: The app automatically loads sample verses based on your chosen input method
-  4. **Ready to Learn**: You'll be taken directly to the Learn panel to start practicing immediately
-- **Default Bible Version**: Configure your preferred Bible version in Settings (e.g., 和合本, ESV, NIV)
-- **Theme Selection**: Choose between System, Light, or Dark theme in Settings
-- **Input Methods**: Non-Pinyin methods (Zhuyin and Cangjie) use onscreen keyboards for single-keystroke memorization
-
-### Adding Verses
-1. Click **"Add Verse"** button
-2. Enter the Chinese verse text
-3. Enter the book name (autocomplete available)
-4. Enter chapter and verse numbers
-5. Enter initials for the verse and book name (based on selected input method)
-6. Optionally add to a collection
-7. Click **"Save Verse"**
-
-### Learning Mode
-1. Click **"Learn"** button
-2. Select a verse from the dropdown (or use the sample verses provided on first launch)
-3. See helpful placeholder text in the input field that guides you based on your chosen input method
-4. Progress through three stages:
-   - **Basic**: See full text, type initials
-   - **Intermediate**: See alternating characters
-   - **Advanced**: Type from memory
-5. Type the initials to complete the verse (using onscreen keyboard if Zhuyin or Cangjie selected)
-
-### Review Mode
-1. Click **"Review"** button
-2. Select verses or a collection to review
-3. Choose your review mode:
-   - **Individual Mode**: Review verses one at a time with full feedback and accuracy tracking
-   - **Single-Text Mode**: Review multiple verses as one continuous passage
-4. The app uses spaced repetition to optimize learning and schedule reviews
-
-### Manual Interval Control
-1. In the **Review** panel, select one or more verses using the checkboxes
-2. Click **"Change Review Interval"** button (appears when verses are selected)
-3. Use the ▲/▼ buttons to adjust the interval level
-4. The "Review in X Day(s)" display updates automatically based on the spaced repetition algorithm
-5. Click the green **✔** button to apply the new interval to all selected verses
-6. This feature is useful when making typing errors prevents you from achieving the 90% accuracy threshold needed to advance the interval automatically
-
-### Organize Verses in Collections
-1. Click **"Collections"** button
-2. Create collections to organize verses by topic or passage (a verse can be in more than one collection)
-3. Add verses to collections
-4. Review entire collections at once with either individual or single-text mode
-5. Use collections for themed study or sequential passages
-
-
-## 🔒 Privacy & Data
-
-- **Local Storage Only**: All data is stored locally in your browser's localStorage
-- **No Server Communication**: No data is sent to any server
-- **Regular Backups**: Export your data regularly as backup using the Export & Import feature
-- **Smart Import Merging**: When importing verses that already exist, the version with the most recent review date is automatically kept to preserve your progress
-- **Selective Export**: Export all verses or specific collections, with options to include/exclude review data
-- **Clear All Data**: Option available in Settings to completely reset the app (use with caution - this action cannot be undone)
-
-## 🌐 Browser Compatibility
-
-- ✅ Chrome/Edge (Desktop & Mobile) - Full support
-- ✅ Safari (iOS & macOS) - Full support
-- ✅ Firefox (Desktop & Mobile) - Full support
-- ✅ Samsung Internet - Full support
-
-## 📝 File Structure
-
-```
-CBM InProgress/
-├── index.html          # Main HTML file
-├── style.css           # Styles with theme support
-├── script.js           # Application logic
-├── manifest.json       # PWA manifest
-├── sw.js              # Service worker for offline support
-├── icons/             # App icons (multiple sizes)
-│   ├── icon.svg       # Source SVG
-│   └── icon-*.png     # Generated PNG icons
-├── generate-icons.html # Browser-based icon generator
-├── generate-icons.sh  # Shell script for icon generation
-└── readme.txt         # This file
-```
-
-## 🆘 Troubleshooting
-
-### App Won't Install
-- Ensure you're using HTTPS (or localhost for testing)
-- Check that manifest.json and sw.js are accessible
-- Verify all icon files exist in the icons/ folder
-- Clear browser cache and try again
-
-### Offline Mode Not Working
-- Check that service worker registered successfully (browser console)
-- Ensure you've visited the app at least once online
-- Try force-refreshing the page (Ctrl+Shift+R or Cmd+Shift+R)
-
-### Icons Not Showing
-- Verify all PNG files are in the icons/ folder
-- Check file names match manifest.json
-- Generate icons using generate-icons.html
-
-### Data Lost
-- Export your data regularly using Export & Import feature
-- Data is stored in browser localStorage (browser-specific)
-- Clearing browser data will delete app data
-
-## 🤝 Support
-
-For issues or questions, refer to the app's repository or documentation.
-
-## 📄 License
-
-Copyright © 2025 TzIsf62C
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+- [Features](#-features)
+- [Installation Instructions](#-installation-instructions)
+- [User Guide](#-user-guide)
+- [Spaced Repetition System](#-spaced-repetition-system)
+- [Data & Privacy](#-data--privacy)
+- [Developer Notes](#-developer-notes)
+- [Updates in Version 0.9.1](#-updates-in-version-091)
 
 ---
 
-**Enjoy memorizing Scripture! 愿主赐福给你！**
+## 🚀 Features
+
+### Learning System
+- **Three-Stage Memorization Method**:
+  - **Basic**: Full verse text visible with keystroke hints
+  - **Intermediate**: Alternating characters hidden (revealed as you type)
+  - **Advanced**: Pure recall with no visual hints
+  - Progress to next stage requires ≥90% accuracy
+
+### Input Methods
+- **Pinyin**: First letter of each character's pinyin (Latin alphabet)
+- **Zhuyin (注音)**: Bopomofo phonetic symbols
+- **Cangjie (倉頡)**: Traditional Chinese input radicals
+- Onscreen keyboards for touch devices
+- Physical keyboard support with automatic character mapping for desktop users
+
+### Review & Practice
+- **Spaced Repetition**: Adaptive interval scheduling based on performance
+- **Review Due Verses**: Quick-access button for overdue items
+- **Collections**: Organize verses into themed groups
+- **Review Modes**:
+  - Individual verse-by-verse review
+  - Single-text continuous passage review
+- **Manual Interval Adjustment**: Bulk update review schedules for selected verses
+
+### Data Management
+- **Export/Import**: JSON-based backup with optional review metadata
+- **Backup Reminders**: Weekly for first month, then monthly (toggleable in Settings)
+- **Collections Support**: Export/import with verse references and review history
+
+### Offline & Installation
+- **Progressive Web App**: Install to home screen on iOS, Android, or desktop
+- **Offline-First**: Works without internet after initial load
+- **Bundled Fonts**: Noto Sans SC included for reliable Chinese rendering
+
+### User Interface
+- **Theme Support**: Light, Dark, or System-matched
+- **Three Languages**: English, Simplified Chinese, Traditional Chinese
+- **Mobile-Optimized**: Space-efficient layout with dynamic keyboard management
+- **Vibration Feedback**: Error alerts on Android devices (optional)
+
+---
+
+## 📱 Installation Instructions
+
+### iOS (Safari)
+1. Open the app in Safari
+2. Tap the **Share** button (⎋) at the bottom
+3. Scroll down and tap **Add to Home Screen** (➕)
+4. Tap **Add** in the top right
+
+### Android (Chrome)
+1. Open the app in Chrome
+2. Tap the **menu** button (⋮) in the top right
+3. Tap **Add to Home screen** or **Install app**
+4. Tap **Add** or **Install**
+
+### Desktop
+1. Look for the **install** icon (⊕) in your browser's address bar
+2. Click it and select **Install**
+
+After installation, the app opens in its own window and works offline.
+
+---
+
+## 📖 User Guide
+
+### First-Time Setup
+1. **Language Selection**: Choose interface language (English / Simplified / Traditional)
+2. **Installation Check**: Install to home screen if not already in standalone mode
+3. **Input Method**: Select Pinyin, Zhuyin, or Cangjie
+4. **Backup Reminder**: Review data safety recommendations
+5. **Tutorial**: Learn the three-stage memorization system (or skip to start immediately)
+
+### Adding Verses
+1. Go to **Add Verse** panel
+2. Enter:
+   - Chinese verse text
+   - Book name (Chinese)
+   - Chapter and verse numbers
+   - First key for each character (based on your input method)
+   - Book name keys
+   - Bible version (optional)
+3. Optionally add to a collection
+4. Tap **Save Verse**
+
+**Tip**: Input method keys must match character order exactly. For Pinyin: "耶和華" → "yhh"
+
+### Learning Mode
+1. Go to **Learn** panel
+2. Select a verse from the dropdown
+3. Choose difficulty: **Basic** → **Intermediate** → **Advanced**
+4. Type the first key for each character
+5. Progress to next stage at 90% accuracy
+6. Verses become reviewable after completing Advanced
+
+### Review Mode
+- **Review Due Verses**: Red button appears when verses are overdue
+- **Collections**: Select a collection and choose review mode (individual or single-text)
+- **Individual Verses**: Check boxes next to verses, then tap **Review verses**
+- **Change Interval**: Select verses and adjust next review date (1–35+ days)
+
+### Collections
+- **Create**: Enter title and tap **Create Collection**
+- **Add Verses**: Use the Add Verse panel or bulk-add from the Collections panel
+- **View/Edit**: Expand collections to see verses and due dates
+- **Rename/Delete**: Use action buttons on each collection
+
+### Export & Import
+- **Download Data**: Export all verses, selected collections, or ungrouped verses
+- **Include Options**: Toggle review data (progress) and collection data (groups)
+- **Import Data**: Upload JSON file; review data merges intelligently (keeps most recent)
+
+**⚠️ Important**: Export regularly! Data is stored locally—clearing browser data or uninstalling deletes everything.
+
+### Settings
+- **Language**: Switch interface language
+- **Theme**: Light / Dark / System
+- **Input Method**: Change entry method (resets keyboard)
+- **Default Bible Version**: Pre-fill version field
+- **Vibration Feedback**: Enable error vibrations (Android only)
+- **Backup Reminders**: Toggle periodic export reminders
+- **Clear All Data**: Permanently delete all verses and collections
+
+---
+
+## 🧠 Spaced Repetition System
+
+### Interval Progression
+- **Success**: 1 day → 6 days → 12 days → 24 days → 48 days → continues doubling
+- **Failure**: Resets to interval=1, repetitions=0
+- **Early Review Penalty**: If reviewed before due date, next interval is reduced proportionally:  
+  `new_interval = old_interval × (days_waited / previous_interval)`
+
+### Advancement Rules
+- **Learning Stage**: 90% accuracy required to advance (Basic → Intermediate → Advanced)
+- **Review Stage**: <90% accuracy resets interval to 1 day
+
+### Due Date Logic
+- **Due Today**: 0–24 hours until due or 0–24 hours overdue
+- **Overdue**: 24+ hours past due date (shown in red)
+- **Due Soon**: 1–23 hours until due (shown in orange)
+
+---
+
+## 🔒 Data & Privacy
+
+### Storage
+- All data stored in browser's `localStorage` (5–10 MB limit per domain)
+- No backend server or cloud sync
+- No user accounts or tracking
+
+### Data Safety
+- **Backup Regularly**: Use Export & Import to save JSON files to cloud storage
+- **Device-Specific**: Data does not sync between devices
+- **Clearing Data**: Uninstalling the app or clearing site data deletes all progress
+- **Installed PWA**: Even standalone apps lose data if you clear browser storage
+
+### What Gets Exported
+- **Verses**: Text, references, keystrokes, bible version
+- **Review Data** (optional): Last reviewed date, due date, interval, repetition count
+- **Collections** (optional): Titles and verse membership
+
+---
+
+## 👨‍💻 Developer Notes
+
+### Architecture
+- **Single-Page Vanilla JS**: No frameworks—entire app in `window.onload` closure
+- **Offline-First**: Service worker caches all assets for instant offline access
+- **Mobile-First CSS**: Base styles for mobile, `@media (min-width: 768px)` for desktop
+
+### Key Files
+- **`index.html`**: Single-page structure with all panels and modals
+- **`script.js`**: Complete application logic (5400+ lines in one closure)
+- **`style.css`**: Theme-aware styling with CSS variables
+- **`sw.js`**: Service worker for PWA caching
+- **`manifest.json`**: PWA manifest for installation
+- **`fonts/`**: Bundled Noto Sans SC for offline Chinese rendering
+- **`icons/`**: PWA icons (72px–512px)
+
+### Data Model (localStorage)
+```javascript
+verses = [{
+  id, verseText, bookName, chapterNumber, verseNumber,
+  verseInitials, bookInitials, bibleVersion,
+  lastReviewed, dueDate, interval, repetitions
+}]
+
+collections = [{
+  id, title, verseIds: []
+}]
+```
+
+### Spaced Repetition Implementation
+- **Function**: `spacedRepetitionBinary(card, success, currentDate)` (line ~1353)
+- **Binary System**: Pass/fail only (not EF-based like SM-2)
+- **Early Review**: Reduces next interval based on fraction of scheduled time waited
+- **Storage**: Dates stored as ISO strings; converted to Date objects at runtime
+
+### Input Methods & Keyboards
+- **Physical Keyboard Mapping**:
+  - Zhuyin: QWERTY keys map to Bopomofo symbols
+  - Cangjie: QWERTY keys map to radicals (手田水口廿卜山戈人心…)
+  - Pinyin: Direct a-z mapping
+- **Onscreen Keyboards**: Custom HTML keyboards for touch devices
+- **Hidden Input Pattern**: `learnInput` positioned off-screen (`left: -9999px`) but remains focusable
+  - Unifies physical and onscreen keyboard handling
+  - Prevents layout shifts while keeping input field functional
+  - Uses helper text above verse display instead of placeholder
+
+### Onboarding Flow
+1. Language Selection
+2. Install Check (if not in standalone mode)
+3. Input Method Selection
+4. Backup Reminder
+5. Tutorial Intro (overview of 3 stages)
+6. Tutorial Basic (animated example)
+7. Tutorial Intermediate (animated example)
+8. Tutorial Advanced (animated example)
+9. Begin (Learn panel with sample verses)
+
+### Sample Data
+- **Files**: `PY-Samples.json`, `ZY-Samples.json`, `CJ-Samples.json`
+- **Format**: `{ verses: [], collections: [{ title, verseRefs }] }`
+- **Loading**: Verse refs resolved to IDs during import
+- **Trigger**: Loaded once on first run based on selected input method
+
+### Icon Generation
+- **Source**: `icons/icon.svg`
+- **Methods**:
+  - Browser: Open `generate-icons.html` (canvas-based)
+  - CLI: Run `./generate-icons.sh` (requires ImageMagick)
+- **Sizes**: 72, 96, 128, 144, 152, 192, 384, 512px
+
+### Local Development
+```bash
+# Start server (option 1)
+./start-server.sh
+
+# Start server (option 2)
+python3 -m http.server 8000
+
+# Open browser
+open http://localhost:8000
+```
+
+### Deployment Checklist
+1. Update code in `index.html`, `script.js`, `style.css`
+2. **Bump `CACHE_NAME`** in `sw.js` (e.g., `v0.9.1` → `v0.9.2`)
+3. Verify `manifest.json` version and icons
+4. Test in browsers: Safari (iOS), Chrome (Android), desktop
+5. Hard reload (Cmd+Shift+R / Ctrl+Shift+R) to clear cache
+
+### Key Technical Patterns
+
+**Panel Navigation**
+- `showPanel(panel)` shows one panel at a time
+- `hideAllKeyboards()` called on panel switch
+
+**Keyboard Management**
+- `showKeyboardForInput(input, forceKeyboardType)` detects input method and shows appropriate keyboard
+- Makes input readonly in learn/review mode (keys append programmatically)
+- `hideElementsBetweenInputAndKeyboard()` maximizes screen space
+- `scrollIntoView({ block: 'center' })` keeps content visible above keyboard
+
+**Biblical Order Sorting**
+- `sortVersesByBibleOrder(verses)` uses hardcoded `CHINESE_BIBLE_BOOKS` array
+- Critical for displaying verses in canonical sequence
+
+**Collections**
+- Verses can belong to multiple collections
+- Review modes: Individual (verse-by-verse) or Single-Text (continuous)
+- Export supports selective collection export with optional review data merge
+
+**Translation System**
+- Inline `TRANSLATIONS` object with keys for `english`, `simplified`, `traditional`
+- `applyLanguage()` updates all `[data-i18n]` attributes
+- `t(key)` helper returns localized string
+
+### Critical Implementation Details
+
+**Why Single File?**
+- Maximum portability (copy 5 files, runs anywhere)
+- Simplified offline caching (no build step or module bundler)
+- Entire state machine in one closure (no global pollution)
+
+**Why Hidden Input?**
+- Unifies physical keyboard and onscreen keyboard event handling
+- Prevents mobile keyboard from covering content
+- Allows programmatic focus management without visible input field
+
+**Why localStorage?**
+- Simple, synchronous API
+- Works offline immediately
+- No server required
+- Trade-off: Manual backups needed
+
+**Mobile Optimizations**
+- Hidden learn input field saves ~50–60px vertical space
+- Inline mute button with verse selector saves ~40px
+- Dynamic keyboard visibility based on active input
+- Touch-optimized key sizes (Cangjie: 44×44px minimum)
+
+### Reset / Re-Onboard
+To reset onboarding state:
+1. Open browser DevTools → Application/Storage → Local Storage
+2. Delete keys: `hasCompletedOnboarding`, `hasVisitedBefore`, `inputMethod`
+3. Delete `verses` and `collections` to reload samples
+4. Refresh page
+
+Or use **Clear All Data** button in Settings.
+
+### Known Limitations
+- localStorage size limit (~5–10 MB)
+- No cross-device sync
+- Depends on browser Chinese font rendering quality
+- Vibration API only works on Android
+- Review data merge on import keeps most recent `lastReviewed` date
+
+### Contributing Guidelines
+- Maintain single-file closure architecture
+- Add translation keys to all three languages (`english`, `simplified`, `traditional`)
+- Test all three input methods (Pinyin, Zhuyin, Cangjie)
+- Verify light/dark theme compatibility
+- Test on iOS Safari, Android Chrome, and desktop
+- Update `CACHE_NAME` in `sw.js` after changes
+- Use CSS variables for colors (theme support)
+- Preserve offline functionality
+
+---
+
+## 📋 Updates in Version 0.9.1
+
+### New Features
+- **Installation Check**: Onboarding detects standalone mode and shows platform-specific install instructions
+- **Learning Tutorial**: Interactive multi-stage tutorial with animated keystroke examples
+- **Tutorial Intro**: Overview screen explaining 3-stage system with skip option
+- **Onscreen Pinyin Keyboard**: Touch-friendly Latin keyboard for mobile users
+- **Automatic Numeric Keyboard**: Switches to numeric keyboard for chapter/verse fields
+- **Vibration Feedback**: Optional error vibration on Android devices
+- **Backup Reminders**: Weekly reminders for first month, then monthly (toggleable)
+- **Unsaved Changes Warning**: Alert when leaving Add Verse panel with unsaved edits
+- **Physical Keyboard Mappings**: Desktop users can type with keyboard (Zhuyin/Cangjie mapped to QWERTY)
+- **Review Button Opacity**: Buttons dim when no selection (Change Interval always visible)
+
+### Improvements
+- **Autosave Settings**: Removed save button; settings persist immediately
+- **Hidden Learn Input**: Off-screen input field saves vertical space (~90–100px total)
+- **Removed Confirm Key**: Enter key removed from onscreen keyboards in learn/review modes
+- **Larger Cangjie Keys**: Increased size and spacing for better accuracy
+- **Review Due Logic**: Fixed "Due Today" vs "Overdue" threshold (now 24 hours)
+- **Punctuation Coloring**: Fixed inconsistent intermediate mode punctuation colors
+- **Initial Punctuation**: Fixed opening quotes not appearing in correct color
+- **Keyboard Auto-Show**: Fixed keyboard not appearing after advancing to next verse
+
+### Bug Fixes
+- Fixed Zhuyin error in Ephesians 2:8 sample (ZY-Samples.json)
+- Fixed review badge showing 0 due when verses actually due today
+- Fixed collections due counter not matching individual verse due status
+
+---
+
+## 📄 License
+
+MIT License
+
+Copyright (c) 2024
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
