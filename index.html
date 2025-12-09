@@ -34,7 +34,7 @@
       <button id="addVerseBtn" data-i18n="add_verse">Add Verse</button>
       <button id="learnBtn" data-i18n="learn">Learn</button>
       <button id="collectionsBtn" data-i18n="collections">Collections</button>
-      <button id="reviewBtn" data-i18n="review">Review<span id="reviewBadge" class="badge" style="display:none;"></span></button>
+      <button id="reviewBtn" data-i18n="review" style="display:none;">Review<span id="reviewBadge" class="badge" style="display:none;"></span></button>
       <button id="exportBtn" data-i18n="export_import">Export & Import</button>
       <button id="settingsBtn" title="Settings">⚙️ <span data-i18n="settings">Settings</span></button>
     </div>
@@ -348,7 +348,7 @@
       <button id="clearDataBtn" style="background-color: #dc3545; color: white;" data-i18n="clear_all_data_btn">Clear All Data</button>
     </div>
     <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border-color); text-align: center; font-size: 0.85em; color: var(--text-secondary);">
-      <div style="margin-bottom: 4px;">ZH Bible Verse Memorizer PWA (Version 0.9.1)</div>
+      <div style="margin-bottom: 4px;">ZH Bible Verse Memorizer PWA (Version 0.9.1.1)</div>
       <div>Copyright © 2025 TzIsf62C</div>
     </div>
   </div>
@@ -538,6 +538,17 @@
 </div>
 <!-- End Review Mode Selection Modal -->
 
+<!-- Individual Review Order Modal -->
+<div id="reviewOrderModal" class="modal" aria-hidden="true">
+  <div class="modal-content">
+    <h2 data-i18n="choose_review_order">Choose Review Order</h2>
+    <button id="reviewOrderBiblicalBtn" data-i18n="order_biblical">Biblical Order</button>
+    <button id="reviewOrderDueDateBtn" data-i18n="order_due_date">By Due Date</button>
+    <button id="reviewOrderRandomBtn" data-i18n="order_random">Random Order</button>
+  </div>
+</div>
+<!-- End Individual Review Order Modal -->
+
 <!-- Reset Review Data Modal -->
 <div id="resetReviewDataModal" class="modal" aria-hidden="true">
   <div class="modal-overlay"></div>
@@ -559,7 +570,7 @@
     <img src="icons/icon-192x192.png" alt="App Icon" style="width: 80px; height: 80px; margin: 0 auto 16px; display: block;">
     <div style="text-align: center; margin-bottom: 24px;">
       <div style="font-size: 18px; font-weight: 600; margin-bottom: 4px;">ZH Bible Verse Memorizer</div>
-      <div style="font-size: 16px; color: var(--text-secondary);">圣经经文背诵</div>
+      <div style="font-size: 16px; color: var(--text-secondary);">聖經經文背誦 V0.9.1.1</div>
     </div>
     <h2>Set Language<br>设定语言 / 設定語言</h2>
     <div class="onboarding-options">
@@ -703,6 +714,8 @@
     <h2 id="tutorialAdvancedTitle" data-i18n="tutorial_advanced_title">Advanced Stage</h2>
     <p id="tutorialAdvancedDesc" data-i18n="tutorial_advanced_desc">No text is shown. The characters will appear as you type the correct keys.</p>
     
+
+    
     <div class="tutorial-example">
       <div id="tutorialAdvancedChars" class="tutorial-chars">
         <span class="tutorial-char tutorial-hidden" data-index="0">耶</span>
@@ -721,6 +734,11 @@
         <span>↑</span>
       </div>
       <div id="tutorialAdvancedKeys" class="tutorial-keys"></div>
+    </div>
+
+    <div style="margin: 16px 0; padding: 12px; background: var(--card-background); border-radius: 4px; font-size: 0.9em;">
+      <p style="margin: 0 0 8px 0;" id="tutorialAdvancedComplete" data-i18n="tutorial_advanced_complete"><strong>Completing a verse:</strong></p>
+      <p style="margin: 0;" id="tutorialAdvancedSpaced" data-i18n="tutorial_advanced_spaced">When you achieve 90% or higher accuracy on the Advanced stage, the verse will be marked as learned. The spaced repetition system will then remind you to review your learned verses at optimal intervals.</p>
     </div>
     
     <div class="onboarding-options">
@@ -771,6 +789,47 @@
   </div>
 </div>
 <!-- End Change Interval Modal -->
+
+<!-- Add Verse Tutorial Modal -->
+<div id="addVerseTutorialModal" class="modal" aria-hidden="true">
+  <div class="modal-overlay"></div>
+  <div class="modal-content" role="dialog" aria-modal="true">
+    <h2 id="addVerseTutorialTitle" data-i18n="add_verse_tutorial_title">How to Add Verses</h2>
+    
+    <div style="margin: 16px 0; line-height: 1.6;">
+      <p id="addVerseTutorialDesc1" data-i18n="add_verse_tutorial_desc1">Verses are added manually so you can use any Bible translation you prefer. Simply copy and paste the Chinese text into the verse field.</p>
+      
+      <p id="addVerseTutorialDesc2" data-i18n="add_verse_tutorial_desc2" style="margin-top: 12px;">For the initials fields, type one key per character using your chosen input method. This creates the answer key you'll be graded against when learning and reviewing verses.</p>
+    </div>
+    
+    <div style="margin: 20px 0; padding: 16px; background: var(--card-background); border-radius: 8px; border: 1px solid var(--border-color);">
+      <h3 style="margin: 0 0 12px 0; font-size: 14px; color: var(--text-secondary);" data-i18n="add_verse_tutorial_example">Example: Ephesians 2:8</h3>
+      
+      <div style="margin-bottom: 12px;">
+        <label style="font-size: 13px; font-weight: 600; color: var(--text-primary); text-align: left; display: block;" data-i18n="chinese_verse_text">Chinese Verse Text</label>
+        <div id="addVerseTutorialExampleText" style="margin-top: 4px; padding: 8px; background: white; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; color: #333; text-align: left;">
+          你們得救是本乎恩，也因着信；這並不是出於自己，而是神所賜的；
+        </div>
+      </div>
+      
+      <div>
+        <label id="addVerseTutorialInputLabel" data-i18n="pinyin_initials_verse" style="font-size: 13px; font-weight: 600; color: var(--text-primary); text-align: left; display: block;">Pinyin Initials for Verse</label>
+        <div id="addVerseTutorialExampleInitials" style="margin-top: 4px; padding: 8px; background: white; border: 1px solid #ddd; border-radius: 4px; font-family: monospace; font-size: 14px; color: #333; text-align: left;">
+          nmdjsbheyyzxzbbscyzjessscd
+        </div>
+      </div>
+      
+      <p style="margin: 12px 0 0 0; font-size: 12px; color: var(--text-secondary); text-align: left;" id="addVerseTutorialNote">
+        <strong>Note:</strong> <span data-i18n="add_verse_tutorial_note">Each Chinese character gets one key, punctuation is skipped.</span>
+      </p>
+    </div>
+    
+    <div class="onboarding-options">
+      <button id="addVerseTutorialGotIt" class="onboarding-btn" data-i18n="got_it">Got it!</button>
+    </div>
+  </div>
+</div>
+<!-- End Add Verse Tutorial Modal -->
 
 <!-- Onscreen Keyboards -->
 <div id="zhuyinKeyboard" class="onscreen-keyboard" style="display:none;">
