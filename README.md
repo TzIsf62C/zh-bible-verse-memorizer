@@ -1,6 +1,6 @@
 # ZH Bible Verse Memorizer PWA
 
-**Version 0.9.1** | **License: MIT**
+**Version 0.9.1.1** | **License: MIT**
 
 A Progressive Web App for memorizing Chinese Bible verses with spaced repetition. This App is inspired by the Bible Memory App (https://biblememory.com/). I would recommend that app if you are memorizing Bible verses in English.
 
@@ -15,6 +15,7 @@ A Progressive Web App for memorizing Chinese Bible verses with spaced repetition
 - [Data & Privacy](#-data--privacy)
 - [Developer Notes](#-developer-notes)
 - [Updates in Version 0.9.1](#-updates-in-version-091)
+- [Updates in Version 0.9.1.1](#-updates-in-version-0911)
 
 ---
 
@@ -378,6 +379,47 @@ Or use **Clear All Data** button in Settings.
 - Fixed Zhuyin error in Ephesians 2:8 sample (ZY-Samples.json)
 - Fixed review badge showing 0 due when verses actually due today
 - Fixed collections due counter not matching individual verse due status
+
+---
+
+## 📋 Updates in Version 0.9.1.1
+
+### New Features
+- **Review Ordering Options**: Individual verse reviews can now be sorted by Biblical order, Due Date (earliest first), or Random shuffle
+- **Add Verse Tutorial Modal**: First-time tutorial explaining manual verse entry with visual example (Ephesians 2:8) showing input method-specific answer keys
+- **Language-Aware Pinyin Samples**: Separate sample files for Simplified (PY-Samples-zhs.json) and Traditional (PY-Samples-zht.json) Chinese
+
+### Improvements
+- **Single-Text Reviews**: Always display verses in Biblical order regardless of due dates
+- **Real-Time Review Badge**: Updates during active review sessions as verses are completed
+- **Progressive Review Button**: Hidden until first verse is learned, reducing clutter for new users
+- **Biblical Order Sorting**: Collection verse selector displays verses in canonical book order
+- **Verse Selector Visibility**: Always visible on retry in intermediate mode (previously hidden during reviews)
+- **Advanced Tutorial Enhancement**: Added explanation about 90% accuracy requirement and spaced repetition system
+- **Navigation Accessibility**: Review button remains clickable during active review sessions
+
+### Bug Fixes
+- Fixed Learning Mode controls incorrectly showing during review sessions
+- Fixed review navigation button becoming disabled during active reviews
+
+### UI/UX Enhancements
+- **Responsive Onscreen Keyboards**: Keyboards now scale intelligently across screen sizes
+  - Mobile (< 600px): Compact layout optimized for narrow screens
+  - Tablet (≥ 600px): Medium-sized keys with improved spacing
+  - Desktop (≥ 768px): Larger keys centered with max-width 900px
+  - Large Desktop (≥ 1024px): Maximum size keys with max-width 1100px
+  - Keys use flexbox with max-width constraints to balance across available space
+  
+- **Landscape Mode Optimizations**: Dramatically reduced keyboard vertical footprint on mobile devices in landscape orientation
+  - General keyboards: ~40% reduction in padding and spacing
+  - Zhuyin keyboard: Extra aggressive reduction (5 rows → ~65-70% screen height vs 90%)
+  - Numeric keyboard: Optimized 4-row layout with balanced button sizes
+  - All keyboards now match or beat native keyboard efficiency (~73% screen height)
+  
+- **Orientation Change Auto-Recentering**: Viewport automatically recenters on focused content after device rotation
+  - Learn panel: Scrolls `progressDisplay` (verse text) into view
+  - Add Verse panel: Scrolls field labels into view for context
+  - Smooth scrolling animation for polished user experience
 
 ---
 

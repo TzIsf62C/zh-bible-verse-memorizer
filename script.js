@@ -604,6 +604,10 @@ window.onload = function () {
         choose_review_mode: "Choose Review Mode",
         review_individually: "Review verses individually",
         review_single_text: "Review as a single text",
+        choose_review_order: "Choose Review Order",
+        order_biblical: "Biblical Order",
+        order_due_date: "By Due Date",
+        order_random: "Random Order",
         // Collections Panel
         collections_title: "Collections",
         new_collection_title: "New Collection Title",
@@ -724,7 +728,15 @@ window.onload = function () {
         tutorial_intermediate_title: "Intermediate Stage",
         tutorial_intermediate_desc: "Every other character is hidden. Type a key for each character, even the hidden ones. They will appear as you type.",
         tutorial_advanced_title: "Advanced Stage",
-        tutorial_advanced_desc: "No text is shown. The characters will appear as you type the correct keys.",
+        tutorial_advanced_desc: "No text is shown. The characters will appear as you type.",
+        tutorial_advanced_complete: "Completing a verse:",
+        tutorial_advanced_spaced: "When you achieve 90% or higher accuracy on the Advanced stage, the verse will be marked as learned. The spaced repetition system will then remind you to review your learned verses at optimal intervals.",
+        add_verse_tutorial_title: "How to Add Verses",
+        add_verse_tutorial_desc1: "Verses are added manually so you can use any Bible translation you prefer. Simply copy and paste the Chinese text into the verse field.",
+        add_verse_tutorial_desc2: "For the initials fields, type one key per character using your chosen input method. This creates the answer key you'll be graded against when learning and reviewing verses.",
+        add_verse_tutorial_example: "Example: Ephesians 2:8",
+        add_verse_tutorial_note: "Each Chinese character gets one key, punctuation is skipped.",
+        got_it: "Got it!",
         begin: "Begin"
       },
       simplified: {
@@ -806,6 +818,10 @@ window.onload = function () {
         choose_review_mode: "选择复习方式",
         review_individually: "逐节复习",
         review_single_text: "单段复习",
+        choose_review_order: "选择复习顺序",
+        order_biblical: "圣经顺序",
+        order_due_date: "按到期日期",
+        order_random: "随机顺序",
         // Collections Panel
         collections_title: "经文集合",
         new_collection_title: "新集合标题",
@@ -926,7 +942,15 @@ window.onload = function () {
         tutorial_intermediate_title: "中级阶段",
         tutorial_intermediate_desc: "每隔一个字符会被隐藏。为每个字符输入一个键，即使是隐藏的字符。它们会在您输入时出现。",
         tutorial_advanced_title: "高级阶段",
-        tutorial_advanced_desc: "不显示文本。当您输入正确的键时，字符会出现。",
+        tutorial_advanced_desc: "不显示任何文本。只有当您输入时，字才会出现。",
+        tutorial_advanced_complete: "完成一个经文：",
+        tutorial_advanced_spaced: "当您在高级阶段达到90%或更高的准确率时，该经文将被标记为已学习。间隔重复系统将在最佳时间间隔提醒您复习已学习的经文。",
+        add_verse_tutorial_title: "如何添加经文",
+        add_verse_tutorial_desc1: "经文是手动添加的，所以您可以使用任何您喜欢的圣经译本。只需将中文文本复制并粘贴到经文字段中。",
+        add_verse_tutorial_desc2: "对于首字母字段，使用您选择的输入法为每个字符输入一个键。这将创建您在学习和复习经文时将被评分的答案键。",
+        add_verse_tutorial_example: "示例：以弗所书 2:8",
+        add_verse_tutorial_note: "每个中文字符对应一个键，标点符号会被跳过。",
+        got_it: "明白了！",
         begin: "开始"
       },
       traditional: {
@@ -1008,6 +1032,10 @@ window.onload = function () {
         choose_review_mode: "選擇複習方式",
         review_individually: "逐節複習",
         review_single_text: "單段複習",
+        choose_review_order: "選擇複習順序",
+        order_biblical: "聖經順序",
+        order_due_date: "按到期日期",
+        order_random: "隨機順序",
         // Collections Panel
         collections_title: "經文集合",
         new_collection_title: "新集合標題",
@@ -1128,7 +1156,15 @@ window.onload = function () {
         tutorial_intermediate_title: "中級階段",
         tutorial_intermediate_desc: "每隔一個字元會被隱藏。為每個字元輸入一個鍵，即使是隱藏的字元。它們會在您輸入時出現。",
         tutorial_advanced_title: "高級階段",
-        tutorial_advanced_desc: "不顯示文字。當您輸入正確的鍵時，字元會出現。",
+        tutorial_advanced_desc: "不顯示任何文字，只有當您輸入時，字才會出現。",
+        tutorial_advanced_complete: "完成一個經文：",
+        tutorial_advanced_spaced: "當您在高級階段達到90%或更高的準確率時，該經文將被標記為已學習。間隔重複系統將在最佳時間間隔提醒您複習已學習的經文。",
+        add_verse_tutorial_title: "如何添加經文",
+        add_verse_tutorial_desc1: "經文是手動添加的，所以您可以使用任何您喜歡的聖經譯本。只需將中文文本複製並貼上到經文欄位中。",
+        add_verse_tutorial_desc2: "對於首字母欄位，使用您選擇的輸入法為每個字元輸入一個鍵。這將創建您在學習和複習經文時將被評分的答案鍵。",
+        add_verse_tutorial_example: "示例：以弗所書 2:8",
+        add_verse_tutorial_note: "每個中文字元對應一個鍵，標點符號會被跳過。",
+        got_it: "明白了！",
         begin: "開始"
       }
     };
@@ -1174,6 +1210,34 @@ window.onload = function () {
           el.textContent = t(key, savedLang);
         }
       });
+      
+      // Update Add Verse tutorial example based on input method
+      updateAddVerseTutorialExample();
+    }
+    
+    function updateAddVerseTutorialExample() {
+      const inputMethod = localStorage.getItem('inputMethod') || 'pinyin';
+      const labelElement = document.getElementById('addVerseTutorialInputLabel');
+      const initialsElement = document.getElementById('addVerseTutorialExampleInitials');
+      
+      if (!labelElement || !initialsElement) return;
+      
+      // Ephesians 2:8 verse: 你們得救是本乎恩，也因着信；這並不是出於自己，而是神所賜的；
+      // Answer keys from sample files
+      
+      if (inputMethod === 'pinyin') {
+        labelElement.setAttribute('data-i18n', 'pinyin_initials_verse');
+        labelElement.textContent = t('pinyin_initials_verse');
+        initialsElement.textContent = 'nmdjsbheyyzxzbbscyzjessscd';
+      } else if (inputMethod === 'zhuyin') {
+        labelElement.setAttribute('data-i18n', 'zhuyin_initials_verse');
+        labelElement.textContent = t('zhuyin_initials_verse');
+        initialsElement.textContent = 'ㄋㄇㄉㄐㄕㄅㄏㄣㄧㄧㄓㄒㄓㄅㄅㄕㄔㄩㄗㄐㄦㄕㄕㄙㄙㄉ';
+      } else if (inputMethod === 'cangjie') {
+        labelElement.setAttribute('data-i18n', 'cangjie_initials_verse');
+        labelElement.textContent = t('cangjie_initials_verse');
+        initialsElement.textContent = '人人竹戈日木竹田心田廿人卜廿一日山卜竹尸一日戈竹月竹';
+      }
     }
 
     function initLanguage() {
@@ -1495,6 +1559,26 @@ window.onload = function () {
       return verseA - verseB;
     });
   }
+
+  // Helper function to sort verses by due date (earliest first)
+  function sortByDueDate(verses) {
+    return verses.sort((a, b) => {
+      const dateA = new Date(a.dueDate || 0);
+      const dateB = new Date(b.dueDate || 0);
+      return dateA - dateB;
+    });
+  }
+
+  // Helper function to shuffle an array randomly
+  function shuffleArray(arr) {
+    const shuffled = [...arr];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  }
+
  // --- NEW: Pinyin Autocomplete Logic ---
     
   // Function to render the suggestions based on input value
@@ -1709,6 +1793,14 @@ window.onload = function () {
     const reviewBtn = document.getElementById('reviewBtn');
     
     if (badge && reviewBtn) {
+      // Show Review button if there are any learned verses
+      if (learnedVerses.length > 0) {
+        reviewBtn.style.display = '';
+      } else {
+        reviewBtn.style.display = 'none';
+      }
+      
+      // Show badge with count if there are due verses
       if (dueCount > 0) {
         badge.textContent = dueCount;
         badge.style.display = 'inline-block';
@@ -2217,10 +2309,11 @@ window.onload = function () {
     if (!col) return;
     collectionDetail.style.display = 'block';
     collectionDetailTitle.textContent = col.title;
-    // populate addVerseToCollection select with all verses
+    // populate addVerseToCollection select with all verses sorted by Biblical order
     const verses = JSON.parse(localStorage.getItem('verses') || '[]');
+    const sortedVerses = sortVersesByBibleOrder(verses);
     addVerseToCollection.innerHTML = '';
-    verses.forEach(v => {
+    sortedVerses.forEach(v => {
       const opt = document.createElement('option');
       opt.value = v.id;
       opt.textContent = `${v.bookName} ${v.chapterNumber}:${v.verseNumber}`;
@@ -2273,43 +2366,63 @@ window.onload = function () {
       return;
     }
 
-    // Sort selected verses by Biblical order
-    const sortedSelectedVerses = sortVersesByBibleOrder(selectedVerses);
+    // Show review order modal to let user choose sorting
+    const reviewOrderModal = document.getElementById('reviewOrderModal');
+    if (reviewOrderModal) {
+      reviewOrderModal.classList.add('open');
+      reviewOrderModal.setAttribute('aria-hidden', 'false');
 
-    // Start an individual-verse review session (selected verses behave like a playlist)
-    reviewCollectionMode = 'individual';
-    reviewVerses = sortedSelectedVerses;
-    reviewSuccessCount = 0;
+      const biblicalBtn = document.getElementById('reviewOrderBiblicalBtn');
+      const dueDateBtn = document.getElementById('reviewOrderDueDateBtn');
+      const randomBtn = document.getElementById('reviewOrderRandomBtn');
 
-    // Populate the verseSelector with only the selected verses so the reference is visible and can fade
-    if (verseSelector) {
-      verseSelector.innerHTML = '';
-      reviewVerses.forEach((v, idx) => {
-        const opt = document.createElement('option');
-        opt.value = idx;
-        opt.textContent = `${v.bookName} ${v.chapterNumber}:${v.verseNumber}`;
-        verseSelector.appendChild(opt);
-      });
-      try { 
-        verseSelector.selectedIndex = 0; 
-        verseSelector.style.display = 'block'; 
-        verseSelector.style.opacity = '1';
-        verseSelector.disabled = true; // Disable during review to prevent changing verses
-      } catch (e) {}
+      // Remove previous listeners
+      biblicalBtn.onclick = null;
+      dueDateBtn.onclick = null;
+      randomBtn.onclick = null;
+
+      // Function to start review with chosen order
+      function startReviewWithOrder(sortedVerses) {
+        reviewOrderModal.classList.remove('open');
+        reviewOrderModal.setAttribute('aria-hidden', 'true');
+
+        reviewCollectionMode = 'individual';
+        reviewVerses = sortedVerses;
+        reviewSuccessCount = 0;
+
+        if (verseSelector) {
+          verseSelector.innerHTML = '';
+          reviewVerses.forEach((v, idx) => {
+            const opt = document.createElement('option');
+            opt.value = idx;
+            opt.textContent = `${v.bookName} ${v.chapterNumber}:${v.verseNumber}`;
+            verseSelector.appendChild(opt);
+          });
+          try { 
+            verseSelector.selectedIndex = 0; 
+            verseSelector.style.display = 'block'; 
+            verseSelector.style.opacity = '1';
+            verseSelector.disabled = true;
+          } catch (e) {}
+        }
+
+        const verseSelectorLabel = document.getElementById('verseSelectorLabel');
+        if (verseSelectorLabel) verseSelectorLabel.style.display = 'none';
+
+        currentVerse = reviewVerses[0];
+        singleTextPrev = [];
+        singleTextReviewIndex = 0;
+        setLearningStage('advanced');
+        setActiveNavButton(null);
+        showPanel(learnPanel);
+        startLearnMode(currentVerse);
+        if (reviewModeHiddenControls) reviewModeHiddenControls.style.display = 'none';
+      }
+
+      biblicalBtn.onclick = () => startReviewWithOrder(sortVersesByBibleOrder(selectedVerses));
+      dueDateBtn.onclick = () => startReviewWithOrder(sortByDueDate(selectedVerses));
+      randomBtn.onclick = () => startReviewWithOrder(shuffleArray(selectedVerses));
     }
-
-    // Hide the verse selector label during review
-    const verseSelectorLabel = document.getElementById('verseSelectorLabel');
-    if (verseSelectorLabel) verseSelectorLabel.style.display = 'none';
-
-    currentVerse = reviewVerses[0];
-    singleTextPrev = [];
-    singleTextReviewIndex = 0;
-    setLearningStage('advanced'); // Review always uses advanced mode
-    showPanel(learnPanel);
-    startLearnMode(currentVerse);
-    // NEW: Hide the "Learn Mode" title and mode buttons
-  if (reviewModeHiddenControls) reviewModeHiddenControls.style.display = 'none';
   });
 
   // --- INDEPENDENT SINGLE-TEXT REVIEW SYSTEM ---
@@ -2340,6 +2453,7 @@ window.onload = function () {
     singleTextSession.reviewedIds = [];
     singleTextSession.input = '';
     singleTextSession.helpText = '';
+    setActiveNavButton(null);
     showPanel(learnPanel);
     if (verseSelector) verseSelector.style.display = 'none';
     renderSingleTextReview();
@@ -2581,6 +2695,8 @@ function populateBookDatalist() {
         }
         
         localStorage.setItem('verses', JSON.stringify(verses));
+        // Update badge after storing verse completion
+        updateReviewBadge();
       }
       
       learnInput.disabled = true;
@@ -2654,45 +2770,70 @@ function populateBookDatalist() {
         individuallyBtn.onclick = function() {
           reviewModeModal.classList.remove('open');
           reviewModeModal.setAttribute('aria-hidden', 'true');
-          // Sort collection verses by Biblical order
-          const sortedList = sortVersesByBibleOrder(list);
-          // Start individual-verse review session
-          reviewCollectionMode = 'individual';
-          reviewVerses = sortedList;
-          reviewSuccessCount = 0;
-          if (verseSelector) {
-            verseSelector.innerHTML = '';
-            reviewVerses.forEach((v, idx) => {
-              const opt = document.createElement('option');
-              opt.value = idx;
-              opt.textContent = `${v.bookName} ${v.chapterNumber}:${v.verseNumber}`;
-              verseSelector.appendChild(opt);
-            });
-            try { 
-              verseSelector.selectedIndex = 0; 
-              verseSelector.style.display = 'block'; 
-              verseSelector.style.opacity = '1';
-              verseSelector.disabled = true; // Disable during review to prevent changing verses
-            } catch (e) {}
-          }
-          // Hide the verse selector label during review
-          const verseSelectorLabel = document.getElementById('verseSelectorLabel');
-          if (verseSelectorLabel) verseSelectorLabel.style.display = 'none';
           
-          currentVerse = reviewVerses[0];
-          singleTextPrev = [];
-          singleTextReviewIndex = 0;
-          // Ensure advanced mode is set before showing panel and starting learn mode
-          setLearningStage('advanced');
-          showPanel(learnPanel);
-          startLearnMode(currentVerse);
-          if (reviewModeHiddenControls) reviewModeHiddenControls.style.display = 'none';
+          // Show review order modal
+          const reviewOrderModal = document.getElementById('reviewOrderModal');
+          if (reviewOrderModal) {
+            reviewOrderModal.classList.add('open');
+            reviewOrderModal.setAttribute('aria-hidden', 'false');
+
+            const biblicalBtn = document.getElementById('reviewOrderBiblicalBtn');
+            const dueDateBtn = document.getElementById('reviewOrderDueDateBtn');
+            const randomBtn = document.getElementById('reviewOrderRandomBtn');
+
+            biblicalBtn.onclick = null;
+            dueDateBtn.onclick = null;
+            randomBtn.onclick = null;
+
+            function startCollectionReview(sortedList) {
+              reviewOrderModal.classList.remove('open');
+              reviewOrderModal.setAttribute('aria-hidden', 'true');
+
+              reviewCollectionMode = 'individual';
+              reviewVerses = sortedList;
+              reviewSuccessCount = 0;
+              
+              if (verseSelector) {
+                verseSelector.innerHTML = '';
+                reviewVerses.forEach((v, idx) => {
+                  const opt = document.createElement('option');
+                  opt.value = idx;
+                  opt.textContent = `${v.bookName} ${v.chapterNumber}:${v.verseNumber}`;
+                  verseSelector.appendChild(opt);
+                });
+                try { 
+                  verseSelector.selectedIndex = 0; 
+                  verseSelector.style.display = 'block'; 
+                  verseSelector.style.opacity = '1';
+                  verseSelector.disabled = true;
+                } catch (e) {}
+              }
+              
+              const verseSelectorLabel = document.getElementById('verseSelectorLabel');
+              if (verseSelectorLabel) verseSelectorLabel.style.display = 'none';
+              
+              currentVerse = reviewVerses[0];
+              singleTextPrev = [];
+              singleTextReviewIndex = 0;
+              setLearningStage('advanced');
+              setActiveNavButton(null);
+              showPanel(learnPanel);
+              startLearnMode(currentVerse);
+              if (reviewModeHiddenControls) reviewModeHiddenControls.style.display = 'none';
+            }
+
+            biblicalBtn.onclick = () => startCollectionReview(sortVersesByBibleOrder(list));
+            dueDateBtn.onclick = () => startCollectionReview(sortByDueDate(list));
+            randomBtn.onclick = () => startCollectionReview(shuffleArray(list));
+          }
         };
 
         singleTextBtn.onclick = function() {
           reviewModeModal.classList.remove('open');
           reviewModeModal.setAttribute('aria-hidden', 'true');
-          startSingleTextReviewSession(list);
+          // Always sort by Biblical order for single-text review
+          const sortedList = sortVersesByBibleOrder(list);
+          startSingleTextReviewSession(sortedList);
         };
       }
     }, true);
@@ -2713,16 +2854,6 @@ function populateBookDatalist() {
     saveVerseBtn.classList.remove('dimmed');
     saveStatus.textContent = '';
   }
-
-  addVerseBtn.addEventListener('click', () => {
-    showPanel(addVersePanel);
-    clearForm();
-    // Auto-populate Bible version with default value if it's empty
-    const bibleVersionInput = document.getElementById('bibleVersion');
-    if (bibleVersionInput && !bibleVersionInput.value) {
-      bibleVersionInput.value = localStorage.getItem('defaultBibleVersion') || '';
-    }
-  });
 
   clearFormBtn.addEventListener('click', clearForm);
 
@@ -3483,6 +3614,8 @@ function populateBookDatalist() {
           verses[verseIndex].dueDate = updatedCard.dueDate.toISOString();
           
           localStorage.setItem('verses', JSON.stringify(verses));
+          // Update badge after storing verse completion
+          updateReviewBadge();
         }
 
         closeAccuracyModal();
@@ -3901,8 +4034,8 @@ function populateBookDatalist() {
     learnRetryBtn.style.display = 'none';
     learnNextBtn.style.display = 'none';
     
-    // Ensure verse selector is visible during review retry
-    if (reviewVerses && reviewVerses.length > 0 && verseSelector) {
+    // Ensure verse selector is visible during retry (both in review and learning modes)
+    if (verseSelector) {
       verseSelector.style.display = 'block';
       verseSelector.style.opacity = '1';
     }
@@ -4086,9 +4219,13 @@ function showPanel(panelToShow) {
   // Hide keyboards when switching panels
   hideAllKeyboards();
   
-  // NEW: Restore header and controls if we are going to learnPanel
+  // NEW: Restore header and controls if we are going to learnPanel (but NOT during active review sessions)
   if (panelToShow === learnPanel) {
-    if (reviewModeHiddenControls) reviewModeHiddenControls.style.display = 'block';
+    // Only restore controls if we're not in an active review session
+    const inReview = (reviewVerses && reviewVerses.length > 0) || (singleTextSession !== null && typeof singleTextSession !== 'undefined');
+    if (reviewModeHiddenControls && !inReview) {
+      reviewModeHiddenControls.style.display = 'block';
+    }
   }
     // CRITICAL FIX: Check if we are exiting the learn panel and if a single-text session is active.
     if (panelToShow !== learnPanel) {
@@ -4119,6 +4256,19 @@ function showPanel(panelToShow) {
 
   // Navigation Event Listeners
   addVerseBtn.addEventListener('click', () => {
+    // Check if user has seen the Add Verse tutorial
+    const hasSeenTutorial = localStorage.getItem('hasSeenAddVerseTutorial');
+    
+    if (!hasSeenTutorial) {
+      // Update example based on input method before showing
+      updateAddVerseTutorialExample();
+      // Show tutorial modal first
+      const tutorialModal = document.getElementById('addVerseTutorialModal');
+      tutorialModal.setAttribute('aria-hidden', 'false');
+      tutorialModal.style.display = 'flex';
+      return;
+    }
+    
     setActiveNavButton(addVerseBtn);
     showPanel(addVersePanel);
     loadVersesForEdit();
@@ -4207,6 +4357,7 @@ function showPanel(panelToShow) {
         singleTextPrev = [];
         singleTextReviewIndex = 0;
         setLearningStage('advanced');
+        setActiveNavButton(null);
         showPanel(learnPanel);
         startLearnMode(currentVerse);
         if (reviewModeHiddenControls) reviewModeHiddenControls.style.display = 'none';
@@ -4241,40 +4392,68 @@ function showPanel(panelToShow) {
         individuallyBtn.onclick = function() {
           reviewModeModal.classList.remove('open');
           reviewModeModal.setAttribute('aria-hidden', 'true');
-          // Sort due verses by Biblical order
-          const sortedList = sortVersesByBibleOrder(dueVerses);
-          reviewCollectionMode = 'individual';
-          reviewVerses = sortedList;
-          reviewSuccessCount = 0;
-          if (verseSelector) {
-            verseSelector.innerHTML = '';
-            reviewVerses.forEach((v, idx) => {
-              const opt = document.createElement('option');
-              opt.value = idx;
-              opt.textContent = `${v.bookName} ${v.chapterNumber}:${v.verseNumber}`;
-              verseSelector.appendChild(opt);
-            });
-            verseSelector.selectedIndex = 0;
-            verseSelector.style.display = 'block';
-            verseSelector.style.opacity = '1';
-            verseSelector.disabled = true;
-          }
-          const verseSelectorLabel = document.getElementById('verseSelectorLabel');
-          if (verseSelectorLabel) verseSelectorLabel.style.display = 'none';
           
-          currentVerse = reviewVerses[0];
-          singleTextPrev = [];
-          singleTextReviewIndex = 0;
-          setLearningStage('advanced');
-          showPanel(learnPanel);
-          startLearnMode(currentVerse);
-          if (reviewModeHiddenControls) reviewModeHiddenControls.style.display = 'none';
+          // Show review order modal
+          const reviewOrderModal = document.getElementById('reviewOrderModal');
+          if (reviewOrderModal) {
+            reviewOrderModal.classList.add('open');
+            reviewOrderModal.setAttribute('aria-hidden', 'false');
+
+            const biblicalBtn = document.getElementById('reviewOrderBiblicalBtn');
+            const dueDateBtn = document.getElementById('reviewOrderDueDateBtn');
+            const randomBtn = document.getElementById('reviewOrderRandomBtn');
+
+            biblicalBtn.onclick = null;
+            dueDateBtn.onclick = null;
+            randomBtn.onclick = null;
+
+            function startDueReview(sortedList) {
+              reviewOrderModal.classList.remove('open');
+              reviewOrderModal.setAttribute('aria-hidden', 'true');
+
+              reviewCollectionMode = 'individual';
+              reviewVerses = sortedList;
+              reviewSuccessCount = 0;
+              
+              if (verseSelector) {
+                verseSelector.innerHTML = '';
+                reviewVerses.forEach((v, idx) => {
+                  const opt = document.createElement('option');
+                  opt.value = idx;
+                  opt.textContent = `${v.bookName} ${v.chapterNumber}:${v.verseNumber}`;
+                  verseSelector.appendChild(opt);
+                });
+                verseSelector.selectedIndex = 0;
+                verseSelector.style.display = 'block';
+                verseSelector.style.opacity = '1';
+                verseSelector.disabled = true;
+              }
+              
+              const verseSelectorLabel = document.getElementById('verseSelectorLabel');
+              if (verseSelectorLabel) verseSelectorLabel.style.display = 'none';
+              
+              currentVerse = reviewVerses[0];
+              singleTextPrev = [];
+              singleTextReviewIndex = 0;
+              setLearningStage('advanced');
+              setActiveNavButton(null);
+              showPanel(learnPanel);
+              startLearnMode(currentVerse);
+              if (reviewModeHiddenControls) reviewModeHiddenControls.style.display = 'none';
+            }
+
+            biblicalBtn.onclick = () => startDueReview(sortVersesByBibleOrder(dueVerses));
+            dueDateBtn.onclick = () => startDueReview(sortByDueDate(dueVerses));
+            randomBtn.onclick = () => startDueReview(shuffleArray(dueVerses));
+          }
         };
 
         singleTextBtn.onclick = function() {
           reviewModeModal.classList.remove('open');
           reviewModeModal.setAttribute('aria-hidden', 'true');
-          startSingleTextReviewSession(dueVerses);
+          // Always sort by Biblical order for single-text review
+          const sortedList = sortVersesByBibleOrder(dueVerses);
+          startSingleTextReviewSession(sortedList);
         };
       }
     });
@@ -4926,13 +5105,24 @@ function showPanel(panelToShow) {
   }
 
   async function loadSampleVerses(inputMethod) {
-    const fileMap = {
-      'pinyin': 'PY-Samples.json',
-      'zhuyin': 'ZY-Samples.json',
-      'cangjie': 'CJ-Samples.json'
-    };
+    const language = localStorage.getItem('languagePreference') || 'english';
+    
+    // Map input method and language to sample file
+    let fileName;
+    if (inputMethod === 'pinyin') {
+      // For pinyin, use language-specific samples
+      if (language === 'traditional') {
+        fileName = 'PY-Samples-zht.json';
+      } else {
+        // Use simplified for both 'simplified' and 'english' language settings
+        fileName = 'PY-Samples-zhs.json';
+      }
+    } else if (inputMethod === 'zhuyin') {
+      fileName = 'ZY-Samples.json';
+    } else if (inputMethod === 'cangjie') {
+      fileName = 'CJ-Samples.json';
+    }
 
-    const fileName = fileMap[inputMethod];
     if (!fileName) return;
 
     try {
@@ -5382,6 +5572,31 @@ function showPanel(panelToShow) {
     });
   }
   
+  // Add Verse Tutorial Modal Event Listener
+  const addVerseTutorialGotIt = document.getElementById('addVerseTutorialGotIt');
+  if (addVerseTutorialGotIt) {
+    addVerseTutorialGotIt.addEventListener('click', () => {
+      // Hide modal
+      const tutorialModal = document.getElementById('addVerseTutorialModal');
+      tutorialModal.setAttribute('aria-hidden', 'true');
+      tutorialModal.style.display = 'none';
+      
+      // Mark as seen
+      localStorage.setItem('hasSeenAddVerseTutorial', 'true');
+      
+      // Proceed to Add Verse panel
+      setActiveNavButton(addVerseBtn);
+      showPanel(addVersePanel);
+      loadVersesForEdit();
+      populateCollectionSelector();
+      clearForm();
+      const bibleVersionInput = document.getElementById('bibleVersion');
+      if (bibleVersionInput && !bibleVersionInput.value) {
+        bibleVersionInput.value = localStorage.getItem('defaultBibleVersion') || '';
+      }
+    });
+  }
+  
   // Backup Reminder Modal Event Listeners
   if (backupReminderGotItBtn) {
     backupReminderGotItBtn.addEventListener('click', () => {
@@ -5419,6 +5634,35 @@ function showPanel(panelToShow) {
   
   bookNameInput.addEventListener('focus', () => showKeyboardForInput(bookNameInput));
   newCollectionTitle.addEventListener('focus', () => showKeyboardForInput(newCollectionTitle));
+
+  // Orientation change handler - recenter focused element
+  window.addEventListener('orientationchange', () => {
+    setTimeout(() => {
+      // If there's an active input, recenter it
+      if (activeInput && document.contains(activeInput)) {
+        activeInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      // If learnInput is the active input, also scroll progressDisplay into view
+      if (activeInput && activeInput.id === 'learnInput') {
+        setTimeout(() => {
+          const progressDisplay = document.getElementById('progressDisplay');
+          if (progressDisplay) {
+            progressDisplay.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 100);
+      }
+      // For Add Verse panel inputs, scroll the label into view for context
+      if (activeInput && (activeInput.id === 'verseInitials' || activeInput.id === 'bookInitials' || 
+          activeInput.id === 'chapterNumber' || activeInput.id === 'verseNumber')) {
+        setTimeout(() => {
+          const label = activeInput.parentElement.querySelector('label');
+          if (label) {
+            label.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }, 100);
+      }
+    }, 200); // Delay to allow orientation change to complete
+  });
 
   // (initialization at top of file already performed)
 };

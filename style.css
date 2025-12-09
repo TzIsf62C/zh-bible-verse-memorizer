@@ -962,46 +962,55 @@ select {
   right: 0;
   background: var(--panel-background);
   border-top: 1px solid var(--border-color);
-  padding: 20px 10px;
+  padding: 12px 8px;
   z-index: 1001;
   margin-top: 10px;
   touch-action: manipulation;
   -webkit-user-select: none;
   user-select: none;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .keyboard-row {
   display: flex;
   justify-content: center;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
+  gap: 4px;
+  max-width: 100%;
 }
 
 .onscreen-keyboard button {
   background: var(--button-background);
   color: var(--button-text);
   border: 1px solid var(--border-color);
-  padding: 8px 4px;
-  margin: 2px 1px;
+  padding: 10px 8px;
+  margin: 0;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 14px;
-  min-width: 28px;
+  font-size: 15px;
+  min-width: 32px;
+  flex: 1;
+  max-width: 50px;
   touch-action: manipulation;
+  transition: background 0.2s ease;
 }
 
 #numericKeyboard button {
-  padding: 8px 20px;
-  margin: 2px;
-  min-width: 60px;
+  padding: 12px 16px;
+  min-width: 50px;
+  max-width: 70px;
   font-size: 18px;
+  flex: 1;
 }
 
 #cangjieKeyboard button,
 #pinyinKeyboard button {
   font-size: 16px;
-  padding: 10px 6px;
-  margin: 2px 3px;
-  min-width: 32px;
+  padding: 12px 8px;
+  min-width: 36px;
+  max-width: 48px;
+  flex: 1;
 }
 
 .onscreen-keyboard button:hover {
@@ -1009,19 +1018,201 @@ select {
 }
 
 .onscreen-keyboard .space {
-  flex: 1;
+  flex: 3;
+  max-width: none;
 }
 
 .onscreen-keyboard .backspace {
   background: #dc3545;
   color: white;
   touch-action: manipulation;
+  flex: 1.5;
+  max-width: none;
 }
 
 .onscreen-keyboard .enter {
   background: #28a745;
   color: white;
   touch-action: manipulation;
+  flex: 1.5;
+  max-width: none;
+}
+
+/* Mobile landscape optimization - reduce keyboard height */
+@media (max-height: 500px) and (orientation: landscape) {
+  .onscreen-keyboard {
+    padding: 6px 8px;
+  }
+  
+  .keyboard-row {
+    gap: 3px;
+    margin-bottom: 4px;
+  }
+  
+  .onscreen-keyboard button {
+    padding: 6px 8px;
+    font-size: 14px;
+    min-width: 28px;
+    max-width: 45px;
+  }
+  
+  #numericKeyboard button {
+    padding: 8px 12px;
+    min-width: 45px;
+    max-width: 60px;
+    font-size: 16px;
+  }
+  
+  /* Numeric keyboard - more aggressive reduction for 4-row layout */
+  #numericKeyboard {
+    padding: 5px 8px;
+  }
+  
+  #numericKeyboard .keyboard-row {
+    gap: 4px;
+    margin-bottom: 5px;
+  }
+  
+  #numericKeyboard button {
+    padding: 6px 12px;
+    min-width: 50px;
+    max-width: 70px;
+    font-size: 18px;
+  }
+  
+  #cangjieKeyboard button,
+  #pinyinKeyboard button {
+    font-size: 15px;
+    padding: 6px 6px;
+    min-width: 32px;
+    max-width: 42px;
+  }
+  
+  /* Zhuyin keyboard has 5 rows - needs extra aggressive reduction */
+  #zhuyinKeyboard {
+    padding: 5px 6px;
+  }
+  
+  #zhuyinKeyboard .keyboard-row {
+    gap: 3px;
+    margin-bottom: 8px;
+  }
+  
+  #zhuyinKeyboard button {
+    padding: 4px 6px;
+    font-size: 15px;
+    min-width: 26px;
+    max-width: 60px;
+  }
+  
+  #zhuyinKeyboard .backspace,
+  #zhuyinKeyboard .enter {
+    padding: 4px 8px;
+  }
+}
+
+/* Tablet responsiveness (medium screens) */
+@media (min-width: 600px) {
+  .onscreen-keyboard {
+    padding: 16px 12px;
+  }
+  
+  .keyboard-row {
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+  
+  .onscreen-keyboard button {
+    padding: 14px 12px;
+    font-size: 17px;
+    min-width: 42px;
+    max-width: 65px;
+  }
+  
+  #numericKeyboard button {
+    padding: 16px 20px;
+    min-width: 60px;
+    max-width: 90px;
+    font-size: 20px;
+  }
+  
+  #cangjieKeyboard button,
+  #pinyinKeyboard button {
+    font-size: 18px;
+    padding: 14px 12px;
+    min-width: 44px;
+    max-width: 60px;
+  }
+}
+
+/* Desktop responsiveness (large screens) */
+@media (min-width: 768px) {
+  .onscreen-keyboard {
+    padding: 20px 16px;
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  
+  .keyboard-row {
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  
+  .onscreen-keyboard button {
+    padding: 16px 14px;
+    font-size: 18px;
+    min-width: 48px;
+    max-width: 75px;
+  }
+  
+  #numericKeyboard button {
+    padding: 18px 24px;
+    min-width: 70px;
+    max-width: 100px;
+    font-size: 22px;
+  }
+  
+  #cangjieKeyboard button,
+  #pinyinKeyboard button {
+    font-size: 20px;
+    padding: 16px 14px;
+    min-width: 50px;
+    max-width: 70px;
+  }
+}
+
+/* Extra large screens */
+@media (min-width: 1024px) {
+  .onscreen-keyboard {
+    max-width: 1100px;
+  }
+  
+  .keyboard-row {
+    gap: 10px;
+  }
+  
+  .onscreen-keyboard button {
+    padding: 18px 16px;
+    font-size: 20px;
+    min-width: 54px;
+    max-width: 85px;
+  }
+  
+  #numericKeyboard button {
+    padding: 20px 28px;
+    min-width: 80px;
+    max-width: 120px;
+    font-size: 24px;
+  }
+  
+  #cangjieKeyboard button,
+  #pinyinKeyboard button {
+    font-size: 22px;
+    padding: 18px 16px;
+    min-width: 56px;
+    max-width: 80px;
+  }
 }
 
 /* Tutorial Modal Styles */
