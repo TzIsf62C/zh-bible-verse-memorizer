@@ -41,7 +41,15 @@ window.onload = function () {
   const basicMode = document.getElementById('basicMode');
   const intermediateMode = document.getElementById('intermediateMode');
   const advancedMode = document.getElementById('advancedMode');
-  const reviewModeHiddenControls = document.getElementById('reviewModeHiddenControls'); // NEW: For hiding learn mode controls during review
+  const learnModeLabel = document.getElementById('learnModeLabel'); // Label to hide during review
+  const difficultyControls = document.getElementById('difficultyControls'); // Buttons to show during practice mode
+  
+  // Helper function to hide both label and difficulty buttons during review
+  function hideReviewModeControls() {
+    if (learnModeLabel) learnModeLabel.style.display = 'none';
+    if (difficultyControls) difficultyControls.style.display = 'none';
+  }
+  
   // Collections DOM
   const newCollectionTitle = document.getElementById('newCollectionTitle');
   const createCollectionBtn = document.getElementById('createCollectionBtn');
@@ -148,10 +156,8 @@ window.onload = function () {
   }
 
   function showPinyinKeyboard() {
-    console.log('showPinyinKeyboard called');
     hideAllKeyboards();
     pinyinKeyboard.style.display = 'block';
-    console.log('Pinyin keyboard display after setting:', pinyinKeyboard.style.display);
   }
 
   function showNumericKeyboard() {
@@ -198,7 +204,6 @@ window.onload = function () {
   }
 
   function showKeyboardForInput(input, forceKeyboardType) {
-    console.log('showKeyboardForInput called:', { inputId: input?.id, forceKeyboardType, activeInput: activeInput?.id });
     const method = forceKeyboardType || localStorage.getItem('inputMethod') || 'pinyin';
     if (input.id === 'bookNameInput' || input.id === 'newCollectionTitle' || input.id === 'verseText' || input.id === 'bibleVersion' || input.id === 'defaultBibleVersion') {
       hideAllKeyboards();
@@ -256,7 +261,6 @@ window.onload = function () {
     if (method === 'pinyin') {
       // Show pinyin keyboard for verseInitials, bookInitials, and learnInput
       if (input.id === 'verseInitials' || input.id === 'bookInitials' || input.id === 'learnInput') {
-        console.log('Showing pinyin keyboard for', input.id);
         showPinyinKeyboard();
         activeInput = input;
         input.readOnly = (input.id === 'learnInput');
@@ -589,6 +593,7 @@ window.onload = function () {
         vibration_note: "Note: Vibration is only available on Android devices.",
         retry: "Retry",
         next: "Next",
+        skip: "Skip",
         finish: "Finish",
         // Review Panel
         review_mode: "Review Mode",
@@ -694,6 +699,14 @@ window.onload = function () {
         reset_review_data_message: "This verse has existing review history. Would you like to reset the review data?",
         yes: "Yes",
         no: "No",
+        check_for_updates: "Check for Updates",
+        update_description: "Check if a new version of the app is available.",
+        check_update_btn: "Check for Updates",
+        checking_updates: "Checking...",
+        update_available: "Update available! Click to install.",
+        update_now: "Update Now",
+        no_updates: "You're up to date!",
+        update_error: "Unable to check for updates.",
         clear_all_data: "Clear All Data",
         clear_data_warning: "This will permanently delete all verses, collections, and review data from this device.",
         clear_all_data_btn: "Clear All Data",
@@ -803,6 +816,7 @@ window.onload = function () {
         vibration_note: "注意：振动功能仅在安卓设备上可用。",
         retry: "重试",
         next: "继续",
+        skip: "跳过",
         finish: "完成",
         // Review Panel
         review_mode: "复习模式",
@@ -908,6 +922,14 @@ window.onload = function () {
         reset_review_data_message: "此经文已有复习记录。您想重置复习数据吗？",
         yes: "是",
         no: "否",
+        check_for_updates: "检查更新",
+        update_description: "检查是否有新版本可用。",
+        check_update_btn: "检查更新",
+        checking_updates: "正在检查...",
+        update_available: "有可用更新！点击安装。",
+        update_now: "立即更新",
+        no_updates: "已是最新版本！",
+        update_error: "无法检查更新。",
         clear_all_data: "清除所有数据",
         clear_data_warning: "这将永久删除此设备上的所有经文、集合和复习数据。",
         clear_all_data_btn: "清除所有数据",
@@ -1017,6 +1039,7 @@ window.onload = function () {
         vibration_note: "注意：振動功能僅在安卓裝置上可用。",
         retry: "重試",
         next: "繼續",
+        skip: "跳過",
         finish: "完成",
         // Review Panel
         review_mode: "複習模式",
@@ -1122,6 +1145,14 @@ window.onload = function () {
         reset_review_data_message: "此經文已有複習記錄。您想重置複習數據嗎？",
         yes: "是",
         no: "否",
+        check_for_updates: "檢查更新",
+        update_description: "檢查是否有新版本可用。",
+        check_update_btn: "檢查更新",
+        checking_updates: "正在檢查...",
+        update_available: "有可用更新！點擊安裝。",
+        update_now: "立即更新",
+        no_updates: "已是最新版本！",
+        update_error: "無法檢查更新。",
         clear_all_data: "清除所有數據",
         clear_data_warning: "這將永久刪除此設備上的所有經文、集合和複習數據。",
         clear_all_data_btn: "清除所有數據",
@@ -1419,6 +1450,194 @@ window.onload = function () {
       });
     }
 
+    // Check for Updates functionality
+    const checkUpdateBtn = document.getElementById('checkUpdateBtn');
+    const updateStatus = document.getElementById('updateStatus');
+    let waitingWorker = null;
+
+    function showUpdateStatus(message, type = 'info') {
+      if (!updateStatus) return;
+      updateStatus.textContent = message;
+      updateStatus.style.display = 'block';
+      updateStatus.style.color = type === 'error' ? '#dc3545' : 
+                                  type === 'success' ? '#28a745' : 
+                                  'var(--text-secondary)';
+    }
+
+    function hideUpdateStatus() {
+      if (updateStatus) updateStatus.style.display = 'none';
+    }
+
+    async function checkForUpdates(silent = false) {
+      console.log('checkForUpdates called, silent:', silent);
+      console.log('navigator.serviceWorker:', navigator.serviceWorker);
+      console.log('serviceWorker in navigator:', 'serviceWorker' in navigator);
+      console.log('window.location:', window.location.href);
+      console.log('isSecureContext:', window.isSecureContext);
+      
+      if (!('serviceWorker' in navigator)) {
+        console.log('Service Worker not supported in this browser/context');
+        if (!silent) {
+          const isHttp = window.location.protocol === 'http:' && window.location.hostname !== 'localhost';
+          const message = isHttp ? 
+            'Service Workers require HTTPS. Please use HTTPS or install as PWA.' : 
+            t('update_error');
+          showUpdateStatus(message, 'error');
+        }
+        if (!silent && checkUpdateBtn) {
+          checkUpdateBtn.textContent = t('check_update_btn');
+          checkUpdateBtn.disabled = false;
+        }
+        return;
+      }
+
+      try {
+        if (!silent && checkUpdateBtn) {
+          checkUpdateBtn.disabled = true;
+          checkUpdateBtn.textContent = t('checking_updates');
+        }
+
+        // Wait a moment for service worker to register if page just loaded
+        let registration = await navigator.serviceWorker.getRegistration();
+        console.log('Service Worker registration (first check):', registration);
+        
+        if (!registration) {
+          console.log('No registration found, waiting and retrying...');
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          registration = await navigator.serviceWorker.getRegistration();
+          console.log('Service Worker registration (after retry):', registration);
+        }
+        
+        if (!registration) {
+          console.log('No service worker registration found after retry');
+          if (!silent) showUpdateStatus('Service Worker not registered. Try reloading the page.', 'error');
+          if (!silent && checkUpdateBtn) {
+            checkUpdateBtn.textContent = t('check_update_btn');
+            checkUpdateBtn.disabled = false;
+          }
+          return;
+        }
+
+        console.log('Checking for updates...');
+        // Check for updates
+        await registration.update();
+        console.log('Update check complete');
+
+        // Small delay to let the update process settle
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // Check if there's a waiting worker
+        if (registration.waiting) {
+          console.log('Update available (waiting worker found)');
+          waitingWorker = registration.waiting;
+          if (!silent && checkUpdateBtn) {
+            checkUpdateBtn.textContent = t('update_now');
+            checkUpdateBtn.disabled = false;
+            showUpdateStatus(t('update_available'), 'success');
+          }
+        } else if (registration.installing) {
+          console.log('Update installing...');
+          // Wait for installing to become waiting
+          registration.installing.addEventListener('statechange', (e) => {
+            console.log('Installing worker state changed:', e.target.state);
+            if (e.target.state === 'installed') {
+              waitingWorker = registration.waiting;
+              if (!silent && checkUpdateBtn) {
+                checkUpdateBtn.textContent = t('update_now');
+                checkUpdateBtn.disabled = false;
+                showUpdateStatus(t('update_available'), 'success');
+              }
+            }
+          });
+          // Don't reset button yet - wait for state change
+          return;
+        } else {
+          console.log('No updates available - app is up to date');
+          if (!silent) {
+            showUpdateStatus(t('no_updates'), 'success');
+            if (checkUpdateBtn) {
+              checkUpdateBtn.textContent = t('check_update_btn');
+              checkUpdateBtn.disabled = false;
+            }
+          }
+        }
+
+        // Listen for updatefound events (for future updates)
+        if (!registration._updateListenerAdded) {
+          registration._updateListenerAdded = true;
+          registration.addEventListener('updatefound', () => {
+            console.log('Update found event triggered');
+            const newWorker = registration.installing;
+            if (newWorker) {
+              newWorker.addEventListener('statechange', () => {
+                console.log('New worker state:', newWorker.state);
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  waitingWorker = newWorker;
+                  if (checkUpdateBtn) {
+                    checkUpdateBtn.textContent = t('update_now');
+                    checkUpdateBtn.disabled = false;
+                    showUpdateStatus(t('update_available'), 'success');
+                  }
+                }
+              });
+            }
+          });
+        }
+
+      } catch (error) {
+        console.error('Error checking for updates:', error);
+        if (!silent) showUpdateStatus(t('update_error'), 'error');
+        if (!silent && checkUpdateBtn) {
+          checkUpdateBtn.textContent = t('check_update_btn');
+          checkUpdateBtn.disabled = false;
+        }
+      }
+    }
+
+    function applyUpdate() {
+      if (waitingWorker) {
+        waitingWorker.postMessage({ type: 'SKIP_WAITING' });
+        waitingWorker.addEventListener('statechange', (e) => {
+          if (e.target.state === 'activated') {
+            window.location.reload();
+          }
+        });
+      }
+    }
+
+    if (checkUpdateBtn) {
+      checkUpdateBtn.addEventListener('click', () => {
+        if (waitingWorker) {
+          applyUpdate();
+        } else {
+          hideUpdateStatus();
+          checkForUpdates(false);
+        }
+      });
+    }
+
+    // Check for updates silently once a week when settings panel is opened
+    if (settingsBtn) {
+      settingsBtn.addEventListener('click', () => {
+        const lastUpdateCheck = localStorage.getItem('lastUpdateCheck');
+        const now = Date.now();
+        const oneWeek = 7 * 24 * 60 * 60 * 1000;
+
+        if (!lastUpdateCheck || (now - parseInt(lastUpdateCheck)) > oneWeek) {
+          localStorage.setItem('lastUpdateCheck', now.toString());
+          setTimeout(() => checkForUpdates(true), 1000); // Delay 1s to not interfere with panel loading
+        }
+      });
+    }
+
+    // Listen for controller change (new service worker activated)
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        // New service worker has taken control, reload
+        window.location.reload();
+      });
+    }
+
     // Clear All Data button handler
     if (clearDataBtn) {
       clearDataBtn.addEventListener('click', () => {
@@ -1678,6 +1897,8 @@ window.onload = function () {
   let singleTextReviewIndex = 0;
   // count of verses successfully reviewed (accuracy > 90%) during current review session
   let reviewSuccessCount = 0;
+  // Practice mode flag - when true, user can practice with different difficulties during review
+  let reviewPracticeMode = false;
   // Sound / buzzer state
   let audioCtx = null;
   let isMuted = true; // default: muted (no sound)
@@ -2389,6 +2610,7 @@ window.onload = function () {
         reviewCollectionMode = 'individual';
         reviewVerses = sortedVerses;
         reviewSuccessCount = 0;
+        reviewPracticeMode = false; // Reset practice mode for new review session
 
         if (verseSelector) {
           verseSelector.innerHTML = '';
@@ -2416,7 +2638,7 @@ window.onload = function () {
         setActiveNavButton(null);
         showPanel(learnPanel);
         startLearnMode(currentVerse);
-        if (reviewModeHiddenControls) reviewModeHiddenControls.style.display = 'none';
+        hideReviewModeControls();
       }
 
       biblicalBtn.onclick = () => startReviewWithOrder(sortVersesByBibleOrder(selectedVerses));
@@ -2458,7 +2680,7 @@ window.onload = function () {
     if (verseSelector) verseSelector.style.display = 'none';
     renderSingleTextReview();
     // NEW: Hide the "Learn Mode" title and mode buttons for single-text review
-  if (reviewModeHiddenControls) reviewModeHiddenControls.style.display = 'none';
+  hideReviewModeControls();
     learnInput.value = '';
     learnInput.disabled = false;
     learnInput.focus();
@@ -2716,6 +2938,8 @@ function populateBookDatalist() {
           // **NEW: Final display update and persistent message**
             renderSingleTextReview(); // Re-render one last time
             learnInput.disabled = true; // Disable input since session is complete
+            // CRITICAL FIX: Remove the event listener when session completes
+            learnInput.removeEventListener('input', singleTextInputHandler);
             updateReviewBadge(); // Update badge after single-text review
             alert(t('congratulations_reviewed_count').replace('{count}', reviewedCount));
             learnInput.style.display = 'none';
@@ -2792,6 +3016,7 @@ function populateBookDatalist() {
               reviewCollectionMode = 'individual';
               reviewVerses = sortedList;
               reviewSuccessCount = 0;
+              reviewPracticeMode = false; // Reset practice mode for new review session
               
               if (verseSelector) {
                 verseSelector.innerHTML = '';
@@ -2819,7 +3044,7 @@ function populateBookDatalist() {
               setActiveNavButton(null);
               showPanel(learnPanel);
               startLearnMode(currentVerse);
-              if (reviewModeHiddenControls) reviewModeHiddenControls.style.display = 'none';
+              hideReviewModeControls();
             }
 
             biblicalBtn.onclick = () => startCollectionReview(sortVersesByBibleOrder(list));
@@ -3134,9 +3359,19 @@ function populateBookDatalist() {
       setLearningStage('basic');
     }
     
-    // 2. Ensure the mode buttons/controls are VISIBLE (from previous successful fix)
-    if (window.reviewModeHiddenControls) {
-        window.reviewModeHiddenControls.style.display = ''; 
+    // 2. Control visibility of label and buttons separately
+    const inReview = (reviewVerses && reviewVerses.length > 0) || reviewCollectionMode !== null;
+    
+    // Label: hide during review, show during normal learning
+    if (learnModeLabel) {
+      learnModeLabel.style.display = inReview ? 'none' : '';
+    }
+    
+    // Difficulty buttons: hide during review UNLESS in practice mode
+    if (difficultyControls) {
+      const showButtons = !inReview || reviewPracticeMode;
+      difficultyControls.style.display = showButtons ? '' : 'none';
+      console.log('startLearnMode visibility:', { inReview, reviewPracticeMode, showButtons });
     }
     
     // 3. Clear user input and reset completion flag
@@ -3200,7 +3435,6 @@ function populateBookDatalist() {
     // Delay focus to ensure all state is cleared and display is rendered
     // This prevents keyboard from appearing and immediately dismissing on mobile
     setTimeout(() => {
-      console.log('startLearnMode: focusing learnInput');
       learnInput.focus();
     }, 100);
   }
@@ -3448,7 +3682,6 @@ function populateBookDatalist() {
   const modalNextBtn = document.getElementById('modalNextBtn');
 
   function showAccuracyModal(success, accuracy) {
-    console.log('showAccuracyModal called:', { accuracyModal, success, accuracy });
     if (!accuracyModal) {
       console.error('accuracyModal element not found!');
       return;
@@ -3508,10 +3741,11 @@ function populateBookDatalist() {
       }
     } else {
       modalMessage.textContent = t('nice_try');
-      // In review mode, show both Retry and Next buttons for failed attempts
+      // In review mode, show both Retry and Skip buttons for failed attempts
       if (reviewVerses && reviewVerses.length > 0) {
         modalNextBtn.style.display = 'inline-block';
-        if (modalNextBtn) modalNextBtn.textContent = t('next');
+        // Change button text to "Skip" when user fails
+        if (modalNextBtn) modalNextBtn.textContent = t('skip') || 'Skip';
       } else {
         modalNextBtn.style.display = 'none';
       }
@@ -3537,7 +3771,6 @@ function populateBookDatalist() {
   }
 
   function closeAccuracyModal() {
-    console.log('closeAccuracyModal called');
     if (!accuracyModal) return;
     accuracyModal.classList.remove('open');
     accuracyModal.setAttribute('aria-hidden', 'true');
@@ -3546,8 +3779,17 @@ function populateBookDatalist() {
   // Wire modal buttons
   if (modalRetryBtn) {
     modalRetryBtn.addEventListener('click', () => {
+      console.log('Retry button clicked:', {
+        success: pendingCompletion.success,
+        learningStage,
+        reviewVerses: reviewVerses?.length,
+        reviewPracticeMode
+      });
+      
       // Apply spaced repetition for failure before allowing retry
-      if (!pendingCompletion.success && learningStage === 'advanced') {
+      // Only apply once - on the first retry (when not already in practice mode)
+      if (!pendingCompletion.success && learningStage === 'advanced' && !reviewPracticeMode) {
+        console.log('Applying spaced repetition for failure');
         const verses = JSON.parse(localStorage.getItem('verses') || '[]');
         const verseIndex = verses.findIndex(v => 
           v.bookName === currentVerse.bookName && 
@@ -3585,8 +3827,18 @@ function populateBookDatalist() {
 
   if (modalNextBtn) {
     modalNextBtn.addEventListener('click', () => {
-      // Update lastReviewed if success in advanced mode
-      if (pendingCompletion.success && learningStage === 'advanced') {
+      // Always exit practice mode when clicking Next (whether success or skip)
+      if (reviewPracticeMode) {
+        console.log('Exiting practice mode via Next button');
+        reviewPracticeMode = false;
+      }
+      
+      // Update lastReviewed and spaced repetition based on success/skip
+      // In practice mode, if user clicks Next without completing Advanced successfully,
+      // treat it as a failure for spaced repetition purposes
+      const shouldUpdateSpacedRepetition = learningStage === 'advanced';
+      
+      if (shouldUpdateSpacedRepetition) {
         const verses = JSON.parse(localStorage.getItem('verses') || '[]');
         const verseIndex = verses.findIndex(v => 
           v.bookName === currentVerse.bookName && 
@@ -3601,13 +3853,14 @@ function populateBookDatalist() {
           if (!verses[verseIndex].interval) verses[verseIndex].interval = 0;
           if (!verses[verseIndex].repetitions) verses[verseIndex].repetitions = 0;
           
-          // Apply spaced repetition algorithm
+          // Apply spaced repetition algorithm (use actual success status)
           const card = {
             interval: verses[verseIndex].interval,
             repetitions: verses[verseIndex].repetitions,
             dueDate: verses[verseIndex].dueDate
           };
-          const updatedCard = spacedRepetitionBinary(card, true, now);
+          const isSuccess = pendingCompletion && pendingCompletion.success;
+          const updatedCard = spacedRepetitionBinary(card, isSuccess, now);
           
           verses[verseIndex].interval = updatedCard.interval;
           verses[verseIndex].repetitions = updatedCard.repetitions;
@@ -3701,7 +3954,6 @@ function populateBookDatalist() {
         }
 
         // Not in review - reset to basic learning mode
-        console.log('Finish button: Not in review, closing modal and starting next verse');
         closeAccuracyModal();
         userInput = '';
         prevUserInputLength = 0;
@@ -4007,10 +4259,60 @@ function populateBookDatalist() {
           alert(`${t('congratulations_reviewed')} ${totalReviewed} ${t('verses')}`);
         }
       } else {
-        // For individual verse review: show modal with retry/next options
-        console.log('Showing accuracy modal:', { success, totalAccuracy, reviewCollectionMode });
-        showAccuracyModal(success, totalAccuracy);
-        learnInput.disabled = true;
+        // For individual verse review: check if we should show modal or just feedback
+        
+        // Enable practice mode if in review and accuracy is below 90% on advanced
+        const inReview = (reviewVerses && reviewVerses.length > 0) || reviewCollectionMode !== null;
+        if (inReview && !success && learningStage === 'advanced' && !reviewPracticeMode) {
+          console.log('Enabling practice mode: accuracy below 90% in review', {
+            accuracy: totalAccuracy,
+            reviewPracticeMode: false
+          });
+          reviewPracticeMode = true;
+        }
+        
+        // In practice mode, only show modal for Advanced stage
+        // For Basic/Intermediate, auto-advance after showing feedback briefly
+        if (reviewPracticeMode && learningStage !== 'advanced') {
+          console.log('Practice mode: Basic/Intermediate completion, auto-advancing', {
+            success,
+            accuracy: totalAccuracy,
+            learningStage
+          });
+          
+          learnInput.disabled = true;
+          
+          // Auto-advance after 1.5 seconds
+          setTimeout(() => {
+            if (success) {
+              // Move to next difficulty
+              const nextStage = learningStage === 'basic' ? 'intermediate' : 'advanced';
+              setLearningStage(nextStage);
+            } else {
+              // Failed: stay on same stage but toggle variant for intermediate
+              if (learningStage === 'intermediate') {
+                intermediateVariant = (intermediateVariant === 'odd') ? 'even' : 'odd';
+                console.log('Toggled intermediate variant to:', intermediateVariant);
+              }
+            }
+            
+            // Clear and restart
+            userInput = '';
+            learnInput.value = '';
+            learnInput.disabled = false;
+            lastErrorIndex = null;
+            lastErrorChar = null;
+            learnFeedback.textContent = '';
+            learnFeedback.className = '';
+            
+            renderVerseDisplay();
+            learnInput.focus();
+          }, 1500);
+        } else {
+          // Show modal for: non-practice mode OR practice mode in Advanced stage
+          showAccuracyModal(success, totalAccuracy);
+          learnInput.disabled = true;
+        }
       }
     } else {
       learnRetryBtn.style.display = 'none';
@@ -4019,6 +4321,12 @@ function populateBookDatalist() {
   }
 
   learnRetryBtn.addEventListener('click', () => {
+    console.log('learnRetryBtn clicked:', {
+      reviewPracticeMode,
+      reviewVerses: reviewVerses?.length,
+      learningStage
+    });
+    
     // Toggle intermediate variant between 'odd' and 'even' on retry so the user sees the opposite pattern
     if (learningStage === 'intermediate') {
       intermediateVariant = (intermediateVariant === 'odd') ? 'even' : 'odd';
@@ -4041,6 +4349,12 @@ function populateBookDatalist() {
     }
     
     renderVerseDisplay();
+    
+    // Update control visibility based on practice mode
+    if (currentVerse) {
+      startLearnMode(currentVerse);
+    }
+    
     learnInput.focus();
   });
 
@@ -4084,10 +4398,34 @@ function populateBookDatalist() {
   }
 
   basicMode.addEventListener('click', () => setLearningStage('basic'));
-  intermediateMode.addEventListener('click', () => setLearningStage('intermediate'));
+  intermediateMode.addEventListener('click', () => {
+    // Toggle variant if already on intermediate stage (clicking again)
+    if (learningStage === 'intermediate') {
+      intermediateVariant = (intermediateVariant === 'odd') ? 'even' : 'odd';
+      // Clear input and re-render to show toggled pattern
+      userInput = '';
+      learnInput.value = '';
+      renderVerseDisplay();
+      learnInput.focus();
+    } else {
+      setLearningStage('intermediate');
+    }
+  });
   advancedMode.addEventListener('click', () => setLearningStage('advanced'));
 
   learnNextBtn.addEventListener('click', () => {
+    // Check if we're in practice mode during a review session
+    if (reviewPracticeMode) {
+      console.log('Practice mode: Next clicked, exiting practice and advancing to next verse');
+      reviewPracticeMode = false;
+      
+      // Trigger the modal Next button behavior to advance to next review verse
+      if (modalNextBtn) {
+        modalNextBtn.click();
+      }
+      return;
+    }
+    
     let nextStage;
     switch (learningStage) {
       case 'basic':
@@ -4223,8 +4561,15 @@ function showPanel(panelToShow) {
   if (panelToShow === learnPanel) {
     // Only restore controls if we're not in an active review session
     const inReview = (reviewVerses && reviewVerses.length > 0) || (singleTextSession !== null && typeof singleTextSession !== 'undefined');
-    if (reviewModeHiddenControls && !inReview) {
-      reviewModeHiddenControls.style.display = 'block';
+    
+    // Always show label when not in review
+    if (learnModeLabel) {
+      learnModeLabel.style.display = inReview ? 'none' : '';
+    }
+    
+    // Show difficulty buttons only when not in review
+    if (difficultyControls) {
+      difficultyControls.style.display = inReview ? 'none' : '';
     }
   }
     // CRITICAL FIX: Check if we are exiting the learn panel and if a single-text session is active.
@@ -4234,10 +4579,16 @@ function showPanel(panelToShow) {
             // 1. Reset/Clear the session state
             singleTextSession = null;
 
-            // 2. Reset the Learn Panel UI (as it was left in a "completed" state)
+            // 2. Remove the event listener to prevent keyboard issues
+            if (learnInput) {
+                learnInput.removeEventListener('input', singleTextInputHandler);
+            }
+
+            // 3. Reset the Learn Panel UI (as it was left in a "completed" state)
             if (learnInput) {
                 learnInput.value = '';
                 learnInput.disabled = false;
+                learnInput.style.display = ''; // Restore display
                 // Keep input field hidden - it's invisible by design
             }
             if (learnFeedback) {
@@ -4292,17 +4643,20 @@ function showPanel(panelToShow) {
     singleTextPrev = [];
     singleTextReviewIndex = 0;
     reviewSuccessCount = 0;
+    reviewPracticeMode = false; // Reset practice mode
     
     // 2. CRITICAL FIX: Ensure the mode buttons/controls are VISIBLE
     // The empty string resets the style to the element's default (e.g., 'block' or 'flex').
-    if (window.reviewModeHiddenControls) {
-        window.reviewModeHiddenControls.style.display = ''; 
-    }
+    if (learnModeLabel) learnModeLabel.style.display = '';
+    if (difficultyControls) difficultyControls.style.display = '';
     
     // 3. Reset the Learn Panel UI elements
     if (learnInput) {
         learnInput.value = '';
         learnInput.disabled = false;
+        learnInput.style.display = ''; // Restore display
+        // Remove any stale event listeners
+        learnInput.removeEventListener('input', singleTextInputHandler);
         // Keep input field hidden - it's invisible by design
     }
     if (learnFeedback) {
@@ -4360,7 +4714,7 @@ function showPanel(panelToShow) {
         setActiveNavButton(null);
         showPanel(learnPanel);
         startLearnMode(currentVerse);
-        if (reviewModeHiddenControls) reviewModeHiddenControls.style.display = 'none';
+        hideReviewModeControls();
         if (verseSelector) {
           verseSelector.innerHTML = '';
           const opt = document.createElement('option');
@@ -4439,7 +4793,7 @@ function showPanel(panelToShow) {
               setActiveNavButton(null);
               showPanel(learnPanel);
               startLearnMode(currentVerse);
-              if (reviewModeHiddenControls) reviewModeHiddenControls.style.display = 'none';
+              hideReviewModeControls();
             }
 
             biblicalBtn.onclick = () => startDueReview(sortVersesByBibleOrder(dueVerses));
@@ -5615,7 +5969,6 @@ function showPanel(panelToShow) {
 
   // Input Focus Listeners
   learnInput.addEventListener('focus', () => {
-    console.log('learnInput focus event triggered');
     showKeyboardForInput(learnInput);
   });
   

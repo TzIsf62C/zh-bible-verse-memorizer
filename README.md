@@ -1,6 +1,6 @@
 # ZH Bible Verse Memorizer PWA
 
-**Version 0.9.1.1** | **License: MIT**
+**Version 0.9.2** | **License: MIT**
 
 A Progressive Web App for memorizing Chinese Bible verses with spaced repetition. This App is inspired by the Bible Memory App (https://biblememory.com/). I would recommend that app if you are memorizing Bible verses in English.
 
@@ -16,6 +16,7 @@ A Progressive Web App for memorizing Chinese Bible verses with spaced repetition
 - [Developer Notes](#-developer-notes)
 - [Updates in Version 0.9.1](#-updates-in-version-091)
 - [Updates in Version 0.9.1.1](#-updates-in-version-0911)
+- [Updates in Version 0.9.2](#-updates-in-version-092)
 
 ---
 
@@ -42,6 +43,11 @@ A Progressive Web App for memorizing Chinese Bible verses with spaced repetition
 - **Review Modes**:
   - Individual verse-by-verse review
   - Single-text continuous passage review
+- **Pracitic Mode**:
+  - Scoring below 90% on a verse while in verse-by-verse review automatically triggers practice mode
+  - Practice mode allows the user to step down the difficulty to refresh their memory
+  - Skip button allows user to bypass practice mode without scoring 90+% and move on to the next verse.
+  - Practice mode ends when a user skips or scores higher than 90% on advanced mode.
 - **Manual Interval Adjustment**: Bulk update review schedules for selected verses
 
 ### Data Management
@@ -420,6 +426,40 @@ Or use **Clear All Data** button in Settings.
   - Learn panel: Scrolls `progressDisplay` (verse text) into view
   - Add Verse panel: Scrolls field labels into view for context
   - Smooth scrolling animation for polished user experience
+
+---
+
+## 📋 Updates in Version 0.9.2
+
+### New Features
+- **Check for Updates Button**: Added manual update checking in Settings panel
+  - User-controlled service worker updates with clear "Update Now" prompt
+  - Automatic weekly silent checks when Settings panel is accessed
+  - Visual feedback during update check process with translated status messages
+  - Graceful handling for browsers without service worker support
+  - Prevents unexpected app refreshes by requiring user confirmation
+
+### Practice Mode Enhancements
+- **Enhanced Intermediate Mode**: Improved practice flow for intermediate difficulty
+  - Auto-retry with toggled character pattern on failure (odd ↔ even characters)
+  - Manual pattern toggle: Click intermediate button repeatedly to alternate visible characters
+  - Enables comprehensive practice of both character patterns for thorough memorization
+
+- **Streamlined Practice UX**: Removed friction from practice mode workflow
+  - Auto-advance after 1.5 seconds for Basic/Intermediate stages (no button clicks required)
+  - Success automatically advances to next difficulty; failure auto-retries same stage
+  - Modal only appears for Advanced stage completion
+  - Clear "Skip" button label (instead of "Next") when failing Advanced stage
+
+- **Smart Practice Activation**: Practice mode triggers automatically
+  - Activates when scoring <90% on Advanced stage during reviews
+  - Exits automatically when clicking Next/Skip button
+  - Difficulty buttons appear only in practice mode; label stays hidden
+
+### Bug Fixes
+- Fixed practice mode not triggering after modal retry button click
+- Fixed "Learn Mode" label appearing alongside difficulty buttons in review practice mode
+- Fixed spaced repetition interval calculations using button click status instead of actual accuracy
 
 ---
 

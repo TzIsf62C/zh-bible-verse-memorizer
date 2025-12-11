@@ -1,5 +1,5 @@
 // Service Worker for ZH Bible Verse Memorizer
-const CACHE_NAME = 'zh-bible-memorizer-v0.9.2.1';
+const CACHE_NAME = 'zh-bible-memorizer-v0.9.2';
 const urlsToCache = [
   './',
   './index.html',
@@ -16,8 +16,15 @@ self.addEventListener('install', (event) => {
         console.log('Opened cache');
         return cache.addAll(urlsToCache);
       })
-      .then(() => self.skipWaiting())
+      // Don't skipWaiting automatically - wait for user confirmation
   );
+});
+
+// Message event - handle skip waiting request from client
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
 
 // Activate event - clean up old caches
