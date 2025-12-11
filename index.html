@@ -105,14 +105,14 @@
   </div>
 </div>
 <div id="learnPanel" class="panel" style="display:none;">
-  <div id="reviewModeHiddenControls">
-  <h2 data-i18n="learn_mode">Learn Mode</h2>
+  <h2 id="learnModeLabel" data-i18n="learn_mode">Learn Mode</h2>
 
-    <div class="difficulty-controls">
-      <button id="basicMode" class="mode-btn active" data-i18n="basic">Basic</button>
-      <button id="intermediateMode" class="mode-btn" data-i18n="intermediate">Intermediate</button>
-      <button id="advancedMode" class="mode-btn" data-i18n="advanced">Advanced</button>
-    </div></div>
+  <div id="difficultyControls" class="difficulty-controls">
+    <button id="basicMode" class="mode-btn active" data-i18n="basic">Basic</button>
+    <button id="intermediateMode" class="mode-btn" data-i18n="intermediate">Intermediate</button>
+    <button id="advancedMode" class="mode-btn" data-i18n="advanced">Advanced</button>
+  </div>
+  
     <div class="learning-controls">
     <label id="verseSelectorLabel" for="verseSelector" data-i18n="select_verse">Select Verse</label>
     <div class="selector-row">
@@ -341,6 +341,14 @@
       <input id="defaultBibleVersion" type="text" autocomplete="off" autocorrect="off" spellcheck="false" autocapitalize="none" placeholder="">
     </div>
     <div class="input-group" style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border-color);">
+      <label data-i18n="check_for_updates">Check for Updates</label>
+      <p style="font-size: 0.9em; color: var(--text-secondary); margin: 8px 0;">
+        <span data-i18n="update_description">Check if a new version of the app is available.</span>
+      </p>
+      <button id="checkUpdateBtn" data-i18n="check_update_btn">Check for Updates</button>
+      <p id="updateStatus" style="font-size: 0.85em; color: var(--text-secondary); margin: 8px 0 0 0; display: none;"></p>
+    </div>
+    <div class="input-group" style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border-color);">
       <label data-i18n="clear_all_data">Clear All Data</label>
       <p style="font-size: 0.9em; color: var(--text-secondary); margin: 8px 0;">
         <span data-i18n="clear_data_warning">This will permanently delete all verses, collections, and review data from this device.</span>
@@ -348,7 +356,7 @@
       <button id="clearDataBtn" style="background-color: #dc3545; color: white;" data-i18n="clear_all_data_btn">Clear All Data</button>
     </div>
     <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border-color); text-align: center; font-size: 0.85em; color: var(--text-secondary);">
-      <div style="margin-bottom: 4px;">ZH Bible Verse Memorizer PWA (Version 0.9.1.1)</div>
+      <div style="margin-bottom: 4px;">ZH Bible Verse Memorizer PWA (Version 0.9.2)</div>
       <div>Copyright © 2025 TzIsf62C</div>
     </div>
   </div>
@@ -570,7 +578,7 @@
     <img src="icons/icon-192x192.png" alt="App Icon" style="width: 80px; height: 80px; margin: 0 auto 16px; display: block;">
     <div style="text-align: center; margin-bottom: 24px;">
       <div style="font-size: 18px; font-weight: 600; margin-bottom: 4px;">ZH Bible Verse Memorizer</div>
-      <div style="font-size: 16px; color: var(--text-secondary);">聖經經文背誦 V0.9.1.1</div>
+      <div style="font-size: 16px; color: var(--text-secondary);">聖經經文背誦 V0.9.2</div>
     </div>
     <h2>Set Language<br>设定语言 / 設定語言</h2>
     <div class="onboarding-options">
