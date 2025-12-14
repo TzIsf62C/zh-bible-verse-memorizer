@@ -332,6 +332,8 @@ window.onload = function () {
 
   // Keyboard Event Listeners
   function handleKeyboardClick(e, keyboard) {
+    e.preventDefault();
+    e.stopPropagation();
     if (e.target.classList.contains('key') && !e.target.classList.contains('unused')) {
       const value = e.target.textContent.trim();
       if (activeInput) {
@@ -552,6 +554,9 @@ window.onload = function () {
         input_pinyin: "Pinyin",
         input_zhuyin: "Zhuyin (注音)",
         input_cangjie: "Cangjie (倉頡)",
+        book_name_charset: "Character Set for Book Names",
+        charset_simplified: "Simplified",
+        charset_traditional: "Traditional",
         default_bible_version: "Default Bible Version",
         save_settings: "Save Settings",
         // Add Verse Panel
@@ -731,7 +736,7 @@ window.onload = function () {
         // Learning Mode Tutorial
         tutorial_intro_title: "Learning Method",
         tutorial_intro_desc: "This app uses a three-stage memorization method to help you learn Bible verses:",
-        tutorial_intro_basic: "Full text visible with hints",
+        tutorial_intro_basic: "Full text visible",
         tutorial_intro_intermediate: "Every other character hidden",
         tutorial_intro_advanced: "Pure recall with no hints",
         tutorial_start: "Start Tutorial",
@@ -775,6 +780,9 @@ window.onload = function () {
         input_pinyin: "拼音",
         input_zhuyin: "注音",
         input_cangjie: "仓颉",
+        book_name_charset: "书卷名称字符集",
+        charset_simplified: "简体",
+        charset_traditional: "繁体",
         default_bible_version: "默认圣经版本",
         save_settings: "Save Settings / 保存设置",
         // Add Verse Panel
@@ -954,7 +962,7 @@ window.onload = function () {
         // Learning Mode Tutorial
         tutorial_intro_title: "学习方法",
         tutorial_intro_desc: "此应用使用三阶段记忆法帮助您学习圣经经文：",
-        tutorial_intro_basic: "完整文本可见，带提示",
+        tutorial_intro_basic: "完整文本可见",
         tutorial_intro_intermediate: "每隔一个字符隐藏",
         tutorial_intro_advanced: "纯粹回忆，无提示",
         tutorial_start: "开始教程",
@@ -998,6 +1006,9 @@ window.onload = function () {
         input_pinyin: "拼音",
         input_zhuyin: "注音",
         input_cangjie: "倉頡",
+        book_name_charset: "書卷名稱字符集",
+        charset_simplified: "簡體",
+        charset_traditional: "繁體",
         default_bible_version: "默認聖經版本",
         save_settings: "Save Settings / 保存設置",
         // Add Verse Panel
@@ -1177,7 +1188,7 @@ window.onload = function () {
         // Learning Mode Tutorial
         tutorial_intro_title: "學習方法",
         tutorial_intro_desc: "此應用使用三階段記憶法幫助您學習聖經經文：",
-        tutorial_intro_basic: "完整文字可見，帶提示",
+        tutorial_intro_basic: "完整文字可見",
         tutorial_intro_intermediate: "每隔一個字元隱藏",
         tutorial_intro_advanced: "純粹回憶，無提示",
         tutorial_start: "開始教程",
@@ -1357,10 +1368,20 @@ window.onload = function () {
           defaultBibleVersionInput.value = localStorage.getItem('defaultBibleVersion') || '';
         }
         
+        // Load language radios
+        const languageRadios = document.querySelectorAll('input[name="languageOption"]');
+        const savedLanguage = localStorage.getItem('languagePreference') || 'english';
+        languageRadios.forEach(r => { r.checked = (r.value === savedLanguage); });
+        
         // Load input method radios
         const inputMethodRadios = document.querySelectorAll('input[name="inputMethodOption"]');
         const savedInputMethod = localStorage.getItem('inputMethod') || 'pinyin';
         inputMethodRadios.forEach(r => { r.checked = (r.value === savedInputMethod); });
+        
+        // Load book name charset radios
+        const bookNameCharsetRadios = document.querySelectorAll('input[name="bookNameCharsetOption"]');
+        const savedCharset = localStorage.getItem('bookNameCharset') || 'simplified';
+        bookNameCharsetRadios.forEach(r => { r.checked = (r.value === savedCharset); });
         
         // Load vibration toggle
         const vibrationToggle = document.getElementById('vibrationToggle');
@@ -1397,9 +1418,8 @@ window.onload = function () {
         localStorage.setItem('languagePreference', langVal);
         applyLanguage(langVal);
         
-        // If language changed, rebuild bible books and refresh displays
+        // If language changed, refresh displays (book charset is separate setting)
         if (previousLang !== langVal) {
-          rebuildBibleBooks();
           loadVersesForEdit();
           loadVersesForReview();
           loadCollectionsForReview();
@@ -1420,6 +1440,24 @@ window.onload = function () {
         if (previousInputMethod !== inputMethodVal) {
           updateInputMethodLabels();
         }
+      });
+    });
+    
+    // Auto-save book name charset changes
+    const bookNameCharsetRadios = document.querySelectorAll('input[name="bookNameCharsetOption"]');
+    bookNameCharsetRadios.forEach(radio => {
+      radio.addEventListener('change', (e) => {
+        const charsetVal = e.target.value;
+        localStorage.setItem('bookNameCharset', charsetVal);
+        
+        // Rebuild bible books with new charset
+        rebuildBibleBooks();
+        
+        // Refresh displays that use book names
+        loadVersesForEdit();
+        loadVersesForReview();
+        loadCollectionsForReview();
+        populateCollectionSelector();
       });
     });
     
@@ -1724,11 +1762,11 @@ window.onload = function () {
     { simplified: "启示录", traditional: "啟示錄", pinyin: "qishilu", initials: "QSL", zhuyinInitials: "ㄑㄕㄌ", cangjieInitials: "竹一女" }
   ];
   
-  // CHINESE_BIBLE_BOOKS maintains compatibility: books display in current language setting, but remain Chinese
+  // CHINESE_BIBLE_BOOKS: books display based on bookNameCharset setting
   let CHINESE_BIBLE_BOOKS = BIBLE_BOOKS_DATA.map(b => {
-    const lang = localStorage.getItem('languagePreference') || 'english';
+    const charset = localStorage.getItem('bookNameCharset') || 'simplified';
     return {
-      hanzi: lang === 'traditional' ? b.traditional : b.simplified,
+      hanzi: charset === 'traditional' ? b.traditional : b.simplified,
       pinyin: b.pinyin,
       initials: b.initials,
       zhuyinInitials: b.zhuyinInitials,
@@ -1736,12 +1774,12 @@ window.onload = function () {
     };
   });
 
-  // Function to rebuild CHINESE_BIBLE_BOOKS when language changes
+  // Function to rebuild CHINESE_BIBLE_BOOKS when charset setting changes
   function rebuildBibleBooks() {
-    const lang = localStorage.getItem('languagePreference') || 'english';
+    const charset = localStorage.getItem('bookNameCharset') || 'simplified';
     CHINESE_BIBLE_BOOKS = BIBLE_BOOKS_DATA.map(b => {
       return {
-        hanzi: lang === 'traditional' ? b.traditional : b.simplified,
+        hanzi: charset === 'traditional' ? b.traditional : b.simplified,
         pinyin: b.pinyin,
         initials: b.initials,
         zhuyinInitials: b.zhuyinInitials,
@@ -3820,8 +3858,35 @@ function populateBookDatalist() {
       }
       
       closeAccuracyModal();
-      // reuse existing retry behavior
-      learnRetryBtn.click();
+      
+      // CRITICAL FIX: Do NOT call learnRetryBtn.click() as it calls startLearnMode which resets to basic.
+      // Instead, replicate the retry behavior while preserving the current learning stage.
+      
+      // Toggle intermediate variant between 'odd' and 'even' on retry so the user sees the opposite pattern
+      if (learningStage === 'intermediate') {
+        intermediateVariant = (intermediateVariant === 'odd') ? 'even' : 'odd';
+      }
+      
+      // Reset input, coloring and help text
+      userInput = '';
+      learnInput.value = '';
+      learnInput.disabled = false;
+      lastErrorIndex = null;
+      lastErrorChar = null;
+      learnFeedback.textContent = '';
+      learnFeedback.className = '';
+      learnRetryBtn.style.display = 'none';
+      learnNextBtn.style.display = 'none';
+      
+      // Ensure verse selector is visible during retry
+      if (verseSelector) {
+        verseSelector.style.display = 'block';
+        verseSelector.style.opacity = '1';
+      }
+      
+      // Re-render without changing the learning stage
+      renderVerseDisplay();
+      learnInput.focus();
     });
   }
 
@@ -3953,7 +4018,7 @@ function populateBookDatalist() {
           return;
         }
 
-        // Not in review - reset to basic learning mode
+        // Not in review
         closeAccuracyModal();
         userInput = '';
         prevUserInputLength = 0;
@@ -3961,19 +4026,28 @@ function populateBookDatalist() {
         learnFeedback.textContent = '';
         learnFeedback.className = '';
         const list = populateUnlearnedSelector();
+
+        // If there are no more unlearned verses, route to Add Verse panel
+        if (!list || list.length === 0) {
+          try {
+            setActiveNavButton(addVerseBtn);
+            showPanel(addVersePanel);
+            loadVersesForEdit();
+            populateCollectionSelector();
+          } catch (e) { /* ignore */ }
+          return;
+        }
+
+        // Otherwise, continue normal learning flow
         setLearningStage('basic');
         showPanel(learnPanel);
         if (verseSelector) verseSelector.style.display = 'block';
-        if (list && list.length > 0) {
-          currentVerse = list[0];
-          startLearnMode(currentVerse);
-          // Explicitly show keyboard after startLearnMode since showPanel hides it
-          setTimeout(() => {
-            showKeyboardForInput(learnInput);
-          }, 150);
-        } else {
-          try { if (verseSelector) verseSelector.focus(); } catch (e) {}
-        }
+        currentVerse = list[0];
+        startLearnMode(currentVerse);
+        // Explicitly show keyboard after startLearnMode since showPanel hides it
+        setTimeout(() => {
+          showKeyboardForInput(learnInput);
+        }, 150);
         return;
       }
 
@@ -4327,6 +4401,9 @@ function populateBookDatalist() {
       learningStage
     });
     
+    // CRITICAL FIX: Do NOT call startLearnMode() as it resets the learning stage to basic.
+    // Instead, replicate the retry behavior while preserving the current learning stage.
+    
     // Toggle intermediate variant between 'odd' and 'even' on retry so the user sees the opposite pattern
     if (learningStage === 'intermediate') {
       intermediateVariant = (intermediateVariant === 'odd') ? 'even' : 'odd';
@@ -4348,13 +4425,8 @@ function populateBookDatalist() {
       verseSelector.style.opacity = '1';
     }
     
+    // Re-render without changing the learning stage
     renderVerseDisplay();
-    
-    // Update control visibility based on practice mode
-    if (currentVerse) {
-      startLearnMode(currentVerse);
-    }
-    
     learnInput.focus();
   });
 
@@ -4549,7 +4621,7 @@ function showPanel(panelToShow) {
       }
       
       if (!confirm(message)) {
-        return; // User chose to stay, don't change panels
+        return false; // User chose to stay, don't change panels
       }
     }
   }
@@ -4620,20 +4692,21 @@ function showPanel(panelToShow) {
       return;
     }
     
-    setActiveNavButton(addVerseBtn);
-    showPanel(addVersePanel);
-    loadVersesForEdit();
-    populateCollectionSelector();
+    if (showPanel(addVersePanel) !== false) {
+      setActiveNavButton(addVerseBtn);
+      loadVersesForEdit();
+      populateCollectionSelector();
+    }
   });
 
   // Initialize review badge on page load
   updateReviewBadge();
 
   learnBtn.addEventListener('click', () => {
-    setActiveNavButton(learnBtn);
     // Hide all panels, then show the learnPanel
     document.querySelectorAll('.panel').forEach(p => p.style.display = 'none');
     learnPanel.style.display = 'block';
+    setActiveNavButton(learnBtn);
 
     // --- REVISED RESET LOGIC (Full Refresh) ---
     // 1. Reset ALL review state variables to ensure default mode is active
@@ -4679,11 +4752,12 @@ function showPanel(panelToShow) {
   });
 
   reviewBtn.addEventListener('click', () => {
-    setActiveNavButton(reviewBtn);
-    showPanel(reviewPanel);
-    loadVersesForReview();
-    loadCollectionsForReview();
-    updateReviewBadge();
+    if (showPanel(reviewPanel) !== false) {
+      setActiveNavButton(reviewBtn);
+      loadVersesForReview();
+      loadCollectionsForReview();
+      updateReviewBadge();
+    }
   });
 
   // Review Due Verses button handler
@@ -4941,10 +5015,10 @@ function showPanel(panelToShow) {
   }
 
   exportBtn.addEventListener('click', () => {
-    setActiveNavButton(exportBtn);
-    showPanel(exportImportPanel);
-    // Populate export collections tree with available collections
-    try {
+    if (showPanel(exportImportPanel) !== false) {
+      setActiveNavButton(exportBtn);
+      // Populate export collections tree with available collections
+      try {
       if (exportCollectionsList) {
         exportCollectionsList.innerHTML = '';
         const cols = getCollections();
@@ -5005,6 +5079,7 @@ function showPanel(panelToShow) {
         });
       }
     } catch(e) { /* ignore */ }
+    }
   });
 
   // Export/Import Functions
@@ -5199,11 +5274,12 @@ function showPanel(panelToShow) {
   // Collections event wiring
   if (collectionsBtn) {
     collectionsBtn.addEventListener('click', () => {
-      setActiveNavButton(collectionsBtn);
-      showPanel(collectionsPanel);
-      renderCollectionsList();
-      populateCollectionSelector();
-      collectionDetail.style.display = 'none';
+      if (showPanel(collectionsPanel) !== false) {
+        setActiveNavButton(collectionsBtn);
+        renderCollectionsList();
+        populateCollectionSelector();
+        collectionDetail.style.display = 'none';
+      }
     });
   }
 
@@ -5576,6 +5652,13 @@ function showPanel(panelToShow) {
   // Input method selection handlers
   document.getElementById('onboardingInputPinyin').addEventListener('click', async () => {
     localStorage.setItem('inputMethod', 'pinyin');
+    
+    // Set book name charset based on language: if simplified/traditional use that, otherwise Pinyin defaults to simplified
+    const language = localStorage.getItem('languagePreference') || 'english';
+    const charset = language === 'traditional' ? 'traditional' : 'simplified';
+    localStorage.setItem('bookNameCharset', charset);
+    rebuildBibleBooks();
+    
     hideOnboardingInputMethodModal();
     await loadSampleVerses('pinyin');
     updateInputMethodLabels();
@@ -5609,6 +5692,13 @@ function showPanel(panelToShow) {
 
   document.getElementById('onboardingInputZhuyin').addEventListener('click', async () => {
     localStorage.setItem('inputMethod', 'zhuyin');
+    
+    // Set book name charset based on language: if simplified use that, otherwise Zhuyin defaults to traditional
+    const language = localStorage.getItem('languagePreference') || 'english';
+    const charset = language === 'simplified' ? 'simplified' : 'traditional';
+    localStorage.setItem('bookNameCharset', charset);
+    rebuildBibleBooks();
+    
     hideOnboardingInputMethodModal();
     await loadSampleVerses('zhuyin');
     updateInputMethodLabels();
@@ -5642,6 +5732,13 @@ function showPanel(panelToShow) {
 
   document.getElementById('onboardingInputCangjie').addEventListener('click', async () => {
     localStorage.setItem('inputMethod', 'cangjie');
+    
+    // Set book name charset based on language: if simplified use that, otherwise Cangjie defaults to traditional
+    const language = localStorage.getItem('languagePreference') || 'english';
+    const charset = language === 'simplified' ? 'simplified' : 'traditional';
+    localStorage.setItem('bookNameCharset', charset);
+    rebuildBibleBooks();
+    
     hideOnboardingInputMethodModal();
     await loadSampleVerses('cangjie');
     updateInputMethodLabels();
