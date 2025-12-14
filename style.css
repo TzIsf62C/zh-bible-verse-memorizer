@@ -32,7 +32,11 @@
   box-shadow: 0 2px 16px rgba(0,0,0,0.3);
   text-align: center;
   max-width: 90vw;
+  max-height: 90vh;
   margin: 0 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .modal-content h2 {
@@ -44,7 +48,7 @@
 .modal-content button {
   margin: 12px 8px;
   min-width: 120px;
-  font-size: 16px;
+  font-size: var(--font-size-base);
 }
 
 @media (min-width: 768px) {
@@ -55,7 +59,7 @@
   .modal-content button {
     margin: 12px 16px;
     min-width: 180px;
-    font-size: 18px;
+    font-size: var(--font-size-md);
   }
 }
 /* Theme variables: default to dark, override via data-theme or media query */
@@ -71,6 +75,29 @@
   --input-background: #333;
   --input-border: #444;
   --card-background: #333;
+  
+  /* Text scaling system - default to 1.0 (100%) */
+  --text-scale: 1.0;
+  
+  /* Base font sizes that scale with --text-scale */
+  --font-size-xs: calc(12px * var(--text-scale));
+  --font-size-sm: calc(14px * var(--text-scale));
+  --font-size-base: calc(16px * var(--text-scale));
+  --font-size-md: calc(18px * var(--text-scale));
+  --font-size-lg: calc(20px * var(--text-scale));
+  --font-size-xl: calc(24px * var(--text-scale));
+  --font-size-2xl: calc(28px * var(--text-scale));
+  --font-size-3xl: calc(32px * var(--text-scale));
+  --font-size-4xl: calc(40px * var(--text-scale));
+  
+  /* Keyboard fixed sizes (NOT scaled with --text-scale) */
+  --keyboard-font-xs: 14px;
+  --keyboard-font-sm: 15px;
+  --keyboard-font-base: 16px;
+  --keyboard-font-md: 18px;
+  --keyboard-font-lg: 20px;
+  --keyboard-font-xl: 22px;
+  --keyboard-font-2xl: 24px;
 }
 
 /* Light theme variables */
@@ -124,8 +151,8 @@ body {
   background: var(--background-color);
   color: var(--text-color);
   font-family: 'Noto Sans SC', 'Kaiti', 'KaiTi', '楷体', 'Kaiti SC', 'STKaiti', sans-serif;
-  font-size: 16px;
-  line-height: 24px;
+  font-size: var(--font-size-base);
+  line-height: calc(24px * var(--text-scale));
   margin: 0;
   padding: 0;
   overscroll-behavior: contain;
@@ -165,11 +192,14 @@ button {
   color: var(--correct-color);
   border: none;
   border-radius: 4px;
-  font-size: 16px;
+  font-size: var(--font-size-base);
   margin: 8px 8px 8px 0;
-  padding: 8px 20px;
+  padding: 0.5em 1.25em;
   cursor: pointer;
   font-family: inherit;
+  min-height: 2.5em;
+  white-space: normal;
+  word-wrap: break-word;
 }
 
 button:hover {
@@ -198,7 +228,7 @@ button.active-nav {
   background: #ff4444;
   color: white;
   border-radius: 10px;
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   font-weight: bold;
   line-height: 20px;
   text-align: center;
@@ -221,8 +251,8 @@ textarea {
   border: 1px solid var(--input-border);
   border-radius: 4px;
   font-family: inherit;
-  font-size: 16px;
-  line-height: 24px;
+  font-size: var(--font-size-base);
+  line-height: calc(24px * var(--text-scale));
 }
 
 input[type="text"]:focus,
@@ -249,7 +279,7 @@ label {
 .verse-character {
     display: inline-block;
     margin: 0 2px;
-    font-size: 20px;
+    font-size: var(--font-size-lg);
     transition: color 0.2s ease;
 }
 
@@ -363,8 +393,8 @@ label {
   color: var(--text-color);
   box-shadow: 0 6px 24px rgba(0,0,0,0.3);
 }
-.modal-message { margin: 12px 0; font-size: 16px; }
-.modal-accuracy { font-weight: bold; margin-bottom: 16px; font-size: 16px; }
+.modal-message { margin: 12px 0; font-size: var(--font-size-base); }
+.modal-accuracy { font-weight: bold; margin-bottom: 16px; font-size: var(--font-size-base); }
 .modal-buttons { 
   display: flex; 
   flex-wrap: wrap;
@@ -380,8 +410,8 @@ label {
 }
 
 @media (min-width: 768px) {
-  .modal-message { font-size: 18px; }
-  .modal-accuracy { font-size: 18px; }
+  .modal-message { font-size: var(--font-size-md); }
+  .modal-accuracy { font-size: var(--font-size-md); }
   .modal-buttons {
     justify-content: flex-end;
   }
@@ -401,7 +431,7 @@ label {
 
 .onboarding-btn {
   padding: 14px 20px;
-  font-size: 16px;
+  font-size: var(--font-size-base);
   font-weight: 500;
   background-color: var(--button-background);
   color: var(--button-text);
@@ -436,7 +466,7 @@ label {
 }
 
 .interval-display label {
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   font-weight: 500;
   margin: 0;
   width: 100%;
@@ -460,7 +490,7 @@ label {
   border-radius: 4px;
   width: 28px;
   height: 28px;
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -478,7 +508,7 @@ label {
 }
 
 .interval-value {
-  font-size: 20px;
+  font-size: var(--font-size-lg);
   font-weight: 600;
   min-width: 35px;
   text-align: center;
@@ -486,7 +516,7 @@ label {
 }
 
 .interval-days {
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   color: var(--text-secondary);
   margin-top: 8px;
   padding: 0 10px;
@@ -495,7 +525,7 @@ label {
 .confirm-btn {
   background-color: #28a745 !important;
   color: white !important;
-  font-size: 20px;
+  font-size: var(--font-size-lg);
   min-width: 60px;
 }
 
@@ -528,7 +558,7 @@ select {
   border: 1px solid var(--input-border);
   border-radius: 4px;
   font-family: inherit;
-  font-size: 16px;
+  font-size: var(--font-size-base);
 }
 
 .nav-buttons {
@@ -545,7 +575,7 @@ select {
   }
   
   .nav-buttons button {
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     padding: 8px 12px;
   }
   
@@ -555,7 +585,7 @@ select {
   }
   
   .difficulty-controls .mode-btn {
-    font-size: 14px;
+    font-size: var(--font-size-sm);
     padding: 8px 12px;
   }
   
@@ -629,7 +659,7 @@ select {
   color: var(--text-color);
   opacity: 0.6;
   margin-top: 4px;
-  font-size: 14px;
+  font-size: var(--font-size-sm);
 }
 
 .difficulty-controls {
@@ -661,7 +691,7 @@ select {
 }
 
 .learn-helper-text {
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   opacity: 0.65;
   margin-bottom: 8px;
   text-align: center;
@@ -676,7 +706,7 @@ select {
   padding: 6px 12px;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--font-size-sm);
 }
 
 .mute-btn:hover {
@@ -695,8 +725,8 @@ select {
 
 .verse-display {
   font-family: 'Noto Sans SC', 'Kaiti', 'KaiTi', '楷体', 'Kaiti SC', 'STKaiti', sans-serif;
-  font-size: 20px;
-  line-height: 32px;
+  font-size: var(--font-size-lg);
+  line-height: calc(32px * var(--text-scale));
   margin: 20px 0;
   padding: 16px;
   background: var(--card-background);
@@ -726,7 +756,7 @@ select {
 }
 
 #learnInput::placeholder {
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   opacity: 0.65;
 }
 
@@ -778,10 +808,10 @@ select {
 }
 
 .collection-tags { margin-top:6px; }
-.collection-tag { display:inline-block; background: rgba(45,114,217,0.12); color: var(--correct-color); padding:4px 8px; border-radius:12px; font-size:13px; margin-right:6px; }
+.collection-tag { display:inline-block; background: rgba(45,114,217,0.12); color: var(--correct-color); padding:4px 8px; border-radius:12px; font-size:var(--font-size-sm); margin-right:6px; }
 
 .verse-item .last-reviewed {
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   color: var(--text-color);
 }
 
@@ -806,7 +836,7 @@ select {
   padding: 8px 20px;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 16px;
+  font-size: var(--font-size-base);
   margin: 10px 0;
   transition: background 0.2s;
 }
@@ -820,7 +850,7 @@ select {
   margin-left: 12px;
   color: var(--text-color);
   opacity: 0.7;
-  font-size: 14px;
+  font-size: var(--font-size-sm);
 }
 
 #importFile {
@@ -856,7 +886,7 @@ select {
 }
 
 .collection-expand-icon {
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   transition: transform 0.2s;
   user-select: none;
   min-width: 16px;
@@ -993,7 +1023,7 @@ select {
   margin: 0;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 15px;
+  font-size: var(--keyboard-font-sm);
   min-width: 32px;
   flex: 1;
   max-width: 50px;
@@ -1006,13 +1036,13 @@ select {
   padding: 12px 16px;
   min-width: 50px;
   max-width: 70px;
-  font-size: 18px;
+  font-size: var(--keyboard-font-md);
   flex: 1;
 }
 
 #cangjieKeyboard button,
 #pinyinKeyboard button {
-  font-size: 16px;
+  font-size: var(--keyboard-font-base);
   padding: 12px 8px;
   min-width: 36px;
   max-width: 48px;
@@ -1057,7 +1087,7 @@ select {
   
   .onscreen-keyboard button {
     padding: 6px 8px;
-    font-size: 14px;
+    font-size: var(--keyboard-font-xs);
     min-width: 28px;
     max-width: 45px;
   }
@@ -1066,7 +1096,7 @@ select {
     padding: 8px 12px;
     min-width: 45px;
     max-width: 60px;
-    font-size: 16px;
+    font-size: var(--keyboard-font-base);
   }
   
   /* Numeric keyboard - more aggressive reduction for 4-row layout */
@@ -1083,12 +1113,12 @@ select {
     padding: 6px 12px;
     min-width: 50px;
     max-width: 70px;
-    font-size: 18px;
+    font-size: var(--keyboard-font-md);
   }
   
   #cangjieKeyboard button,
   #pinyinKeyboard button {
-    font-size: 15px;
+    font-size: var(--keyboard-font-sm);
     padding: 6px 6px;
     min-width: 32px;
     max-width: 42px;
@@ -1106,7 +1136,7 @@ select {
   
   #zhuyinKeyboard button {
     padding: 4px 6px;
-    font-size: 15px;
+    font-size: var(--keyboard-font-sm);
     min-width: 26px;
     max-width: 60px;
   }
@@ -1130,7 +1160,7 @@ select {
   
   .onscreen-keyboard button {
     padding: 14px 12px;
-    font-size: 17px;
+    font-size: var(--keyboard-font-md);
     min-width: 42px;
     max-width: 65px;
   }
@@ -1139,12 +1169,12 @@ select {
     padding: 16px 20px;
     min-width: 60px;
     max-width: 90px;
-    font-size: 20px;
+    font-size: var(--keyboard-font-lg);
   }
   
   #cangjieKeyboard button,
   #pinyinKeyboard button {
-    font-size: 18px;
+    font-size: var(--keyboard-font-md);
     padding: 14px 12px;
     min-width: 44px;
     max-width: 60px;
@@ -1167,7 +1197,7 @@ select {
   
   .onscreen-keyboard button {
     padding: 16px 14px;
-    font-size: 18px;
+    font-size: var(--keyboard-font-md);
     min-width: 48px;
     max-width: 75px;
   }
@@ -1176,12 +1206,12 @@ select {
     padding: 18px 24px;
     min-width: 70px;
     max-width: 100px;
-    font-size: 22px;
+    font-size: var(--keyboard-font-xl);
   }
   
   #cangjieKeyboard button,
   #pinyinKeyboard button {
-    font-size: 20px;
+    font-size: var(--keyboard-font-lg);
     padding: 16px 14px;
     min-width: 50px;
     max-width: 70px;
@@ -1200,7 +1230,7 @@ select {
   
   .onscreen-keyboard button {
     padding: 18px 16px;
-    font-size: 20px;
+    font-size: var(--keyboard-font-lg);
     min-width: 54px;
     max-width: 85px;
   }
@@ -1209,12 +1239,12 @@ select {
     padding: 20px 28px;
     min-width: 80px;
     max-width: 120px;
-    font-size: 24px;
+    font-size: var(--keyboard-font-2xl);
   }
   
   #cangjieKeyboard button,
   #pinyinKeyboard button {
-    font-size: 22px;
+    font-size: var(--keyboard-font-xl);
     padding: 18px 16px;
     min-width: 56px;
     max-width: 80px;
@@ -1237,7 +1267,7 @@ select {
 }
 
 .tutorial-char {
-  font-size: 32px;
+  font-size: var(--font-size-3xl);
   font-weight: 500;
   color: var(--text-secondary);
   transition: color 0.3s ease, opacity 0.3s ease;
@@ -1259,7 +1289,7 @@ select {
   justify-content: center;
   gap: 8px;
   margin-bottom: 8px;
-  font-size: 20px;
+  font-size: var(--font-size-lg);
   color: var(--accent-color);
 }
 
@@ -1272,7 +1302,7 @@ select {
   display: flex;
   justify-content: center;
   gap: 8px;
-  font-size: 24px;
+  font-size: var(--font-size-xl);
   font-weight: 600;
   color: var(--accent-color);
   min-height: 32px;
@@ -1317,7 +1347,7 @@ select {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
+  font-size: var(--font-size-lg);
   font-weight: bold;
   flex-shrink: 0;
 }
@@ -1328,13 +1358,13 @@ select {
 
 .tutorial-stage-info h3 {
   margin: 0 0 4px 0;
-  font-size: 18px;
+  font-size: var(--font-size-md);
   color: var(--text-color);
 }
 
 .tutorial-stage-info p {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--font-size-sm);
   opacity: 0.75;
 }
 
@@ -1355,7 +1385,7 @@ select {
 
 @media (min-width: 768px) {
   .tutorial-char {
-    font-size: 40px;
+    font-size: var(--font-size-4xl);
     min-width: 44px;
   }
   
@@ -1364,7 +1394,7 @@ select {
   }
   
   .tutorial-keys {
-    font-size: 28px;
+    font-size: var(--font-size-2xl);
   }
   
   .tutorial-keys span {
