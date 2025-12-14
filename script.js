@@ -529,6 +529,56 @@ window.onload = function () {
 
     initTheme();
 
+    // TEXT SIZE MANAGEMENT SYSTEM
+    function getDeviceTextSize() {
+      // Try to detect if device has enlarged text setting
+      // Method 1: Check computed font size on body vs expected default
+      try {
+        const bodyComputedSize = parseFloat(window.getComputedStyle(document.body).fontSize);
+        const expectedDefault = 16; // Our CSS default
+        const ratio = bodyComputedSize / expectedDefault;
+        
+        console.log('Device Text Size Detection:');
+        console.log('  Body computed font-size:', bodyComputedSize + 'px');
+        console.log('  Expected default:', expectedDefault + 'px');
+        console.log('  Ratio:', ratio.toFixed(3));
+        
+        // If device text is significantly larger (>10% difference), return appropriate scale
+        if (ratio >= 1.4) {
+          console.log('  → Detected: Extra Large (1.5)');
+          return 1.5;
+        }
+        if (ratio >= 1.15) {
+          console.log('  → Detected: Large (1.2)');
+          return 1.2;
+        }
+        console.log('  → Detected: Normal (1.0)');
+        return 1.0;
+      } catch (e) {
+        console.error('Device text size detection failed:', e);
+        return 1.0; // Default if detection fails
+      }
+    }
+
+    function applyTextSize(scale) {
+      const scaleValue = parseFloat(scale);
+      document.documentElement.style.setProperty('--text-scale', scaleValue);
+    }
+
+    function initTextSize() {
+      const saved = localStorage.getItem('textSizePreference');
+      const choice = saved || '1.0'; // Default to normal size
+      
+      applyTextSize(choice);
+      
+      // Set radio state
+      const radios = document.querySelectorAll('input[name="textSizeOption"]');
+      radios.forEach(r => { r.checked = (r.value === choice); });
+    }
+
+    // Initialize text size early so it's applied before onboarding modals display
+    initTextSize();
+
     // LANGUAGE MANAGEMENT SYSTEM
     const TRANSLATIONS = {
       english: {
@@ -554,6 +604,12 @@ window.onload = function () {
         input_pinyin: "Pinyin",
         input_zhuyin: "Zhuyin (注音)",
         input_cangjie: "Cangjie (倉頡)",
+        text_size: "Text Size",
+        text_size_normal: "Normal (100%)",
+        text_size_large: "Large (120%)",
+        text_size_extra_large: "Extra Large (150%)",
+        view_tutorial: "View Tutorial",
+        view_tutorial_description: "View the interactive tutorial explaining the three-stage learning method.",
         book_name_charset: "Character Set for Book Names",
         charset_simplified: "Simplified",
         charset_traditional: "Traditional",
@@ -780,6 +836,12 @@ window.onload = function () {
         input_pinyin: "拼音",
         input_zhuyin: "注音",
         input_cangjie: "仓颉",
+        text_size: "文字大小",
+        text_size_normal: "正常 (100%)",
+        text_size_large: "大 (120%)",
+        text_size_extra_large: "特大 (150%)",
+        view_tutorial: "查看教程",
+        view_tutorial_description: "查看交互式教程，了解三阶段学习方法。",
         book_name_charset: "书卷名称字符集",
         charset_simplified: "简体",
         charset_traditional: "繁体",
@@ -1006,6 +1068,12 @@ window.onload = function () {
         input_pinyin: "拼音",
         input_zhuyin: "注音",
         input_cangjie: "倉頡",
+        text_size: "文字大小",
+        text_size_normal: "正常 (100%)",
+        text_size_large: "大 (120%)",
+        text_size_extra_large: "特大 (150%)",
+        view_tutorial: "查看教程",
+        view_tutorial_description: "查看互動式教程，瞭解三階段學習方法。",
         book_name_charset: "書卷名稱字符集",
         charset_simplified: "簡體",
         charset_traditional: "繁體",
@@ -1474,6 +1542,24 @@ window.onload = function () {
     if (backupReminderToggle) {
       backupReminderToggle.addEventListener('change', (e) => {
         localStorage.setItem('backupReminderEnabled', e.target.checked.toString());
+      });
+    }
+    
+    // Auto-save text size changes
+    const textSizeRadios = document.querySelectorAll('input[name="textSizeOption"]');
+    textSizeRadios.forEach(radio => {
+      radio.addEventListener('change', (e) => {
+        const textSizeVal = e.target.value;
+        localStorage.setItem('textSizePreference', textSizeVal);
+        applyTextSize(textSizeVal);
+      });
+    });
+
+    // View Tutorial button
+    const viewTutorialBtn = document.getElementById('viewTutorialBtn');
+    if (viewTutorialBtn) {
+      viewTutorialBtn.addEventListener('click', () => {
+        showTutorialIntroModal();
       });
     }
     
@@ -5840,6 +5926,20 @@ function showPanel(panelToShow) {
   let tutorialAnimationInterval = null;
   
   function showTutorialIntroModal() {
+    console.log('=== TUTORIAL MODAL DEBUG ===');
+    console.log('Current Settings:');
+    console.log('  Language:', localStorage.getItem('languagePreference') || 'english');
+    console.log('  Input Method:', localStorage.getItem('inputMethod') || 'pinyin');
+    console.log('  Character Set (Books):', localStorage.getItem('bookNameCharset') || 'simplified');
+    console.log('==========================');
+    
+    // Stop any running tutorial animations
+    if (tutorialAnimationInterval) {
+      console.log('Stopping existing tutorial animation...');
+      clearInterval(tutorialAnimationInterval);
+      tutorialAnimationInterval = null;
+    }
+    
     tutorialIntroModal.style.display = 'block';
     tutorialIntroModal.classList.add('open');
     tutorialIntroModal.setAttribute('aria-hidden', 'false');
@@ -5859,10 +5959,18 @@ function showPanel(panelToShow) {
       'zhuyin': ['ㄧ', 'ㄏ', 'ㄏ', 'ㄧ', 'ㄣ', 'ㄏ'],
       'cangjie': ['尸', '竹', '廿', '大', '田', '十']
     };
-    return keyMappings[inputMethod] || keyMappings['pinyin'];
+    const keys = keyMappings[inputMethod] || keyMappings['pinyin'];
+    
+    console.log('Tutorial Keystrokes:');
+    console.log('  Input Method:', inputMethod);
+    console.log('  Keys:', keys);
+    
+    return keys;
   }
   
   function startTutorialAnimation(stage) {
+    console.log(`--- Starting ${stage} Animation ---`);
+    
     // Stop any existing animation
     if (tutorialAnimationInterval) {
       clearInterval(tutorialAnimationInterval);
@@ -5872,46 +5980,64 @@ function showPanel(panelToShow) {
     const keysContainer = document.getElementById(`tutorial${stage}Keys`);
     const keystrokes = getTutorialKeystrokes();
     
+    console.log(`${stage} Animation Setup:`);
+    console.log('  Chinese Characters:', Array.from(chars).map(c => c.textContent));
+    console.log('  Keys Container:', keysContainer ? 'Found' : 'NOT FOUND');
+    console.log('  Number of chars:', chars.length);
+    console.log('  Number of keystrokes:', keystrokes.length);
+    
     let currentIndex = 0;
     
     function animateStep() {
+      console.log(`  Resetting animation for ${stage} stage...`);
+      
       // Reset all characters
       chars.forEach((char, idx) => {
         if (stage === 'Basic') {
           char.classList.remove('tutorial-typed');
           char.classList.remove('tutorial-hidden');
+          console.log(`    Char ${idx} (${char.textContent}): visible, not typed`);
         } else if (stage === 'Intermediate') {
           char.classList.remove('tutorial-typed');
           if (idx % 2 === 1) {
             char.classList.add('tutorial-hidden');
+            console.log(`    Char ${idx} (${char.textContent}): HIDDEN`);
           } else {
             char.classList.remove('tutorial-hidden');
+            console.log(`    Char ${idx} (${char.textContent}): visible, not typed`);
           }
         } else if (stage === 'Advanced') {
           char.classList.remove('tutorial-typed');
           char.classList.add('tutorial-hidden');
+          console.log(`    Char ${idx} (${char.textContent}): HIDDEN`);
         }
       });
       
       // Clear and setup keystrokes (all present but hidden)
       keysContainer.innerHTML = '';
-      keystrokes.forEach(key => {
+      keystrokes.forEach((key, idx) => {
         const keySpan = document.createElement('span');
         keySpan.textContent = key;
         keysContainer.appendChild(keySpan);
+        console.log(`    Key ${idx}: ${key} (added as hidden)`);
       });
       const keySpans = keysContainer.querySelectorAll('span');
       
       currentIndex = 0;
       
-      // Animate typing
-      const typingInterval = setInterval(() => {
+      // Animate typing - store in global variable so it can be stopped
+      tutorialAnimationInterval = setInterval(() => {
         if (currentIndex >= chars.length) {
-          clearInterval(typingInterval);
-          // Wait 1 second before restarting loop
-          setTimeout(animateStep, 1000);
+          console.log(`  Animation complete for ${stage}, restarting in 1s...`);
+          clearInterval(tutorialAnimationInterval);
+          // Wait 1 second before restarting the animation loop
+          tutorialAnimationInterval = setTimeout(() => {
+            animateStep();
+          }, 1000);
           return;
         }
+        
+        console.log(`  Step ${currentIndex}: Show key[${keystrokes[currentIndex]}], reveal char[${chars[currentIndex].textContent}]`);
         
         // Show keystroke
         keySpans[currentIndex].classList.add('visible');
@@ -5940,6 +6066,7 @@ function showPanel(panelToShow) {
     tutorialBasicModal.setAttribute('aria-hidden', 'true');
     if (tutorialAnimationInterval) {
       clearInterval(tutorialAnimationInterval);
+      tutorialAnimationInterval = null;
     }
   }
   
@@ -5956,6 +6083,7 @@ function showPanel(panelToShow) {
     tutorialIntermediateModal.setAttribute('aria-hidden', 'true');
     if (tutorialAnimationInterval) {
       clearInterval(tutorialAnimationInterval);
+      tutorialAnimationInterval = null;
     }
   }
   
@@ -5972,6 +6100,7 @@ function showPanel(panelToShow) {
     tutorialAdvancedModal.setAttribute('aria-hidden', 'true');
     if (tutorialAnimationInterval) {
       clearInterval(tutorialAnimationInterval);
+      tutorialAnimationInterval = null;
     }
   }
   
