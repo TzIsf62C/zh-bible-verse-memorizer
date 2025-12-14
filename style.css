@@ -1257,13 +1257,19 @@ select {
   padding: 20px;
   background: var(--card-background);
   border-radius: 8px;
-}
-
-.tutorial-chars {
   display: flex;
   justify-content: center;
-  gap: 8px;
-  margin-bottom: 12px;
+}
+
+.tutorial-table {
+  border-collapse: collapse;
+  margin: 0 auto;
+}
+
+.tutorial-table td {
+  text-align: center;
+  vertical-align: middle;
+  padding: 4px 4px;
 }
 
 .tutorial-char {
@@ -1271,8 +1277,7 @@ select {
   font-weight: 500;
   color: var(--text-secondary);
   transition: color 0.3s ease, opacity 0.3s ease;
-  min-width: 36px;
-  text-align: center;
+  display: inline-block;
 }
 
 .tutorial-char.tutorial-hidden {
@@ -1284,35 +1289,27 @@ select {
   color: var(--correct-color);
 }
 
-.tutorial-arrows {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  margin-bottom: 8px;
+.tutorial-arrows td {
   font-size: var(--font-size-lg);
   color: var(--accent-color);
-}
-
-.tutorial-arrows span {
-  min-width: 36px;
-  text-align: center;
+  padding: 6px 4px;
 }
 
 .tutorial-keys {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
   font-size: var(--font-size-xl);
   font-weight: 600;
   color: var(--accent-color);
+}
+
+.tutorial-keys td {
   min-height: 32px;
+  padding: 6px 4px;
 }
 
 .tutorial-keys span {
-  min-width: 36px;
-  text-align: center;
   opacity: 0;
   transition: opacity 0.3s ease;
+  display: inline-block;
 }
 
 .tutorial-keys span.visible {
