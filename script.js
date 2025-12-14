@@ -646,8 +646,8 @@ window.onload = function () {
         intermediate: "Intermediate",
         advanced: "Advanced",
         select_verse: "Select Verse",
-        sound_off: "Sound Off",
-        sound_on: "Sound On",
+        sound_off: "Muted",
+        sound_on: "On",
         toggle_sound: "Toggle sound",
         vibration_feedback: "Vibration Feedback",
         enable_vibration: "Enable vibration on error",
@@ -6013,13 +6013,16 @@ function showPanel(panelToShow) {
         }
       });
       
-      // Clear and setup keystrokes (all present but hidden)
-      keysContainer.innerHTML = '';
-      keystrokes.forEach((key, idx) => {
-        const keySpan = document.createElement('span');
-        keySpan.textContent = key;
-        keysContainer.appendChild(keySpan);
-        console.log(`    Key ${idx}: ${key} (added as hidden)`);
+      // Clear and setup keystrokes (all present but hidden) in table cells
+      const keyCells = keysContainer.querySelectorAll('td');
+      keyCells.forEach((cell, idx) => {
+        cell.innerHTML = '';
+        if (idx < keystrokes.length) {
+          const keySpan = document.createElement('span');
+          keySpan.textContent = keystrokes[idx];
+          cell.appendChild(keySpan);
+          console.log(`    Key ${idx}: ${keystrokes[idx]} (added as hidden)`);
+        }
       });
       const keySpans = keysContainer.querySelectorAll('span');
       
@@ -6144,6 +6147,7 @@ function showPanel(panelToShow) {
       hideTutorialAdvancedModal();
       localStorage.setItem('hasCompletedOnboarding', 'true');
       showPanel(learnPanel);
+      setActiveNavButton(learnBtn);
       const unlearnedList = populateUnlearnedSelector();
       if (unlearnedList && unlearnedList.length > 0) {
         startLearnMode(unlearnedList[0]);
