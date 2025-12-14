@@ -2275,6 +2275,19 @@ window.onload = function () {
       verseItem.appendChild(checkbox);
       verseItem.appendChild(verseContent);
       verseItem.appendChild(buttonContainer);
+      
+      // Add click handler to toggle checkbox when clicking anywhere on the verse-item except buttons
+      verseItem.addEventListener('click', (e) => {
+        // Don't toggle if clicking on buttons or the checkbox itself
+        if (e.target.tagName === 'BUTTON' || e.target === checkbox) {
+          return;
+        }
+        checkbox.checked = !checkbox.checked;
+        // Trigger change event to update bulk actions visibility
+        const changeEvent = new Event('change', { bubbles: true });
+        checkbox.dispatchEvent(changeEvent);
+      });
+      
       listDiv.appendChild(verseItem);
     });
 
@@ -2334,10 +2347,10 @@ window.onload = function () {
       count.className = 'collection-verse-count';
       count.textContent = `(${t('learned_count').replace('{count}', learnedVerses.length)})`;
       
-      header.appendChild(expandIcon);
       header.appendChild(checkbox);
       header.appendChild(title);
       header.appendChild(count);
+      header.appendChild(expandIcon);
       
       const versesList = document.createElement('div');
       versesList.className = 'collection-verses-list';
@@ -2397,14 +2410,32 @@ window.onload = function () {
         
         verseItem.appendChild(reference);
         verseItem.appendChild(lastReviewed);
+        
+        // Add click handler to toggle parent collection checkbox
+        verseItem.addEventListener('click', () => {
+          checkbox.checked = !checkbox.checked;
+          // Trigger change event to update button opacity
+          const changeEvent = new Event('change', { bubbles: true });
+          checkbox.dispatchEvent(changeEvent);
+        });
+        
         versesList.appendChild(verseItem);
       });
       
-      // Toggle expand/collapse on header click (except checkbox)
-      header.addEventListener('click', (e) => {
-        if (e.target === checkbox) return;
+      // Toggle expand/collapse only when clicking the expand icon
+      expandIcon.addEventListener('click', (e) => {
+        e.stopPropagation(); // Prevent triggering header click
         const isExpanded = versesList.classList.toggle('expanded');
         expandIcon.classList.toggle('expanded', isExpanded);
+      });
+      
+      // Toggle checkbox when clicking anywhere on header except checkbox or expand icon
+      header.addEventListener('click', (e) => {
+        if (e.target === checkbox || e.target === expandIcon) return;
+        checkbox.checked = !checkbox.checked;
+        // Trigger change event to update button opacity
+        const changeEvent = new Event('change', { bubbles: true });
+        checkbox.dispatchEvent(changeEvent);
       });
       
       collectionItem.appendChild(header);
@@ -2528,6 +2559,19 @@ window.onload = function () {
       content.appendChild(lastReviewed);
       verseItem.appendChild(checkbox);
       verseItem.appendChild(content);
+      
+      // Add click handler to toggle checkbox when clicking anywhere on the verse-item
+      verseItem.addEventListener('click', (e) => {
+        // Don't toggle if clicking on the checkbox itself
+        if (e.target === checkbox) {
+          return;
+        }
+        checkbox.checked = !checkbox.checked;
+        // Trigger change event to update button visibility
+        const changeEvent = new Event('change', { bubbles: true });
+        checkbox.dispatchEvent(changeEvent);
+      });
+      
       reviewList.appendChild(verseItem);
     });
 
