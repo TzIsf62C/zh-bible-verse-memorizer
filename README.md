@@ -1,6 +1,6 @@
 # ZH Bible Verse Memorizer PWA
 
-**Version 0.9.2** | **License: MIT**
+**Version 0.9.3** | **License: MIT**
 
 A Progressive Web App for memorizing Chinese Bible verses with spaced repetition. This App is inspired by the Bible Memory App (https://biblememory.com/). I would recommend that app if you are memorizing Bible verses in English.
 
@@ -14,9 +14,7 @@ A Progressive Web App for memorizing Chinese Bible verses with spaced repetition
 - [Spaced Repetition System](#-spaced-repetition-system)
 - [Data & Privacy](#-data--privacy)
 - [Developer Notes](#-developer-notes)
-- [Updates in Version 0.9.1](#-updates-in-version-091)
-- [Updates in Version 0.9.1.1](#-updates-in-version-0911)
-- [Updates in Version 0.9.2](#-updates-in-version-092)
+- [Updates in Version 0.9.3](#-updates-in-version-093)
 
 ---
 
@@ -357,109 +355,40 @@ Or use **Clear All Data** button in Settings.
 
 ---
 
-## 📋 Updates in Version 0.9.1
+## 📋 Updates in Version 0.9.3
 
-### New Features
-- **Installation Check**: Onboarding detects standalone mode and shows platform-specific install instructions
-- **Learning Tutorial**: Interactive multi-stage tutorial with animated keystroke examples
-- **Tutorial Intro**: Overview screen explaining 3-stage system with skip option
-- **Onscreen Pinyin Keyboard**: Touch-friendly Latin keyboard for mobile users
-- **Automatic Numeric Keyboard**: Switches to numeric keyboard for chapter/verse fields
-- **Vibration Feedback**: Optional error vibration on Android devices
-- **Backup Reminders**: Weekly reminders for first month, then monthly (toggleable)
-- **Unsaved Changes Warning**: Alert when leaving Add Verse panel with unsaved edits
-- **Physical Keyboard Mappings**: Desktop users can type with keyboard (Zhuyin/Cangjie mapped to QWERTY)
-- **Review Button Opacity**: Buttons dim when no selection (Change Interval always visible)
+### New Settings
+- **Character Set for Book Names**: Choose between Simplified or Traditional Chinese characters for Bible book names
+  - Affects display in verse lists, review screens, and throughout the app
+  - Independent from interface language setting
+  - Allows English interface Pinyin users to choose their prefered character set
 
-### Improvements
-- **Autosave Settings**: Removed save button; settings persist immediately
-- **Hidden Learn Input**: Off-screen input field saves vertical space (~90–100px total)
-- **Removed Confirm Key**: Enter key removed from onscreen keyboards in learn/review modes
-- **Larger Cangjie Keys**: Increased size and spacing for better accuracy
-- **Review Due Logic**: Fixed "Due Today" vs "Overdue" threshold (now 24 hours)
-- **Punctuation Coloring**: Fixed inconsistent intermediate mode punctuation colors
-- **Initial Punctuation**: Fixed opening quotes not appearing in correct color
-- **Keyboard Auto-Show**: Fixed keyboard not appearing after advancing to next verse
+- **Text Size Adjustment**: Larger font size for better readability
+  - Three size options: Normal (100%), Large (120%), Extra Large (150%)
+  - Applies to verse text, book names, and UI elements
+  - Onscreen keyboards are the only text not affected
+  - Settings persist across sessions
 
-### Bug Fixes
-- Fixed Zhuyin error in Ephesians 2:8 sample (ZY-Samples.json)
-- Fixed review badge showing 0 due when verses actually due today
-- Fixed collections due counter not matching individual verse due status
+- **View Tutorial**: Re-access the learning tutorial anytime from Settings
+  - Review the three-stage memorization system
+  - View the interactive examples
+  - Helpful for new users who prefer larger text sizes or refreshing memory after time away
 
----
-
-## 📋 Updates in Version 0.9.1.1
-
-### New Features
-- **Review Ordering Options**: Individual verse reviews can now be sorted by Biblical order, Due Date (earliest first), or Random shuffle
-- **Add Verse Tutorial Modal**: First-time tutorial explaining manual verse entry with visual example (Ephesians 2:8) showing input method-specific answer keys
-- **Language-Aware Pinyin Samples**: Separate sample files for Simplified (PY-Samples-zhs.json) and Traditional (PY-Samples-zht.json) Chinese
-
-### Improvements
-- **Single-Text Reviews**: Always display verses in Biblical order regardless of due dates
-- **Real-Time Review Badge**: Updates during active review sessions as verses are completed
-- **Progressive Review Button**: Hidden until first verse is learned, reducing clutter for new users
-- **Biblical Order Sorting**: Collection verse selector displays verses in canonical book order
-- **Verse Selector Visibility**: Always visible on retry in intermediate mode (previously hidden during reviews)
-- **Advanced Tutorial Enhancement**: Added explanation about 90% accuracy requirement and spaced repetition system
-- **Navigation Accessibility**: Review button remains clickable during active review sessions
-
-### Bug Fixes
-- Fixed Learning Mode controls incorrectly showing during review sessions
-- Fixed review navigation button becoming disabled during active reviews
-
-### UI/UX Enhancements
-- **Responsive Onscreen Keyboards**: Keyboards now scale intelligently across screen sizes
-  - Mobile (< 600px): Compact layout optimized for narrow screens
-  - Tablet (≥ 600px): Medium-sized keys with improved spacing
-  - Desktop (≥ 768px): Larger keys centered with max-width 900px
-  - Large Desktop (≥ 1024px): Maximum size keys with max-width 1100px
-  - Keys use flexbox with max-width constraints to balance across available space
-  
-- **Landscape Mode Optimizations**: Dramatically reduced keyboard vertical footprint on mobile devices in landscape orientation
-  - General keyboards: ~40% reduction in padding and spacing
-  - Zhuyin keyboard: Extra aggressive reduction (5 rows → ~65-70% screen height vs 90%)
-  - Numeric keyboard: Optimized 4-row layout with balanced button sizes
-  - All keyboards now match or beat native keyboard efficiency (~73% screen height)
-  
-- **Orientation Change Auto-Recentering**: Viewport automatically recenters on focused content after device rotation
-  - Learn panel: Scrolls `progressDisplay` (verse text) into view
-  - Add Verse panel: Scrolls field labels into view for context
-  - Smooth scrolling animation for polished user experience
+### UX Improvements
+- **Enhanced Checkbox Selection**: Improved tap/click targets for faster verse and collection selection
+  - Add Verse List: Click anywhere on verse item (except buttons) to toggle checkbox
+  - Review Verse List: Click anywhere on verse item to toggle checkbox
+  - Review Collections: Click anywhere on collection header to toggle checkbox
+  - Collection verses: Click on any verse within expanded collection to toggle parent collection checkbox
+  - Expand/collapse icon moved to far right for easier access without accidentally hitting checkbox
+  - Only the triangle icon (▶) now controls collection expansion/collapse
+  - Larger, more accessible hit areas for mobile-friendly interaction
 
 ---
 
-## 📋 Updates in Version 0.9.2
+## 📄 Previous Versions
 
-### New Features
-- **Check for Updates Button**: Added manual update checking in Settings panel
-  - User-controlled service worker updates with clear "Update Now" prompt
-  - Automatic weekly silent checks when Settings panel is accessed
-  - Visual feedback during update check process with translated status messages
-  - Graceful handling for browsers without service worker support
-  - Prevents unexpected app refreshes by requiring user confirmation
-
-### Practice Mode Enhancements
-- **Enhanced Intermediate Mode**: Improved practice flow for intermediate difficulty
-  - Auto-retry with toggled character pattern on failure (odd ↔ even characters)
-  - Manual pattern toggle: Click intermediate button repeatedly to alternate visible characters
-  - Enables comprehensive practice of both character patterns for thorough memorization
-
-- **Streamlined Practice UX**: Removed friction from practice mode workflow
-  - Auto-advance after 1.5 seconds for Basic/Intermediate stages (no button clicks required)
-  - Success automatically advances to next difficulty; failure auto-retries same stage
-  - Modal only appears for Advanced stage completion
-  - Clear "Skip" button label (instead of "Next") when failing Advanced stage
-
-- **Smart Practice Activation**: Practice mode triggers automatically
-  - Activates when scoring <90% on Advanced stage during reviews
-  - Exits automatically when clicking Next/Skip button
-  - Difficulty buttons appear only in practice mode; label stays hidden
-
-### Bug Fixes
-- Fixed practice mode not triggering after modal retry button click
-- Fixed "Learn Mode" label appearing alongside difficulty buttons in review practice mode
-- Fixed spaced repetition interval calculations using button click status instead of actual accuracy
+For detailed changelogs of versions 0.9.2, 0.9.1.1, 0.9.1, and earlier, please refer to the project's git history.
 
 ---
 
