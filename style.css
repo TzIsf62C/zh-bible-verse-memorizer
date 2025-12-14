@@ -262,6 +262,14 @@ textarea:focus {
   border-color: var(--accent-color);
 }
 
+/* Consistent checkbox sizing across all devices */
+input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
 label {
   display: block;
   margin: 12px 0 4px;
@@ -613,6 +621,8 @@ select {
     order: -1;
     align-self: flex-start;
     margin-top: 2px;
+    width: 18px;
+    height: 18px;
   }
   
   .verse-item .verse-content {
@@ -898,6 +908,8 @@ select {
 
 .collection-checkbox {
   margin: 0;
+  width: 18px;
+  height: 18px;
 }
 
 .collection-title {
@@ -973,8 +985,6 @@ select {
 
 .tree-item input[type="checkbox"] {
   margin: 0 8px 0 0;
-  width: auto;
-  cursor: pointer;
 }
 
 .tree-children {
