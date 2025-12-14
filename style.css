@@ -63,6 +63,7 @@
   --background-color: #1a1a1a;
   --panel-background: #222;
   --text-color: #cccccc;
+  --text-secondary: #888888;
   --correct-color: #ffffff;
   --error-color: #ff0000;
   --accent-color: #2d72d9;
@@ -77,6 +78,7 @@
   --background-color: #f7f7f7;
   --panel-background: #ffffff;
   --text-color: #222222;
+  --text-secondary: #999999;
   --correct-color: #000000;
   --error-color: #cc0000;
   --accent-color: #5c9aeb;
@@ -91,6 +93,7 @@
   --background-color: #1a1a1a;
   --panel-background: #222;
   --text-color: #cccccc;
+  --text-secondary: #888888;
   --correct-color: #ffffff;
   --error-color: #ff0000;
   --accent-color: #2d72d9;
@@ -106,6 +109,7 @@
     --background-color: #f7f7f7;
     --panel-background: #ffffff;
     --text-color: #222222;
+    --text-secondary: #999999;
     --correct-color: #000000;
     --error-color: #c62828;
     --accent-color: #5c9aeb;
@@ -970,6 +974,7 @@ select {
   user-select: none;
   max-width: 100%;
   box-sizing: border-box;
+  pointer-events: auto;
 }
 
 .keyboard-row {
@@ -994,6 +999,7 @@ select {
   max-width: 50px;
   touch-action: manipulation;
   transition: background 0.2s ease;
+  pointer-events: auto;
 }
 
 #numericKeyboard button {
@@ -1233,7 +1239,7 @@ select {
 .tutorial-char {
   font-size: 32px;
   font-weight: 500;
-  color: var(--text-color);
+  color: var(--text-secondary);
   transition: color 0.3s ease, opacity 0.3s ease;
   min-width: 36px;
   text-align: center;
@@ -1286,16 +1292,20 @@ select {
 .tutorial-stages-list {
   margin: 24px 0;
   text-align: left;
+  background: var(--card-background);
+  border-radius: 8px;
+  padding: 16px;
 }
 
 .tutorial-stage-item {
   display: flex;
   align-items: center;
   gap: 16px;
-  margin-bottom: 20px;
-  padding: 12px;
-  background: var(--card-background);
-  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.tutorial-stage-item:last-child {
+  margin-bottom: 0;
 }
 
 .tutorial-stage-number {
