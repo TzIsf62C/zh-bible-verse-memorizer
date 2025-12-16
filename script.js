@@ -132,6 +132,12 @@ window.onload = function () {
     pinyinKeyboard.style.display = 'none';
     numericKeyboard.style.display = 'none';
     
+    // Remove padding-compact class from all keyboards
+    zhuyinKeyboard.classList.remove('padding-compact');
+    cangjieKeyboard.classList.remove('padding-compact');
+    pinyinKeyboard.classList.remove('padding-compact');
+    numericKeyboard.classList.remove('padding-compact');
+    
     // Restore all hidden elements
     hiddenElements.forEach(el => {
       el.style.display = el.dataset.originalDisplay || '';
@@ -239,6 +245,7 @@ window.onload = function () {
       // Hide backspace and enter buttons for learnInput
       const backspaceButtons = document.querySelectorAll('.onscreen-keyboard .backspace');
       const enterButtons = document.querySelectorAll('.onscreen-keyboard .enter');
+      const keyboards = document.querySelectorAll('.onscreen-keyboard');
       backspaceButtons.forEach(btn => {
         if (input.id === 'learnInput') {
           btn.style.display = 'none';
@@ -251,6 +258,13 @@ window.onload = function () {
           btn.style.display = 'none';
         } else {
           btn.style.display = '';
+        }
+      });
+      keyboards.forEach(kbd => {
+        if (input.id === 'learnInput') {
+          kbd.classList.add('padding-compact');
+        } else {
+          kbd.classList.remove('padding-compact');
         }
       });
       
@@ -268,6 +282,7 @@ window.onload = function () {
         // Hide backspace and enter buttons for learnInput
         const backspaceButtons = document.querySelectorAll('.onscreen-keyboard .backspace');
         const enterButtons = document.querySelectorAll('.onscreen-keyboard .enter');
+        const keyboards = document.querySelectorAll('.onscreen-keyboard');
         backspaceButtons.forEach(btn => {
           if (input.id === 'learnInput') {
             btn.style.display = 'none';
@@ -280,6 +295,13 @@ window.onload = function () {
             btn.style.display = 'none';
           } else {
             btn.style.display = '';
+          }
+        });
+        keyboards.forEach(kbd => {
+          if (input.id === 'learnInput') {
+            kbd.classList.add('padding-compact');
+          } else {
+            kbd.classList.remove('padding-compact');
           }
         });
         
@@ -309,6 +331,7 @@ window.onload = function () {
     // Hide backspace and enter buttons if this is learn input
     const backspaceButtons = document.querySelectorAll('.onscreen-keyboard .backspace');
     const enterButtons = document.querySelectorAll('.onscreen-keyboard .enter');
+    const keyboards = document.querySelectorAll('.onscreen-keyboard');
     backspaceButtons.forEach(btn => {
       if (input.id === 'learnInput') {
         btn.style.display = 'none';
@@ -321,6 +344,13 @@ window.onload = function () {
         btn.style.display = 'none';
       } else {
         btn.style.display = '';
+      }
+    });
+    keyboards.forEach(kbd => {
+      if (input.id === 'learnInput') {
+        kbd.classList.add('padding-compact');
+      } else {
+        kbd.classList.remove('padding-compact');
       }
     });
     

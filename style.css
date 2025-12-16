@@ -7,6 +7,12 @@
   font-style: normal;
 }
 
+/* Prevent horizontal scrolling */
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
 /* Modal overlay for review mode selection */
 .modal {
   display: none;
@@ -641,6 +647,7 @@ select {
 .panel {
   margin-top: 20px;
   padding: 20px;
+  padding-bottom: 220px; /* Extra space for fixed keyboard */
   background: var(--panel-background);
   border-radius: 8px;
 }
@@ -1000,7 +1007,7 @@ select {
 
 /* Onscreen Keyboards */
 .onscreen-keyboard {
-  position: sticky;
+  position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
@@ -1008,13 +1015,14 @@ select {
   border-top: 1px solid var(--border-color);
   padding: 12px 8px;
   z-index: 1001;
-  margin-top: 10px;
   touch-action: manipulation;
   -webkit-user-select: none;
   user-select: none;
-  max-width: 100%;
+  width: 100%;
+  max-width: 100vw;
   box-sizing: border-box;
   pointer-events: auto;
+  overflow-x: hidden;
 }
 
 .keyboard-row {
@@ -1022,7 +1030,10 @@ select {
   justify-content: center;
   margin-bottom: 8px;
   gap: 4px;
+  width: 100%;
   max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 .onscreen-keyboard button {
@@ -1082,6 +1093,21 @@ select {
   touch-action: manipulation;
   flex: 1.5;
   max-width: none;
+}
+
+/* Add extra bottom padding when enter/backspace are hidden (portrait mode only) */
+#zhuyinKeyboard.padding-compact,
+#cangjieKeyboard.padding-compact,
+#pinyinKeyboard.padding-compact {
+  padding-bottom: 50px !important;
+}
+
+@media (orientation: landscape) {
+  #zhuyinKeyboard.padding-compact,
+  #cangjieKeyboard.padding-compact,
+  #pinyinKeyboard.padding-compact {
+    padding-bottom: 12px !important; /* Reset to normal in landscape */
+  }
 }
 
 /* Mobile landscape optimization - reduce keyboard height */
