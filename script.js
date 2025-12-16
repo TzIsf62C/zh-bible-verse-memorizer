@@ -3489,10 +3489,16 @@ function populateBookDatalist() {
   function populateUnlearnedSelector() {
     const verses = JSON.parse(localStorage.getItem('verses') || '[]');
     let list = verses.filter(v => !v.lastReviewed);
-    // If no unlearned verses, fall back to all verses
-    if (list.length === 0) list = verses;
-    // Sort by Bible book order
-    list = sortVersesByBibleOrder(list);
+    console.log('populateUnlearnedSelector:', {
+      totalVerses: verses.length,
+      unlearnedCount: list.length,
+      unlearned: list.map(v => `${v.bookName} ${v.chapterNumber}:${v.verseNumber}`)
+    });
+    
+    // Sort by Bible book order (only if we have unlearned verses)
+    if (list.length > 0) {
+      list = sortVersesByBibleOrder(list);
+    }
 
     verseSelector.innerHTML = '';
     list.forEach((v, i) => {
@@ -3502,8 +3508,10 @@ function populateBookDatalist() {
       verseSelector.appendChild(option);
     });
 
-    // Select top verse and ensure selector visible
-    try { verseSelector.selectedIndex = 0; verseSelector.style.opacity = '1'; } catch (e) {}
+    // Select top verse and ensure selector visible (only if list has items)
+    if (list.length > 0) {
+      try { verseSelector.selectedIndex = 0; verseSelector.style.opacity = '1'; } catch (e) {}
+    }
     return list;
   }
 
@@ -4040,9 +4048,16 @@ function populateBookDatalist() {
           v.chapterNumber === currentVerse.chapterNumber &&
           v.verseNumber === currentVerse.verseNumber
         );
+        console.log('modalNextBtn: Applying spaced repetition for advanced completion:', {
+          verseIndex,
+          verse: `${currentVerse.bookName} ${currentVerse.chapterNumber}:${currentVerse.verseNumber}`,
+          previousLastReviewed: verseIndex !== -1 ? verses[verseIndex].lastReviewed : 'N/A',
+          success: pendingCompletion && pendingCompletion.success
+        });
         if (verseIndex !== -1) {
           const now = new Date();
           verses[verseIndex].lastReviewed = now.toISOString();
+          console.log('modalNextBtn: Updated lastReviewed to:', verses[verseIndex].lastReviewed);
           
           // Initialize or update spaced repetition data
           if (!verses[verseIndex].interval) verses[verseIndex].interval = 0;
@@ -4155,20 +4170,31 @@ function populateBookDatalist() {
         learnInput.value = '';
         learnFeedback.textContent = '';
         learnFeedback.className = '';
+        
+        console.log('modalNextBtn: Advanced completion, checking for remaining unlearned verses');
         const list = populateUnlearnedSelector();
+        console.log('modalNextBtn: populateUnlearnedSelector returned list:', {
+          listLength: list ? list.length : 0,
+          hasUnlearned: list && list.length > 0,
+          firstVerse: list && list[0] ? `${list[0].bookName} ${list[0].chapterNumber}:${list[0].verseNumber}` : 'none'
+        });
 
         // If there are no more unlearned verses, route to Add Verse panel
         if (!list || list.length === 0) {
+          console.log('modalNextBtn: No unlearned verses remaining, routing to Add Verse panel');
           try {
             setActiveNavButton(addVerseBtn);
             showPanel(addVersePanel);
             loadVersesForEdit();
             populateCollectionSelector();
-          } catch (e) { /* ignore */ }
+          } catch (e) {
+            console.error('Error routing to Add Verse panel:', e);
+          }
           return;
         }
 
         // Otherwise, continue normal learning flow
+        console.log('modalNextBtn: Unlearned verses remain, continuing to next verse');
         setLearningStage('basic');
         showPanel(learnPanel);
         if (verseSelector) verseSelector.style.display = 'block';
