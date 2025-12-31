@@ -3986,7 +3986,7 @@ function populateBookDatalist() {
   if (modalRetryBtn) {
     modalRetryBtn.addEventListener('click', () => {
       console.log('Retry button clicked:', {
-        success: pendingCompletion.success,
+        success: pendingCompletion?.success,
         learningStage,
         reviewVerses: reviewVerses?.length,
         reviewPracticeMode
@@ -4023,6 +4023,13 @@ function populateBookDatalist() {
           
           localStorage.setItem('verses', JSON.stringify(verses));
         }
+        
+        // Enable practice mode and show difficulty controls
+        console.log('Enabling practice mode via retry button');
+        reviewPracticeMode = true;
+        if (difficultyControls) {
+          difficultyControls.style.display = '';
+        }
       }
       
       closeAccuracyModal();
@@ -4050,6 +4057,11 @@ function populateBookDatalist() {
       if (verseSelector) {
         verseSelector.style.display = 'block';
         verseSelector.style.opacity = '1';
+      }
+      
+      // Show difficulty controls if in practice mode
+      if (reviewPracticeMode && difficultyControls) {
+        difficultyControls.style.display = '';
       }
       
       // Re-render without changing the learning stage
