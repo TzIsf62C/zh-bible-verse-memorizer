@@ -2785,25 +2785,13 @@ window.onload = function () {
       return;
     }
 
-    // Show review order modal to let user choose sorting
-    const reviewOrderModal = document.getElementById('reviewOrderModal');
-    if (reviewOrderModal) {
-      reviewOrderModal.classList.add('open');
-      reviewOrderModal.setAttribute('aria-hidden', 'false');
-
-      const biblicalBtn = document.getElementById('reviewOrderBiblicalBtn');
-      const dueDateBtn = document.getElementById('reviewOrderDueDateBtn');
-      const randomBtn = document.getElementById('reviewOrderRandomBtn');
-
-      // Remove previous listeners
-      biblicalBtn.onclick = null;
-      dueDateBtn.onclick = null;
-      randomBtn.onclick = null;
-
-      // Function to start review with chosen order
-      function startReviewWithOrder(sortedVerses) {
+    // Function to start review with chosen order
+    function startReviewWithOrder(sortedVerses) {
+      const reviewOrderModal = document.getElementById('reviewOrderModal');
+      if (reviewOrderModal) {
         reviewOrderModal.classList.remove('open');
         reviewOrderModal.setAttribute('aria-hidden', 'true');
+      }
 
         reviewCollectionMode = 'individual';
         reviewVerses = sortedVerses;
@@ -2837,11 +2825,30 @@ window.onload = function () {
         showPanel(learnPanel);
         startLearnMode(currentVerse);
         hideReviewModeControls();
-      }
+    }
 
-      biblicalBtn.onclick = () => startReviewWithOrder(sortVersesByBibleOrder(selectedVerses));
-      dueDateBtn.onclick = () => startReviewWithOrder(sortByDueDate(selectedVerses));
-      randomBtn.onclick = () => startReviewWithOrder(shuffleArray(selectedVerses));
+    // Only show reviewOrderModal if more than one verse
+    if (selectedVerses.length > 1) {
+      const reviewOrderModal = document.getElementById('reviewOrderModal');
+      if (reviewOrderModal) {
+        reviewOrderModal.classList.add('open');
+        reviewOrderModal.setAttribute('aria-hidden', 'false');
+
+        const biblicalBtn = document.getElementById('reviewOrderBiblicalBtn');
+        const dueDateBtn = document.getElementById('reviewOrderDueDateBtn');
+        const randomBtn = document.getElementById('reviewOrderRandomBtn');
+
+        biblicalBtn.onclick = null;
+        dueDateBtn.onclick = null;
+        randomBtn.onclick = null;
+
+        biblicalBtn.onclick = () => startReviewWithOrder(sortVersesByBibleOrder(selectedVerses));
+        dueDateBtn.onclick = () => startReviewWithOrder(sortByDueDate(selectedVerses));
+        randomBtn.onclick = () => startReviewWithOrder(shuffleArray(selectedVerses));
+      }
+    } else {
+      // Single verse - start review directly
+      startReviewWithOrder(selectedVerses);
     }
   });
 
@@ -3193,23 +3200,12 @@ function populateBookDatalist() {
           reviewModeModal.classList.remove('open');
           reviewModeModal.setAttribute('aria-hidden', 'true');
           
-          // Show review order modal
-          const reviewOrderModal = document.getElementById('reviewOrderModal');
-          if (reviewOrderModal) {
-            reviewOrderModal.classList.add('open');
-            reviewOrderModal.setAttribute('aria-hidden', 'false');
-
-            const biblicalBtn = document.getElementById('reviewOrderBiblicalBtn');
-            const dueDateBtn = document.getElementById('reviewOrderDueDateBtn');
-            const randomBtn = document.getElementById('reviewOrderRandomBtn');
-
-            biblicalBtn.onclick = null;
-            dueDateBtn.onclick = null;
-            randomBtn.onclick = null;
-
-            function startCollectionReview(sortedList) {
+          function startCollectionReview(sortedList) {
+            const reviewOrderModal = document.getElementById('reviewOrderModal');
+            if (reviewOrderModal) {
               reviewOrderModal.classList.remove('open');
               reviewOrderModal.setAttribute('aria-hidden', 'true');
+            }
 
               reviewCollectionMode = 'individual';
               reviewVerses = sortedList;
@@ -3243,11 +3239,30 @@ function populateBookDatalist() {
               showPanel(learnPanel);
               startLearnMode(currentVerse);
               hideReviewModeControls();
-            }
+          }
 
-            biblicalBtn.onclick = () => startCollectionReview(sortVersesByBibleOrder(list));
-            dueDateBtn.onclick = () => startCollectionReview(sortByDueDate(list));
-            randomBtn.onclick = () => startCollectionReview(shuffleArray(list));
+          // Only show reviewOrderModal if more than one verse
+          if (list.length > 1) {
+            const reviewOrderModal = document.getElementById('reviewOrderModal');
+            if (reviewOrderModal) {
+              reviewOrderModal.classList.add('open');
+              reviewOrderModal.setAttribute('aria-hidden', 'false');
+
+              const biblicalBtn = document.getElementById('reviewOrderBiblicalBtn');
+              const dueDateBtn = document.getElementById('reviewOrderDueDateBtn');
+              const randomBtn = document.getElementById('reviewOrderRandomBtn');
+
+              biblicalBtn.onclick = null;
+              dueDateBtn.onclick = null;
+              randomBtn.onclick = null;
+
+              biblicalBtn.onclick = () => startCollectionReview(sortVersesByBibleOrder(list));
+              dueDateBtn.onclick = () => startCollectionReview(sortByDueDate(list));
+              randomBtn.onclick = () => startCollectionReview(shuffleArray(list));
+            }
+          } else {
+            // Single verse - start review directly  
+            startCollectionReview(list);
           }
         };
 
@@ -5019,23 +5034,12 @@ function showPanel(panelToShow) {
           reviewModeModal.classList.remove('open');
           reviewModeModal.setAttribute('aria-hidden', 'true');
           
-          // Show review order modal
-          const reviewOrderModal = document.getElementById('reviewOrderModal');
-          if (reviewOrderModal) {
-            reviewOrderModal.classList.add('open');
-            reviewOrderModal.setAttribute('aria-hidden', 'false');
-
-            const biblicalBtn = document.getElementById('reviewOrderBiblicalBtn');
-            const dueDateBtn = document.getElementById('reviewOrderDueDateBtn');
-            const randomBtn = document.getElementById('reviewOrderRandomBtn');
-
-            biblicalBtn.onclick = null;
-            dueDateBtn.onclick = null;
-            randomBtn.onclick = null;
-
-            function startDueReview(sortedList) {
+          function startDueReview(sortedList) {
+            const reviewOrderModal = document.getElementById('reviewOrderModal');
+            if (reviewOrderModal) {
               reviewOrderModal.classList.remove('open');
               reviewOrderModal.setAttribute('aria-hidden', 'true');
+            }
 
               reviewCollectionMode = 'individual';
               reviewVerses = sortedList;
@@ -5066,11 +5070,30 @@ function showPanel(panelToShow) {
               showPanel(learnPanel);
               startLearnMode(currentVerse);
               hideReviewModeControls();
-            }
+          }
 
-            biblicalBtn.onclick = () => startDueReview(sortVersesByBibleOrder(dueVerses));
-            dueDateBtn.onclick = () => startDueReview(sortByDueDate(dueVerses));
-            randomBtn.onclick = () => startDueReview(shuffleArray(dueVerses));
+          // Only show reviewOrderModal if more than one verse
+          if (dueVerses.length > 1) {
+            const reviewOrderModal = document.getElementById('reviewOrderModal');
+            if (reviewOrderModal) {
+              reviewOrderModal.classList.add('open');
+              reviewOrderModal.setAttribute('aria-hidden', 'false');
+
+              const biblicalBtn = document.getElementById('reviewOrderBiblicalBtn');
+              const dueDateBtn = document.getElementById('reviewOrderDueDateBtn');
+              const randomBtn = document.getElementById('reviewOrderRandomBtn');
+
+              biblicalBtn.onclick = null;
+              dueDateBtn.onclick = null;
+              randomBtn.onclick = null;
+
+              biblicalBtn.onclick = () => startDueReview(sortVersesByBibleOrder(dueVerses));
+              dueDateBtn.onclick = () => startDueReview(sortByDueDate(dueVerses));
+              randomBtn.onclick = () => startDueReview(shuffleArray(dueVerses));
+            }
+          } else {
+            // Single verse - start review directly
+            startDueReview(dueVerses);
           }
         };
 
