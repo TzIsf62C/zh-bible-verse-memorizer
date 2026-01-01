@@ -772,7 +772,7 @@ window.onload = function () {
         select_or_create_collection: "Please choose or create a collection",
         collection_not_found: "Collection not found",
         verses_added_to_collection: "Added selected verses to collection",
-        completed_all_verses: "Congratulations! You have completed all new verses.",
+        completed_all_verses: "You have no unlearned verses. Why don't you add some more?",
         select_file_to_import: "Please select a file to import",
         import_successful: "Import successful",
         select_verse_to_change_interval: "Please select at least one verse to change the review interval",
@@ -1008,7 +1008,7 @@ window.onload = function () {
         select_or_create_collection: "请选择或创建集合",
         collection_not_found: "未找到集合",
         verses_added_to_collection: "已将所选经文添加到集合",
-        completed_all_verses: "恭喜！您已完成所有新经文。",
+        completed_all_verses: "目前没有为学习的经文，来新增几节吧！",
         select_file_to_import: "请选择要导入的文件",
         import_successful: "导入成功",
         select_verse_to_change_interval: "请至少选择一节经文以更改复习间隔",
@@ -1240,7 +1240,7 @@ window.onload = function () {
         select_or_create_collection: "請選擇或創建集合",
         collection_not_found: "未找到集合",
         verses_added_to_collection: "已將所選經文添加到集合",
-        completed_all_verses: "恭喜！您已完成所有新經文。",
+        completed_all_verses: "目前沒有為學習的經文，來新增幾節吧！",
         select_file_to_import: "請選擇要導入的文件",
         import_successful: "導入成功",
         select_verse_to_change_interval: "請至少選擇一節經文以更改複習間隔",
@@ -1804,13 +1804,13 @@ window.onload = function () {
         const currentLang = localStorage.getItem('languagePreference') || 'english';
         const confirmMessage = t('clear_data_confirm', currentLang);
         
-        if (confirm(confirmMessage)) {
+        showConfirm('', confirmMessage, () => {
           // Clear all localStorage data
           localStorage.clear();
           
           // Reload the page to reset the app
           window.location.reload();
-        }
+        });
       });
     }
 
@@ -2073,6 +2073,57 @@ window.onload = function () {
       isVibrationEnabled = true;
     }
   })();
+  
+  // Generic alert modal functions
+  const alertModal = document.getElementById('alertModal');
+  const alertModalTitle = document.getElementById('alertModalTitle');
+  const alertModalMessage = document.getElementById('alertModalMessage');
+  const alertModalOkBtn = document.getElementById('alertModalOkBtn');
+  
+  function showAlert(title, message, callback) {
+    if (!alertModal) return;
+    alertModalTitle.textContent = title || '';
+    alertModalMessage.textContent = message || '';
+    alertModal.classList.add('open');
+    alertModal.setAttribute('aria-hidden', 'false');
+    
+    // Store callback for OK button
+    alertModalOkBtn.onclick = () => {
+      alertModal.classList.remove('open');
+      alertModal.setAttribute('aria-hidden', 'true');
+      if (callback) callback();
+    };
+  }
+  
+  // Generic confirm modal functions
+  const confirmModal = document.getElementById('confirmModal');
+  const confirmModalTitle = document.getElementById('confirmModalTitle');
+  const confirmModalMessage = document.getElementById('confirmModalMessage');
+  const confirmModalCancelBtn = document.getElementById('confirmModalCancelBtn');
+  const confirmModalConfirmBtn = document.getElementById('confirmModalConfirmBtn');
+  
+  function showConfirm(title, message, onConfirm, onCancel) {
+    if (!confirmModal) return;
+    confirmModalTitle.textContent = title || '';
+    confirmModalMessage.textContent = message || '';
+    confirmModal.classList.add('open');
+    confirmModal.setAttribute('aria-hidden', 'false');
+    
+    // Handle confirm button
+    confirmModalConfirmBtn.onclick = () => {
+      confirmModal.classList.remove('open');
+      confirmModal.setAttribute('aria-hidden', 'true');
+      if (onConfirm) onConfirm();
+    };
+    
+    // Handle cancel button
+    confirmModalCancelBtn.onclick = () => {
+      confirmModal.classList.remove('open');
+      confirmModal.setAttribute('aria-hidden', 'true');
+      if (onCancel) onCancel();
+    };
+  }
+  
   // Modal / completion state
   let pendingCompletion = { success: false, accuracy: 0 };
   // Track last displayed error so help text updates when a new error occurs
@@ -2279,7 +2330,7 @@ window.onload = function () {
       deleteBtn.textContent = '❌';
       deleteBtn.title = t('delete');
       deleteBtn.addEventListener('click', () => {
-        if (confirm(t('delete_confirmation'))) {
+        showConfirm('', t('delete_confirmation'), () => {
           const allVerses = JSON.parse(localStorage.getItem('verses') || '[]');
           const verseIndex = allVerses.findIndex(verse => verse.id === v.id);
           if (verseIndex !== -1) {
@@ -2288,7 +2339,7 @@ window.onload = function () {
             loadVersesForEdit();
             updateReviewBadge();
           }
-        }
+        });
       });
 
   verseContent.appendChild(reference);
@@ -2708,12 +2759,13 @@ window.onload = function () {
       delBtn.textContent = '❌';
       delBtn.title = t('delete');
       delBtn.addEventListener('click', () => {
-        if (!confirm(t('delete_confirmation'))) return;
-        const updated = cols.filter(x => x.id !== c.id);
-        saveCollections(updated);
-        renderCollectionsList();
-        populateCollectionSelector();
-        loadCollectionsForReview();
+        showConfirm('', t('delete_collection_confirmation'), () => {
+          const updated = cols.filter(x => x.id !== c.id);
+          saveCollections(updated);
+          renderCollectionsList();
+          populateCollectionSelector();
+          loadCollectionsForReview();
+        });
       });
       actions.appendChild(viewBtn);
       actions.appendChild(upBtn);
@@ -2829,7 +2881,7 @@ window.onload = function () {
       .map(checkbox => JSON.parse(checkbox.dataset.verse));
     
     if (selectedVerses.length === 0) {
-      alert(t('select_verse_to_review'));
+      showAlert('', t('select_verse_to_review'));
       return;
     }
 
@@ -3194,7 +3246,7 @@ function populateBookDatalist() {
             // CRITICAL FIX: Remove the event listener when session completes
             learnInput.removeEventListener('input', singleTextInputHandler);
             updateReviewBadge(); // Update badge after single-text review
-            alert(t('congratulations_reviewed_count').replace('{count}', reviewedCount));
+            showAlert('', t('congratulations_reviewed_count').replace('{count}', reviewedCount));
             learnInput.style.display = 'none';
         }
       }, 500);
@@ -3209,13 +3261,13 @@ function populateBookDatalist() {
       // Require at least one collection selected
       const anyChecked = !!document.querySelector('.collection-checkbox:checked');
       if (!anyChecked) {
-        alert(t('select_collection_to_review'));
+        showAlert('', t('select_collection_to_review'));
         return;
       }
       // Get selected collection from checkbox
       const selectedCheckbox = document.querySelector('.collection-checkbox:checked');
       if (!selectedCheckbox) {
-        alert(t('select_collection_to_review'));
+        showAlert('', t('select_collection_to_review'));
         return;
       }
       
@@ -3226,7 +3278,7 @@ function populateBookDatalist() {
       const verses = JSON.parse(localStorage.getItem('verses') || '[]');
       const list = (col.verseIds || []).map(id => verses.find(v => v.id === id)).filter(Boolean).filter(v => v.lastReviewed);
       if (list.length === 0) {
-        alert(t('no_learned_verses_collection'));
+        showAlert('', t('no_learned_verses_collection'));
         return;
       }
 
@@ -3560,17 +3612,18 @@ function populateBookDatalist() {
     const unlearned = verses.filter(v => !v.lastReviewed);
 
     if (unlearned.length === 0) {
-      alert(t('no_verses_to_learn'));
-      // Redirect to Add Verse panel
-      setActiveNavButton(addVerseBtn);
-      showPanel(addVersePanel);
-      loadVersesForEdit();
-      populateCollectionSelector();
-      // Set Bible version to default
-      const bibleVersionInput = document.getElementById('bibleVersion');
-      if (bibleVersionInput && !editIndex) {
-        bibleVersionInput.value = localStorage.getItem('defaultBibleVersion') || '';
-      }
+      showAlert('', t('no_verses_to_learn'), () => {
+        // Redirect to Add Verse panel after user acknowledges the message
+        setActiveNavButton(addVerseBtn);
+        showPanel(addVersePanel);
+        loadVersesForEdit();
+        populateCollectionSelector();
+        // Set Bible version to default
+        const bibleVersionInput = document.getElementById('bibleVersion');
+        if (bibleVersionInput && !editIndex) {
+          bibleVersionInput.value = localStorage.getItem('defaultBibleVersion') || '';
+        }
+      });
       return false;
     }
     // Sort by Bible book order
@@ -4245,7 +4298,7 @@ function populateBookDatalist() {
               loadVersesForReview(); // Refresh with updated lastReviewed times
               updateReviewBadge();
               if (verseSelector) verseSelector.style.display = 'block'; // restore selector
-              alert(`${t('congratulations_reviewed')} ${totalReviewed} ${t('verses')}`);
+              showAlert('', `${t('congratulations_reviewed')} ${totalReviewed} ${t('verses')}`);
             }
             return;
           }
@@ -4296,20 +4349,23 @@ function populateBookDatalist() {
 
         // If there are no more unlearned verses, route to Add Verse panel
         if (!list || list.length === 0) {
-          console.log('modalNextBtn: No unlearned verses remaining, routing to Add Verse panel');
-          try {
-            setActiveNavButton(addVerseBtn);
-            showPanel(addVersePanel);
-            loadVersesForEdit();
-            populateCollectionSelector();
-            // Set Bible version to default
-            const bibleVersionInput = document.getElementById('bibleVersion');
-            if (bibleVersionInput && !editIndex) {
-              bibleVersionInput.value = localStorage.getItem('defaultBibleVersion') || '';
+          console.log('modalNextBtn: No unlearned verses remaining, showing completion modal');
+          showAlert('', t('completed_all_verses'), () => {
+            // Redirect to Add Verse panel after user acknowledges
+            try {
+              setActiveNavButton(addVerseBtn);
+              showPanel(addVersePanel);
+              loadVersesForEdit();
+              populateCollectionSelector();
+              // Set Bible version to default
+              const bibleVersionInput = document.getElementById('bibleVersion');
+              if (bibleVersionInput && !editIndex) {
+                bibleVersionInput.value = localStorage.getItem('defaultBibleVersion') || '';
+              }
+            } catch (e) {
+              console.error('Error routing to Add Verse panel:', e);
             }
-          } catch (e) {
-            console.error('Error routing to Add Verse panel:', e);
-          }
+          });
           return;
         }
 
@@ -4606,7 +4662,7 @@ function populateBookDatalist() {
           // Show the verse selector label again
           const verseSelectorLabel = document.getElementById('verseSelectorLabel');
           if (verseSelectorLabel) verseSelectorLabel.style.display = '';
-          alert(`${t('congratulations_reviewed')} ${totalReviewed} ${t('verses')}`);
+          showAlert('', `${t('congratulations_reviewed')} ${totalReviewed} ${t('verses')}`);
         }
       } else {
         // For individual verse review: check if we should show modal or just feedback
@@ -4796,7 +4852,13 @@ function populateBookDatalist() {
           currentVerse = unlearned[currentIndex + 1];
           nextStage = 'basic';
         } else {
-          alert(t('completed_all_verses'));
+          showAlert('', t('completed_all_verses'), () => {
+            // Redirect to Add Verse panel after user acknowledges
+            setActiveNavButton(addVerseBtn);
+            showPanel(addVersePanel);
+            loadVersesForEdit();
+            populateCollectionSelector();
+          });
           return;
         }
     }
@@ -4896,12 +4958,20 @@ function showPanel(panelToShow) {
         message = 'You have unsaved changes. Are you sure you want to leave this page?';
       }
       
-      if (!confirm(message)) {
-        return false; // User chose to stay, don't change panels
-      }
+      // Use confirm modal and continue panel switch in callback
+      showConfirm('', message, () => {
+        // User confirmed - proceed with panel switch
+        completePanelSwitch(panelToShow);
+      });
+      return false; // Cancel immediate panel switch
     }
   }
   
+  // No unsaved changes - proceed immediately
+  completePanelSwitch(panelToShow);
+}
+
+function completePanelSwitch(panelToShow) {
   // Hide keyboards when switching panels
   hideAllKeyboards();
   
@@ -4985,6 +5055,30 @@ function showPanel(panelToShow) {
   updateReviewBadge();
 
   learnBtn.addEventListener('click', () => {
+    // Check for unsaved changes before proceeding
+    if (addVersePanel && addVersePanel.style.display === 'block' && hasUnsavedChanges()) {
+      const lang = localStorage.getItem('languagePreference') || 'english';
+      let message;
+      if (lang === 'simplified') {
+        message = '您有未保存的更改。确定要离开此页面吗？';
+      } else if (lang === 'traditional') {
+        message = '您有未保存的更改。確定要離開此頁面嗎？';
+      } else {
+        message = 'You have unsaved changes. Are you sure you want to leave this page?';
+      }
+      
+      showConfirm('', message, () => {
+        // User confirmed - proceed with Learn panel
+        proceedWithLearnPanel();
+      });
+      return; // Exit early if unsaved changes detected
+    }
+    
+    // No unsaved changes - proceed immediately
+    proceedWithLearnPanel();
+  });
+
+  function proceedWithLearnPanel() {
     // Hide all panels, then show the learnPanel
     document.querySelectorAll('.panel').forEach(p => p.style.display = 'none');
     learnPanel.style.display = 'block';
@@ -5031,7 +5125,7 @@ function showPanel(panelToShow) {
     // 5. CRITICAL FIX: Ensure the learning mode is set to 'basic' 
     // This overrides any mode set by loadUnlearnedVerses/startLearnMode if needed.
     setLearningStage('basic');
-  });
+  }
 
   reviewBtn.addEventListener('click', () => {
     if (showPanel(reviewPanel) !== false) {
@@ -5054,7 +5148,7 @@ function showPanel(panelToShow) {
       });
 
       if (dueVerses.length === 0) {
-        alert(t('no_learned_verses'));
+        showAlert('', t('no_learned_verses'));
         return;
       }
 
@@ -5210,7 +5304,7 @@ function showPanel(panelToShow) {
       const selectedVerses = Array.from(document.querySelectorAll('.verse-checkbox:checked'))
         .map(checkbox => JSON.parse(checkbox.dataset.verse));
       if (selectedVerses.length === 0) {
-        alert(t('select_verse_to_change_interval'));
+        showAlert('', t('select_verse_to_change_interval'));
         return;
       }
       currentInterval = 1;
@@ -5470,7 +5564,7 @@ function showPanel(panelToShow) {
   importDataBtn.addEventListener('click', () => {
     const file = importFile.files[0];
     if (!file) {
-      alert(t('select_file_to_import'));
+      showAlert('', t('select_file_to_import'));
       return;
     }
 
@@ -5551,11 +5645,11 @@ function showPanel(panelToShow) {
           saveCollections(cols);
         }
 
-        alert(t('import_successful'));
+        showAlert('', t('import_successful'));
         loadVersesForEdit();
         updateReviewBadge();
       } catch (error) {
-        alert(t('error_importing') + ': ' + error.message);
+        showAlert('', t('error_importing') + ': ' + error.message);
       }
     };
     reader.readAsText(file);
@@ -5576,7 +5670,7 @@ function showPanel(panelToShow) {
   if (createCollectionBtn) {
     createCollectionBtn.addEventListener('click', () => {
       const title = (newCollectionTitle.value || '').trim();
-      if (!title) { alert(t('enter_title')); return; }
+      if (!title) { showAlert('', t('enter_title')); return; }
       const cols = getCollections();
       cols.push({ id: Date.now().toString(), title, verseIds: [] });
       saveCollections(cols);
@@ -5592,7 +5686,7 @@ function showPanel(panelToShow) {
       const title = collectionDetailTitle.textContent;
       const cols = getCollections();
       const col = cols.find(c => c.title === title);
-      if (!col) { alert(t('select_collection_msg')); return; }
+      if (!col) { showAlert('', t('select_collection_msg')); return; }
       const vid = addVerseToCollection.value;
       if (!vid) return;
       col.verseIds = col.verseIds || [];
@@ -5611,17 +5705,18 @@ function showPanel(panelToShow) {
   if (bulkDeleteBtn) {
     bulkDeleteBtn.addEventListener('click', () => {
       const checked = Array.from(document.querySelectorAll('.add-verse-checkbox:checked'));
-      if (checked.length === 0) { alert(t('select_at_least_one')); return; }
-      if (!confirm(t('delete_count_confirmation').replace('{count}', checked.length))) return;
-      const ids = checked.map(cb => cb.dataset.verseId);
-      let verses = JSON.parse(localStorage.getItem('verses') || '[]');
-      verses = verses.filter(v => !ids.includes(v.id));
-      localStorage.setItem('verses', JSON.stringify(verses));
-      loadVersesForEdit();
-      updateReviewBadge();
-      renderCollectionsList();
-      populateCollectionSelector();
-      if (bulkActions) bulkActions.style.display = 'none';
+      if (checked.length === 0) { showAlert('', t('select_at_least_one')); return; }
+      showConfirm('', t('delete_count_confirmation').replace('{count}', checked.length), () => {
+        const ids = checked.map(cb => cb.dataset.verseId);
+        let verses = JSON.parse(localStorage.getItem('verses') || '[]');
+        verses = verses.filter(v => !ids.includes(v.id));
+        localStorage.setItem('verses', JSON.stringify(verses));
+        loadVersesForEdit();
+        updateReviewBadge();
+        renderCollectionsList();
+        populateCollectionSelector();
+        if (bulkActions) bulkActions.style.display = 'none';
+      });
     });
   }
 
@@ -5652,13 +5747,13 @@ function showPanel(panelToShow) {
   if (bulkAddConfirmBtn) {
     bulkAddConfirmBtn.addEventListener('click', () => {
       const checked = Array.from(document.querySelectorAll('.add-verse-checkbox:checked'));
-      if (checked.length === 0) { alert(t('select_at_least_one')); return; }
+      if (checked.length === 0) { showAlert('', t('select_at_least_one')); return; }
       let chosen = bulkAddCollectionSelect ? bulkAddCollectionSelect.value : '';
       let cols = getCollections();
-      if (!chosen) { alert(t('select_or_create_collection')); return; }
+      if (!chosen) { showAlert('', t('select_or_create_collection')); return; }
       if (chosen === 'create_new') {
         const name = (bulkNewCollectionName && bulkNewCollectionName.value || '').trim();
-        if (!name) { alert(t('enter_collection_name')); return; }
+        if (!name) { showAlert('', t('enter_collection_name')); return; }
         const newCol = { id: Date.now().toString(), title: name, verseIds: [] };
         cols.push(newCol);
         chosen = newCol.id;
