@@ -934,6 +934,15 @@ select {
   height: 18px;
 }
 
+/* Book headers in add verse panel */
+.book-header {
+  background: var(--card-background);
+}
+
+.book-header:hover {
+  background: var(--input-background);
+}
+
 .collection-title {
   flex: 1;
   font-weight: 500;
