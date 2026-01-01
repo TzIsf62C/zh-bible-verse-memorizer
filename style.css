@@ -877,8 +877,23 @@ select {
 /* Collections UI */
 .create-collection input[type="text"] { max-width: 360px; display: inline-block; margin-right:8px; }
 .collection-review { margin: 12px 0; }
-.collection-item { display:flex; justify-content:space-between; align-items:center; padding:8px; margin:6px 0; background:var(--card-background); border-radius:6px; }
-.collection-item .actions button { margin-left:8px; }
+.collection-item { display:flex; justify-content:space-between; align-items:center; padding:8px; margin:6px 0; background:var(--card-background); border-radius:6px; flex-wrap: wrap; gap: 8px; }
+.collection-item .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0; }
+.collection-item .actions button { margin: 0; }
+.collection-item .actions button:first-child { margin-right: 8px; }
+/* Icon-only buttons - no background, narrower width */
+.collection-item .actions button.icon-btn { 
+  background: none; 
+  color: var(--text-color); 
+  padding: 0.5em 0.4em; 
+  min-width: auto; 
+  font-size: var(--font-size-lg);
+  margin: 0;
+}
+.collection-item .actions button.icon-btn:hover { 
+  background: none; 
+  color: var(--accent-color); 
+}
 .collection-verses-item { display:flex; justify-content:space-between; align-items:center; padding:8px; margin:6px 0; background:var(--card-background); border-radius:6px; }
 .collection-controls { display:flex; gap:8px; }
 

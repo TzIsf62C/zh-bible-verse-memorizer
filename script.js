@@ -709,6 +709,8 @@ window.onload = function () {
         new_collection_title: "New Collection Title",
         create_collection: "Create Collection",
         view: "View",
+        move_up: "Move Up",
+        move_down: "Move Down",
         rename: "Rename",
         add: "Add",
         remove: "Remove",
@@ -941,6 +943,10 @@ window.onload = function () {
         new_collection_title: "新集合标题",
         create_collection: "新建集合",
         view: "查看",
+        move_up: "上移",
+        move_down: "下移",
+        move_up: "上移",
+        move_down: "下移",
         rename: "重命名",
         add: "添加",
         remove: "移除",
@@ -2669,7 +2675,22 @@ window.onload = function () {
       const viewBtn = document.createElement('button');
       viewBtn.textContent = t('view');
       viewBtn.addEventListener('click', () => viewCollection(c.id));
+      
+      // Up/down buttons for reordering
+      const upBtn = document.createElement('button');
+      upBtn.className = 'icon-btn';
+      upBtn.textContent = '▲';
+      upBtn.title = t('move_up');
+      upBtn.addEventListener('click', () => moveCollectionUp(c.id));
+      
+      const downBtn = document.createElement('button');
+      downBtn.className = 'icon-btn';
+      downBtn.textContent = '▼';
+      downBtn.title = t('move_down');
+      downBtn.addEventListener('click', () => moveCollectionDown(c.id));
+      
       const editBtn = document.createElement('button');
+      editBtn.className = 'icon-btn';
       editBtn.textContent = '✏️';
       editBtn.title = t('rename');
       editBtn.addEventListener('click', () => {
@@ -2683,6 +2704,7 @@ window.onload = function () {
         loadCollectionsForReview();
       });
       const delBtn = document.createElement('button');
+      delBtn.className = 'icon-btn';
       delBtn.textContent = '❌';
       delBtn.title = t('delete');
       delBtn.addEventListener('click', () => {
@@ -2694,12 +2716,38 @@ window.onload = function () {
         loadCollectionsForReview();
       });
       actions.appendChild(viewBtn);
+      actions.appendChild(upBtn);
+      actions.appendChild(downBtn);
       actions.appendChild(editBtn);
       actions.appendChild(delBtn);
       item.appendChild(title);
       item.appendChild(actions);
       collectionsList.appendChild(item);
     });
+  }
+
+  function moveCollectionUp(id) {
+    const cols = getCollections();
+    const index = cols.findIndex(c => c.id === id);
+    if (index <= 0) return; // Already at top or not found
+    
+    // Swap with previous collection
+    [cols[index - 1], cols[index]] = [cols[index], cols[index - 1]];
+    saveCollections(cols);
+    renderCollectionsList();
+    loadCollectionsForReview();
+  }
+
+  function moveCollectionDown(id) {
+    const cols = getCollections();
+    const index = cols.findIndex(c => c.id === id);
+    if (index === -1 || index >= cols.length - 1) return; // Already at bottom or not found
+    
+    // Swap with next collection
+    [cols[index], cols[index + 1]] = [cols[index + 1], cols[index]];
+    saveCollections(cols);
+    renderCollectionsList();
+    loadCollectionsForReview();
   }
 
   function populateCollectionSelector() {
