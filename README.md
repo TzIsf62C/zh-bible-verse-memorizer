@@ -1,6 +1,6 @@
 # ZH Bible Verse Memorizer PWA
 
-**Version 0.9.3** | **License: MIT**
+**Version 0.9.4** | **License: MIT**
 
 A Progressive Web App for memorizing Chinese Bible verses with spaced repetition. This App is inspired by the Bible Memory App (https://biblememory.com/). I would recommend that app if you are memorizing Bible verses in English.
 
@@ -14,6 +14,7 @@ A Progressive Web App for memorizing Chinese Bible verses with spaced repetition
 - [Spaced Repetition System](#-spaced-repetition-system)
 - [Data & Privacy](#-data--privacy)
 - [Developer Notes](#-developer-notes)
+- [Updates in Version 0.9.4](#-updates-in-version-094)
 - [Updates in Version 0.9.3](#-updates-in-version-093)
 
 ---
@@ -355,6 +356,47 @@ Or use **Clear All Data** button in Settings.
 
 ---
 
+## 📋 Updates in Version 0.9.4
+
+### UI/UX Improvements
+- **Consistent Modal System**: Replaced all system alert() and confirm() dialogs with custom modals
+  - Maintains consistent text size settings throughout the app
+  - Better visual integration with app theme
+  - Supports HTML formatting for improved readability (lists, line breaks)
+  - Unsaved changes warning when navigating away from Add Verse panel with unsaved data
+
+- **Hierarchical Verse List in My Verses**: Completely redesigned verse organization
+  - Book headers group verses by biblical book
+  - Chapter headers automatically appear for multi-chapter books
+  - Collapsible sections with animated triangle indicators (▶/▼)
+  - "Expand All" / "Collapse All" toggle button for quick navigation
+  - Book checkboxes for bulk selection of all verses in a book
+  - Background styling matches collection headers for visual consistency
+  - Makes managing large verse libraries significantly easier
+
+- **Collection Reordering**: Drag-and-drop or button-based reordering of collections
+  - Organize collections in preferred order
+  - Order persists across sessions
+
+### Bug Fixes
+- **Collection Due Dates**: Fixed collections not refreshing after completing reviews
+  - Collection list now updates immediately when finishing individual or practice mode reviews
+  - Accurate "(X due)" counts without requiring navigation away and back
+
+- **Practice Mode Display**: Fixed difficulty level not showing during practice mode
+
+- **Keyboard Layout**: Fixed keyboard width issues and added bottom padding in learn/review modes for better mobile experience
+
+- **Default Bible Version**: Fixed setting not populating the verse input field
+
+- **Pinyin Book List**: Fixed "YUE" book name entry
+
+- **Single Verse Handling**: Skip review order selection when only one verse is selected
+
+- **Unlearned Verses**: Improved behavior when no unlearned verses are available
+
+---
+
 ## 📋 Updates in Version 0.9.3
 
 ### New Settings
@@ -388,7 +430,7 @@ Or use **Clear All Data** button in Settings.
 
 ## 📄 Previous Versions
 
-For detailed changelogs of versions 0.9.2, 0.9.1.1, 0.9.1, and earlier, please refer to the project's git history.
+For detailed changelogs of versions 0.9.3, 0.9.2, 0.9.1.1, 0.9.1, and earlier, please refer to the project's git history.
 
 ---
 
