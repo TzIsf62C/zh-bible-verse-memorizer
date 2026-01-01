@@ -5736,6 +5736,7 @@ function showPanel(panelToShow) {
   const onboardingInstallSkip = document.getElementById('onboardingInstallSkip');
   const onboardingInputMethodModal = document.getElementById('onboardingInputMethodModal');
   const onboardingInputMethodTitle = document.getElementById('onboardingInputMethodTitle');
+  const onboardingCharsetModal = document.getElementById('onboardingCharsetModal');
 
   const inputMethodTitles = {
     english: 'Choose Input Method',
@@ -5824,14 +5825,29 @@ function showPanel(panelToShow) {
     onboardingInputMethodModal.setAttribute('aria-hidden', 'true');
   }
 
-  async function loadSampleVerses(inputMethod) {
+  function showOnboardingCharsetModal() {
+    onboardingCharsetModal.style.display = 'block';
+    onboardingCharsetModal.classList.add('open');
+    onboardingCharsetModal.setAttribute('aria-hidden', 'false');
+  }
+
+  function hideOnboardingCharsetModal() {
+    onboardingCharsetModal.style.display = 'none';
+    onboardingCharsetModal.classList.remove('open');
+    onboardingCharsetModal.setAttribute('aria-hidden', 'true');
+  }
+
+  async function loadSampleVerses(inputMethod, charset) {
     const language = localStorage.getItem('languagePreference') || 'english';
     
     // Map input method and language to sample file
     let fileName;
     if (inputMethod === 'pinyin') {
-      // For pinyin, use language-specific samples
-      if (language === 'traditional') {
+      // For pinyin, use charset parameter if provided (for English users),
+      // otherwise use language-specific samples
+      if (charset) {
+        fileName = charset === 'traditional' ? 'PY-Samples-zht.json' : 'PY-Samples-zhs.json';
+      } else if (language === 'traditional') {
         fileName = 'PY-Samples-zht.json';
       } else {
         // Use simplified for both 'simplified' and 'english' language settings
@@ -5942,42 +5958,48 @@ function showPanel(panelToShow) {
   // Input method selection handlers
   document.getElementById('onboardingInputPinyin').addEventListener('click', async () => {
     localStorage.setItem('inputMethod', 'pinyin');
-    
-    // Set book name charset based on language: if simplified/traditional use that, otherwise Pinyin defaults to simplified
-    const language = localStorage.getItem('languagePreference') || 'english';
-    const charset = language === 'traditional' ? 'traditional' : 'simplified';
-    localStorage.setItem('bookNameCharset', charset);
-    rebuildBibleBooks();
-    
     hideOnboardingInputMethodModal();
-    await loadSampleVerses('pinyin');
-    updateInputMethodLabels();
-    applyLanguage();
-    localStorage.setItem('hasVisitedBefore', 'true');
     
-    // Show backup reminder on first visit
-    const now = new Date().getTime();
-    localStorage.setItem('firstBackupReminder', now.toString());
-    localStorage.setItem('lastBackupReminder', now.toString());
-    showBackupReminderModal(true); // true = onboarding mode, hides Export Now button
+    const language = localStorage.getItem('languagePreference') || 'english';
     
-    // After user dismisses backup reminder, show tutorial intro
-    const onModalClose = () => {
-      showTutorialIntroModal();
-    };
-    
-    // Update event listeners to call onModalClose
-    backupReminderGotItBtn.removeEventListener('click', hideBackupReminderModal);
-    backupReminderGotItBtn.addEventListener('click', () => {
-      hideBackupReminderModal();
-      onModalClose();
-    }, { once: true });
-    
-    backupReminderExportBtn.removeEventListener('click', hideBackupReminderModal);
-    backupReminderExportBtn.addEventListener('click', () => {
-      hideBackupReminderModal();
-      showPanel(exportImportPanel);
-    }, { once: true });
+    // For English users, show charset selection modal
+    if (language === 'english') {
+      showOnboardingCharsetModal();
+    } else {
+      // For Chinese users, set charset based on language and continue
+      const charset = language === 'traditional' ? 'traditional' : 'simplified';
+      localStorage.setItem('bookNameCharset', charset);
+      rebuildBibleBooks();
+      
+      await loadSampleVerses('pinyin');
+      updateInputMethodLabels();
+      applyLanguage();
+      localStorage.setItem('hasVisitedBefore', 'true');
+      
+      // Show backup reminder on first visit
+      const now = new Date().getTime();
+      localStorage.setItem('firstBackupReminder', now.toString());
+      localStorage.setItem('lastBackupReminder', now.toString());
+      showBackupReminderModal(true); // true = onboarding mode, hides Export Now button
+      
+      // After user dismisses backup reminder, show tutorial intro
+      const onModalClose = () => {
+        showTutorialIntroModal();
+      };
+      
+      // Update event listeners to call onModalClose
+      backupReminderGotItBtn.removeEventListener('click', hideBackupReminderModal);
+      backupReminderGotItBtn.addEventListener('click', () => {
+        hideBackupReminderModal();
+        onModalClose();
+      }, { once: true });
+      
+      backupReminderExportBtn.removeEventListener('click', hideBackupReminderModal);
+      backupReminderExportBtn.addEventListener('click', () => {
+        hideBackupReminderModal();
+        showPanel(exportImportPanel);
+      }, { once: true });
+    }
   });
 
   document.getElementById('onboardingInputZhuyin').addEventListener('click', async () => {
@@ -6047,6 +6069,75 @@ function showPanel(panelToShow) {
     };
     
     // Update event listeners to call onModalClose
+    backupReminderGotItBtn.removeEventListener('click', hideBackupReminderModal);
+    backupReminderGotItBtn.addEventListener('click', () => {
+      hideBackupReminderModal();
+      onModalClose();
+    }, { once: true });
+    
+    backupReminderExportBtn.removeEventListener('click', hideBackupReminderModal);
+    backupReminderExportBtn.addEventListener('click', () => {
+      hideBackupReminderModal();
+      showPanel(exportImportPanel);
+    }, { once: true });
+  });
+
+  // Character set selection handlers (for English + Pinyin users only)
+  document.getElementById('onboardingCharsetSimplified').addEventListener('click', async () => {
+    localStorage.setItem('bookNameCharset', 'simplified');
+    rebuildBibleBooks();
+    hideOnboardingCharsetModal();
+    
+    await loadSampleVerses('pinyin', 'simplified');
+    updateInputMethodLabels();
+    applyLanguage();
+    localStorage.setItem('hasVisitedBefore', 'true');
+    
+    // Show backup reminder on first visit
+    const now = new Date().getTime();
+    localStorage.setItem('firstBackupReminder', now.toString());
+    localStorage.setItem('lastBackupReminder', now.toString());
+    showBackupReminderModal(true);
+    
+    // After user dismisses backup reminder, show tutorial intro
+    const onModalClose = () => {
+      showTutorialIntroModal();
+    };
+    
+    backupReminderGotItBtn.removeEventListener('click', hideBackupReminderModal);
+    backupReminderGotItBtn.addEventListener('click', () => {
+      hideBackupReminderModal();
+      onModalClose();
+    }, { once: true });
+    
+    backupReminderExportBtn.removeEventListener('click', hideBackupReminderModal);
+    backupReminderExportBtn.addEventListener('click', () => {
+      hideBackupReminderModal();
+      showPanel(exportImportPanel);
+    }, { once: true });
+  });
+
+  document.getElementById('onboardingCharsetTraditional').addEventListener('click', async () => {
+    localStorage.setItem('bookNameCharset', 'traditional');
+    rebuildBibleBooks();
+    hideOnboardingCharsetModal();
+    
+    await loadSampleVerses('pinyin', 'traditional');
+    updateInputMethodLabels();
+    applyLanguage();
+    localStorage.setItem('hasVisitedBefore', 'true');
+    
+    // Show backup reminder on first visit
+    const now = new Date().getTime();
+    localStorage.setItem('firstBackupReminder', now.toString());
+    localStorage.setItem('lastBackupReminder', now.toString());
+    showBackupReminderModal(true);
+    
+    // After user dismisses backup reminder, show tutorial intro
+    const onModalClose = () => {
+      showTutorialIntroModal();
+    };
+    
     backupReminderGotItBtn.removeEventListener('click', hideBackupReminderModal);
     backupReminderGotItBtn.addEventListener('click', () => {
       hideBackupReminderModal();
