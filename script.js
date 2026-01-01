@@ -5967,7 +5967,7 @@ function completePanelSwitch(panelToShow) {
         chosen = newCol.id;
       }
       const col = cols.find(c => c.id === chosen);
-      if (!col) { alert(t('collection_not_found')); return; }
+      if (!col) { showAlert('', t('collection_not_found')); return; }
       col.verseIds = col.verseIds || [];
       const verses = JSON.parse(localStorage.getItem('verses') || '[]');
       checked.forEach(cb => {
@@ -5982,7 +5982,7 @@ function completePanelSwitch(panelToShow) {
       if (bulkNewCollectionName) bulkNewCollectionName.value = '';
       if (bulkActions) bulkActions.style.display = 'none';
       loadVersesForEdit();
-      alert(t('verses_added_to_collection'));
+      showAlert('', t('verses_added_to_collection'));
     });
   }
 
