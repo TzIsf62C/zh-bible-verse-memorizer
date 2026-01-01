@@ -3513,6 +3513,16 @@ function populateBookDatalist() {
 
     if (unlearned.length === 0) {
       alert(t('no_verses_to_learn'));
+      // Redirect to Add Verse panel
+      setActiveNavButton(addVerseBtn);
+      showPanel(addVersePanel);
+      loadVersesForEdit();
+      populateCollectionSelector();
+      // Set Bible version to default
+      const bibleVersionInput = document.getElementById('bibleVersion');
+      if (bibleVersionInput && !editIndex) {
+        bibleVersionInput.value = localStorage.getItem('defaultBibleVersion') || '';
+      }
       return false;
     }
     // Sort by Bible book order
@@ -4244,6 +4254,11 @@ function populateBookDatalist() {
             showPanel(addVersePanel);
             loadVersesForEdit();
             populateCollectionSelector();
+            // Set Bible version to default
+            const bibleVersionInput = document.getElementById('bibleVersion');
+            if (bibleVersionInput && !editIndex) {
+              bibleVersionInput.value = localStorage.getItem('defaultBibleVersion') || '';
+            }
           } catch (e) {
             console.error('Error routing to Add Verse panel:', e);
           }
@@ -4909,6 +4924,12 @@ function showPanel(panelToShow) {
       setActiveNavButton(addVerseBtn);
       loadVersesForEdit();
       populateCollectionSelector();
+      
+      // Always sync Bible version with default when not in edit mode
+      const bibleVersionInput = document.getElementById('bibleVersion');
+      if (bibleVersionInput && !editIndex) {
+        bibleVersionInput.value = localStorage.getItem('defaultBibleVersion') || '';
+      }
     }
   });
 
