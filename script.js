@@ -803,7 +803,7 @@ window.onload = function () {
         clear_all_data: "Clear All Data",
         clear_data_warning: "This will permanently delete all verses, collections, and review data from this device.",
         clear_all_data_btn: "Clear All Data",
-        clear_data_confirm: "Are you sure you want to clear all data?\n\nThis will permanently delete:\n• All verses\n• All collections\n• All review progress\n• All settings\n\nThis action cannot be undone.",
+        clear_data_confirm: "Are you sure you want to clear all data?<br><br>This will permanently delete:<ul style='margin: 8px 0; padding-left: 20px;'><li>All verses</li><li>All collections</li><li>All review progress</li><li>All settings</li></ul>This action cannot be undone.",
         backup_reminders: "Backup Reminders",
         enable_backup_reminders: "Enable periodic backup reminders",
         backup_reminder_frequency: "Reminds you to export your data weekly (first month) then monthly",
@@ -1039,7 +1039,7 @@ window.onload = function () {
         clear_all_data: "清除所有数据",
         clear_data_warning: "这将永久删除此设备上的所有经文、集合和复习数据。",
         clear_all_data_btn: "清除所有数据",
-        clear_data_confirm: "您确定要清除所有数据吗？\n\n这将永久删除：\n• 所有经文\n• 所有集合\n• 所有复习进度\n• 所有设置\n\n此操作无法撤消。",
+        clear_data_confirm: "您确定要清除所有数据吗？<br><br>这将永久删除：<ul style='margin: 8px 0; padding-left: 20px;'><li>所有经文</li><li>所有集合</li><li>所有复习进度</li><li>所有设置</li></ul>此操作无法撤消。",
         backup_reminders: "备份提醒",
         enable_backup_reminders: "启用定期备份提醒",
         backup_reminder_frequency: "第一个月每周提醒一次，之后每月提醒一次",
@@ -1271,7 +1271,7 @@ window.onload = function () {
         clear_all_data: "清除所有數據",
         clear_data_warning: "這將永久刪除此設備上的所有經文、集合和複習數據。",
         clear_all_data_btn: "清除所有數據",
-        clear_data_confirm: "您確定要清除所有數據嗎？\n\n這將永久刪除：\n• 所有經文\n• 所有集合\n• 所有複習進度\n• 所有設置\n\n此操作無法撤消。",
+        clear_data_confirm: "您確定要清除所有數據嗎？<br><br>這將永久刪除：<ul style='margin: 8px 0; padding-left: 20px;'><li>所有經文</li><li>所有集合</li><li>所有複習進度</li><li>所有設置</li></ul>此操作無法撤消。",
         backup_reminders: "備份提醒",
         enable_backup_reminders: "啟用定期備份提醒",
         backup_reminder_frequency: "第一個月每週提醒一次，之後每月提醒一次",
@@ -2105,7 +2105,7 @@ window.onload = function () {
   function showConfirm(title, message, onConfirm, onCancel) {
     if (!confirmModal) return;
     confirmModalTitle.textContent = title || '';
-    confirmModalMessage.textContent = message || '';
+    confirmModalMessage.innerHTML = message || '';
     confirmModal.classList.add('open');
     confirmModal.setAttribute('aria-hidden', 'false');
     
