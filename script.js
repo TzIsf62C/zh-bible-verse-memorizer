@@ -2311,7 +2311,7 @@ window.onload = function () {
       // Create book header
       const bookHeader = document.createElement('div');
       bookHeader.className = 'book-header';
-      bookHeader.style.cssText = 'display: flex; align-items: center; padding: 8px; background: var(--bg-secondary); margin-top: 8px; cursor: pointer; font-weight: bold; border-radius: 4px;';
+      bookHeader.style.cssText = 'display: flex; align-items: center; padding: 8px; margin-top: 8px; cursor: pointer; font-weight: bold; border-radius: 4px;';
 
       const bookCheckbox = document.createElement('input');
       bookCheckbox.type = 'checkbox';
@@ -4504,6 +4504,7 @@ function populateBookDatalist() {
               currentVerse = null;
               showPanel(reviewPanel);
               loadVersesForReview(); // Refresh with updated lastReviewed times
+              loadCollectionsForReview(); // Refresh collection list with updated due dates
               updateReviewBadge();
               if (verseSelector) verseSelector.style.display = 'block'; // restore selector
               showAlert('', `${t('congratulations_reviewed')} ${totalReviewed} ${t('verses')}`);
@@ -4527,6 +4528,7 @@ function populateBookDatalist() {
             currentVerse = null;
             showPanel(reviewPanel);
             loadVersesForReview(); // Refresh with updated lastReviewed times
+            loadCollectionsForReview(); // Refresh collection list with updated due dates
             updateReviewBadge();
             if (verseSelector) {
               verseSelector.style.display = 'block'; // Show verse selector again
@@ -4862,6 +4864,7 @@ function populateBookDatalist() {
           currentVerse = null;
           showPanel(reviewPanel);
           loadVersesForReview(); // Refresh with updated lastReviewed times
+          loadCollectionsForReview(); // Refresh collection list with updated due dates
           updateReviewBadge();
           if (verseSelector) {
             verseSelector.style.display = 'block';
