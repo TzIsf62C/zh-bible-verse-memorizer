@@ -647,6 +647,11 @@ window.onload = function () {
         save_settings: "Save Settings",
         // Add Verse Panel
         add_verse_title: "Add Verse",
+        my_verses: "My Verses",
+        expand_all: "Expand All",
+        collapse_all: "Collapse All",
+        chapter: "Chapter",
+        chapter_heading: "Chapter",
         chinese_verse_text: "Chinese Verse Text",
         chinese_book_name: "Chinese Book Name",
         chapter: "Chapter",
@@ -881,6 +886,11 @@ window.onload = function () {
         save_settings: "Save Settings / 保存设置",
         // Add Verse Panel
         add_verse_title: "添加经文",
+        my_verses: "我的经文",
+        expand_all: "全部展开",
+        collapse_all: "全部折叠",
+        chapter: "章号",
+        chapter_heading: "第",
         chinese_verse_text: "中文经文",
         chinese_book_name: "中文书名",
         chapter: "章号",
@@ -1117,6 +1127,11 @@ window.onload = function () {
         save_settings: "Save Settings / 保存設置",
         // Add Verse Panel
         add_verse_title: "添加經文",
+        my_verses: "我的經文",
+        expand_all: "全部展開",
+        collapse_all: "全部折疊",
+        chapter: "章號",
+        chapter_heading: "第",
         chinese_verse_text: "中文經文",
         chinese_book_name: "中文書名",
         chapter: "章號",
@@ -2246,144 +2261,337 @@ window.onload = function () {
   function loadVersesForEdit() {
     const verses = JSON.parse(localStorage.getItem('verses') || '[]');
     const sortedVerses = sortVersesByBibleOrder([...verses]);
-    const listDiv = addVerseList; // id 'addVerseList'
+    const listDiv = addVerseList;
     listDiv.innerHTML = '';
 
-    sortedVerses.forEach((v, i) => {
-      const verseItem = document.createElement('div');
-      verseItem.className = 'verse-item';
+    if (sortedVerses.length === 0) {
+      document.getElementById('verseListControls').style.display = 'none';
+      return;
+    }
 
-      const checkbox = document.createElement('input');
-      checkbox.type = 'checkbox';
-      checkbox.className = 'add-verse-checkbox';
-      checkbox.dataset.verseId = v.id;
+    // Show the toggle button
+    document.getElementById('verseListControls').style.display = 'block';
 
-      const verseContent = document.createElement('div');
-      verseContent.className = 'verse-content';
+    // Group verses by book, then by chapter
+    const bookGroups = {};
+    const knownBooks = [];
+    const unknownBooks = [];
 
-      const reference = document.createElement('div');
-      reference.className = 'reference';
-      reference.textContent = `${v.bookName} ${v.chapterNumber}:${v.verseNumber}`;
-
-      const text = document.createElement('div');
-      text.className = 'text';
-      text.textContent = v.verseText;
-
-      // collection membership tags
-      const cols = getCollections();
-      const memberships = cols.filter(c => Array.isArray(c.verseIds) && c.verseIds.includes(v.id));
-      const tagsDiv = document.createElement('div');
-      tagsDiv.className = 'collection-tags';
-      memberships.forEach(mc => {
-        const span = document.createElement('span');
-        span.className = 'collection-tag';
-        span.textContent = mc.title;
-        tagsDiv.appendChild(span);
-      });
-
-      if (v.lastReviewed) {
-        const lastReviewed = document.createElement('div');
-        lastReviewed.className = 'last-reviewed';
-        const days = Math.floor((new Date() - new Date(v.lastReviewed)) / (1000 * 60 * 60 * 24));
-        lastReviewed.textContent = `${t('last_reviewed')}: ${days} ${t('days_ago')}`;
-        verseContent.appendChild(lastReviewed);
-      }
-
-      const buttonContainer = document.createElement('div');
-      buttonContainer.className = 'button-container';
-
-      const editBtn = document.createElement('button');
-      editBtn.textContent = '✏️';
-      editBtn.title = t('edit');
-      editBtn.addEventListener('click', () => {
-        const allVerses = JSON.parse(localStorage.getItem('verses') || '[]');
-        editIndex = allVerses.findIndex(verse => verse.id === v.id);
-        document.getElementById('verseText').value = v.verseText;
-        document.getElementById('bookNameInput').value = v.bookName;
-        document.getElementById('chapterNumber').value = v.chapterNumber;
-        document.getElementById('verseNumber').value = v.verseNumber;
-        document.getElementById('verseInitials').value = v.verseInitials;
-        document.getElementById('bookInitials').value = v.bookInitials;
-        document.getElementById('bibleVersion').value = v.bibleVersion || '';
-        // Store original values for change detection
-        originalVerseValues = {
-          verseText: v.verseText,
-          bookName: v.bookName,
-          chapterNumber: v.chapterNumber,
-          verseNumber: v.verseNumber,
-          verseInitials: v.verseInitials,
-          bookInitials: v.bookInitials,
-          bibleVersion: v.bibleVersion || ''
-        };
-        // If this verse belongs to a collection, pre-select that collection in the add panel select
-        const cols = getCollections();
-        let found = null;
-        cols.forEach(c => { if (c.verseIds && c.verseIds.includes(v.id)) found = c.id; });
-        try { if (addToCollectionSelect) addToCollectionSelect.value = found || ''; } catch (e) {}
-        showPanel(addVersePanel);
-        saveVerseBtn.textContent = t('update_verse');
-        // Dim the Update Verse button initially
-        saveVerseBtn.classList.add('dimmed');
-      });
-
-      const deleteBtn = document.createElement('button');
-      deleteBtn.textContent = '❌';
-      deleteBtn.title = t('delete');
-      deleteBtn.addEventListener('click', () => {
-        showConfirm('', t('delete_confirmation'), () => {
-          const allVerses = JSON.parse(localStorage.getItem('verses') || '[]');
-          const verseIndex = allVerses.findIndex(verse => verse.id === v.id);
-          if (verseIndex !== -1) {
-            allVerses.splice(verseIndex, 1);
-            localStorage.setItem('verses', JSON.stringify(allVerses));
-            loadVersesForEdit();
-            updateReviewBadge();
-          }
-        });
-      });
-
-  verseContent.appendChild(reference);
-  verseContent.appendChild(text);
-  // append bible version (if any)
-  if (v.bibleVersion) {
-    const version = document.createElement('div');
-    version.className = 'bible-version';
-    version.textContent = v.bibleVersion;
-    version.style.fontSize = '0.9em';
-    version.style.color = '#888';
-    version.style.fontStyle = 'italic';
-    version.style.marginTop = '4px';
-    verseContent.appendChild(version);
-  }
-  // append tags (if any)
-  if (tagsDiv && tagsDiv.children.length > 0) verseContent.appendChild(tagsDiv);
-      buttonContainer.appendChild(editBtn);
-      buttonContainer.appendChild(deleteBtn);
-      verseItem.appendChild(checkbox);
-      verseItem.appendChild(verseContent);
-      verseItem.appendChild(buttonContainer);
-      
-      // Add click handler to toggle checkbox when clicking anywhere on the verse-item except buttons
-      verseItem.addEventListener('click', (e) => {
-        // Don't toggle if clicking on buttons or the checkbox itself
-        if (e.target.tagName === 'BUTTON' || e.target === checkbox) {
-          return;
+    sortedVerses.forEach(v => {
+      const bookName = v.bookName;
+      if (!bookGroups[bookName]) {
+        bookGroups[bookName] = {};
+        // Check if book is in CHINESE_BIBLE_BOOKS
+        const isKnown = getBookOrder(bookName) !== 9999;
+        if (isKnown) {
+          knownBooks.push(bookName);
+        } else {
+          unknownBooks.push(bookName);
         }
-        checkbox.checked = !checkbox.checked;
-        // Trigger change event to update bulk actions visibility
-        const changeEvent = new Event('change', { bubbles: true });
-        checkbox.dispatchEvent(changeEvent);
-      });
-      
-      listDiv.appendChild(verseItem);
+      }
+      const chapter = v.chapterNumber;
+      if (!bookGroups[bookName][chapter]) {
+        bookGroups[bookName][chapter] = [];
+      }
+      bookGroups[bookName][chapter].push(v);
     });
 
-    // wire checkbox visibility for bulk actions
-    const boxes = Array.from(document.querySelectorAll('.add-verse-checkbox'));
-    boxes.forEach(b => b.addEventListener('change', () => {
-      const any = Array.from(document.querySelectorAll('.add-verse-checkbox:checked')).length > 0;
-      if (bulkActions) bulkActions.style.display = any ? 'block' : 'none';
-    }));
+    // Sort unknown books alphabetically
+    unknownBooks.sort();
+    
+    // Combine known books (in biblical order) + unknown books (alphabetically)
+    const allBooks = [...knownBooks, ...unknownBooks];
+
+    // Render each book
+    allBooks.forEach(bookName => {
+      const chapters = bookGroups[bookName];
+      const chapterNumbers = Object.keys(chapters).sort((a, b) => parseInt(a) - parseInt(b));
+      const totalVersesInBook = chapterNumbers.reduce((sum, ch) => sum + chapters[ch].length, 0);
+
+      // Create book header
+      const bookHeader = document.createElement('div');
+      bookHeader.className = 'book-header';
+      bookHeader.style.cssText = 'display: flex; align-items: center; padding: 8px; background: var(--bg-secondary); margin-top: 8px; cursor: pointer; font-weight: bold; border-radius: 4px;';
+
+      const bookCheckbox = document.createElement('input');
+      bookCheckbox.type = 'checkbox';
+      bookCheckbox.className = 'book-checkbox';
+      bookCheckbox.style.cssText = 'margin-right: 8px; cursor: pointer;';
+      bookCheckbox.addEventListener('click', (e) => {
+        e.stopPropagation();
+        // Select/deselect all verses in this book
+        const bookSection = bookHeader.nextElementSibling;
+        const verseCheckboxes = bookSection.querySelectorAll('.add-verse-checkbox');
+        verseCheckboxes.forEach(cb => cb.checked = bookCheckbox.checked);
+        updateBulkActionsVisibility();
+      });
+
+      const bookTitle = document.createElement('span');
+      bookTitle.textContent = `${bookName} (${totalVersesInBook})`;
+      bookTitle.style.flex = '1';
+
+      const bookTriangle = document.createElement('span');
+      bookTriangle.textContent = '▶';
+      bookTriangle.style.cssText = 'margin-left: 8px; transition: transform 0.2s; font-size: 0.8em;';
+
+      bookHeader.appendChild(bookCheckbox);
+      bookHeader.appendChild(bookTitle);
+      bookHeader.appendChild(bookTriangle);
+
+      // Create book section (contains chapters)
+      const bookSection = document.createElement('div');
+      bookSection.className = 'book-section';
+      bookSection.style.display = 'none'; // Start collapsed
+      
+      // Add click handler to toggle expand/collapse (but not on checkbox)
+      bookHeader.addEventListener('click', () => {
+        const isCollapsed = bookSection.style.display === 'none';
+        bookSection.style.display = isCollapsed ? 'block' : 'none';
+        bookTriangle.style.transform = isCollapsed ? 'rotate(90deg)' : 'rotate(0deg)';
+      });
+
+      listDiv.appendChild(bookHeader);
+      listDiv.appendChild(bookSection);
+
+      // Render chapters within this book
+      if (chapterNumbers.length === 1) {
+        // Only one chapter - skip chapter header, show verses directly
+        const verseArray = chapters[chapterNumbers[0]];
+        verseArray.forEach(v => {
+          bookSection.appendChild(createVerseItem(v));
+        });
+      } else {
+        // Multiple chapters - show chapter headers
+        chapterNumbers.forEach(chapterNum => {
+          const verseArray = chapters[chapterNum];
+
+          // Create chapter header
+          const chapterHeader = document.createElement('div');
+          chapterHeader.className = 'chapter-header';
+          chapterHeader.style.cssText = 'display: flex; align-items: center; padding: 6px 8px; background: var(--bg-color); margin: 4px 0 4px 16px; cursor: pointer; font-weight: 600; border-left: 3px solid var(--accent-color);';
+
+          const chapterCheckbox = document.createElement('input');
+          chapterCheckbox.type = 'checkbox';
+          chapterCheckbox.className = 'chapter-checkbox';
+          chapterCheckbox.style.cssText = 'margin-right: 8px; cursor: pointer;';
+          chapterCheckbox.addEventListener('click', (e) => {
+            e.stopPropagation();
+            // Select/deselect all verses in this chapter
+            const chapterSection = chapterHeader.nextElementSibling;
+            const verseCheckboxes = chapterSection.querySelectorAll('.add-verse-checkbox');
+            verseCheckboxes.forEach(cb => cb.checked = chapterCheckbox.checked);
+            updateBulkActionsVisibility();
+          });
+
+          const chapterTitle = document.createElement('span');
+          const lang = localStorage.getItem('languagePreference') || 'english';
+          if (lang === 'english') {
+            chapterTitle.textContent = `${t('chapter_heading')} ${chapterNum} (${verseArray.length})`;
+          } else {
+            chapterTitle.textContent = `${t('chapter_heading')}${chapterNum}章 (${verseArray.length})`;
+          }
+          chapterTitle.style.flex = '1';
+
+          const chapterTriangle = document.createElement('span');
+          chapterTriangle.textContent = '▶';
+          chapterTriangle.style.cssText = 'margin-left: 8px; transition: transform 0.2s; font-size: 0.8em;';
+
+          chapterHeader.appendChild(chapterCheckbox);
+          chapterHeader.appendChild(chapterTitle);
+          chapterHeader.appendChild(chapterTriangle);
+
+          // Create chapter section (contains verses)
+          const chapterSection = document.createElement('div');
+          chapterSection.className = 'chapter-section';
+          chapterSection.style.display = 'none'; // Start collapsed
+          chapterSection.style.marginLeft = '32px';
+
+          // Add click handler to toggle expand/collapse
+          chapterHeader.addEventListener('click', () => {
+            const isCollapsed = chapterSection.style.display === 'none';
+            chapterSection.style.display = isCollapsed ? 'block' : 'none';
+            chapterTriangle.style.transform = isCollapsed ? 'rotate(90deg)' : 'rotate(0deg)';
+          });
+
+          bookSection.appendChild(chapterHeader);
+          bookSection.appendChild(chapterSection);
+
+          // Render verses in this chapter
+          verseArray.forEach(v => {
+            chapterSection.appendChild(createVerseItem(v));
+          });
+        });
+      }
+    });
+
+    function updateBulkActionsVisibility() {
+      const anyChecked = listDiv.querySelector('.add-verse-checkbox:checked');
+      const bulkActions = document.getElementById('bulkActions');
+      if (bulkActions) {
+        bulkActions.style.display = anyChecked ? 'block' : 'none';
+      }
+    }
+
+    // Add change listeners to all verse checkboxes for bulk actions
+    listDiv.addEventListener('change', (e) => {
+      if (e.target.classList.contains('add-verse-checkbox')) {
+        updateBulkActionsVisibility();
+      }
+    });
+  }
+
+  function createVerseItem(v) {
+    const verseItem = document.createElement('div');
+    verseItem.className = 'verse-item';
+
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.className = 'add-verse-checkbox';
+    checkbox.dataset.verseId = v.id;
+
+    const verseContent = document.createElement('div');
+    verseContent.className = 'verse-content';
+
+    const reference = document.createElement('div');
+    reference.className = 'reference';
+    reference.textContent = `${v.bookName} ${v.chapterNumber}:${v.verseNumber}`;
+
+    const text = document.createElement('div');
+    text.className = 'text';
+    text.textContent = v.verseText;
+
+    // collection membership tags
+    const cols = getCollections();
+    const memberships = cols.filter(c => Array.isArray(c.verseIds) && c.verseIds.includes(v.id));
+    const tagsDiv = document.createElement('div');
+    tagsDiv.className = 'collection-tags';
+    memberships.forEach(mc => {
+      const span = document.createElement('span');
+      span.className = 'collection-tag';
+      span.textContent = mc.title;
+      tagsDiv.appendChild(span);
+    });
+
+    if (v.lastReviewed) {
+      const lastReviewed = document.createElement('div');
+      lastReviewed.className = 'last-reviewed';
+      const days = Math.floor((new Date() - new Date(v.lastReviewed)) / (1000 * 60 * 60 * 24));
+      lastReviewed.textContent = `${t('last_reviewed')}: ${days} ${t('days_ago')}`;
+      verseContent.appendChild(lastReviewed);
+    }
+
+    const buttonContainer = document.createElement('div');
+    buttonContainer.className = 'button-container';
+
+    const editBtn = document.createElement('button');
+    editBtn.textContent = '✏️';
+    editBtn.title = t('edit');
+    editBtn.addEventListener('click', () => {
+      const allVerses = JSON.parse(localStorage.getItem('verses') || '[]');
+      editIndex = allVerses.findIndex(verse => verse.id === v.id);
+      document.getElementById('verseText').value = v.verseText;
+      document.getElementById('bookNameInput').value = v.bookName;
+      document.getElementById('chapterNumber').value = v.chapterNumber;
+      document.getElementById('verseNumber').value = v.verseNumber;
+      document.getElementById('verseInitials').value = v.verseInitials;
+      document.getElementById('bookInitials').value = v.bookInitials;
+      document.getElementById('bibleVersion').value = v.bibleVersion || '';
+      // Store original values for change detection
+      originalVerseValues = {
+        verseText: v.verseText,
+        bookName: v.bookName,
+        chapterNumber: v.chapterNumber,
+        verseNumber: v.verseNumber,
+        verseInitials: v.verseInitials,
+        bookInitials: v.bookInitials,
+        bibleVersion: v.bibleVersion || ''
+      };
+      // If this verse belongs to a collection, pre-select that collection in the add panel select
+      const cols = getCollections();
+      let found = null;
+      cols.forEach(c => { if (c.verseIds && c.verseIds.includes(v.id)) found = c.id; });
+      try { if (addToCollectionSelect) addToCollectionSelect.value = found || ''; } catch (e) {}
+      showPanel(addVersePanel);
+      saveVerseBtn.textContent = t('update_verse');
+      // Dim the Update Verse button initially
+      saveVerseBtn.classList.add('dimmed');
+    });
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.textContent = '❌';
+    deleteBtn.title = t('delete');
+    deleteBtn.addEventListener('click', () => {
+      showConfirm('', t('delete_confirmation'), () => {
+        const allVerses = JSON.parse(localStorage.getItem('verses') || '[]');
+        const verseIndex = allVerses.findIndex(verse => verse.id === v.id);
+        if (verseIndex !== -1) {
+          allVerses.splice(verseIndex, 1);
+          localStorage.setItem('verses', JSON.stringify(allVerses));
+          loadVersesForEdit();
+          updateReviewBadge();
+        }
+      });
+    });
+
+    verseContent.appendChild(reference);
+    verseContent.appendChild(text);
+    // append bible version (if any)
+    if (v.bibleVersion) {
+      const version = document.createElement('div');
+      version.className = 'bible-version';
+      version.textContent = v.bibleVersion;
+      version.style.fontSize = '0.9em';
+      version.style.color = '#888';
+      version.style.fontStyle = 'italic';
+      version.style.marginTop = '4px';
+      verseContent.appendChild(version);
+    }
+    // append tags (if any)
+    if (tagsDiv && tagsDiv.children.length > 0) verseContent.appendChild(tagsDiv);
+    buttonContainer.appendChild(editBtn);
+    buttonContainer.appendChild(deleteBtn);
+    verseItem.appendChild(checkbox);
+    verseItem.appendChild(verseContent);
+    verseItem.appendChild(buttonContainer);
+    
+    // Add click handler to toggle checkbox when clicking anywhere on the verse-item except buttons
+    verseItem.addEventListener('click', (e) => {
+      // Don't toggle if clicking on buttons or the checkbox itself
+      if (e.target.tagName === 'BUTTON' || e.target === checkbox) {
+        return;
+      }
+      checkbox.checked = !checkbox.checked;
+      // Trigger change event to update bulk actions visibility
+      const changeEvent = new Event('change', { bubbles: true });
+      checkbox.dispatchEvent(changeEvent);
+    });
+    
+    return verseItem;
+  }
+
+  // Toggle All button handler
+  const toggleAllBtn = document.getElementById('toggleAllBtn');
+  if (toggleAllBtn) {
+    toggleAllBtn.addEventListener('click', () => {
+      const listDiv = document.getElementById('addVerseList');
+      const allSections = listDiv.querySelectorAll('.book-section, .chapter-section');
+      const allTriangles = listDiv.querySelectorAll('.book-header span:last-child, .chapter-header span:last-child');
+      const isExpandAll = toggleAllBtn.getAttribute('data-i18n') === 'collapse_all';
+      
+      if (isExpandAll) {
+        // Collapse all
+        allSections.forEach(section => section.style.display = 'none');
+        allTriangles.forEach(triangle => triangle.style.transform = 'rotate(0deg)');
+        toggleAllBtn.setAttribute('data-i18n', 'expand_all');
+        toggleAllBtn.textContent = t('expand_all');
+      } else {
+        // Expand all
+        allSections.forEach(section => section.style.display = 'block');
+        allTriangles.forEach(triangle => triangle.style.transform = 'rotate(90deg)');
+        toggleAllBtn.setAttribute('data-i18n', 'collapse_all');
+        toggleAllBtn.textContent = t('collapse_all');
+      }
+    });
   }
 
   function loadCollectionsForReview() {
