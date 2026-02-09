@@ -1,0 +1,193 @@
+:root {
+	color-scheme: light dark;
+	font-family: 'Noto Sans SC', system-ui, sans-serif;
+	background-color: #f7f7f9;
+	color: #1b1b1f;
+	--app-background: #f7f7f9;
+	--panel-background: #ffffff;
+	--panel-shadow: 0 10px 30px rgba(24, 24, 27, 0.08);
+	--subtitle-color: #4b4b56;
+	--nav-button-bg: #eef1ff;
+	--nav-button-color: #2f2f3a;
+	--file-border: #d7d7df;
+	--file-bg: #f7f7fb;
+}
+
+:root[data-theme='light'] {
+	color-scheme: light;
+	background-color: #f7f7f9;
+	color: #1b1b1f;
+}
+
+:root[data-theme='dark'] {
+	color-scheme: dark;
+	background-color: #111114;
+	color: #f4f4f6;
+	--app-background: #111114;
+	--panel-background: #1b1b20;
+	--panel-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+	--subtitle-color: #b7b7c6;
+	--nav-button-bg: #2a2a36;
+	--nav-button-color: #f4f4f6;
+	--file-border: #2c2c34;
+	--file-bg: #22222a;
+}
+
+body {
+	margin: 0;
+	min-height: 100vh;
+	background: var(--app-background, #f7f7f9);
+	color: inherit;
+}
+
+main.app-shell {
+	max-width: 960px;
+	margin: 0 auto;
+	padding: 2.5rem 1.5rem 3rem;
+	display: grid;
+	gap: 1.5rem;
+}
+
+.app-header h1 {
+	margin: 0 0 0.25rem;
+	font-size: 2rem;
+}
+
+.subtitle {
+	margin: 0;
+	color: var(--subtitle-color, #4b4b56);
+}
+
+.panel {
+	background: var(--panel-background, #ffffff);
+	border-radius: 16px;
+	padding: 1.5rem;
+	box-shadow: var(--panel-shadow, 0 10px 30px rgba(24, 24, 27, 0.08));
+}
+
+.panel-nav {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.75rem;
+}
+
+.panel-nav button {
+	background: var(--nav-button-bg, #eef1ff);
+	color: var(--nav-button-color, #2f2f3a);
+}
+
+.panel-nav button.active {
+	background: #3264ff;
+	color: #fff;
+}
+
+.control-row {
+	display: flex;
+	gap: 1rem;
+	flex-wrap: wrap;
+	align-items: center;
+	margin-top: 1rem;
+}
+
+.control-grid {
+	display: grid;
+	gap: 1rem;
+	margin-top: 1rem;
+}
+
+.field {
+	display: grid;
+	gap: 0.5rem;
+}
+
+select {
+	padding: 0.6rem 0.75rem;
+	border-radius: 10px;
+	border: 1px solid var(--file-border, #d7d7df);
+	background: var(--file-bg, #f7f7fb);
+	color: inherit;
+}
+
+button {
+	border: none;
+	background: #3264ff;
+	color: #fff;
+	padding: 0.7rem 1.5rem;
+	border-radius: 999px;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+input[type='file'] {
+	border: 1px solid var(--file-border, #d7d7df);
+	padding: 0.5rem;
+	border-radius: 8px;
+	background: var(--file-bg, #f7f7fb);
+}
+
+.status {
+	margin-top: 0.75rem;
+	color: #1a7f37;
+}
+
+.keyboard-demo {
+	margin-top: 1.5rem;
+	display: grid;
+	gap: 0.75rem;
+}
+
+.keyboard-input {
+	width: 100%;
+	min-height: 48px;
+	padding: 0.75rem 1rem;
+	border-radius: 12px;
+	border: 1px solid var(--file-border, #d7d7df);
+	background: var(--file-bg, #f7f7fb);
+	font-size: 1.1rem;
+}
+
+.helper-text {
+	margin: 0;
+	color: var(--subtitle-color, #4b4b56);
+}
+
+.keyboard {
+	display: grid;
+	gap: 0.5rem;
+}
+
+.keyboard-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+
+.key {
+	background: var(--nav-button-bg, #eef1ff);
+	color: var(--nav-button-color, #2f2f3a);
+	border: none;
+	border-radius: 10px;
+	padding: 0.5rem 0.75rem;
+	min-width: 40px;
+	font-size: 1rem;
+	cursor: pointer;
+}
+
+.key-wide {
+	min-width: 64px;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root:not([data-theme='light']) {
+		background-color: #111114;
+		color: #f4f4f6;
+		--app-background: #111114;
+		--panel-background: #1b1b20;
+		--panel-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+		--subtitle-color: #b7b7c6;
+		--nav-button-bg: #2a2a36;
+		--nav-button-color: #f4f4f6;
+		--file-border: #2c2c34;
+		--file-bg: #22222a;
+	}
+}
