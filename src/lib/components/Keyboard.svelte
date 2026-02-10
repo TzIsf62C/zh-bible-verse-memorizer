@@ -1,11 +1,14 @@
 <script>
+	import { createEventDispatcher } from 'svelte';
+
 	export let layout = [];
-	export let onKey = () => {};
 	export let showBackspace = true;
 	export let showEnter = false;
 
+	const dispatch = createEventDispatcher();
+
 	function handleKeyPress(key) {
-		onKey(key);
+		dispatch('key', key);
 	}
 </script>
 

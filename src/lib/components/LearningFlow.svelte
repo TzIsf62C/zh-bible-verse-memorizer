@@ -5,6 +5,7 @@
 	import Keyboard from './Keyboard.svelte';
 	import { keyboardLayouts } from '$lib/utils/keyboardLayouts';
 	import { spacedRepetitionBinary } from '$lib/utils/spacedRepetition';
+	import { zhuyinKeyMap, cangjieKeyMap } from '$lib/utils/inputMaps';
 
 	let currentVerseIdx = null;
 	let currentStage = 'basic'; // basic, intermediate, advanced
@@ -21,7 +22,7 @@
 
 	// Filter unlearned verses
 	$: {
-		versesToLearn = $verses.filter((v) => v.repetitions === 0);
+		versesToLearn = $verses.filter((v) => !v.repetitions || v.repetitions === 0);
 	}
 
 	function selectVerse(idx) {
@@ -31,6 +32,7 @@
 		feedbackMessage = '';
 		accuracy = 0;
 		showNextButton = false;
+		console.log('[Learn] Selected verse', versesToLearn[idx]);
 	}
 
 	function getCurrentVerse() {
@@ -41,7 +43,7 @@
 	function getExpectedInitials() {
 		const verse = getCurrentVerse();
 		if (!verse) return '';
-		return currentStage === 'verse' ? verse.verseInitials : verse.bookInitials;
+		return verse.verseInitials || '';
 	}
 
 	// Character visibility for intermediate stage
@@ -51,17 +53,24 @@
 		return false; // Advanced: no characters shown
 	}
 
+	function getCharStatus(idx) {
+		const expected = getExpectedInitials();
+		if (!expected || idx >= expected.length) return '';
+		if (idx >= userInput.length) return '';
+		return userInput[idx] === expected[idx] ? 'correct' : 'incorrect';
+	}
+
 	function handleKeyInput(event) {
 		if (!getCurrentVerse()) return;
 
 		const key = event.detail;
 
-		if (key === '⌫') {
+		if (key === '⌫' || key === 'Backspace') {
 			userInput = userInput.slice(0, -1);
 			return;
 		}
 
-		if (key === '↵') {
+		if (key === '↵' || key === 'Enter') {
 			submitAnswer();
 			return;
 		}
@@ -80,6 +89,11 @@
 		const expected = getExpectedInitials();
 
 		if (!verse) return;
+		if (!expected) {
+			feedbackMessage = t('fill_all_fields');
+			feedbackType = 'error';
+			return;
+		}
 
 		// Calculate accuracy
 		let correctChars = 0;
@@ -90,19 +104,25 @@
 		}
 
 		accuracy = Math.round((correctChars / expected.length) * 100);
+		console.log('[Learn] Submitted answer', {
+			stage: currentStage,
+			accuracy,
+			inputLength: userInput.length,
+			expectedLength: expected.length
+		});
 
 		if (accuracy >= 90) {
 			// Success!
 			if (currentStage === 'basic') {
-				feedbackMessage = t('great_job_basic');
+				feedbackMessage = `${t('great_job_basic')} (${accuracy}%)`;
 				feedbackType = 'success';
 				currentStage = 'intermediate';
 			} else if (currentStage === 'intermediate') {
-				feedbackMessage = t('great_job_intermediate');
+				feedbackMessage = `${t('great_job_intermediate')} (${accuracy}%)`;
 				feedbackType = 'success';
 				currentStage = 'advanced';
 			} else if (currentStage === 'advanced') {
-				feedbackMessage = t('congratulations_mastered');
+				feedbackMessage = `${t('congratulations_mastered')} (${accuracy}%)`;
 				feedbackType = 'success';
 				// Mark verse as learned
 				updateVerseProgress(verse);
@@ -110,7 +130,21 @@
 			}
 		} else {
 			// Failed - show error feedback
-			feedbackMessage = t('nice_try');
+			let mismatchIndex = -1;
+			for (let i = 0; i < Math.max(userInput.length, expected.length); i++) {
+				if (userInput[i] !== expected[i]) {
+					mismatchIndex = i;
+					break;
+				}
+			}
+			const detail = mismatchIndex >= 0
+				? ` ${t('incorrect_input', {
+						char: userInput[mismatchIndex] || '',
+						pos: mismatchIndex + 1,
+						expected: expected[mismatchIndex] || ''
+					})}`
+				: '';
+			feedbackMessage = `${t('nice_try')} (${accuracy}%)${detail}`;
 			feedbackType = 'error';
 			showNextButton = true;
 		}
@@ -150,17 +184,53 @@
 		feedbackType = 'warning';
 		showNextButton = true;
 	}
+
+	function getMaskedInput() {
+		if (!userInput) return '';
+		return '•'.repeat(userInput.length);
+	}
 </script>
 
 <svelte:document on:keydown={(e) => {
+	if (currentVerseIdx === null) return;
+	if (!e?.key) return;
+	if (showNextButton) return;
+
 	if (e.key === 'Enter' && userInput.length > 0) {
 		e.preventDefault();
 		submitAnswer();
-	} else if (e.key === 'Backspace') {
+		return;
+	}
+
+	if (e.key === 'Backspace') {
 		e.preventDefault();
 		userInput = userInput.slice(0, -1);
+		return;
+	}
+
+	const inputMethod = $settings.inputMethod || 'pinyin';
+	const key = e.key.toLowerCase();
+	let mappedValue = '';
+
+	if (inputMethod === 'zhuyin') {
+		mappedValue = zhuyinKeyMap[key] || '';
+	} else if (inputMethod === 'cangjie') {
+		mappedValue = cangjieKeyMap[key] || '';
+	} else if (/^[a-z0-9]$/i.test(key)) {
+		mappedValue = key;
+	}
+
+	if (mappedValue) {
+		e.preventDefault();
+		userInput += mappedValue;
+		const expected = getExpectedInitials();
+		if (userInput.length === expected.length) {
+			submitAnswer();
+		}
 	}
 }} />
+
+<span class="visually-hidden" aria-hidden="true">{$settings.languagePreference}</span>
 
 <div class="learning-container">
 	{#if currentVerseIdx === null}
@@ -173,15 +243,17 @@
 					<p>{t('no_verses_to_learn')}</p>
 				</div>
 			{:else}
-				<div class="verses-grid">
-					{#each versesToLearn as verse, idx}
-						<button class="verse-card" on:click={() => selectVerse(idx)}>
-							<div class="verse-ref">
+				<div class="verse-selector">
+					<select on:change={(e) => selectVerse(parseInt(e.target.value))}>
+						<option value={-1} selected={currentVerseIdx === null}>
+							-- {t('select_verse')} --
+						</option>
+						{#each versesToLearn as verse, idx}
+							<option value={idx}>
 								{verse.bookName} {verse.chapterNumber}:{verse.verseNumber}
-							</div>
-							<div class="verse-preview">{verse.verseText.substring(0, 40)}...</div>
-						</button>
-					{/each}
+							</option>
+						{/each}
+					</select>
 				</div>
 			{/if}
 		</div>
@@ -200,6 +272,8 @@
 									class="char"
 									class:visible={shouldShowCharacter(idx)}
 									class:hidden={!shouldShowCharacter(idx)}
+									class:correct={getCharStatus(idx) === 'correct'}
+									class:incorrect={getCharStatus(idx) === 'incorrect'}
 								>
 									{char}
 								</span>
@@ -221,7 +295,7 @@
 				<div class="input-section">
 					<div class="input-display">
 						{#if userInput}
-							{userInput}
+							{getMaskedInput()}
 						{:else}
 							<span class="placeholder">Type initials...</span>
 						{/if}
@@ -234,7 +308,7 @@
 					{/if}
 
 					{#if !showNextButton}
-						<Keyboard {keyboardLayout} on:key={handleKeyInput} />
+						<Keyboard {keyboardLayout} on:key={handleKeyInput} showBackspace={true} showEnter={true} />
 					{/if}
 
 					<!-- Action Buttons -->
@@ -278,40 +352,19 @@
 		margin-bottom: 1.5rem;
 	}
 
-	.verses-grid {
+	.verse-selector {
 		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
 		gap: 1rem;
 	}
 
-	.verse-card {
-		background: var(--file-bg);
+	.verse-selector select {
+		padding: 0.75rem;
 		border: 1px solid var(--file-border);
-		border-radius: 6px;
-		padding: 1rem;
-		cursor: pointer;
-		transition: all 0.3s;
-		text-align: left;
-		color: inherit;
+		background: var(--file-bg);
+		color: var(--text-color);
+		border-radius: 4px;
 		font-family: inherit;
-	}
-
-	.verse-card:hover {
-		background: var(--nav-button-bg);
-		transform: translateY(-2px);
-		box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-	}
-
-	.verse-ref {
-		font-weight: 600;
-		margin-bottom: 0.5rem;
-		color: var(--accent-color);
-	}
-
-	.verse-preview {
-		font-size: 0.9rem;
-		color: var(--subtitle-color);
-		line-height: 1.4;
+		font-size: 1rem;
 	}
 
 	.learning-screen {
@@ -356,6 +409,14 @@
 		background: var(--file-bg);
 		border-bottom: 2px solid var(--subtitle-color);
 		user-select: none;
+	}
+
+	.char.correct {
+		color: #2e7d32;
+	}
+
+	.char.incorrect {
+		color: #c62828;
 	}
 
 	.no-text-notice {

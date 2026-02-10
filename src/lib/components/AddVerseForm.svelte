@@ -5,6 +5,13 @@
 	import Keyboard from './Keyboard.svelte';
 	import { keyboardLayouts } from '$lib/utils/keyboardLayouts';
 	import { zhuyinKeyMap, cangjieKeyMap } from '$lib/utils/inputMaps';
+	import {
+		getBibleBooks,
+		getBibleBookOptions,
+		findBookByName,
+		getBookInitialsForMethod,
+		sortVersesByBibleOrder
+	} from '$lib/utils/bibleBooks';
 
 	let verseText = '';
 	let bookName = '';
@@ -19,38 +26,75 @@
 
 	let editingId = null;
 	let versesList = [];
-	let expandedIndex = null;
+	let expandedAll = false;
+	let expandedBooks = [];
+	let expandedChapters = [];
+	let expandedVerseId = null;
+	let groupedVerses = [];
 
 	let selectOptions = [];
+	let bookOptions = [];
+	let bibleBooks = [];
+	let filteredBookOptions = [];
+	let currentInputMethod = 'pinyin';
+	let bookInitialsAuto = true;
 
 	// Keyboard state
 	let keyboardInput = '';
 
 	// Update from store
 	$: {
-		versesList = $verses;
+		versesList = sortVersesByBibleOrder(
+			$verses,
+			$settings.bookNameCharset || 'simplified'
+		);
 		selectOptions = [
 			...new Set($verses.map((v) => v.bibleVersion).filter(Boolean))
 		];
+		bibleBooks = getBibleBooks($settings.bookNameCharset || 'simplified');
+		bookOptions = getBibleBookOptions($settings.bookNameCharset || 'simplified');
+		filteredBookOptions = bookOptions;
+	}
+
+	$: currentInputMethod = $settings.inputMethod || 'pinyin';
+
+	$: if (!editingId && !bibleVersion && $settings.defaultBibleVersion) {
+		bibleVersion = $settings.defaultBibleVersion;
+	}
+
+	$: if (bookName) {
+		updateBookInitialsFromBookName();
+	}
+
+	$: if (currentInputMethod && bookName && bookInitialsAuto) {
+		updateBookInitialsFromBookName(true);
 	}
 
 	// Get current keyboard layout
 	$: keyboardLayout = keyboardLayouts[$settings.inputMethod] || keyboardLayouts.pinyin;
 
-	function handleVerseInitialsClick() {
-		showKeyboard = showKeyboard === 'verse' ? null : 'verse';
-		if (showKeyboard === 'verse') {
-			activeInput = document.getElementById('verseInitials');
-			keyboardInput = verseInitials;
+	function handleVerseInitialsClick(event) {
+		activeInput = event?.currentTarget || null;
+		keyboardInput = verseInitials;
+
+		if (currentInputMethod === 'pinyin') {
+			showKeyboard = null;
+			return;
 		}
+
+		showKeyboard = showKeyboard === 'verse' ? null : 'verse';
 	}
 
-	function handleBookInitialsClick() {
-		showKeyboard = showKeyboard === 'book' ? null : 'book';
-		if (showKeyboard === 'book') {
-			activeInput = document.getElementById('bookInitials');
-			keyboardInput = bookInitials;
+	function handleBookInitialsClick(event) {
+		activeInput = event?.currentTarget || null;
+		keyboardInput = bookInitials;
+
+		if (currentInputMethod === 'pinyin') {
+			showKeyboard = null;
+			return;
 		}
+
+		showKeyboard = showKeyboard === 'book' ? null : 'book';
 	}
 
 	function handleKeyboardKey(event) {
@@ -62,6 +106,7 @@
 			verseInitials += key;
 			keyboardInput = verseInitials;
 		} else if (activeInput.id === 'bookInitials') {
+			bookInitialsAuto = false;
 			bookInitials += key;
 			keyboardInput = bookInitials;
 		}
@@ -72,6 +117,7 @@
 			verseInitials = verseInitials.slice(0, -1);
 			keyboardInput = verseInitials;
 		} else if (activeInput.id === 'bookInitials') {
+			bookInitialsAuto = false;
 			bookInitials = bookInitials.slice(0, -1);
 			keyboardInput = bookInitials;
 		}
@@ -79,9 +125,18 @@
 
 	function handlePhysicalKey(event) {
 		if (!activeInput) return;
+		if (currentInputMethod === 'pinyin' && !activeInput.readOnly) return;
+		if (!event?.key) return;
+		if (
+			event.target &&
+			['INPUT', 'TEXTAREA', 'SELECT'].includes(event.target.tagName) &&
+			event.target !== activeInput
+		) {
+			return;
+		}
 
 		const key = event.key.toLowerCase();
-		const inputMethod = $settings.inputMethod;
+		const inputMethod = currentInputMethod;
 
 		if (key === 'backspace' || key === 'delete') {
 			event.preventDefault();
@@ -115,15 +170,71 @@
 				verseInitials += mappedValue;
 				keyboardInput = verseInitials;
 			} else if (activeInput.id === 'bookInitials') {
+				bookInitialsAuto = false;
 				bookInitials += mappedValue;
 				keyboardInput = bookInitials;
 			}
 		}
 	}
 
+	function updateBookInitialsFromBookName(force = false) {
+		const match = findBookByName(bookName);
+		if (!match) return;
+		if (!bookInitials || bookInitialsAuto || force) {
+			bookInitials = getBookInitialsForMethod(match, currentInputMethod);
+			bookInitialsAuto = true;
+			console.log('[AddVerse] Auto-filled book initials', {
+				bookName,
+				bookInitials,
+				inputMethod: currentInputMethod
+			});
+		}
+	}
+
+	function updateBookSuggestions(inputValue = '') {
+		const query = (inputValue || '').trim().toLowerCase();
+		console.log('[AddVerse] Book name input changed:', inputValue);
+		if (!query) {
+			filteredBookOptions = bookOptions;
+			return;
+		}
+
+		const exactPinyinMatch = bibleBooks.find(
+			(book) => book.pinyin && book.pinyin.toLowerCase() === query
+		);
+		if (exactPinyinMatch && inputValue.length === exactPinyinMatch.pinyin.length) {
+			bookName = exactPinyinMatch.hanzi;
+			updateBookInitialsFromBookName(true);
+			return;
+		}
+
+		const matches = bibleBooks.filter(
+			(book) =>
+				book.hanzi.includes(inputValue) ||
+				(book.pinyin && book.pinyin.toLowerCase().startsWith(query))
+		);
+
+		filteredBookOptions = [
+			...new Set(
+				matches.flatMap((book) => [book.hanzi, book.pinyin].filter(Boolean))
+			)
+		];
+	}
+
 	function saveVerse() {
 		// Validation
+		console.log('[AddVerse] Attempting to save verse', {
+			bookName,
+			chapterNumber,
+			verseNumber,
+			inputMethod: currentInputMethod
+		});
 		if (!verseText.trim() || !bookName.trim() || !chapterNumber || !verseNumber) {
+			alert(t('fill_all_fields'));
+			return;
+		}
+
+		if (!verseInitials.trim() || !bookInitials.trim()) {
 			alert(t('fill_all_fields'));
 			return;
 		}
@@ -167,7 +278,7 @@
 		if (!confirm(t('delete_confirmation'))) return;
 
 		verses.update((list) => list.filter((v) => v.id !== id));
-		expandedIndex = null;
+		expandedVerseId = null;
 	}
 
 	function editVerse(id) {
@@ -198,22 +309,83 @@
 		editingId = null;
 		showKeyboard = null;
 		keyboardInput = '';
+		bookInitialsAuto = true;
 	}
 
 	function expandAll() {
-		expandedIndex = 'all';
+		expandedAll = true;
 	}
 
 	function collapseAll() {
-		expandedIndex = null;
+		expandedAll = false;
+		expandedBooks = [];
+		expandedChapters = [];
+		expandedVerseId = null;
 	}
 
-	function toggleExpanded(idx) {
-		expandedIndex = expandedIndex === idx ? null : idx;
+	function toggleBook(bookKey) {
+		expandedAll = false;
+		console.log('[AddVerse] Toggle book', bookKey);
+		if (expandedBooks.includes(bookKey)) {
+			expandedBooks = expandedBooks.filter((book) => book !== bookKey);
+			return;
+		}
+		expandedBooks = [...expandedBooks, bookKey];
 	}
+
+	function getChapterKey(bookKey, chapterNumber) {
+		return `${bookKey}-${chapterNumber}`;
+	}
+
+	function toggleChapter(bookKey, chapterNumber) {
+		expandedAll = false;
+		const chapterKey = getChapterKey(bookKey, chapterNumber);
+		if (expandedChapters.includes(chapterKey)) {
+			expandedChapters = expandedChapters.filter((key) => key !== chapterKey);
+			return;
+		}
+		expandedChapters = [...expandedChapters, chapterKey];
+	}
+
+	function toggleVerse(verseId) {
+		expandedVerseId = expandedVerseId === verseId ? null : verseId;
+	}
+
+	function isBookExpanded(bookKey) {
+		return expandedAll || expandedBooks.includes(bookKey);
+	}
+
+	function isChapterExpanded(bookKey, chapterNumber) {
+		return expandedAll || expandedChapters.includes(getChapterKey(bookKey, chapterNumber));
+	}
+
+	function buildGroupedVerses(list) {
+		const grouped = [];
+		list.forEach((verse) => {
+			let bookGroup = grouped.find((entry) => entry.bookName === verse.bookName);
+			if (!bookGroup) {
+				bookGroup = { bookName: verse.bookName, chapters: [] };
+				grouped.push(bookGroup);
+			}
+
+			let chapterGroup = bookGroup.chapters.find(
+				(entry) => entry.chapterNumber === verse.chapterNumber
+			);
+			if (!chapterGroup) {
+				chapterGroup = { chapterNumber: verse.chapterNumber, verses: [] };
+				bookGroup.chapters.push(chapterGroup);
+			}
+			chapterGroup.verses.push(verse);
+		});
+		return grouped;
+	}
+
+	$: groupedVerses = buildGroupedVerses(versesList);
 </script>
 
 <svelte:document on:keydown={handlePhysicalKey} />
+
+<span class="visually-hidden" aria-hidden="true">{$settings.languagePreference}</span>
 
 <div class="add-verse-container">
 	<!-- Form Section -->
@@ -228,21 +400,71 @@
 
 			<div class="field">
 				<label for="bookName">{t('chinese_book_name')}</label>
-				<input type="text" id="bookName" bind:value={bookName} placeholder={t('chinese_book_name')} />
+				<input
+					type="text"
+					id="bookName"
+					bind:value={bookName}
+					list="bookNames"
+					placeholder={t('chinese_book_name')}
+					on:input={() => {
+						bookInitialsAuto = true;
+						updateBookSuggestions(bookName);
+						updateBookInitialsFromBookName(true);
+					}}
+					on:focus={() => {
+						activeInput = null;
+						showKeyboard = null;
+					}}
+				/>
+				<datalist id="bookNames">
+					{#each filteredBookOptions as option}
+						<option value={option}></option>
+					{/each}
+				</datalist>
 			</div>
 
 			<div class="form-row">
 				<div class="field">
 					<label for="chapterNumber">{t('chapter')}</label>
-					<input type="number" id="chapterNumber" bind:value={chapterNumber} placeholder="1" min="1" />
+					<input
+						type="number"
+						id="chapterNumber"
+						bind:value={chapterNumber}
+						placeholder="1"
+						min="1"
+						on:focus={() => {
+							activeInput = null;
+							showKeyboard = null;
+						}}
+					/>
 				</div>
 				<div class="field">
 					<label for="verseNumber">{t('verse')}</label>
-					<input type="number" id="verseNumber" bind:value={verseNumber} placeholder="1" min="1" />
+					<input
+						type="number"
+						id="verseNumber"
+						bind:value={verseNumber}
+						placeholder="1"
+						min="1"
+						on:focus={() => {
+							activeInput = null;
+							showKeyboard = null;
+						}}
+					/>
 				</div>
 				<div class="field">
 					<label for="bibleVersion">{t('default_bible_version')}</label>
-					<input type="text" id="bibleVersion" bind:value={bibleVersion} placeholder="e.g., ESV" list="versions" />
+					<input
+						type="text"
+						id="bibleVersion"
+						bind:value={bibleVersion}
+						placeholder="e.g., ESV"
+						list="versions"
+						on:focus={() => {
+							activeInput = null;
+							showKeyboard = null;
+						}}
+					/>
 					<datalist id="versions">
 						{#each selectOptions as version}
 							<option value={version}></option>
@@ -252,7 +474,7 @@
 			</div>
 
 			<!-- Initials input based on input method -->
-			{#if $settings.inputMethod === 'pinyin'}
+			{#if currentInputMethod === 'pinyin'}
 				<div class="field">
 					<label for="verseInitials">{t('pinyin_initials_verse')}</label>
 					<p class="helper-text">{t('pinyin_helper')}</p>
@@ -272,9 +494,10 @@
 						bind:value={bookInitials}
 						placeholder="e.g., yfs"
 						on:focus={handleBookInitialsClick}
+						on:input={() => (bookInitialsAuto = false)}
 					/>
 				</div>
-			{:else if $settings.inputMethod === 'zhuyin'}
+			{:else if currentInputMethod === 'zhuyin'}
 				<div class="field">
 					<label for="verseInitialsZhuyin">{t('zhuyin_initials_verse')}</label>
 					<p class="helper-text">{t('zhuyin_helper')}</p>
@@ -304,7 +527,7 @@
 						<Keyboard {keyboardLayout} on:key={handleKeyboardKey} />
 					{/if}
 				</div>
-			{:else if $settings.inputMethod === 'cangjie'}
+			{:else if currentInputMethod === 'cangjie'}
 				<div class="field">
 					<label for="verseInitialsCangjie">{t('cangjie_initials_verse')}</label>
 					<p class="helper-text">{t('cangjie_helper')}</p>
@@ -354,54 +577,90 @@
 		</div>
 
 		<div class="verses-list">
-			{#each versesList as verse, idx}
+			{#each groupedVerses as book}
 				<div class="verse-item">
 					<button
 						class="verse-header"
-						on:click={() => toggleExpanded(idx)}
+						on:click={() => toggleBook(book.bookName)}
 						type="button"
 					>
-						<span class="book-ref">
-							{verse.bookName} {verse.chapterNumber}:{verse.verseNumber}
-						</span>
-						<span class="toggle-icon">{expandedIndex === idx ? '▼' : '▶'}</span>
+						<span class="book-ref">{book.bookName}</span>
+						<span class="toggle-icon">{isBookExpanded(book.bookName) ? '▼' : '▶'}</span>
 					</button>
 
-					{#if expandedIndex === idx}
+					{#if isBookExpanded(book.bookName)}
 						<div class="verse-content">
-							<div class="verse-text">{verse.verseText}</div>
-							<div class="verse-meta">
-								<div class="meta-item">
-									<span class="label">Version:</span>
-									<span class="value">{verse.bibleVersion}</span>
-								</div>
-								<div class="meta-item">
-									<span class="label">Initials:</span>
-									<span class="value">{verse.verseInitials}</span>
-								</div>
-								{#if verse.lastReviewed}
-									<div class="meta-item">
-										<span class="label">Last Reviewed:</span>
-										<span class="value">
-											{new Date(verse.lastReviewed).toLocaleDateString()}
-										</span>
-									</div>
+							{#each book.chapters as chapter}
+								<button
+									class="verse-header chapter-header"
+									on:click={() => toggleChapter(book.bookName, chapter.chapterNumber)}
+									type="button"
+								>
+									<span class="book-ref">
+										{t('chapter_heading')} {chapter.chapterNumber}
+									</span>
+									<span class="toggle-icon">
+										{isChapterExpanded(book.bookName, chapter.chapterNumber) ? '▼' : '▶'}
+									</span>
+								</button>
+
+								{#if isChapterExpanded(book.bookName, chapter.chapterNumber)}
+									{#each chapter.verses as verse}
+										<div class="verse-item verse-item-nested">
+											<button
+												class="verse-header"
+												on:click={() => toggleVerse(verse.id)}
+												type="button"
+											>
+												<span class="book-ref">
+													{verse.chapterNumber}:{verse.verseNumber}
+												</span>
+												<span class="toggle-icon">
+													{expandedAll || expandedVerseId === verse.id ? '▼' : '▶'}
+												</span>
+											</button>
+
+											{#if expandedAll || expandedVerseId === verse.id}
+												<div class="verse-content">
+													<div class="verse-text">{verse.verseText}</div>
+													<div class="verse-meta">
+														<div class="meta-item">
+															<span class="label">Version:</span>
+															<span class="value">{verse.bibleVersion}</span>
+														</div>
+														<div class="meta-item">
+															<span class="label">Initials:</span>
+															<span class="value">{verse.verseInitials}</span>
+														</div>
+														{#if verse.lastReviewed}
+															<div class="meta-item">
+																<span class="label">Last Reviewed:</span>
+																<span class="value">
+																	{new Date(verse.lastReviewed).toLocaleDateString()}
+																</span>
+															</div>
+														{/if}
+													</div>
+													<div class="verse-actions">
+														<button
+															class="secondary-small"
+															on:click={() => editVerse(verse.id)}
+														>
+															{t('edit')}
+														</button>
+														<button
+															class="danger-small"
+															on:click={() => deleteVerse(verse.id)}
+														>
+															{t('delete')}
+														</button>
+													</div>
+												</div>
+											{/if}
+										</div>
+									{/each}
 								{/if}
-							</div>
-							<div class="verse-actions">
-								<button
-									class="secondary-small"
-									on:click={() => editVerse(verse.id)}
-								>
-									{t('edit')}
-								</button>
-								<button
-									class="danger-small"
-									on:click={() => deleteVerse(verse.id)}
-								>
-									{t('delete')}
-								</button>
-							</div>
+							{/each}
 						</div>
 					{/if}
 				</div>
@@ -602,6 +861,11 @@
 		margin-bottom: 1rem;
 		padding: 0.5rem;
 		background: var(--file-bg);
+	.verse-item-nested {
+		margin: 0.5rem 0 0.75rem;
+		border-color: transparent;
+		background: transparent;
+	}
 		border-radius: 4px;
 	}
 
@@ -609,6 +873,11 @@
 		display: flex;
 		gap: 0.5rem;
 		font-size: 0.9rem;
+	.chapter-header {
+		background: var(--file-bg);
+		border-top: 1px solid var(--file-border);
+		font-size: 0.95rem;
+	}
 	}
 
 	.meta-item .label {

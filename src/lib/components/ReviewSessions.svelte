@@ -189,6 +189,8 @@
 	}
 </script>
 
+<span class="visually-hidden" aria-hidden="true">{$settings.languagePreference}</span>
+
 <div class="review-container">
 	{#if reviewState === 'selectMode'}
 		<!-- Select Review Mode -->

@@ -12,9 +12,9 @@ export const translations = {
 		
 		// Settings panel
 		language: 'Language',
-		lang_english: 'English',
-		lang_simplified: 'Simplified',
-		lang_traditional: 'Traditional',
+		lang_english: 'English / 英文',
+		lang_simplified: 'Simplified / 简体',
+		lang_traditional: 'Traditional / 繁體',
 		input_method: 'Input Method',
 		input_pinyin: 'Pinyin',
 		input_zhuyin: 'Zhuyin (注音)',
@@ -279,9 +279,9 @@ export const translations = {
 		
 		// Settings panel
 		language: '语言',
-		lang_english: '英文',
-		lang_simplified: '简体',
-		lang_traditional: '繁体',
+		lang_english: 'English / 英文',
+		lang_simplified: 'Simplified / 简体',
+		lang_traditional: 'Traditional / 繁體',
 		input_method: '输入法',
 		input_pinyin: '拼音',
 		input_zhuyin: '注音',
@@ -546,9 +546,9 @@ export const translations = {
 		
 		// Settings panel
 		language: '語言',
-		lang_english: '英文',
-		lang_simplified: '簡體',
-		lang_traditional: '繁體',
+		lang_english: 'English / 英文',
+		lang_simplified: 'Simplified / 简体',
+		lang_traditional: 'Traditional / 繁體',
 		input_method: '輸入法',
 		input_pinyin: '拼音',
 		input_zhuyin: '注音',

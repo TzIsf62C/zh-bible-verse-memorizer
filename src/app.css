@@ -9,6 +9,7 @@
 	--subtitle-color: #4b4b56;
 	--nav-button-bg: #eef1ff;
 	--nav-button-color: #2f2f3a;
+	--accent-color: #3264ff;
 	--file-border: #d7d7df;
 	--file-bg: #f7f7fb;
 }
@@ -29,6 +30,7 @@
 	--subtitle-color: #b7b7c6;
 	--nav-button-bg: #2a2a36;
 	--nav-button-color: #f4f4f6;
+	--accent-color: #5b8dff;
 	--file-border: #2c2c34;
 	--file-bg: #22222a;
 }
@@ -156,6 +158,18 @@ input[type='file'] {
 	gap: 0.5rem;
 }
 
+.visually-hidden {
+	position: absolute !important;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
 .keyboard-row {
 	display: flex;
 	flex-wrap: wrap;
@@ -187,6 +201,7 @@ input[type='file'] {
 		--subtitle-color: #b7b7c6;
 		--nav-button-bg: #2a2a36;
 		--nav-button-color: #f4f4f6;
+		--accent-color: #5b8dff;
 		--file-border: #2c2c34;
 		--file-bg: #22222a;
 	}

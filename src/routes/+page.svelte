@@ -94,6 +94,7 @@
 	}
 
 	function handlePhysicalKey(event) {
+		if (!event?.key) return;
 		const key = event.key.toLowerCase();
 		if (key === 'backspace') {
 			keyboardInput = keyboardInput.slice(0, -1);
@@ -122,6 +123,7 @@
 		if (key === 'inputMethod') {
 			keyboardInput = '';
 		}
+		console.log('[Settings] Update', { key, value });
 		settings.update((current) => ({
 			...current,
 			[key]: value
@@ -145,6 +147,7 @@
 </svelte:head>
 
 <main class="app-shell">
+	<span class="visually-hidden" aria-hidden="true">{$settings.languagePreference}</span>
 	<header class="app-header">
 		<h1>{t('app_title')}</h1>
 		<p class="subtitle">{t('app_subtitle')}</p>
@@ -213,6 +216,16 @@
 						<option value="light">{t('theme_light')}</option>
 						<option value="dark">{t('theme_dark')}</option>
 					</select>
+				</label>
+
+				<label class="field">
+					<span>{t('default_bible_version')}</span>
+					<input
+						type="text"
+						value={$settings.defaultBibleVersion}
+						on:input={(event) => updateSetting('defaultBibleVersion', event.currentTarget.value)}
+						placeholder="e.g., ESV"
+					/>
 				</label>
 			</div>
 		</section>
