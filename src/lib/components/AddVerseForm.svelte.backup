@@ -76,19 +76,25 @@
 	function handleVerseInitialsClick(event) {
 		activeInput = event?.currentTarget || null;
 		keyboardInput = verseInitials;
-		console.log('[AddVerse] Verse initials field clicked/focused, input method:', currentInputMethod);
+
+		if (currentInputMethod === 'pinyin') {
+			showKeyboard = null;
+			return;
+		}
 
 		showKeyboard = showKeyboard === 'verse' ? null : 'verse';
-		console.log('[AddVerse] Onscreen keyboard display:', showKeyboard);
 	}
 
 	function handleBookInitialsClick(event) {
 		activeInput = event?.currentTarget || null;
 		keyboardInput = bookInitials;
-		console.log('[AddVerse] Book initials field clicked/focused, input method:', currentInputMethod);
+
+		if (currentInputMethod === 'pinyin') {
+			showKeyboard = null;
+			return;
+		}
 
 		showKeyboard = showKeyboard === 'book' ? null : 'book';
-		console.log('[AddVerse] Onscreen keyboard display:', showKeyboard);
 	}
 
 	function handleKeyboardKey(event) {
@@ -426,10 +432,9 @@
 						bind:value={chapterNumber}
 						placeholder="1"
 						min="1"
-						readonly
-						on:click={(e) => {
-							activeInput = e.target;
-							showKeyboard = 'numeric';
+						on:focus={() => {
+							activeInput = null;
+							showKeyboard = null;
 						}}
 					/>
 				</div>
@@ -441,10 +446,9 @@
 						bind:value={verseNumber}
 						placeholder="1"
 						min="1"
-						readonly
-						on:click={(e) => {
-							activeInput = e.target;
-							showKeyboard = 'numeric';
+						on:focus={() => {
+							activeInput = null;
+							showKeyboard = null;
 						}}
 					/>
 				</div>
@@ -506,7 +510,7 @@
 						on:click={handleVerseInitialsClick}
 					/>
 					{#if showKeyboard === 'verse'}
-						<Keyboard layout={keyboardLayout} on:key={handleKeyboardKey} />
+						<Keyboard {keyboardLayout} on:key={handleKeyboardKey} />
 					{/if}
 				</div>
 				<div class="field">
@@ -536,7 +540,7 @@
 						on:click={handleVerseInitialsClick}
 					/>
 					{#if showKeyboard === 'verse'}
-						<Keyboard layout={keyboardLayout} on:key={handleKeyboardKey} />
+						<Keyboard {keyboardLayout} on:key={handleKeyboardKey} />
 					{/if}
 				</div>
 				<div class="field">
@@ -550,14 +554,9 @@
 						on:click={handleBookInitialsClick}
 					/>
 					{#if showKeyboard === 'book'}
-						<Keyboard layout={keyboardLayout} on:key={handleKeyboardKey} />
+						<Keyboard {keyboardLayout} on:key={handleKeyboardKey} />
 					{/if}
 				</div>
-			{/if}
-
-			<!-- Numeric Keyboard for Chapter/Verse Numbers -->
-			{#if showKeyboard === 'numeric'}
-				<Keyboard layout={keyboardLayouts.numeric} on:key={handleKeyboardKey} />
 			{/if}
 
 			<div class="button-group">
@@ -680,7 +679,6 @@
 		grid-template-columns: 1fr;
 		gap: 2rem;
 		padding: 1rem;
-		padding-bottom: 400px; /* Add space for keyboard at bottom */
 	}
 
 	@media (min-width: 768px) {
