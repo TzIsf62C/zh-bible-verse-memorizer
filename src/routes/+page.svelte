@@ -16,6 +16,7 @@
 	import AddVerseForm from '$lib/components/AddVerseForm.svelte';
 	import LearningFlow from '$lib/components/LearningFlow.svelte';
 	import ReviewSessions from '$lib/components/ReviewSessions.svelte';
+	import Settings from '$lib/components/Settings.svelte';
 	import { t } from '$lib/i18n/index.js';
 
 	const panels = [
@@ -181,56 +182,7 @@
 	{:else if currentPanel === 'settings'}
 		<section class="panel">
 			{#key $settings.languagePreference}
-				<h2>{t('settings')}</h2>
-				<p>{t('settings_placeholder')}</p>
-
-				<div class="control-grid">
-					<label class="field">
-						<span>{t('language')}</span>
-						<select
-							value={$settings.languagePreference}
-							on:change={(event) => updateSetting('languagePreference', event.currentTarget.value)}
-						>
-							<option value="english">{t('lang_english')}</option>
-							<option value="simplified">{t('lang_simplified')}</option>
-							<option value="traditional">{t('lang_traditional')}</option>
-						</select>
-					</label>
-
-					<label class="field">
-						<span>{t('input_method')}</span>
-						<select
-							value={$settings.inputMethod}
-							on:change={(event) => updateSetting('inputMethod', event.currentTarget.value)}
-						>
-							<option value="pinyin">{t('input_pinyin')}</option>
-							<option value="zhuyin">{t('input_zhuyin')}</option>
-							<option value="cangjie">{t('input_cangjie')}</option>
-						</select>
-					</label>
-
-					<label class="field">
-						<span>{t('theme')}</span>
-						<select
-							value={$settings.themePreference}
-							on:change={(event) => updateSetting('themePreference', event.currentTarget.value)}
-						>
-							<option value="system">{t('theme_system')}</option>
-							<option value="light">{t('theme_light')}</option>
-							<option value="dark">{t('theme_dark')}</option>
-						</select>
-					</label>
-
-					<label class="field">
-						<span>{t('default_bible_version')}</span>
-						<input
-							type="text"
-							value={$settings.defaultBibleVersion}
-							on:input={(event) => updateSetting('defaultBibleVersion', event.currentTarget.value)}
-							placeholder="e.g., ESV"
-						/>
-					</label>
-				</div>
+				<Settings />
 			{/key}
 		</section>
 	{:else}
