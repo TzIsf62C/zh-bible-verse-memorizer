@@ -120,6 +120,10 @@ export const translations = {
 		rename: 'Rename',
 		add: 'Add',
 		remove: 'Remove',
+		back: 'Back',
+		add_verse_to_collection: 'Add verse to collection',
+		verses_in_collection: 'Verses in collection',
+		no_verses_in_collection: 'No verses in this collection yet',
 		
 		// Export/Import Panel
 		export_import_title: 'Export & Import',
@@ -387,6 +391,10 @@ export const translations = {
 		rename: '重命名',
 		add: '添加',
 		remove: '移除',
+		back: '返回',
+		add_verse_to_collection: '添加经文到集合',
+		verses_in_collection: '集合中的经文',
+		no_verses_in_collection: '此集合中还没有经文',
 		
 		// Export/Import Panel
 		export_import_title: '导出导入',
@@ -654,6 +662,10 @@ export const translations = {
 		rename: '重命名',
 		add: '新增',
 		remove: '移除',
+		back: '返回',
+		add_verse_to_collection: '新增經文到集合',
+		verses_in_collection: '集合中的經文',
+		no_verses_in_collection: '此集合中還沒有經文',
 		
 		// Export/Import Panel
 		export_import_title: '匯出匯入',

@@ -1,5 +1,6 @@
 <script>
 	import { verses } from '$lib/stores/verses';
+	import { collections } from '$lib/stores/collections';
 	import { settings } from '$lib/stores/settings';
 	import { t } from '$lib/i18n';
 	import Keyboard from './Keyboard.svelte';
@@ -20,6 +21,7 @@
 	let verseInitials = '';
 	let bookInitials = '';
 	let bibleVersion = '';
+	let selectedCollectionId = '';
 
 	let showKeyboard = null; // null, 'verse', 'book'
 	let activeInput = null;
@@ -287,6 +289,17 @@
 			alert(t('verse_saved'));
 		}
 
+		// Add to collection if selected
+		if (selectedCollectionId) {
+			collections.update(cols =>
+				cols.map(c =>
+					c.id === selectedCollectionId
+						? { ...c, verseIds: [...(c.verseIds || []), newVerse.id] }
+						: c
+				)
+			);
+		}
+
 		clearForm();
 	}
 
@@ -308,6 +321,11 @@
 		verseInitials = verse.verseInitials;
 		bookInitials = verse.bookInitials;
 		bibleVersion = verse.bibleVersion;
+		
+		// Find collection containing this verse
+		const verseCollection = $collections.find(c => c.verseIds?.includes(id));
+		selectedCollectionId = verseCollection?.id || '';
+		
 		editingId = id;
 
 		// Scroll to top
@@ -322,6 +340,7 @@
 		verseInitials = '';
 		bookInitials = '';
 		bibleVersion = '';
+		selectedCollectionId = '';
 		editingId = null;
 		showKeyboard = null;
 		keyboardInput = '';
@@ -528,6 +547,22 @@
 							<option value={version}></option>
 						{/each}
 					</datalist>
+				</div>
+				<div class="field">
+					<label for="collectionSelector">{t('add_to_collection_optional')}</label>
+					<select
+						id="collectionSelector"
+						bind:value={selectedCollectionId}
+						on:focus={() => {
+							activeInput = null;
+							showKeyboard = null;
+						}}
+					>
+						<option value="">{t('none')}</option>
+						{#each $collections as collection (collection.id)}
+							<option value={collection.id}>{collection.title}</option>
+						{/each}
+					</select>
 				</div>
 			</div>
 

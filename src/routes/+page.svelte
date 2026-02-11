@@ -17,6 +17,7 @@
 	import LearningFlow from '$lib/components/LearningFlow.svelte';
 	import ReviewSessions from '$lib/components/ReviewSessions.svelte';
 	import Settings from '$lib/components/Settings.svelte';
+	import Collections from '$lib/components/Collections.svelte';
 	import { t } from '$lib/i18n/index.js';
 
 	const panels = [
@@ -176,8 +177,9 @@
 		<AddVerseForm />
 	{:else if currentPanel === 'collections'}
 		<section class="panel">
-			<h2>{t('collections')}</h2>
-			<p>{t('collections_placeholder')}</p>
+			{#key $settings.languagePreference}
+				<Collections />
+			{/key}
 		</section>
 	{:else if currentPanel === 'settings'}
 		<section class="panel">
