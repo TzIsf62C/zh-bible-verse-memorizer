@@ -75,6 +75,63 @@
 	// Get current keyboard layout
 	$: keyboardLayout = keyboardLayouts[$settings.inputMethod] || keyboardLayouts.pinyin;
 
+	// Viewport scrolling for focused input fields
+	$: {
+		if (activeInput && showKeyboard) {
+			console.log('=== ADD VERSE VIEWPORT SCROLL ===');
+			console.log('Active input:', activeInput.id);
+			console.log('Keyboard shown:', showKeyboard);
+			
+			setTimeout(() => {
+				if (!activeInput) return;
+				
+				const inputRect = activeInput.getBoundingClientRect();
+				const viewportHeight = window.innerHeight;
+				
+				console.log('Input rect top:', inputRect.top);
+				console.log('Input rect bottom:', inputRect.bottom);
+				console.log('Viewport height:', viewportHeight);
+				
+				// Find keyboard element - it's rendered after the input field
+				let keyboardElement = null;
+				if (showKeyboard === 'numeric') {
+					keyboardElement = document.querySelector('.keyboard');
+				} else {
+					keyboardElement = activeInput.parentElement.querySelector('.keyboard');
+				}
+				
+				if (keyboardElement) {
+					const keyboardRect = keyboardElement.getBoundingClientRect();
+					const visibleViewportHeight = keyboardRect.top; // Space above keyboard
+					
+					console.log('Keyboard top:', keyboardRect.top);
+					console.log('Visible viewport height (above keyboard):', visibleViewportHeight);
+					
+					// Center the input in the visible viewport (above the keyboard)
+					const targetPosition = visibleViewportHeight / 2 - (inputRect.height / 2);
+					const scrollAdjustment = inputRect.top - targetPosition;
+					const scrollTarget = window.scrollY + scrollAdjustment;
+					
+					console.log('Target position in viewport:', targetPosition);
+					console.log('Scroll adjustment needed:', scrollAdjustment);
+					console.log('Scroll target:', scrollTarget);
+					
+					window.scrollTo({ top: scrollTarget, behavior: 'smooth' });
+					
+					setTimeout(() => {
+						const newInputRect = activeInput.getBoundingClientRect();
+						console.log('=== AFTER SCROLL ===');
+						console.log('Input top from viewport:', newInputRect.top);
+						console.log('Input centered at:', newInputRect.top + (newInputRect.height / 2));
+						console.log('Target center was:', targetPosition + (inputRect.height / 2));
+					}, 500);
+				} else {
+					console.log('WARNING: Keyboard element not found');
+				}
+			}, 300);
+		}
+	}
+
 	function handleVerseInitialsClick(event) {
 		activeInput = event?.currentTarget || null;
 		keyboardInput = verseInitials;
@@ -575,9 +632,13 @@
 						id="verseInitials"
 						type="text"
 						bind:value={verseInitials}
-						placeholder="e.g., jhhbzb"
-						on:focus={handleVerseInitialsClick}
+						placeholder="Click to use keyboard"
+						readonly
+						on:click={handleVerseInitialsClick}
 					/>
+					{#if showKeyboard === 'verse'}
+						<Keyboard layout={keyboardLayout} on:key={handleKeyboardKey} showEnter={true} />
+					{/if}
 				</div>
 				<div class="field">
 					<label for="bookInitials">{t('pinyin_initials_book')}</label>
@@ -585,10 +646,13 @@
 						id="bookInitials"
 						type="text"
 						bind:value={bookInitials}
-						placeholder="e.g., yfs"
-						on:focus={handleBookInitialsClick}
-						on:input={() => (bookInitialsAuto = false)}
+						placeholder="Click to use keyboard"
+						readonly
+						on:click={handleBookInitialsClick}
 					/>
+					{#if showKeyboard === 'book'}
+						<Keyboard layout={keyboardLayout} on:key={handleKeyboardKey} showEnter={true} />
+					{/if}
 				</div>
 			{:else if currentInputMethod === 'zhuyin'}
 				<div class="field">

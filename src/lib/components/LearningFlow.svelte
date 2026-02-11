@@ -25,6 +25,11 @@
 	let showModal = false;
 	let modalMessage = '';
 	let isNumericKeyboard = false;
+	let verseSelectorOpacity = 1;
+	let lastErrorIndex = null;
+	let lastErrorChar = null;
+	let viewportAnchor; // Element to scroll into view for keyboard positioning
+	let scrollTrigger = 0; // Increment this to trigger viewport scroll
 
 	// Update keyboard layout when input method changes OR when switching to numeric
 	$: {
@@ -37,6 +42,89 @@
 		} else {
 			keyboardLayout = keyboardLayouts[$settings.inputMethod] || keyboardLayouts.pinyin;
 			isNumericKeyboard = false;
+		}
+	}
+
+	// Fade out verse selector gradually in intermediate/advanced stages to prevent cheating
+	$: {
+		const totalInputsRequired = learnFullInitials.length;
+		const typedRatio = totalInputsRequired > 0 ? (userInput.length / totalInputsRequired) : 0;
+		
+		if (currentStage === 'intermediate' || currentStage === 'advanced') {
+			// No fade below 25%, fully invisible at 50% or above
+			if (typedRatio <= 0.25) {
+				verseSelectorOpacity = 1;
+			} else if (typedRatio >= 0.5) {
+				verseSelectorOpacity = 0;
+			} else {
+				// Linear fade from 1 -> 0 as typedRatio goes 0.25 -> 0.5
+				verseSelectorOpacity = 1 - (typedRatio - 0.25) / 0.25;
+			}
+		} else {
+			// Ensure fully visible in basic mode
+			verseSelectorOpacity = 1;
+		}
+	}
+
+	// Scroll viewport to position content above keyboard
+	$: {
+		if (viewportAnchor && versesToLearn.length > 0 && !showModal) {
+			// Include scrollTrigger in reactive dependencies to trigger on errors
+			const _ = scrollTrigger;
+			
+			console.log('=== VIEWPORT SCROLL TRIGGER ===');
+			console.log('Anchor element:', viewportAnchor);
+			console.log('Anchor bounding rect:', viewportAnchor.getBoundingClientRect());
+			
+			setTimeout(() => {
+				console.log('=== EXECUTING SCROLL ===');
+				const anchorRect = viewportAnchor.getBoundingClientRect();
+				console.log('Before scroll - Anchor rect:', anchorRect);
+				console.log('Before scroll - Window scrollY:', window.scrollY);
+				console.log('Before scroll - Document scrollTop:', document.documentElement.scrollTop);
+				console.log('Viewport height:', window.innerHeight);
+				
+				// Find keyboard element (Svelte Keyboard component)
+				const keyboard = viewportAnchor.nextElementSibling;
+				if (keyboard) {
+					const keyboardRect = keyboard.getBoundingClientRect();
+					console.log('Keyboard element:', keyboard);
+					console.log('Keyboard rect:', keyboardRect);
+					console.log('Keyboard top position:', keyboardRect.top);
+					
+					// Calculate scroll position: we want the anchor to align with the keyboard's top edge
+					// The keyboard is fixed/sticky, so we scroll the anchor to match its viewport position
+					// scrollTarget = current scroll + (anchor position - desired position)
+					// desired position = keyboard top (where we want the anchor to be)
+					const scrollTarget = window.scrollY + (anchorRect.top - keyboardRect.top);
+					console.log('Calculated scroll target:', scrollTarget);
+					console.log('Current scrollY:', window.scrollY);
+					console.log('Anchor top from viewport:', anchorRect.top);
+					console.log('Keyboard top from viewport:', keyboardRect.top);
+					console.log('Scroll adjustment needed:', anchorRect.top - keyboardRect.top);
+					
+					window.scrollTo({ 
+						top: scrollTarget, 
+						behavior: 'smooth' 
+					});
+				} else {
+					console.log('WARNING: No keyboard element found after anchor');
+				}
+				
+				setTimeout(() => {
+					console.log('=== AFTER SCROLL (500ms) ===');
+					const newAnchorRect = viewportAnchor.getBoundingClientRect();
+					console.log('After scroll - Anchor rect:', newAnchorRect);
+					console.log('After scroll - Anchor top from viewport:', newAnchorRect.top);
+					console.log('After scroll - Window scrollY:', window.scrollY);
+					if (keyboard) {
+						const newKeyboardRect = keyboard.getBoundingClientRect();
+						console.log('After scroll - Keyboard rect:', newKeyboardRect);
+						console.log('After scroll - Keyboard top from viewport:', newKeyboardRect.top);
+						console.log('Alignment check - Anchor vs Keyboard:', newAnchorRect.top - newKeyboardRect.top);
+					}
+				}, 500);
+			}, 300);
 		}
 	}
 
@@ -133,8 +221,11 @@
 	}
 
 	function handleKeyInput(event) {
+		console.log('[Learn] ========== handleKeyInput CALLED ==========');
+		console.log('[Learn] Event:', event);
 		const key = event.detail;
 		console.log('[Learn] Keyboard key pressed:', key);
+		console.log('[Learn] Current userInput before processing:', userInput);
 
 		if (key === '⌫' || key === 'Backspace') {
 			// Backspace is disabled during learning - ignore
@@ -152,10 +243,93 @@
 		userInput += key;
 		console.log('[Learn] User input now:', userInput, 'expected:', learnFullInitials);
 
+		// Update error feedback for incorrect input
+		console.log('[Learn] Calling updateErrorFeedback after key press');
+		try {
+			updateErrorFeedback();
+			console.log('[Learn] updateErrorFeedback completed successfully');
+		} catch (error) {
+			console.error('[Learn] ERROR in updateErrorFeedback:', error);
+		}
+
 		// Auto-submit when input matches expected length
 		if (userInput.length === learnFullInitials.length) {
 			submitAnswer();
 		}
+	}
+
+	function updateErrorFeedback() {
+		console.log('=== UPDATE ERROR FEEDBACK CALLED ===');
+		console.log('userInput:', userInput);
+		console.log('learnFullInitials:', learnFullInitials);
+		console.log('userInput.length:', userInput.length);
+		console.log('learnFullInitials.length:', learnFullInitials.length);
+		
+		const inputMethod = $settings.inputMethod || 'pinyin';
+		console.log('inputMethod:', inputMethod);
+		
+		let latestErrorIndex = -1;
+		let latestErrorChar = '';
+		let mappedCharIndex = -1;
+
+		// Find the most recent (latest) error
+		for (let i = 0; i < userInput.length; i++) {
+			const expected = learnFullInitials[i];
+			const typed = userInput[i];
+			const expectedNorm = inputMethod === 'pinyin' ? expected.toLowerCase() : expected;
+			const typedNorm = inputMethod === 'pinyin' ? typed.toLowerCase() : typed;
+			
+			console.log(`Comparing index ${i}: typed="${typedNorm}" vs expected="${expectedNorm}"`);
+			
+			if (typedNorm !== expectedNorm) {
+				console.log(`ERROR FOUND at index ${i}: typed="${typedNorm}" != expected="${expectedNorm}"`);
+				latestErrorIndex = i;
+				latestErrorChar = expected;
+				mappedCharIndex = inputIndexToCharIndex[i] !== undefined ? inputIndexToCharIndex[i] : -1;
+			}
+		}
+
+		console.log('Latest error index:', latestErrorIndex);
+		console.log('Latest error char:', latestErrorChar);
+		console.log('Mapped char index:', mappedCharIndex);
+
+		// Update help text only when error changes
+		if (latestErrorIndex === -1) {
+			// No error - clear feedback
+			console.log('No errors found - clearing feedback');
+			feedbackMessage = '';
+			feedbackType = '';
+			lastErrorIndex = null;
+			lastErrorChar = null;
+		} else {
+			const chars = [...learnFullText];
+			const errorCharacter = mappedCharIndex !== -1 ? chars[mappedCharIndex] : '?';
+			
+			console.log('Error character:', errorCharacter);
+			console.log('Last error index:', lastErrorIndex);
+			console.log('Last error char:', lastErrorChar);
+			
+			// Only update if this is a new or different error
+			if (lastErrorIndex !== latestErrorIndex || lastErrorChar !== latestErrorChar) {
+				console.log('NEW/DIFFERENT ERROR - updating feedback');
+				feedbackMessage = t('incorrect_input')
+					.replace('{char}', errorCharacter)
+					.replace('{pos}', latestErrorIndex + 1)
+					.replace('{expected}', latestErrorChar);
+				feedbackType = 'error';
+				console.log('Feedback message:', feedbackMessage);
+				console.log('Feedback type:', feedbackType);
+				lastErrorIndex = latestErrorIndex;
+				lastErrorChar = latestErrorChar;
+				
+				// Trigger viewport scroll to reveal error feedback
+				scrollTrigger++;
+				console.log('Scroll trigger incremented to:', scrollTrigger);
+			} else {
+				console.log('Same error as before - not updating feedback');
+			}
+		}
+		console.log('=== END UPDATE ERROR FEEDBACK ===');
 	}
 
 	function submitAnswer() {
@@ -476,6 +650,16 @@
 		if (mappedValue) {
 			e.preventDefault();
 			userInput += mappedValue;
+			console.log('[Learn] Physical keyboard input:', userInput, 'expected:', learnFullInitials);
+			
+			// Update error feedback for incorrect input
+			try {
+				updateErrorFeedback();
+				console.log('[Learn] updateErrorFeedback completed from physical keyboard');
+			} catch (error) {
+				console.error('[Learn] ERROR in updateErrorFeedback from physical keyboard:', error);
+			}
+			
 			if (userInput.length === learnFullInitials.length) {
 				submitAnswer();
 			}
@@ -532,7 +716,12 @@
 		<!-- Verse Selector -->
 		<div class="learning-controls">
 			<label for="verse-selector">{t('select_verse')}</label>
-			<select id="verse-selector" bind:value={currentVerseIdx} on:change={(e) => selectVerse(parseInt(e.target.value))}>
+			<select 
+				id="verse-selector" 
+				bind:value={currentVerseIdx} 
+				on:change={(e) => selectVerse(parseInt(e.target.value))}
+				style="opacity: {verseSelectorOpacity}; transition: opacity 0.3s ease;"
+			>
 				{#each versesToLearn as verse, idx}
 					<option value={idx}>
 						{verse.bookName} {verse.chapterNumber}:{verse.verseNumber}
@@ -591,6 +780,9 @@
 					{feedbackMessage}
 				</div>
 			{/if}
+
+			<!-- Invisible viewport anchor for keyboard positioning -->
+			<div bind:this={viewportAnchor} class="viewport-anchor" aria-hidden="true"></div>
 
 			<!-- Onscreen Keyboard (no backspace/enter during learning) -->
 			<!-- Hide keyboard in intermediate mode when showRetryButton is true -->
@@ -791,6 +983,15 @@
 	[data-theme='dark'] .feedback.warning {
 		background: #e65100;
 		color: #ffb74d;
+	}
+
+	.viewport-anchor {
+		height: 1px;
+		width: 100%;
+		visibility: hidden;
+		pointer-events: none;
+		margin: 0;
+		padding: 0;
 	}
 
 	.control-buttons {
