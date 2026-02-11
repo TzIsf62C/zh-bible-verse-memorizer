@@ -22,9 +22,23 @@
 	let learnFullInitials = '';
 	let charToInputIndex = [];
 	let inputIndexToCharIndex = [];
+	let showModal = false;
+	let modalMessage = '';
+	let isNumericKeyboard = false;
 
-	// Update keyboard layout when input method changes
-	$: keyboardLayout = keyboardLayouts[$settings.inputMethod] || keyboardLayouts.pinyin;
+	// Update keyboard layout when input method changes OR when switching to numeric
+	$: {
+		const nextCharIndex = userInput.length;
+		const isNextCharNumber = nextCharIndex < learnFullInitials.length && /[0-9]/.test(learnFullInitials[nextCharIndex]);
+		
+		if (isNextCharNumber) {
+			keyboardLayout = keyboardLayouts.numeric;
+			isNumericKeyboard = true;
+		} else {
+			keyboardLayout = keyboardLayouts[$settings.inputMethod] || keyboardLayouts.pinyin;
+			isNumericKeyboard = false;
+		}
+	}
 
 	// Filter unlearned verses - verses WITHOUT lastReviewed dates are unlearned
 	$: {
@@ -62,6 +76,13 @@
 		showNextButton = false;
 		showRetryButton = false;
 		console.log('[Learn] Stage changed to', stage);
+	}
+	
+	function toggleIntermediateVariant() {
+		intermediateVariant = intermediateVariant === 'odd' ? 'even' : 'odd';
+		userInput = '';
+		feedbackMessage = '';
+		console.log('[Learn] Toggled intermediate variant to', intermediateVariant);
 	}
 
 	function initializeVerse(verse) {
@@ -173,29 +194,31 @@
 			console.log('[Learn] Success at', currentStage, 'stage');
 			
 			if (currentStage === 'basic') {
-				console.log('[Learn] Auto-advancing from basic to intermediate');
+				console.log('[Learn] Completed basic stage - showing modal');
+				modalMessage = t('great_job_basic');
+				showModal = true;
 				feedbackMessage = '';
 				feedbackType = '';
-				currentStage = 'intermediate';
 				userInput = '';
-				showNextButton = false;
-				showRetryButton = false;
 			} else if (currentStage === 'intermediate') {
-				console.log('[Learn] Auto-advancing from intermediate to advanced');
+				console.log('[Learn] Completed intermediate stage - showing modal');
+				modalMessage = t('great_job_intermediate');
+				showModal = true;
 				feedbackMessage = '';
 				feedbackType = '';
-				currentStage = 'advanced';
 				userInput = '';
-				showNextButton = false;
-				showRetryButton = false;
 			} else if (currentStage === 'advanced') {
 				console.log('[Learn] Completed advanced stage - verse learned');
-				feedbackMessage = `${t('congratulations_mastered')} (${accuracy}%)`;
-				feedbackType = 'success';
 				// Mark verse as learned
 				updateVerseProgress(getCurrentVerse());
-				showNextButton = true;
+				// Show modal for completion
+				modalMessage = `${t('congratulations_mastered')} (${accuracy}%)`;
+				showModal = true;
+				feedbackMessage = '';
+				feedbackType = '';
 				userInput = '';
+				// Set a flag to indicate we need to advance to next verse
+				window._advancedCompleted = true;
 			}
 		} else {
 			// Failed - show error feedback
@@ -210,13 +233,19 @@
 				}
 			}
 			if (currentStage === 'intermediate') {
-				intermediateVariant = intermediateVariant === 'odd' ? 'even' : 'odd';
-				console.log('[Learn] Toggled intermediate variant to', intermediateVariant);
+				// Show modal for intermediate failure - NO retry button below verse
+				modalMessage = `${t('nice_try')} (${accuracy}%)`;
+				showModal = true;
+				feedbackMessage = '';
+				feedbackType = '';
+				userInput = '';
+				// Don't set showRetryButton - modal handles retry
+			} else {
+				showRetryButton = true;
+				feedbackMessage = `${t('nice_try')} (${accuracy}%)`;
+				feedbackType = 'error';
+				userInput = '';
 			}
-			feedbackMessage = `${t('nice_try')} (${accuracy}%)`;
-			feedbackType = 'error';
-			showRetryButton = true;
-			userInput = '';
 		}
 	}
 
@@ -240,6 +269,53 @@
 		showNextButton = false;
 		showRetryButton = false;
 	}
+	
+	function closeModal() {
+		showModal = false;
+		
+		// Check if this was an advanced completion using our flag
+		if (window._advancedCompleted) {
+			window._advancedCompleted = false; // Clear the flag
+			// Advanced completion: move to next verse at basic stage
+			// Note: the completed verse has already been filtered out of versesToLearn
+			// so currentVerseIdx now points to the next verse (or is out of bounds)
+			if (versesToLearn.length > 0) {
+				// Select the first verse (which is now the "next" verse after filtering)
+				currentVerseIdx = 0;
+				selectVerse(0);
+				setStage('basic');
+				console.log('[Learn] Advanced completed - moved to next verse at basic stage');
+			} else {
+				feedbackMessage = t('completed_all_verses');
+				feedbackType = 'warning';
+				console.log('[Learn] Advanced completed - no more verses');
+			}
+		} else if (currentStage === 'basic') {
+			// Advance to next stage on success
+			currentStage = 'intermediate';
+			userInput = '';
+			feedbackMessage = '';
+			showNextButton = false;
+			showRetryButton = false;
+		} else if (currentStage === 'intermediate') {
+			// Check if this was a success or failure modal
+			if (modalMessage.includes(t('great_job_intermediate'))) {
+				// Success - advance to advanced
+				currentStage = 'advanced';
+				userInput = '';
+				feedbackMessage = '';
+				showNextButton = false;
+				showRetryButton = false;
+			} else {
+				// Failure - toggle variant and allow immediate retry (no retry button)
+				intermediateVariant = intermediateVariant === 'odd' ? 'even' : 'odd';
+				// Don't show retry button - user can type immediately
+				showRetryButton = false;
+				userInput = '';
+				feedbackMessage = '';
+			}
+		}
+	}
 
 	function handleNext() {
 		if (currentVerseIdx < versesToLearn.length - 1) {
@@ -261,12 +337,16 @@
 			const expected = learnFullInitials[map];
 			let className = 'verse-character';
 			let hidden = false;
+			let intermediateHidden = false;
 
 			// Determine visibility based on stage
 			if (currentStage === 'intermediate') {
 				const isOdd = ((map + 1) % 2) === 1;
 				const visibleByVariant = (intermediateVariant === 'odd') ? isOdd : !isOdd;
-				if (!visibleByVariant) hidden = true;
+				if (!visibleByVariant) {
+					hidden = true;
+					intermediateHidden = true;
+				}
 			} else if (currentStage === 'advanced') {
 				hidden = true;
 			}
@@ -278,9 +358,14 @@
 					const typedChar = inputMethod === 'pinyin' ? userInput[map].toLowerCase() : userInput[map];
 					const expectedChar = inputMethod === 'pinyin' ? expected.toLowerCase() : expected;
 					const isCorrect = typedChar === expectedChar;
-					return { char, className: className + (isCorrect ? ' correct' : ' incorrect'), hidden: false };
+					return { char, className: className + (isCorrect ? ' correct' : ' incorrect'), hidden: false, intermediateHidden: false };
 				} else {
-					return { char, className: className + ' hidden', hidden: true };
+					// Return different hidden state for intermediate vs advanced
+					if (intermediateHidden) {
+						return { char, className: className + ' intermediate-hidden', hidden: true, intermediateHidden: true };
+					} else {
+						return { char, className: className + ' hidden', hidden: true, intermediateHidden: false };
+					}
 				}
 			}
 
@@ -293,7 +378,7 @@
 				className += isCorrect ? ' correct' : ' incorrect';
 			}
 
-			return { char, className, hidden: false };
+			return { char, className, hidden: false, intermediateHidden: false };
 		} else {
 			// Punctuation/whitespace - complex visibility logic from original
 			let className = 'verse-character punctuation';
@@ -328,23 +413,29 @@
 			// Stage-specific logic for non-initial punctuation
 			if (!isInitialPunct) {
 				if (currentStage === 'basic') {
-					// Basic mode: show all punctuation adjacent to visible characters
+					// Basic mode: show all punctuation as correct (white)
 					shown = true;
-					className = 'verse-character correct';
+					className = 'verse-character punctuation correct';
 				} else if (currentStage === 'intermediate') {
 					// Intermediate: show if previous char is visible OR user has typed past it
 					const isOdd = ((prevMap + 1) % 2) === 1;
 					const visibleByVariant = (intermediateVariant === 'odd') ? isOdd : !isOdd;
 					if (visibleByVariant || (prevMap !== null && userInput.length > prevMap)) {
 						shown = true;
-						className = 'verse-character correct';
+						// Inherit opacity from preceding character
+						if (prevMap !== null && userInput.length > prevMap) {
+							className = 'verse-character punctuation correct';
+						} else {
+							// Preceding char is visible but not typed yet - use default opacity
+							className = 'verse-character punctuation';
+						}
 					}
 				} else if (currentStage === 'advanced') {
 					// Advanced: only show when user has typed past preceding character
 					if (prevMap !== null && userInput.length > prevMap) {
 						shown = true;
-						// In advanced mode, punctuation appears as white (correct) when revealed
-						className = 'verse-character correct';
+						// Punctuation appears as correct (white) when revealed
+						className = 'verse-character punctuation correct';
 					}
 				}
 			}
@@ -411,7 +502,16 @@
 		<button
 			class="mode-btn"
 			class:active={currentStage === 'intermediate'}
-			on:click={() => setStage('intermediate')}
+			on:click={() => {
+				console.log('[Learn] Intermediate button clicked, currentStage is:', currentStage);
+				if (currentStage === 'intermediate') {
+					console.log('[Learn] Already in intermediate, toggling variant');
+					toggleIntermediateVariant();
+				} else {
+					console.log('[Learn] Not in intermediate, setting stage');
+					setStage('intermediate');
+				}
+			}}
 		>
 			{t('intermediate')}
 		</button>
@@ -458,25 +558,17 @@
 					{/if}
 				</div>
 
-				<!-- Verse Display -->
+				<!-- Verse Display (includes inline reference) -->
 				<div class="verse-display">
 					{#each chars as char, i}
-						{#if i < refIndex}
-							{@const rendered = renderCharacter(char, i)}
-							{#if rendered.hidden}
-								<span class={rendered.className}>_</span>
-							{:else}
-								<span class={rendered.className}>{rendered.char}</span>
+						{@const rendered = renderCharacter(char, i)}
+						{#if rendered.hidden}
+							{#if rendered.intermediateHidden}
+								<!-- Intermediate mode: show full-width low line for hidden characters -->
+								<span class={rendered.className}>＿</span>
 							{/if}
-						{/if}
-					{/each}
-				</div>
-				
-				<!-- Verse Reference -->
-				<div class="verse-reference">
-					{#each chars as char, i}
-						{#if i > refIndex}
-							{@const rendered = renderCharacter(char, i)}
+							<!-- Advanced mode: show nothing (completely hidden) -->
+						{:else}
 							<span class={rendered.className}>{rendered.char}</span>
 						{/if}
 					{/each}
@@ -501,7 +593,13 @@
 			{/if}
 
 			<!-- Onscreen Keyboard (no backspace/enter during learning) -->
+			<!-- Hide keyboard in intermediate mode when showRetryButton is true -->
 			{#if !showNextButton && !showRetryButton}
+				<Keyboard layout={keyboardLayout} on:key={handleKeyInput} showBackspace={false} showEnter={false} />
+			{:else if currentStage === 'intermediate' && showRetryButton}
+				<!-- Keyboard hidden in intermediate until retry pressed -->
+			{:else if showRetryButton}
+				<!-- Show keyboard for other stages even with retry button -->
 				<Keyboard layout={keyboardLayout} on:key={handleKeyInput} showBackspace={false} showEnter={false} />
 			{/if}
 
@@ -517,6 +615,22 @@
 		{/if}
 	{/if}
 </div>
+
+<!-- Modal for Stage Completion -->
+{#if showModal}
+	<div class="modal-overlay" on:click={closeModal} on:keydown={(e) => e.key === 'Escape' && closeModal()}>
+		<div class="modal-content" on:click|stopPropagation>
+			<div class="modal-message">{modalMessage}</div>
+			{#if currentStage === 'intermediate' && modalMessage.includes(t('nice_try'))}
+				<!-- Intermediate failure: show Retry button -->
+				<button class="modal-btn" on:click={closeModal}>{t('retry')}</button>
+			{:else}
+				<!-- Success modals: show Continue button -->
+				<button class="modal-btn" on:click={closeModal}>{t('continue')}</button>
+			{/if}
+		</div>
+	</div>
+{/if}
 
 <style>
 	.learning-container {
@@ -593,32 +707,41 @@
 	.verse-character {
 		display: inline;
 		transition: all 0.3s;
+		opacity: 0.5;
 	}
 
 	.verse-character.correct {
 		color: var(--correct-color);
+		opacity: 1;
 	}
 
 	.verse-character.incorrect {
 		color: var(--error-color);
-	}
-
-	.verse-character.hidden {
-		color: transparent;
-		border-bottom: 2px solid var(--subtitle-color);
-		user-select: none;
+		opacity: 1;
 	}
 
 	.verse-character.punctuation {
-		color: var(--subtitle-color);
+		/* Punctuation inherits opacity from preceding character */
+		/* Default opacity when not typed */
+		opacity: 0.5;
 	}
-	
-	.verse-reference {
-		font-size: 1.2rem;
-		text-align: center;
-		color: var(--subtitle-color);
-		margin-top: -0.5rem;
-		margin-bottom: 1rem;
+
+	.verse-character.punctuation.correct {
+		/* When punctuation is revealed (preceding char typed), show as white */
+		color: var(--correct-color);
+		opacity: 1;
+	}
+
+	.verse-character.hidden {
+		/* Advanced mode: completely invisible */
+		visibility: hidden;
+	}
+
+	.verse-character.intermediate-hidden {
+		/* Intermediate mode: show underscore placeholder */
+		visibility: visible;
+		opacity: 0.5;
+		color: var(--text-color);
 	}
 
 	.visually-hidden-input {
@@ -713,5 +836,49 @@
 		left: -9999px;
 		width: 1px;
 		height: 1px;
+	}
+	
+	.modal-overlay {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background: rgba(0, 0, 0, 0.5);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		z-index: 1000;
+	}
+	
+	.modal-content {
+		background: var(--panel-background);
+		padding: 2rem;
+		border-radius: 8px;
+		box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+		max-width: 500px;
+		text-align: center;
+	}
+	
+	.modal-message {
+		font-size: 1.2rem;
+		margin-bottom: 1.5rem;
+		color: var(--text-color);
+	}
+	
+	.modal-btn {
+		padding: 0.75rem 2rem;
+		background: var(--accent-color);
+		color: white;
+		border: none;
+		border-radius: 4px;
+		cursor: pointer;
+		font-size: 1rem;
+		font-weight: 500;
+		transition: all 0.3s;
+	}
+	
+	.modal-btn:hover {
+		opacity: 0.9;
 	}
 </style>

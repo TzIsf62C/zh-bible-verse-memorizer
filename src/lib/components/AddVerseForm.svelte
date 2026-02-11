@@ -103,6 +103,16 @@
 			bookInitialsAuto = false;
 			bookInitials += key;
 			keyboardInput = bookInitials;
+		} else if (activeInput.id === 'chapterNumber') {
+			// Only accept numeric keys
+			if (/^[0-9]$/.test(key)) {
+				chapterNumber += key;
+			}
+		} else if (activeInput.id === 'verseNumber') {
+			// Only accept numeric keys
+			if (/^[0-9]$/.test(key)) {
+				verseNumber += key;
+			}
 		}
 	}
 
@@ -114,6 +124,10 @@
 			bookInitialsAuto = false;
 			bookInitials = bookInitials.slice(0, -1);
 			keyboardInput = bookInitials;
+		} else if (activeInput.id === 'chapterNumber') {
+			chapterNumber = chapterNumber.slice(0, -1);
+		} else if (activeInput.id === 'verseNumber') {
+			verseNumber = verseNumber.slice(0, -1);
 		}
 	}
 
@@ -188,31 +202,39 @@
 	function updateBookSuggestions(inputValue = '') {
 		const query = (inputValue || '').trim().toLowerCase();
 		console.log('[AddVerse] Book name input changed:', inputValue);
-		if (!query) {
-			filteredBookOptions = bookOptions;
-			return;
+		
+		const MAX_FILTERED_RESULTS = 20;
+		let booksToDisplay = [];
+		
+		// Condition 1: If query is empty, show ALL books for browsing
+		if (query.length === 0) {
+			booksToDisplay = bibleBooks;
+		} else {
+			// Condition 2: Filter by Hanzi OR Pinyin and limit results
+			booksToDisplay = bibleBooks
+				.filter((book) => 
+					book.hanzi.includes(inputValue) || // Direct match for Chinese characters
+					(book.pinyin && book.pinyin.toLowerCase().includes(query)) // Case-insensitive for pinyin
+				)
+				.slice(0, MAX_FILTERED_RESULTS);
 		}
-
-		const exactPinyinMatch = bibleBooks.find(
-			(book) => book.pinyin && book.pinyin.toLowerCase() === query
-		);
-		if (exactPinyinMatch && inputValue.length === exactPinyinMatch.pinyin.length) {
-			bookName = exactPinyinMatch.hanzi;
-			updateBookInitialsFromBookName(true);
-			return;
+		
+		filteredBookOptions = booksToDisplay.map((book) => book.hanzi);
+		console.log('[AddVerse] Filtered book options:', filteredBookOptions);
+	}
+	
+	function selectBookSuggestion(selectedHanzi) {
+		bookName = selectedHanzi;
+		// Auto-fill book initials based on input method
+		const book = bibleBooks.find((b) => b.hanzi === selectedHanzi);
+		if (book) {
+			bookInitials = getBookInitialsForMethod(book, currentInputMethod);
+			bookInitialsAuto = true;
+			console.log('[AddVerse] Selected book:', selectedHanzi, 'Initials:', bookInitials);
 		}
-
-		const matches = bibleBooks.filter(
-			(book) =>
-				book.hanzi.includes(inputValue) ||
-				(book.pinyin && book.pinyin.toLowerCase().startsWith(query))
-		);
-
-		filteredBookOptions = [
-			...new Set(
-				matches.flatMap((book) => [book.hanzi, book.pinyin].filter(Boolean))
-			)
-		];
+		filteredBookOptions = []; // Hide suggestions after selection
+		activeInput = null;
+		showKeyboard = null;
 	}
 
 	function saveVerse() {
@@ -319,12 +341,18 @@
 
 	function toggleBook(bookKey) {
 		expandedAll = false;
-		console.log('[AddVerse] Toggle book', bookKey);
+		console.log('[AddVerse] Toggle book called', {
+			bookKey,
+			currentExpandedBooks: expandedBooks,
+			isCurrentlyExpanded: expandedBooks.includes(bookKey)
+		});
 		if (expandedBooks.includes(bookKey)) {
 			expandedBooks = expandedBooks.filter((book) => book !== bookKey);
+			console.log('[AddVerse] Book collapsed, new expandedBooks:', expandedBooks);
 			return;
 		}
 		expandedBooks = [...expandedBooks, bookKey];
+		console.log('[AddVerse] Book expanded, new expandedBooks:', expandedBooks);
 	}
 
 	function getChapterKey(bookKey, chapterNumber) {
@@ -334,23 +362,41 @@
 	function toggleChapter(bookKey, chapterNumber) {
 		expandedAll = false;
 		const chapterKey = getChapterKey(bookKey, chapterNumber);
+		console.log('[AddVerse] Toggle chapter called', {
+			bookKey,
+			chapterNumber,
+			chapterKey,
+			currentExpandedChapters: expandedChapters,
+			isCurrentlyExpanded: expandedChapters.includes(chapterKey)
+		});
 		if (expandedChapters.includes(chapterKey)) {
 			expandedChapters = expandedChapters.filter((key) => key !== chapterKey);
+			console.log('[AddVerse] Chapter collapsed, new expandedChapters:', expandedChapters);
 			return;
 		}
 		expandedChapters = [...expandedChapters, chapterKey];
+		console.log('[AddVerse] Chapter expanded, new expandedChapters:', expandedChapters);
 	}
 
 	function toggleVerse(verseId) {
+		console.log('[AddVerse] Toggle verse called', {
+			verseId,
+			currentExpandedVerseId: expandedVerseId
+		});
 		expandedVerseId = expandedVerseId === verseId ? null : verseId;
+		console.log('[AddVerse] New expandedVerseId:', expandedVerseId);
 	}
 
 	function isBookExpanded(bookKey) {
-		return expandedAll || expandedBooks.includes(bookKey);
+		const result = expandedAll || expandedBooks.includes(bookKey);
+		console.log('[AddVerse] isBookExpanded check', { bookKey, expandedAll, expandedBooks, result });
+		return result;
 	}
 
 	function isChapterExpanded(bookKey, chapterNumber) {
-		return expandedAll || expandedChapters.includes(getChapterKey(bookKey, chapterNumber));
+		const result = expandedAll || expandedChapters.includes(getChapterKey(bookKey, chapterNumber));
+		console.log('[AddVerse] isChapterExpanded check', { bookKey, chapterNumber, expandedAll, expandedChapters, result });
+		return result;
 	}
 
 	function buildGroupedVerses(list) {
@@ -392,14 +438,14 @@
 				<textarea id="verseText" bind:value={verseText} rows="4" placeholder="粘貼中文經文..."></textarea>
 			</div>
 
-			<div class="field">
+			<div class="field" style="position: relative;">
 				<label for="bookName">{t('chinese_book_name')}</label>
 				<input
 					type="text"
 					id="bookName"
 					bind:value={bookName}
-					list="bookNames"
 					placeholder={t('chinese_book_name')}
+					autocomplete="off"
 					on:input={() => {
 						bookInitialsAuto = true;
 						updateBookSuggestions(bookName);
@@ -408,13 +454,29 @@
 					on:focus={() => {
 						activeInput = null;
 						showKeyboard = null;
+						updateBookSuggestions(bookName);
+					}}
+					on:blur={() => {
+						setTimeout(() => {
+							filteredBookOptions = [];
+						}, 200);
 					}}
 				/>
-				<datalist id="bookNames">
-					{#each filteredBookOptions as option}
-						<option value={option}></option>
-					{/each}
-				</datalist>
+				{#if filteredBookOptions.length > 0}
+					<div class="autocomplete-suggestions">
+						{#each filteredBookOptions as option}
+							<div 
+								class="suggestion-item" 
+								on:click={() => selectBookSuggestion(option)}
+								on:keydown={(e) => e.key === 'Enter' && selectBookSuggestion(option)}
+								role="button"
+								tabindex="0"
+							>
+								{option}
+							</div>
+						{/each}
+					</div>
+				{/if}
 			</div>
 
 			<div class="form-row">
@@ -506,7 +568,7 @@
 						on:click={handleVerseInitialsClick}
 					/>
 					{#if showKeyboard === 'verse'}
-						<Keyboard layout={keyboardLayout} on:key={handleKeyboardKey} />
+						<Keyboard layout={keyboardLayout} on:key={handleKeyboardKey} showEnter={true} />
 					{/if}
 				</div>
 				<div class="field">
@@ -520,7 +582,7 @@
 						on:click={handleBookInitialsClick}
 					/>
 					{#if showKeyboard === 'book'}
-						<Keyboard layout={keyboardLayout} on:key={handleKeyboardKey} />
+						<Keyboard layout={keyboardLayout} on:key={handleKeyboardKey} showEnter={true} />
 					{/if}
 				</div>
 			{:else if currentInputMethod === 'cangjie'}
@@ -536,7 +598,7 @@
 						on:click={handleVerseInitialsClick}
 					/>
 					{#if showKeyboard === 'verse'}
-						<Keyboard layout={keyboardLayout} on:key={handleKeyboardKey} />
+						<Keyboard layout={keyboardLayout} on:key={handleKeyboardKey} showEnter={true} />
 					{/if}
 				</div>
 				<div class="field">
@@ -550,7 +612,7 @@
 						on:click={handleBookInitialsClick}
 					/>
 					{#if showKeyboard === 'book'}
-						<Keyboard layout={keyboardLayout} on:key={handleKeyboardKey} />
+						<Keyboard layout={keyboardLayout} on:key={handleKeyboardKey} showEnter={true} />
 					{/if}
 				</div>
 			{/if}
@@ -734,6 +796,39 @@
 	.field textarea:focus {
 		outline: none;
 		border-color: var(--accent-color);
+	}
+	
+	/* Autocomplete suggestions */
+	.autocomplete-suggestions {
+		position: absolute;
+		z-index: 10;
+		width: 100%;
+		max-height: 200px;
+		overflow-y: auto;
+		border: 1px solid var(--file-border);
+		background-color: var(--panel-background);
+		box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+		top: 100%;
+		left: 0;
+	}
+	
+	.suggestion-item {
+		padding: 8px 10px;
+		cursor: pointer;
+		color: var(--text-color);
+		border-bottom: 1px solid var(--file-border);
+		background-color: var(--panel-background);
+	}
+	
+	.suggestion-item:hover,
+	.suggestion-item:focus {
+		background-color: var(--accent-color);
+		color: var(--correct-color);
+		outline: none;
+	}
+	
+	.autocomplete-suggestions .suggestion-item:last-child {
+		border-bottom: none;
 	}
 
 	.helper-text {

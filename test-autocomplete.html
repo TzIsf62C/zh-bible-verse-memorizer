@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Book Autocomplete Test</title>
+</head>
+<body>
+    <h1>Book Autocomplete Filter Test</h1>
+    <div>
+        <label>Test Input: <input type="text" id="testInput" value="m" /></label>
+        <button onclick="runTest()">Run Test</button>
+    </div>
+    <pre id="results"></pre>
+
+    <script>
+        const BIBLE_BOOKS_DATA = [
+            { simplified: '民数记', traditional: '民數記', pinyin: 'minshuji', initials: 'MSJ' },
+            { simplified: '马太福音', traditional: '馬太福音', pinyin: 'mataifuyin', initials: 'MTFY' },
+            { simplified: '马可福音', traditional: '馬可福音', pinyin: 'makefuyin', initials: 'MKFY' },
+            { simplified: '弥迦书', traditional: '彌迦書', pinyin: 'mijiashu', initials: 'MJS' },
+            { simplified: '玛拉基书', traditional: '瑪拉基書', pinyin: 'malajishu', initials: 'MLJS' },
+            { simplified: '路加福音', traditional: '路加福音', pinyin: 'lujiafuyin', initials: 'LJFY' },
+        ];
+
+        const bibleBooks = BIBLE_BOOKS_DATA.map(book => ({
+            hanzi: book.traditional,
+            ...book
+        }));
+
+        function updateBookSuggestions_BROKEN(inputValue = '') {
+            const query = (inputValue || '').trim().toLowerCase();
+            const MAX_FILTERED_RESULTS = 20;
+            let booksToDisplay = [];
+            
+            if (query.length === 0) {
+                booksToDisplay = bibleBooks;
+            } else {
+                // BROKEN: Chinese characters don't become Latin when lowercased
+                booksToDisplay = bibleBooks
+                    .filter((book) => 
+                        book.hanzi.toLowerCase().includes(query) || 
+                        (book.pinyin && book.pinyin.toLowerCase().includes(query))
+                    )
+                    .slice(0, MAX_FILTERED_RESULTS);
+            }
+            
+            return booksToDisplay.map((book) => book.hanzi);
+        }
+
+        function updateBookSuggestions_FIXED(inputValue = '') {
+            const query = (inputValue || '').trim().toLowerCase();
+            const MAX_FILTERED_RESULTS = 20;
+            let booksToDisplay = [];
+            
+            if (query.length === 0) {
+                booksToDisplay = bibleBooks;
+            } else {
+                // FIXED: Only check pinyin for Latin input
+                booksToDisplay = bibleBooks
+                    .filter((book) => 
+                        book.hanzi.includes(inputValue) || // Direct match for Chinese
+                        (book.pinyin && book.pinyin.toLowerCase().includes(query)) // Case-insensitive for pinyin
+                    )
+                    .slice(0, MAX_FILTERED_RESULTS);
+            }
+            
+            return booksToDisplay.map((book) => book.hanzi);
+        }
+
+        function runTest() {
+            const input = document.getElementById('testInput').value;
+            const brokenResults = updateBookSuggestions_BROKEN(input);
+            const fixedResults = updateBookSuggestions_FIXED(input);
+            
+            const output = `
+Input: "${input}"
+Query (lowercased): "${input.trim().toLowerCase()}"
+
+BROKEN IMPLEMENTATION:
+  Results count: ${brokenResults.length}
+  Results: ${JSON.stringify(brokenResults, null, 2)}
+
+FIXED IMPLEMENTATION:
+  Results count: ${fixedResults.length}
+  Results: ${JSON.stringify(fixedResults, null, 2)}
+
+Expected books starting with 'm':
+  - 民數記 (minshuji)
+  - 馬太福音 (mataifuyin)
+  - 馬可福音 (makefuyin)
+  - 彌迦書 (mijiashu)
+  - 瑪拉基書 (malajishu)
+`;
+            document.getElementById('results').textContent = output;
+        }
+
+        // Run test on load
+        runTest();
+    </script>
+</body>
+</html>
