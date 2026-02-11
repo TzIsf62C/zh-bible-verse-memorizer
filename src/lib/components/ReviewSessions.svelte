@@ -6,6 +6,7 @@
 	import { sortVersesByBibleOrder } from '$lib/utils/bibleBooks';
 	import IndividualReview from './IndividualReview.svelte';
 	import SingleTextReview from './SingleTextReview.svelte';
+	import Modal from './Modal.svelte';
 
 	// State machine: 'selection' | 'reviewMode' | 'reviewOrder' | 'reviewing'
 	let state = 'selection';
@@ -13,6 +14,10 @@
 	let selectedVerses = [];
 	let selectedCollectionId = '';
 	let sortedVerses = [];
+	
+	// Modal state
+	let showModal = false;
+	let modalMessage = '';
 
 	// Get learned verses (verses that have been reviewed at least once)
 	$: learnedVerses = $verses.filter(v => v.lastReviewed);
@@ -44,7 +49,8 @@
 
 	function reviewDueVerses() {
 		if (dueVerses.length === 0) {
-			alert(t('no_learned_verses'));
+			modalMessage = t('no_learned_verses');
+			showModal = true;
 			return;
 		}
 
@@ -54,13 +60,15 @@
 
 	function reviewCollection() {
 		if (!selectedCollectionId) {
-			alert(t('select_collection_to_review'));
+			modalMessage = t('select_collection_to_review');
+			showModal = true;
 			return;
 		}
 
 		const collection = $collections.find(c => c.id === selectedCollectionId);
 		if (!collection) {
-			alert(t('collection_not_found'));
+			modalMessage = t('collection_not_found');
+			showModal = true;
 			return;
 		}
 
@@ -70,7 +78,8 @@
 			.filter(v => v && v.lastReviewed);
 
 		if (collectionLearnedVerses.length === 0) {
-			alert(t('no_learned_verses_collection'));
+			modalMessage = t('no_learned_verses_collection');
+			showModal = true;
 			return;
 		}
 
@@ -91,7 +100,8 @@
 
 	function reviewSelected() {
 		if (selectedVerses.length === 0) {
-			alert(t('select_verse_to_review'));
+			modalMessage = t('select_verse_to_review');
+			showModal = true;
 			return;
 		}
 
@@ -285,11 +295,18 @@
 	{/if}
 </div>
 
+<!-- Alert Modal -->
+<Modal 
+	show={showModal} 
+	message={modalMessage}
+	on:close={() => showModal = false}
+/>
+
 <style>
 	.review-container {
-		max-width: 1000px;
 		margin: 0 auto;
 		padding: 1rem;
+		width: 100%;
 	}
 
 	h2 {

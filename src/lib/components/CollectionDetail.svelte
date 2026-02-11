@@ -3,12 +3,15 @@
 	import { collections } from '$lib/stores/collections';
 	import { verses } from '$lib/stores/verses';
 	import { t } from '$lib/i18n';
+	import Modal from './Modal.svelte';
 	
 	export let collection;
 	
 	const dispatch = createEventDispatcher();
 	
 	let selectedVerseId = '';
+	let showModal = false;
+	let modalMessage = '';
 	
 	$: collectionVerses = collection.verseIds
 		?.map(id => $verses.find(v => v.id === id))
@@ -20,7 +23,8 @@
 	
 	function addVerseToCollection() {
 		if (!selectedVerseId) {
-			alert(t('select_verse'));
+			modalMessage = t('select_verse');
+			showModal = true;
 			return;
 		}
 		
@@ -160,6 +164,12 @@
 		{/if}
 	</div>
 </div>
+
+<Modal 
+	show={showModal} 
+	message={modalMessage}
+	on:confirm={() => showModal = false}
+/>
 
 <style>
 	.collection-detail {

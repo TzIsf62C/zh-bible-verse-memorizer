@@ -4,6 +4,7 @@
 	import { settings } from '$lib/stores/settings';
 	import { t } from '$lib/i18n';
 	import Keyboard from './Keyboard.svelte';
+	import Modal from './Modal.svelte';
 	import { keyboardLayouts } from '$lib/utils/keyboardLayouts';
 	import { zhuyinKeyMap, cangjieKeyMap } from '$lib/utils/inputMaps';
 	import {
@@ -25,6 +26,11 @@
 
 	let showKeyboard = null; // null, 'verse', 'book'
 	let activeInput = null;
+	
+	let showModal = false;
+	let modalMessage = '';
+	let modalType = 'alert';
+	let confirmAction = null;
 
 	let editingId = null;
 	let versesList = [];
@@ -305,17 +311,20 @@
 			inputMethod: currentInputMethod
 		});
 		if (!verseText.trim() || !bookName.trim() || !chapterNumber || !verseNumber) {
-			alert(t('fill_all_fields'));
+			modalMessage = t('fill_all_fields');
+			showModal = true;
 			return;
 		}
 
 		if (!verseInitials.trim() || !bookInitials.trim()) {
-			alert(t('fill_all_fields'));
+			modalMessage = t('fill_all_fields');
+			showModal = true;
 			return;
 		}
 
 		if (isNaN(parseInt(chapterNumber)) || isNaN(parseInt(verseNumber))) {
-			alert(t('chapter_verse_numbers'));
+			modalMessage = t('chapter_verse_numbers');
+			showModal = true;
 			return;
 		}
 
@@ -340,10 +349,12 @@
 
 		if (editingId) {
 			verses.update((list) => list.map((v) => (v.id === editingId ? newVerse : v)));
-			alert(t('verse_updated'));
+			modalMessage = t('verse_updated');
+			showModal = true;
 		} else {
 			verses.update((list) => [...list, newVerse]);
-			alert(t('verse_saved'));
+			modalMessage = t('verse_saved');
+			showModal = true;
 		}
 
 		// Add to collection if selected
@@ -361,10 +372,13 @@
 	}
 
 	function deleteVerse(id) {
-		if (!confirm(t('delete_confirmation'))) return;
-
-		verses.update((list) => list.filter((v) => v.id !== id));
-		expandedVerseId = null;
+		modalMessage = t('delete_confirmation');
+		modalType = 'confirm';
+		confirmAction = () => {
+			verses.update((list) => list.filter((v) => v.id !== id));
+			expandedVerseId = null;
+		};
+		showModal = true;
 	}
 
 	function editVerse(id) {
@@ -387,6 +401,21 @@
 
 		// Scroll to top
 		window.scrollTo({ top: 0, behavior: 'smooth' });
+	}
+
+	function handleModalConfirm() {
+		showModal = false;
+		if (confirmAction) {
+			confirmAction();
+			confirmAction = null;
+		}
+		modalType = 'alert';
+	}
+
+	function closeModal() {
+		showModal = false;
+		modalType = 'alert';
+		confirmAction = null;
 	}
 
 	function clearForm() {
@@ -834,6 +863,14 @@
 		</div>
 	</div>
 </div>
+
+<Modal 
+	show={showModal} 
+	message={modalMessage}
+	type={modalType}
+	on:confirm={handleModalConfirm}
+	on:cancel={closeModal}
+/>
 
 <style>
 	.add-verse-container {

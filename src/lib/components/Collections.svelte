@@ -3,14 +3,23 @@
 	import { verses } from '$lib/stores/verses';
 	import { t } from '$lib/i18n';
 	import CollectionDetail from './CollectionDetail.svelte';
+	import Modal from './Modal.svelte';
 	
 	let newCollectionTitle = '';
 	let selectedCollectionId = null;
 	
+	// Modal state
+	let showModal = false;
+	let modalMessage = '';
+	let modalType = 'info';
+	let modalButtons = [];
+	let pendingDeleteId = null;
+	
 	function createCollection() {
 		const title = newCollectionTitle.trim();
 		if (!title) {
-			alert(t('enter_title'));
+			modalMessage = t('enter_title');
+			showModal = true;
 			return;
 		}
 		
@@ -60,13 +69,26 @@
 	}
 	
 	function deleteCollection(id) {
-		const confirmed = confirm(t('delete_collection_confirmation'));
-		if (!confirmed) return;
-		
-		collections.update(cols => cols.filter(c => c.id !== id));
-		if (selectedCollectionId === id) {
-			selectedCollectionId = null;
+		pendingDeleteId = id;
+		modalMessage = t('delete_collection_confirmation');
+		modalType = 'confirm';
+		modalButtons = [
+			{ label: t('delete'), action: 'delete', variant: 'danger' },
+			{ label: t('cancel'), action: 'cancel', variant: 'secondary' }
+		];
+		showModal = true;
+	}
+	
+	function handleModalClick(event) {
+		if (event.detail.action === 'delete' && pendingDeleteId) {
+			collections.update(cols => cols.filter(c => c.id !== pendingDeleteId));
+			if (selectedCollectionId === pendingDeleteId) {
+				selectedCollectionId = null;
+			}
+			pendingDeleteId = null;
 		}
+		modalType = 'info';
+		modalButtons = [];
 	}
 	
 	function viewCollection(id) {
@@ -159,6 +181,15 @@
 		<CollectionDetail collection={selectedCollection} on:close={closeDetail} />
 	{/if}
 </div>
+
+<Modal 
+	show={showModal} 
+	message={modalMessage}
+	type={modalType}
+	buttons={modalButtons}
+	on:click={handleModalClick}
+	on:close={() => { showModal = false; modalType = 'info'; modalButtons = []; }}
+/>
 
 <style>
 	.collections-container {

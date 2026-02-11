@@ -4,10 +4,14 @@
 	import { settings } from '$lib/stores/settings';
 	import { t } from '$lib/i18n';
 	import { spacedRepetitionBinary } from '$lib/utils/spacedRepetition';
+	import Modal from './Modal.svelte';
 
 	export let verses = [];
 
 	const dispatch = createEventDispatcher();
+
+	let showCompletionMsg = false;
+	let completionMessage = '';
 
 	let currentIndex = 0;
 	let userInput = '';
@@ -120,7 +124,12 @@
 		const msg = successCount > 0
 			? t('congratulations_reviewed_count', { count: successCount })
 			: t('congratulations_reviewed');
-		alert(msg);
+		completionMessage = msg;
+		showCompletionMsg = true;
+	}
+
+	function handleCompletionConfirm() {
+		showCompletionMsg = false;
 		dispatch('complete');
 	}
 
@@ -214,6 +223,12 @@
 		</div>
 	{/if}
 </div>
+
+<Modal 
+	show={showCompletionMsg} 
+	message={completionMessage}
+	on:confirm={handleCompletionConfirm}
+/>
 
 <style>
 	.single-text-review {

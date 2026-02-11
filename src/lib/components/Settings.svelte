@@ -2,11 +2,17 @@
 	import { settings } from '$lib/stores/settings';
 	import { t } from '$lib/i18n';
 	import { browser } from '$app/environment';
+	import Modal from './Modal.svelte';
 	
 	let updateStatus = '';
 	let updateStatusType = 'info'; // 'info', 'success', 'error'
 	let waitingWorker = null;
 	let checkingUpdate = false;
+	
+	let showModal = false;
+	let modalMessage = '';
+	let modalType = 'alert';
+	let confirmAction = null;
 	
 	function updateSetting(key, value) {
 		console.log('[Settings] Update', { key, value });
@@ -21,7 +27,8 @@
 	
 	function showTutorial() {
 		// TODO: Implement tutorial modal
-		alert('Tutorial feature will be implemented');
+		modalMessage = 'Tutorial feature will be implemented';
+		showModal = true;
 	}
 	
 	async function checkForUpdates() {
@@ -91,13 +98,30 @@
 	}
 	
 	function clearAllData() {
-		const confirmed = confirm(t('clear_data_confirm'));
-		if (confirmed) {
+		modalMessage = t('clear_data_confirm');
+		modalType = 'confirm';
+		confirmAction = () => {
 			if (browser) {
 				localStorage.clear();
 				window.location.reload();
 			}
+		};
+		showModal = true;
+	}
+	
+	function handleModalConfirm() {
+		showModal = false;
+		if (confirmAction) {
+			confirmAction();
+			confirmAction = null;
 		}
+		modalType = 'alert';
+	}
+	
+	function closeModal() {
+		showModal = false;
+		modalType = 'alert';
+		confirmAction = null;
 	}
 	
 	// Check for updates silently on mount (once per week)
@@ -387,6 +411,14 @@
 		<p>Copyright © 2025 TzIsf62C</p>
 	</div>
 </div>
+
+<Modal 
+	show={showModal} 
+	message={modalMessage}
+	type={modalType}
+	on:confirm={handleModalConfirm}
+	on:cancel={closeModal}
+/>
 
 <style>
 	.settings-container {
