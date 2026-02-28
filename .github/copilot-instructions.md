@@ -264,6 +264,30 @@ Edit `src/lib/utils/spacedRepetition.js`:
 - [ ] Verify all modals work (no browser alerts/confirms)
 - [ ] Test on mobile viewport (responsive design)
 
+## Version Control & Backup Practices
+
+### DO NOT Create Backup Files
+- **This project uses Git** - all file history is tracked in version control
+- **Never create `.backup`, `.backup2`, etc. files** - they clutter the project and are redundant
+- Trust Git's ability to revert changes: `git checkout <file>` or `git reset`
+- View file history with: `git log -p <file>` or `git diff`
+
+### When Making Significant Changes
+1. **Use Git branches** for experimental work:
+   ```bash
+   git checkout -b feature/my-changes
+   ```
+2. **Make atomic commits** with clear messages:
+   ```bash
+   git commit -m "Refactor: Simplify AddVerseForm keyboard handling"
+   ```
+3. **Only ask user** if they want a backup before major destructive refactors (rare)
+
+### If User Explicitly Requests Backup
+- Create ONE backup with descriptive name: `filename.svelte.pre-refactor`
+- Document what the backup contains
+- Suggest deleting it after changes are confirmed working
+
 ## Critical Gotchas
 - **localStorage limits**: ~5-10MB per domain; export data regularly
 - **Service worker caching**: Update `CACHE_NAME` in `sw.js` when deploying new versions
