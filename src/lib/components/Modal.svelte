@@ -19,6 +19,14 @@
 
 	function close() {
 		dispatch('close');
+		dispatch('cancel');
+	}
+
+	function confirm() {
+		dispatch('confirm');
+		if (type === 'confirm') {
+			show = false;
+		}
 	}
 
 	function handleOverlayClick() {
@@ -57,6 +65,13 @@
 							{button.label}
 						</button>
 					{/each}
+				{:else if type === 'confirm'}
+					<button class="modal-btn primary" on:click={confirm}>
+						{t('yes')}
+					</button>
+					<button class="modal-btn secondary" on:click={close}>
+						{t('no')}
+					</button>
 				{:else}
 					<button class="modal-btn primary" on:click={close}>
 						{t('ok')}

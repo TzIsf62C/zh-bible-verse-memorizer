@@ -248,6 +248,11 @@ Edit `src/lib/utils/spacedRepetition.js`:
 - **Theme variables**: `var(--accent-color)`, `var(--app-background)`, etc.
 - **Mobile-first**: Base styles for mobile, `@media (min-width: 768px)` for desktop
 - **Font**: Noto Sans SC loaded from `static/fonts/` for offline Chinese rendering
+- **Avoid excessive div embedding**: Keep HTML structure flat and semantic; use CSS Grid/Flexbox instead of wrapper divs when possible
+- **Mobile padding/margins**: Reduce padding and margins on mobile screens (max-width: 767px) to maximize usable space
+  - Example: `padding: 1rem` on desktop becomes `padding: 0.5rem` on mobile
+  - Remove unnecessary horizontal margins on mobile to prevent overflow
+  - Use `@media (max-width: 767px)` for mobile-specific adjustments
 
 ### Testing Checklist
 - [ ] Test all three input methods (Pinyin, Zhuyin, Cangjie)

@@ -54,6 +54,7 @@ export const translations = {
 		collapse_all: 'Collapse All',
 		chapter: 'Chapter',
 		chapter_heading: 'Chapter',
+		chapter_suffix: '',
 		chinese_verse_text: 'Chinese Verse Text',
 		chinese_book_name: 'Chinese Book Name',
 		verse: 'Verse',
@@ -161,6 +162,7 @@ export const translations = {
 		hour: 'hour',
 		hours: 'hours',
 		learned: 'learned',
+		learned_tag: 'Learned',
 		verses: 'verses',
 		result: 'Result',
 		accuracy: 'Accuracy',
@@ -210,6 +212,7 @@ export const translations = {
 		reset_review_data_message: 'This verse has existing review history. Would you like to reset the review data?',
 		yes: 'Yes',
 		no: 'No',
+		ok: 'OK',
 		
 		// Update checks
 		checking_updates: 'Checking...',
@@ -325,6 +328,7 @@ export const translations = {
 		collapse_all: '全部折叠',
 		chapter: '章号',
 		chapter_heading: '第',
+		chapter_suffix: ' 章',
 		chinese_verse_text: '中文经文',
 		chinese_book_name: '中文书名',
 		verse: '节号',
@@ -431,8 +435,7 @@ export const translations = {
 		days: '天',
 		hour: '小时',
 		hours: '小时',
-		learned: '已学习',
-		verses: '节',
+		learned: '已学习',		learned_tag: '已学',		verses: '节',
 		result: '结果',
 		accuracy: '正确率',
 		incorrect_input: '在"{char}"处输入错误（第{pos}个），应该是"{expected}"。',
@@ -481,6 +484,7 @@ export const translations = {
 		reset_review_data_message: '此经文已有复习记录。您想重置复习数据吗？',
 		yes: '是',
 		no: '否',
+		ok: '确定',
 		
 		// Update checks
 		checking_updates: '正在检查...',
@@ -596,6 +600,7 @@ export const translations = {
 		collapse_all: '全部折疊',
 		chapter: '章號',
 		chapter_heading: '第',
+		chapter_suffix: ' 章',
 		chinese_verse_text: '中文經文',
 		chinese_book_name: '中文書名',
 		verse: '節號',
@@ -702,8 +707,7 @@ export const translations = {
 		days: '天',
 		hour: '小時',
 		hours: '小時',
-		learned: '已學習',
-		verses: '節',
+		learned: '已學習',		learned_tag: '已學',		verses: '節',
 		result: '結果',
 		accuracy: '正確率',
 		incorrect_input: '在"{char}"處輸入錯誤（第{pos}個），應該是"{expected}"。',
@@ -752,6 +756,7 @@ export const translations = {
 		reset_review_data_message: '此經文已有複習記錄。您想重置複習資料嗎？',
 		yes: '是',
 		no: '否',
+		ok: '確定',
 		
 		// Update checks
 		checking_updates: '正在檢查...',

@@ -27,7 +27,7 @@
 				{#if key.key === 'SPACER'}
 					<div class="key spacer"></div>
 				{:else}
-					<button type="button" class="key" class:backspace={key.key === '⌫'} class:enter={key.key === '✔'} class:narrow={key.narrow} on:click={() => handleKeyPress(key.key)}>
+					<button type="button" class="key" class:backspace={key.key === '⌫'} class:enter={key.key === '✔'} class:narrow={key.narrow} on:mousedown|preventDefault on:click={() => handleKeyPress(key.key)}>
 						{key.display}
 					</button>
 				{/if}
@@ -35,12 +35,12 @@
 		</div>
 	{/each}
 	{#if showBackspace && layout.length > 0 && !layout.some(row => row.some(k => k.key === '⌫'))}
-		<button type="button" class="key key-wide backspace" on:click={() => handleKeyPress('Backspace')}>
+		<button type="button" class="key key-wide backspace" on:mousedown|preventDefault on:click={() => handleKeyPress('Backspace')}>
 			⌫
 		</button>
 	{/if}
 	{#if showEnter && layout.length > 0 && !layout.some(row => row.some(k => k.key === '✔'))}
-		<button type="button" class="key key-wide enter" on:click={() => handleKeyPress('Enter')}>
+		<button type="button" class="key key-wide enter" on:mousedown|preventDefault on:click={() => handleKeyPress('Enter')}>
 			↵
 		</button>
 	{/if}

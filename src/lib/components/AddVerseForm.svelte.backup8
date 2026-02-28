@@ -31,7 +31,6 @@
 	let modalMessage = '';
 	let modalType = 'alert';
 	let confirmAction = null;
-	let cancelAction = null;
 
 	let editingId = null;
 	let versesList = [];
@@ -39,20 +38,17 @@
 	let expandedBooks = [];
 	let expandedChapters = [];
 	let groupedVerses = [];
+	let isExpandAllMode = false; // Track whether we're in expand-all or collapse-all mode
 
 	let selectOptions = [];
 	let bookOptions = [];
 	let bibleBooks = [];
 	let filteredBookOptions = [];
-	let filteredVersionOptions = [];
 	let currentInputMethod = 'pinyin';
 	let bookInitialsAuto = true;
 
 	// Keyboard state
 	let keyboardInput = '';
-
-	// Track original values for edit mode change detection
-	let originalFormState = null;
 
 	// Update from store
 	$: {
@@ -85,27 +81,6 @@
 
 	// Get current keyboard layout
 	$: keyboardLayout = keyboardLayouts[$settings.inputMethod] || keyboardLayouts.pinyin;
-
-	// Form state tracking for button enable/disable
-	$: hasAnyInput = verseText.trim() || bookName.trim() || chapterNumber || verseNumber || 
-	                 verseInitials.trim() || bookInitials.trim() || bibleVersion.trim();
-	
-	$: allMandatoryFieldsFilled = verseText.trim() && bookName.trim() && chapterNumber && 
-	                               verseNumber && verseInitials.trim() && bookInitials.trim();
-	
-	$: hasFormChanged = editingId && originalFormState ? (
-		verseText !== originalFormState.verseText ||
-		bookName !== originalFormState.bookName ||
-		chapterNumber !== originalFormState.chapterNumber ||
-		verseNumber !== originalFormState.verseNumber ||
-		verseInitials !== originalFormState.verseInitials ||
-		bookInitials !== originalFormState.bookInitials ||
-		bibleVersion !== originalFormState.bibleVersion ||
-		selectedCollectionId !== originalFormState.selectedCollectionId
-	) : false;
-	
-	$: isSaveEnabled = editingId ? hasFormChanged && allMandatoryFieldsFilled : allMandatoryFieldsFilled;
-	$: isClearEnabled = hasAnyInput;
 
 	// Viewport scrolling for focused input fields
 	$: {
@@ -167,13 +142,19 @@
 	function handleVerseInitialsClick(event) {
 		activeInput = event?.currentTarget || null;
 		keyboardInput = verseInitials;
+		console.log('[AddVerse] Verse initials field clicked/focused, input method:', currentInputMethod);
+
 		showKeyboard = showKeyboard === 'verse' ? null : 'verse';
+		console.log('[AddVerse] Onscreen keyboard display:', showKeyboard);
 	}
 
 	function handleBookInitialsClick(event) {
 		activeInput = event?.currentTarget || null;
 		keyboardInput = bookInitials;
+		console.log('[AddVerse] Book initials field clicked/focused, input method:', currentInputMethod);
+
 		showKeyboard = showKeyboard === 'book' ? null : 'book';
+		console.log('[AddVerse] Onscreen keyboard display:', showKeyboard);
 	}
 
 	function handleKeyboardKey(event) {
@@ -181,32 +162,12 @@
 
 		const key = event.detail;
 
-		// Handle special keys
-		if (key === 'Backspace') {
-			handleBackspace();
-			return;
-		}
-
-		if (key === 'Enter') {
-			showKeyboard = null;
-			activeInput?.blur();
-			return;
-		}
-
-		// Map key to appropriate symbol based on input method
-		let mappedValue = key;
-		if (currentInputMethod === 'zhuyin') {
-			mappedValue = zhuyinKeyMap[key] || key;
-		} else if (currentInputMethod === 'cangjie') {
-			mappedValue = cangjieKeyMap[key] || key;
-		}
-
-		if (activeInput.id.includes('verseInitials')) {
-			verseInitials += mappedValue;
+		if (activeInput.id === 'verseInitials') {
+			verseInitials += key;
 			keyboardInput = verseInitials;
-		} else if (activeInput.id.includes('bookInitials')) {
+		} else if (activeInput.id === 'bookInitials') {
 			bookInitialsAuto = false;
-			bookInitials += mappedValue;
+			bookInitials += key;
 			keyboardInput = bookInitials;
 		} else if (activeInput.id === 'chapterNumber') {
 			// Only accept numeric keys
@@ -222,10 +183,10 @@
 	}
 
 	function handleBackspace() {
-		if (activeInput.id.includes('verseInitials')) {
+		if (activeInput.id === 'verseInitials') {
 			verseInitials = verseInitials.slice(0, -1);
 			keyboardInput = verseInitials;
-		} else if (activeInput.id.includes('bookInitials')) {
+		} else if (activeInput.id === 'bookInitials') {
 			bookInitialsAuto = false;
 			bookInitials = bookInitials.slice(0, -1);
 			keyboardInput = bookInitials;
@@ -279,14 +240,28 @@
 
 		if (mappedValue) {
 			event.preventDefault();
-			if (activeInput.id.includes('verseInitials')) {
+			if (activeInput.id === 'verseInitials') {
 				verseInitials += mappedValue;
 				keyboardInput = verseInitials;
-			} else if (activeInput.id.includes('bookInitials')) {
+			} else if (activeInput.id === 'bookInitials') {
 				bookInitialsAuto = false;
 				bookInitials += mappedValue;
 				keyboardInput = bookInitials;
 			}
+		}
+	}
+
+	function updateBookInitialsFromBookName(force = false) {
+		const match = findBookByName(bookName);
+		if (!match) return;
+		if (!bookInitials || bookInitialsAuto || force) {
+			bookInitials = getBookInitialsForMethod(match, currentInputMethod);
+			bookInitialsAuto = true;
+			console.log('[AddVerse] Auto-filled book initials', {
+				bookName,
+				bookInitials,
+				inputMethod: currentInputMethod
+			});
 		}
 	}
 
@@ -330,22 +305,6 @@
 		showKeyboard = null;
 	}
 
-	function updateVersionSuggestions(inputValue = '') {
-		const query = (inputValue || '').trim().toLowerCase();
-		if (query.length === 0) {
-			filteredVersionOptions = [];
-		} else {
-			filteredVersionOptions = selectOptions.filter(version => 
-				version.toLowerCase().includes(query)
-			);
-		}
-	}
-
-	function selectVersionSuggestion(selectedVersion) {
-		bibleVersion = selectedVersion;
-		filteredVersionOptions = [];
-	}
-
 	function saveVerse() {
 		// Validation
 		console.log('[AddVerse] Attempting to save verse', {
@@ -372,33 +331,8 @@
 			return;
 		}
 
-		// If editing, check if verse has review history
-		if (editingId) {
-			const existingVerse = $verses.find((v) => v.id === editingId);
-			if (existingVerse?.lastReviewed) {
-				// Show modal asking about resetting review data
-				modalMessage = t('reset_review_data_message');
-				modalType = 'confirm';
-				confirmAction = () => {
-					// User chose YES - update verse and reset review data
-					updateVerseData(true);
-				};
-				cancelAction = () => {
-					// User chose NO - update verse but keep review data
-					updateVerseData(false);
-				};
-				showModal = true;
-				return;
-			} else {
-				// No review history, update immediately
-				updateVerseData(false);
-				return;
-			}
-		}
-
-		// New verse - just save and clear form
 		const newVerse = {
-			id: Date.now().toString(),
+			id: editingId || Date.now().toString(),
 			verseText: verseText.trim(),
 			bookName: bookName.trim(),
 			chapterNumber: parseInt(chapterNumber),
@@ -406,13 +340,25 @@
 			verseInitials: verseInitials.trim(),
 			bookInitials: bookInitials.trim(),
 			bibleVersion: bibleVersion || 'Unknown',
-			lastReviewed: null,
-			dueDate: null,
-			interval: 1,
-			repetitions: 0
+			lastReviewed: editingId
+				? $verses.find((v) => v.id === editingId)?.lastReviewed || null
+				: null,
+			dueDate: editingId
+				? $verses.find((v) => v.id === editingId)?.dueDate || null
+				: null,
+			interval: editingId ? $verses.find((v) => v.id === editingId)?.interval || 1 : 1,
+			repetitions: editingId ? $verses.find((v) => v.id === editingId)?.repetitions || 0 : 0
 		};
 
-		verses.update((list) => [...list, newVerse]);
+		if (editingId) {
+			verses.update((list) => list.map((v) => (v.id === editingId ? newVerse : v)));
+			modalMessage = t('verse_updated');
+			showModal = true;
+		} else {
+			verses.update((list) => [...list, newVerse]);
+			modalMessage = t('verse_saved');
+			showModal = true;
+		}
 
 		// Add to collection if selected
 		if (selectedCollectionId) {
@@ -423,43 +369,6 @@
 						: c
 				)
 			);
-		}
-
-		clearForm();
-	}
-
-	function updateVerseData(resetReviewData) {
-		const existingVerse = $verses.find((v) => v.id === editingId);
-		
-		const updatedVerse = {
-			id: editingId,
-			verseText: verseText.trim(),
-			bookName: bookName.trim(),
-			chapterNumber: parseInt(chapterNumber),
-			verseNumber: parseInt(verseNumber),
-			verseInitials: verseInitials.trim(),
-			bookInitials: bookInitials.trim(),
-			bibleVersion: bibleVersion || 'Unknown',
-			lastReviewed: resetReviewData ? null : (existingVerse?.lastReviewed || null),
-			dueDate: resetReviewData ? null : (existingVerse?.dueDate || null),
-			interval: resetReviewData ? 1 : (existingVerse?.interval || 1),
-			repetitions: resetReviewData ? 0 : (existingVerse?.repetitions || 0)
-		};
-
-		verses.update((list) => list.map((v) => (v.id === editingId ? updatedVerse : v)));
-
-		// Add to collection if selected (only if not already in it)
-		if (selectedCollectionId) {
-			const collection = $collections.find(c => c.id === selectedCollectionId);
-			if (collection && !collection.verseIds?.includes(editingId)) {
-				collections.update(cols =>
-					cols.map(c =>
-						c.id === selectedCollectionId
-							? { ...c, verseIds: [...(c.verseIds || []), editingId] }
-							: c
-					)
-				);
-			}
 		}
 
 		clearForm();
@@ -493,18 +402,6 @@
 		
 		editingId = id;
 
-		// Store original state for change detection
-		originalFormState = {
-			verseText,
-			bookName,
-			chapterNumber,
-			verseNumber,
-			verseInitials,
-			bookInitials,
-			bibleVersion,
-			selectedCollectionId
-		};
-
 		// Scroll to top
 		window.scrollTo({ top: 0, behavior: 'smooth' });
 	}
@@ -520,10 +417,6 @@
 
 	function closeModal() {
 		showModal = false;
-		if (cancelAction) {
-			cancelAction();
-			cancelAction = null;
-		}
 		modalType = 'alert';
 		confirmAction = null;
 	}
@@ -538,7 +431,6 @@
 		bibleVersion = '';
 		selectedCollectionId = '';
 		editingId = null;
-		originalFormState = null;
 		showKeyboard = null;
 		keyboardInput = '';
 		bookInitialsAuto = true;
@@ -602,23 +494,17 @@
 	function buildGroupedVerses(list) {
 		const grouped = [];
 		list.forEach((verse) => {
-			// Normalize book name and chapter number for consistent grouping
-			const normalizedBookName = (verse.bookName || '').trim();
-			const chapterNum = typeof verse.chapterNumber === 'number' 
-				? verse.chapterNumber 
-				: parseInt(verse.chapterNumber, 10);
-
-			let bookGroup = grouped.find((entry) => entry.bookName === normalizedBookName);
+			let bookGroup = grouped.find((entry) => entry.bookName === verse.bookName);
 			if (!bookGroup) {
-				bookGroup = { bookName: normalizedBookName, chapters: [] };
+				bookGroup = { bookName: verse.bookName, chapters: [] };
 				grouped.push(bookGroup);
 			}
 
 			let chapterGroup = bookGroup.chapters.find(
-				(entry) => entry.chapterNumber === chapterNum
+				(entry) => entry.chapterNumber === verse.chapterNumber
 			);
 			if (!chapterGroup) {
-				chapterGroup = { chapterNumber: chapterNum, verses: [] };
+				chapterGroup = { chapterNumber: verse.chapterNumber, verses: [] };
 				bookGroup.chapters.push(chapterGroup);
 			}
 			chapterGroup.verses.push(verse);
@@ -691,6 +577,7 @@
 						type="number"
 						id="chapterNumber"
 						bind:value={chapterNumber}
+						placeholder="1"
 						min="1"
 						readonly
 						on:click={(e) => {
@@ -705,6 +592,7 @@
 						type="number"
 						id="verseNumber"
 						bind:value={verseNumber}
+						placeholder="1"
 						min="1"
 						readonly
 						on:click={(e) => {
@@ -730,6 +618,7 @@
 						id="verseInitials"
 						type="text"
 						bind:value={verseInitials}
+						placeholder="Click to use keyboard"
 						readonly
 						on:click={handleVerseInitialsClick}
 					/>
@@ -745,6 +634,7 @@
 						id="verseInitialsZhuyin"
 						type="text"
 						bind:value={verseInitials}
+						placeholder="點擊以使用鍵盤"
 						readonly
 						on:click={handleVerseInitialsClick}
 					/>
@@ -760,6 +650,7 @@
 						id="verseInitialsCangjie"
 						type="text"
 						bind:value={verseInitials}
+						placeholder="點擊以使用鍵盤"
 						readonly
 						on:click={handleVerseInitialsClick}
 					/>
@@ -777,6 +668,7 @@
 						id="bookInitials"
 						type="text"
 						bind:value={bookInitials}
+						placeholder="Click to use keyboard"
 						readonly
 						on:click={handleBookInitialsClick}
 					/>
@@ -791,6 +683,7 @@
 						id="bookInitialsZhuyin"
 						type="text"
 						bind:value={bookInitials}
+						placeholder="點擊以使用鍵盤"
 						readonly
 						on:click={handleBookInitialsClick}
 					/>
@@ -805,6 +698,7 @@
 						id="bookInitialsCangjie"
 						type="text"
 						bind:value={bookInitials}
+						placeholder="點擊以使用鍵盤"
 						readonly
 						on:click={handleBookInitialsClick}
 					/>
@@ -815,41 +709,24 @@
 			{/if}
 
 			<!-- Row 6: Bible version -->
-			<div class="field" style="position: relative;">
+			<div class="field">
 				<label for="bibleVersion">{t('bible_version_optional')}</label>
 				<input
 					type="text"
 					id="bibleVersion"
 					bind:value={bibleVersion}
 					placeholder="e.g., ESV"
-					autocomplete="off"
-					on:input={() => updateVersionSuggestions(bibleVersion)}
+					list="versions"
 					on:focus={() => {
 						activeInput = null;
 						showKeyboard = null;
-						updateVersionSuggestions(bibleVersion);
-					}}
-					on:blur={() => {
-						setTimeout(() => {
-							filteredVersionOptions = [];
-						}, 200);
 					}}
 				/>
-				{#if filteredVersionOptions.length > 0}
-					<div class="autocomplete-suggestions">
-						{#each filteredVersionOptions as option}
-							<div 
-								class="suggestion-item" 
-								on:click={() => selectVersionSuggestion(option)}
-								on:keydown={(e) => e.key === 'Enter' && selectVersionSuggestion(option)}
-								tabindex="0"
-								role="button"
-							>
-								{option}
-							</div>
-						{/each}
-					</div>
-				{/if}
+				<datalist id="versions">
+					{#each selectOptions as version}
+						<option value={version}></option>
+					{/each}
+				</datalist>
 			</div>
 
 			<!-- Row 7: Add to collection -->
@@ -877,20 +754,8 @@
 
 			<!-- Row 8: Save verse, Clear form -->
 			<div class="button-group">
-				<button 
-					class="primary" 
-					on:click={saveVerse}
-					disabled={!isSaveEnabled}
-				>
-					{editingId ? t('update_verse') : t('save_verse')}
-				</button>
-				<button 
-					class="secondary" 
-					on:click={clearForm}
-					disabled={!isClearEnabled}
-				>
-					{t('clear_form')}
-				</button>
+				<button class="primary" on:click={saveVerse}>{t('save_verse')}</button>
+				<button class="secondary" on:click={clearForm}>{t('clear_form')}</button>
 			</div>
 		</div>
 	</div>
@@ -1213,17 +1078,6 @@
 
 	button.primary:hover {
 		opacity: 0.9;
-	}
-
-	button:disabled {
-		background: var(--subtitle-color);
-		color: var(--text-color);
-		opacity: 0.5;
-		cursor: not-allowed;
-	}
-
-	button:disabled:hover {
-		opacity: 0.5;
 	}
 
 	button.secondary {

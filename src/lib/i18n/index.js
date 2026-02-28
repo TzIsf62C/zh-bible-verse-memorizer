@@ -9,7 +9,7 @@ export function t(key, variables = {}) {
 	const currentSettings = get(settings);
 	const language = currentSettings?.languagePreference || 'english';
 	const dictionary = translations[language] || translations.english;
-	let value = dictionary[key] || translations.english[key] || key;
+	let value = dictionary[key] ?? translations.english[key] ?? key;
 
 	Object.entries(variables).forEach(([placeholder, replacement]) => {
 		value = value.replaceAll(`{${placeholder}}`, replacement);
