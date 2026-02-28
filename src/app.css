@@ -235,6 +235,92 @@ input[type='file'] {
 	flex: 1.5;
 }
 
+.key.backspace {
+	background: #dc3545;
+	color: #000000;
+	font-weight: 600;
+	flex: 2;
+}
+
+.key.backspace:hover {
+	background: #c82333;
+	opacity: 1;
+}
+
+.key.enter {
+	background: #28a745;
+	color: #000000;
+	font-weight: 600;
+	flex: 2;
+}
+
+.key.enter:hover {
+	background: #218838;
+	opacity: 1;
+}
+
+.key.spacer {
+	background: transparent;
+	border: none;
+	pointer-events: none;
+	flex: 1;
+	min-width: 32px;
+}
+
+/* Numeric keyboard styling - wider keys and gaps */
+.keyboard.numeric .keyboard-row {
+	gap: 12px;
+}
+
+.keyboard.numeric .key {
+	min-width: 60px;
+	max-width: 80px;
+	font-size: 1.2rem;
+}
+
+.keyboard.numeric .key.backspace,
+.keyboard.numeric .key.enter {
+	flex: 2.5;
+}
+
+@media (max-width: 400px) {
+	.keyboard.numeric .keyboard-row {
+		gap: 8px;
+	}
+	
+	.keyboard.numeric .key {
+		min-width: 50px;
+		max-width: 70px;
+	}
+}
+
+/* Responsive adjustments for narrow screens */
+@media (max-width: 400px) {
+	.key {
+		min-width: 26px;
+		max-width: 42px;
+		padding: 10px 4px;
+		font-size: 0.9rem;
+	}
+	
+	.keyboard-row {
+		gap: 3px;
+	}
+	
+	.key.spacer {
+		min-width: 26px;
+	}
+	
+	/* Make Zhuyin tone keys narrower on small screens */
+	.key.narrow {
+		flex: 0.6;
+		min-width: 20px;
+		max-width: 28px;
+		padding: 10px 2px;
+		font-size: 0.85rem;
+	}
+}
+
 @media (prefers-color-scheme: dark) {
 	:root:not([data-theme='light']) {
 		background-color: #111114;

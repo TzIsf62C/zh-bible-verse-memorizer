@@ -61,7 +61,8 @@
 		];
 		bibleBooks = getBibleBooks($settings.bookNameCharset || 'simplified');
 		bookOptions = getBibleBookOptions($settings.bookNameCharset || 'simplified');
-		filteredBookOptions = bookOptions;
+		// Don't automatically show all books - only show suggestions when user interacts with field
+		console.log('[AddVerse] Reactive update - bookOptions updated, but NOT auto-populating filteredBookOptions');
 	}
 
 	$: currentInputMethod = $settings.inputMethod || 'pinyin';
@@ -266,7 +267,7 @@
 
 	function updateBookSuggestions(inputValue = '') {
 		const query = (inputValue || '').trim().toLowerCase();
-		console.log('[AddVerse] Book name input changed:', inputValue);
+		console.log('[AddVerse] updateBookSuggestions called - inputValue:', inputValue, 'query:', query);
 		
 		const MAX_FILTERED_RESULTS = 20;
 		let booksToDisplay = [];
@@ -274,6 +275,7 @@
 		// Condition 1: If query is empty, show ALL books for browsing
 		if (query.length === 0) {
 			booksToDisplay = bibleBooks;
+			console.log('[AddVerse] Query empty - showing all', bibleBooks.length, 'books');
 		} else {
 			// Condition 2: Filter by Hanzi OR Pinyin and limit results
 			booksToDisplay = bibleBooks
@@ -282,10 +284,11 @@
 					(book.pinyin && book.pinyin.toLowerCase().includes(query)) // Case-insensitive for pinyin
 				)
 				.slice(0, MAX_FILTERED_RESULTS);
+			console.log('[AddVerse] Query not empty - filtered to', booksToDisplay.length, 'books');
 		}
 		
 		filteredBookOptions = booksToDisplay.map((book) => book.hanzi);
-		console.log('[AddVerse] Filtered book options:', filteredBookOptions);
+		console.log('[AddVerse] filteredBookOptions updated - length:', filteredBookOptions.length);
 	}
 	
 	function selectBookSuggestion(selectedHanzi) {
@@ -538,11 +541,7 @@
 		<h3>{editingId ? t('update_verse') : t('save_verse')}</h3>
 
 		<div class="form-grid">
-			<div class="field">
-				<label for="verseText">{t('chinese_verse_text')}</label>
-				<textarea id="verseText" bind:value={verseText} rows="4" placeholder="粘貼中文經文..."></textarea>
-			</div>
-
+			<!-- Row 1: Chinese book name -->
 			<div class="field" style="position: relative;">
 				<label for="bookName">{t('chinese_book_name')}</label>
 				<input
@@ -557,13 +556,16 @@
 						updateBookInitialsFromBookName(true);
 					}}
 					on:focus={() => {
+						console.log('[AddVerse] bookName field focused - bookName value:', bookName);
 						activeInput = null;
 						showKeyboard = null;
 						updateBookSuggestions(bookName);
 					}}
 					on:blur={() => {
+						console.log('[AddVerse] bookName field blurred');
 						setTimeout(() => {
 							filteredBookOptions = [];
+							console.log('[AddVerse] filteredBookOptions cleared on blur');
 						}, 200);
 					}}
 				/>
@@ -584,6 +586,7 @@
 				{/if}
 			</div>
 
+			<!-- Row 2: Chapter, Verse -->
 			<div class="form-row">
 				<div class="field">
 					<label for="chapterNumber">{t('chapter')}</label>
@@ -615,44 +618,15 @@
 						}}
 					/>
 				</div>
-				<div class="field">
-					<label for="bibleVersion">{t('default_bible_version')}</label>
-					<input
-						type="text"
-						id="bibleVersion"
-						bind:value={bibleVersion}
-						placeholder="e.g., ESV"
-						list="versions"
-						on:focus={() => {
-							activeInput = null;
-							showKeyboard = null;
-						}}
-					/>
-					<datalist id="versions">
-						{#each selectOptions as version}
-							<option value={version}></option>
-						{/each}
-					</datalist>
-				</div>
-				<div class="field">
-					<label for="collectionSelector">{t('add_to_collection_optional')}</label>
-					<select
-						id="collectionSelector"
-						bind:value={selectedCollectionId}
-						on:focus={() => {
-							activeInput = null;
-							showKeyboard = null;
-						}}
-					>
-						<option value="">{t('none')}</option>
-						{#each $collections as collection (collection.id)}
-							<option value={collection.id}>{collection.title}</option>
-						{/each}
-					</select>
-				</div>
 			</div>
 
-			<!-- Initials input based on input method -->
+			<!-- Row 3: Chinese Verse Text -->
+			<div class="field">
+				<label for="verseText">{t('chinese_verse_text')}</label>
+				<textarea id="verseText" bind:value={verseText} rows="4" placeholder="粘貼中文經文..."></textarea>
+			</div>
+
+			<!-- Row 4: Verse initials -->
 			{#if currentInputMethod === 'pinyin'}
 				<div class="field">
 					<label for="verseInitials">{t('pinyin_initials_verse')}</label>
@@ -666,20 +640,6 @@
 						on:click={handleVerseInitialsClick}
 					/>
 					{#if showKeyboard === 'verse'}
-						<Keyboard layout={keyboardLayout} on:key={handleKeyboardKey} showEnter={true} />
-					{/if}
-				</div>
-				<div class="field">
-					<label for="bookInitials">{t('pinyin_initials_book')}</label>
-					<input
-						id="bookInitials"
-						type="text"
-						bind:value={bookInitials}
-						placeholder="Click to use keyboard"
-						readonly
-						on:click={handleBookInitialsClick}
-					/>
-					{#if showKeyboard === 'book'}
 						<Keyboard layout={keyboardLayout} on:key={handleKeyboardKey} showEnter={true} />
 					{/if}
 				</div>
@@ -699,20 +659,6 @@
 						<Keyboard layout={keyboardLayout} on:key={handleKeyboardKey} showEnter={true} />
 					{/if}
 				</div>
-				<div class="field">
-					<label for="bookInitialsZhuyin">{t('zhuyin_initials_book')}</label>
-					<input
-						id="bookInitialsZhuyin"
-						type="text"
-						bind:value={bookInitials}
-						placeholder="點擊以使用鍵盤"
-						readonly
-						on:click={handleBookInitialsClick}
-					/>
-					{#if showKeyboard === 'book'}
-						<Keyboard layout={keyboardLayout} on:key={handleKeyboardKey} showEnter={true} />
-					{/if}
-				</div>
 			{:else if currentInputMethod === 'cangjie'}
 				<div class="field">
 					<label for="verseInitialsCangjie">{t('cangjie_initials_verse')}</label>
@@ -729,6 +675,40 @@
 						<Keyboard layout={keyboardLayout} on:key={handleKeyboardKey} showEnter={true} />
 					{/if}
 				</div>
+			{/if}
+
+			<!-- Row 5: Book initials -->
+			{#if currentInputMethod === 'pinyin'}
+				<div class="field">
+					<label for="bookInitials">{t('pinyin_initials_book')}</label>
+					<input
+						id="bookInitials"
+						type="text"
+						bind:value={bookInitials}
+						placeholder="Click to use keyboard"
+						readonly
+						on:click={handleBookInitialsClick}
+					/>
+					{#if showKeyboard === 'book'}
+						<Keyboard layout={keyboardLayout} on:key={handleKeyboardKey} showEnter={true} />
+					{/if}
+				</div>
+			{:else if currentInputMethod === 'zhuyin'}
+				<div class="field">
+					<label for="bookInitialsZhuyin">{t('zhuyin_initials_book')}</label>
+					<input
+						id="bookInitialsZhuyin"
+						type="text"
+						bind:value={bookInitials}
+						placeholder="點擊以使用鍵盤"
+						readonly
+						on:click={handleBookInitialsClick}
+					/>
+					{#if showKeyboard === 'book'}
+						<Keyboard layout={keyboardLayout} on:key={handleKeyboardKey} showEnter={true} />
+					{/if}
+				</div>
+			{:else if currentInputMethod === 'cangjie'}
 				<div class="field">
 					<label for="bookInitialsCangjie">{t('cangjie_initials_book')}</label>
 					<input
@@ -745,11 +725,51 @@
 				</div>
 			{/if}
 
+			<!-- Row 6: Bible version -->
+			<div class="field">
+				<label for="bibleVersion">{t('default_bible_version')}</label>
+				<input
+					type="text"
+					id="bibleVersion"
+					bind:value={bibleVersion}
+					placeholder="e.g., ESV"
+					list="versions"
+					on:focus={() => {
+						activeInput = null;
+						showKeyboard = null;
+					}}
+				/>
+				<datalist id="versions">
+					{#each selectOptions as version}
+						<option value={version}></option>
+					{/each}
+				</datalist>
+			</div>
+
+			<!-- Row 7: Add to collection -->
+			<div class="field">
+				<label for="collectionSelector">{t('add_to_collection_optional')}</label>
+				<select
+					id="collectionSelector"
+					bind:value={selectedCollectionId}
+					on:focus={() => {
+						activeInput = null;
+						showKeyboard = null;
+					}}
+				>
+					<option value="">{t('none')}</option>
+					{#each $collections as collection (collection.id)}
+						<option value={collection.id}>{collection.title}</option>
+					{/each}
+				</select>
+			</div>
+
 			<!-- Numeric Keyboard for Chapter/Verse Numbers -->
 			{#if showKeyboard === 'numeric'}
-				<Keyboard layout={keyboardLayouts.numeric} on:key={handleKeyboardKey} />
+				<Keyboard layout={keyboardLayouts.numeric} on:key={handleKeyboardKey} isNumeric={true} />
 			{/if}
 
+			<!-- Row 8: Save verse, Clear form -->
 			<div class="button-group">
 				<button class="primary" on:click={saveVerse}>{t('save_verse')}</button>
 				<button class="secondary" on:click={clearForm}>{t('clear_form')}</button>
@@ -879,6 +899,17 @@
 		gap: 2rem;
 		padding: 1rem;
 		padding-bottom: 400px; /* Add space for keyboard at bottom */
+		box-sizing: border-box;
+		max-width: 100vw;
+		overflow-x: hidden;
+	}
+
+	@media (max-width: 767px) {
+		.add-verse-container {
+			padding-left: 0;
+			padding-right: 0;
+			gap: 1rem;
+		}
 	}
 
 	@media (min-width: 768px) {
@@ -893,6 +924,17 @@
 		border-radius: 8px;
 		padding: 1.5rem;
 		box-shadow: var(--panel-shadow);
+		box-sizing: border-box;
+		max-width: 100%;
+		overflow-x: hidden;
+	}
+
+	@media (max-width: 767px) {
+		.form-section,
+		.verses-section {
+			padding: 1rem;
+			border-radius: 0;
+		}
 	}
 
 	h3 {
@@ -904,11 +946,15 @@
 	.form-grid {
 		display: grid;
 		gap: 1rem;
+		box-sizing: border-box;
+		max-width: 100%;
 	}
 
 	.field {
 		display: grid;
 		gap: 0.5rem;
+		box-sizing: border-box;
+		max-width: 100%;
 	}
 
 	.field label {
@@ -918,7 +964,8 @@
 	}
 
 	.field input,
-	.field textarea {
+	.field textarea,
+	.field select {
 		padding: 0.75rem;
 		border: 1px solid var(--file-border);
 		background: var(--file-bg);
@@ -926,10 +973,14 @@
 		border-radius: 4px;
 		font-family: inherit;
 		font-size: 1rem;
+		box-sizing: border-box;
+		width: 100%;
+		max-width: 100%;
 	}
 
 	.field input:focus,
-	.field textarea:focus {
+	.field textarea:focus,
+	.field select:focus {
 		outline: none;
 		border-color: var(--accent-color);
 	}
@@ -977,8 +1028,10 @@
 
 	.form-row {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+		grid-template-columns: 1fr 1fr;
 		gap: 1rem;
+		box-sizing: border-box;
+		max-width: 100%;
 	}
 
 	.button-group {
@@ -996,6 +1049,7 @@
 		font-size: 1rem;
 		font-weight: 500;
 		transition: all 0.3s;
+		box-sizing: border-box;
 	}
 
 	button.primary {

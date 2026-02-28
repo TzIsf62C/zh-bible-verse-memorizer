@@ -787,12 +787,12 @@
 			<!-- Onscreen Keyboard (no backspace/enter during learning) -->
 			<!-- Hide keyboard in intermediate mode when showRetryButton is true -->
 			{#if !showNextButton && !showRetryButton}
-				<Keyboard layout={keyboardLayout} on:key={handleKeyInput} showBackspace={false} showEnter={false} />
+				<Keyboard layout={keyboardLayout} on:key={handleKeyInput} showBackspace={false} showEnter={false} isNumeric={isNumericKeyboard} />
 			{:else if currentStage === 'intermediate' && showRetryButton}
 				<!-- Keyboard hidden in intermediate until retry pressed -->
 			{:else if showRetryButton}
 				<!-- Show keyboard for other stages even with retry button -->
-				<Keyboard layout={keyboardLayout} on:key={handleKeyInput} showBackspace={false} showEnter={false} />
+				<Keyboard layout={keyboardLayout} on:key={handleKeyInput} showBackspace={false} showEnter={false} isNumeric={isNumericKeyboard} />
 			{/if}
 
 			<!-- Action Buttons -->

@@ -384,7 +384,7 @@
 			<div bind:this={viewportAnchor} class="viewport-anchor" aria-hidden="true"></div>
 
 			{#if !showResult}
-				<Keyboard layout={keyboardLayout} on:key={handleKeyInput} showBackspace={false} showEnter={false} />
+				<Keyboard layout={keyboardLayout} on:key={handleKeyInput} showBackspace={false} showEnter={false} isNumeric={isNumericKeyboard} />
 			{/if}
 		</div>
 	{/if}
