@@ -26,12 +26,14 @@
 	let selectedCollectionIds = [];
 	let showCollectionDropdown = false;
 
-	let showKeyboard = null; // null, 'verse', 'book'
+	let showKeyboard = null; // null, 'verse', 'book', 'numeric'
 	let activeInput = null;
+	let keyboardBlurTimeout = null; // Track timeout to clear it when needed
 	
 	let showModal = false;
 	let modalMessage = '';
 	let modalType = 'alert';
+	let modalButtons = [];
 	let confirmAction = null;
 	let cancelAction = null;
 
@@ -281,6 +283,9 @@
 			return;
 		}
 
+		// Don't interfere with number fields - let browser handle them normally
+		if (activeInput.type === 'number') return;
+
 		// Map physical key to input symbol based on input method
 		let mappedValue = null;
 
@@ -304,6 +309,25 @@
 				bookInitials += mappedValue;
 				keyboardInput = bookInitials;
 			}
+		}
+	}
+
+	function handleNumberFieldKeydown(event) {
+		const key = event.key;
+		
+		// Handle Enter key - blur the field and hide keyboard
+		if (key === 'Enter') {
+			event.preventDefault();
+			showKeyboard = null;
+			event.target.blur();
+			return;
+		}
+		
+		// Prevent invalid characters in number fields: minus sign, 'e', 'E', and period
+		// HTML5 number inputs allow these for scientific notation, but we only want positive integers
+		if (key === '-' || key === 'e' || key === 'E' || key === '.') {
+			event.preventDefault();
+			return;
 		}
 	}
 
@@ -395,6 +419,31 @@
 		return result;
 	}
 
+	// Count Hanzi characters in text, excluding punctuation and spaces
+	function countHanziCharacters(text) {
+		if (!text) return 0;
+		// Match CJK Unified Ideographs (U+4E00 to U+9FFF) and CJK Extension A (U+3400 to U+4DBF)
+		const hanziRegex = /[\u3400-\u4DBF\u4E00-\u9FFF]/g;
+		const matches = text.match(hanziRegex);
+		return matches ? matches.length : 0;
+	}
+
+	// Validate that verseInitials length matches Hanzi character count
+	function validateVerseInitials() {
+		const hanziCount = countHanziCharacters(verseText);
+		const initialsCount = verseInitials.trim().length;
+		
+		if (hanziCount === initialsCount) {
+			return { valid: true };
+		}
+		
+		return {
+			valid: false,
+			hanziCount,
+			initialsCount
+		};
+	}
+
 	function saveVerse() {
 		// Validation
 		if (!verseText.trim() || !bookName.trim() || !chapterNumber || !verseNumber) {
@@ -414,6 +463,30 @@
 			showModal = true;
 			return;
 		}
+
+		// Validate verse initials count matches Hanzi count
+		const validation = validateVerseInitials();
+		if (!validation.valid) {
+			// Construct appropriate message based on input method
+			const translationKey = `validation_mismatch_${currentInputMethod}`;
+			modalMessage = t(translationKey)
+				.replace('{hanziCount}', validation.hanziCount)
+				.replace('{initialsCount}', validation.initialsCount);
+			modalType = 'info';
+			// Custom buttons: OK = cancel save, Ignore = proceed with save
+			modalButtons = [
+				{ label: t('ok'), action: 'cancel', variant: 'primary' },
+				{ label: t('ignore'), action: 'ignore', variant: 'secondary' }
+			];
+			showModal = true;
+			return;
+		}
+
+		// Validation passed, proceed with save
+		proceedWithSave();
+	}
+
+	function proceedWithSave() {
 
 		// If editing, check if verse has review history
 		if (editingId) {
@@ -558,6 +631,21 @@
 		window.scrollTo({ top: 0, behavior: 'smooth' });
 	}
 
+	function handleModalButtonClick(event) {
+		const action = event.detail.action;
+		showModal = false;
+		
+		if (action === 'ignore') {
+			// User chose to ignore validation and save anyway
+			proceedWithSave();
+		}
+		// If action is 'cancel' or anything else, just close the modal
+		
+		// Reset modal state
+		modalButtons = [];
+		modalType = 'alert';
+	}
+
 	function handleModalConfirm() {
 		showModal = false;
 		if (confirmAction) {
@@ -565,6 +653,7 @@
 			confirmAction = null;
 		}
 		modalType = 'alert';
+		modalButtons = [];
 	}
 
 	function closeModal() {
@@ -574,6 +663,7 @@
 			cancelAction = null;
 		}
 		modalType = 'alert';
+		modalButtons = [];
 		confirmAction = null;
 	}
 
@@ -777,10 +867,24 @@
 						id="chapterNumber"
 						bind:value={chapterNumber}
 						min="1"
-						readonly
-						on:click={(e) => {
+						on:keydown={handleNumberFieldKeydown}
+						on:focus={(e) => {
+							// Clear any pending blur timeout
+							if (keyboardBlurTimeout) {
+								clearTimeout(keyboardBlurTimeout);
+								keyboardBlurTimeout = null;
+							}
 							activeInput = e.target;
 							showKeyboard = 'numeric';
+						}}
+						on:blur={() => {
+							if (showKeyboard === 'numeric') {
+								// Store timeout ID so we can clear it if another numeric field is focused
+								keyboardBlurTimeout = setTimeout(() => {
+									showKeyboard = null;
+									keyboardBlurTimeout = null;
+								}, 200);
+							}
 						}}
 					/>
 				</div>
@@ -791,10 +895,24 @@
 						id="verseNumber"
 						bind:value={verseNumber}
 						min="1"
-						readonly
-						on:click={(e) => {
+						on:keydown={handleNumberFieldKeydown}
+						on:focus={(e) => {
+							// Clear any pending blur timeout
+							if (keyboardBlurTimeout) {
+								clearTimeout(keyboardBlurTimeout);
+								keyboardBlurTimeout = null;
+							}
 							activeInput = e.target;
 							showKeyboard = 'numeric';
+						}}
+						on:blur={() => {
+							if (showKeyboard === 'numeric') {
+								// Store timeout ID so we can clear it if another numeric field is focused
+								keyboardBlurTimeout = setTimeout(() => {
+									showKeyboard = null;
+									keyboardBlurTimeout = null;
+								}, 200);
+							}
 						}}
 					/>
 				</div>
@@ -1158,6 +1276,8 @@
 	show={showModal} 
 	message={modalMessage}
 	type={modalType}
+	buttons={modalButtons}
+	on:click={handleModalButtonClick}
 	on:confirm={handleModalConfirm}
 	on:cancel={closeModal}
 />

@@ -196,6 +196,9 @@ export const translations = {
 		error_importing: 'Error importing file',
 		fill_all_fields: 'Please fill in all fields completely.',
 		chapter_verse_numbers: 'Chapter and Verse must be numbers.',
+		validation_mismatch_pinyin: 'The verse text contains {hanziCount} Hanzi characters, but the Pinyin initials field has {initialsCount} characters. Please double check that you have entered the Pinyin initials correctly.',
+		validation_mismatch_zhuyin: 'The verse text contains {hanziCount} Hanzi characters, but the Zhuyin initials field has {initialsCount} characters. Please double check that you have entered the Zhuyin initials correctly.',
+		validation_mismatch_cangjie: 'The verse text contains {hanziCount} Hanzi characters, but the Cangjie radicals field has {initialsCount} characters. Please double check that you have entered the Cangjie radicals correctly.',
 		verse_saved: 'Verse saved!',
 		verse_updated: 'Verse updated!',
 		
@@ -214,6 +217,7 @@ export const translations = {
 		yes: 'Yes',
 		no: 'No',
 		ok: 'OK',
+		ignore: 'Ignore',
 		
 		// Update checks
 		checking_updates: 'Checking...',
@@ -467,6 +471,9 @@ export const translations = {
 		error_importing: '导入文件时出错',
 		fill_all_fields: '请输入完整的经文各项内容。',
 		chapter_verse_numbers: '章节和节号必须是数字。',
+		validation_mismatch_pinyin: '经文包含 {hanziCount} 个汉字，但拼音首字母字段有 {initialsCount} 个字符。请检查您输入的拼音首字母是否正确。',
+		validation_mismatch_zhuyin: '经文包含 {hanziCount} 个汉字，但注音首码字段有 {initialsCount} 个字符。请检查您输入的注音首码是否正确。',
+		validation_mismatch_cangjie: '经文包含 {hanziCount} 个汉字，但仓颉字根字段有 {initialsCount} 个字符。请检查您输入的仓颉字根是否正确。',
 		verse_saved: '经文已保存！',
 		verse_updated: '经文已更新！',
 		
@@ -485,6 +492,7 @@ export const translations = {
 		yes: '是',
 		no: '否',
 		ok: '确定',
+		ignore: '忽略',
 		
 		// Update checks
 		checking_updates: '正在检查...',
@@ -738,6 +746,9 @@ export const translations = {
 		error_importing: '匯入檔案時出錯',
 		fill_all_fields: '請輸入完整的經文各項內容。',
 		chapter_verse_numbers: '章節和節號必須是數字。',
+		validation_mismatch_pinyin: '經文包含 {hanziCount} 個漢字，但拼音首字母欄位有 {initialsCount} 個字符。請檢查您輸入的拼音首字母是否正確。',
+		validation_mismatch_zhuyin: '經文包含 {hanziCount} 個漢字，但注音首碼欄位有 {initialsCount} 個字符。請檢查您輸入的注音首碼是否正確。',
+		validation_mismatch_cangjie: '經文包含 {hanziCount} 個漢字，但倉頡字根欄位有 {initialsCount} 個字符。請檢查您輸入的倉頡字根是否正確。',
 		verse_saved: '經文已保存！',
 		verse_updated: '經文已更新！',
 		
@@ -756,6 +767,7 @@ export const translations = {
 		yes: '是',
 		no: '否',
 		ok: '確定',
+		ignore: '忽略',
 		
 		// Update checks
 		checking_updates: '正在檢查...',
