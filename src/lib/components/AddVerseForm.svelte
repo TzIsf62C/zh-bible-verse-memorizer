@@ -1,4 +1,5 @@
 <script>
+	import { onMount, onDestroy } from 'svelte';
 	import { verses } from '$lib/stores/verses';
 	import { collections } from '$lib/stores/collections';
 	import { settings } from '$lib/stores/settings';
@@ -22,7 +23,8 @@
 	let verseInitials = '';
 	let bookInitials = '';
 	let bibleVersion = '';
-	let selectedCollectionId = '';
+	let selectedCollectionIds = [];
+	let showCollectionDropdown = false;
 
 	let showKeyboard = null; // null, 'verse', 'book'
 	let activeInput = null;
@@ -47,6 +49,10 @@
 	let filteredVersionOptions = [];
 	let currentInputMethod = 'pinyin';
 	let bookInitialsAuto = true;
+	let collectionDisplayText = '';
+	let bookDropdownElement = null;
+	let versionDropdownElement = null;
+	let collectionDropdownElement = null;
 
 	// Keyboard state
 	let keyboardInput = '';
@@ -65,8 +71,6 @@
 		];
 		bibleBooks = getBibleBooks($settings.bookNameCharset || 'simplified');
 		bookOptions = getBibleBookOptions($settings.bookNameCharset || 'simplified');
-		// Don't automatically show all books - only show suggestions when user interacts with field
-		console.log('[AddVerse] Reactive update - bookOptions updated, but NOT auto-populating filteredBookOptions');
 	}
 
 	$: currentInputMethod = $settings.inputMethod || 'pinyin';
@@ -86,9 +90,22 @@
 	// Get current keyboard layout
 	$: keyboardLayout = keyboardLayouts[$settings.inputMethod] || keyboardLayouts.pinyin;
 
+	// Reactive collection display text - must reference dependencies directly
+	$: {
+		if (selectedCollectionIds.length === 0) {
+			collectionDisplayText = t('none');
+		} else {
+			const names = selectedCollectionIds
+				.map(id => $collections.find(c => c.id === id)?.title)
+				.filter(Boolean);
+			collectionDisplayText = names.join(', ');
+		}
+	}
+
 	// Form state tracking for button enable/disable
 	$: hasAnyInput = verseText.trim() || bookName.trim() || chapterNumber || verseNumber || 
-	                 verseInitials.trim() || bookInitials.trim() || bibleVersion.trim();
+	                 verseInitials.trim() || bookInitials.trim() || bibleVersion.trim() ||
+	                 selectedCollectionIds.length > 0;
 	
 	$: allMandatoryFieldsFilled = verseText.trim() && bookName.trim() && chapterNumber && 
 	                               verseNumber && verseInitials.trim() && bookInitials.trim();
@@ -101,7 +118,7 @@
 		verseInitials !== originalFormState.verseInitials ||
 		bookInitials !== originalFormState.bookInitials ||
 		bibleVersion !== originalFormState.bibleVersion ||
-		selectedCollectionId !== originalFormState.selectedCollectionId
+		JSON.stringify(selectedCollectionIds.sort()) !== JSON.stringify(originalFormState.selectedCollectionIds.sort())
 	) : false;
 	
 	$: isSaveEnabled = editingId ? hasFormChanged && allMandatoryFieldsFilled : allMandatoryFieldsFilled;
@@ -292,7 +309,6 @@
 
 	function updateBookSuggestions(inputValue = '') {
 		const query = (inputValue || '').trim().toLowerCase();
-		console.log('[AddVerse] updateBookSuggestions called - inputValue:', inputValue, 'query:', query);
 		
 		const MAX_FILTERED_RESULTS = 20;
 		let booksToDisplay = [];
@@ -300,7 +316,6 @@
 		// Condition 1: If query is empty, show ALL books for browsing
 		if (query.length === 0) {
 			booksToDisplay = bibleBooks;
-			console.log('[AddVerse] Query empty - showing all', bibleBooks.length, 'books');
 		} else {
 			// Condition 2: Filter by Hanzi OR Pinyin and limit results
 			booksToDisplay = bibleBooks
@@ -309,11 +324,9 @@
 					(book.pinyin && book.pinyin.toLowerCase().includes(query)) // Case-insensitive for pinyin
 				)
 				.slice(0, MAX_FILTERED_RESULTS);
-			console.log('[AddVerse] Query not empty - filtered to', booksToDisplay.length, 'books');
 		}
 		
 		filteredBookOptions = booksToDisplay.map((book) => book.hanzi);
-		console.log('[AddVerse] filteredBookOptions updated - length:', filteredBookOptions.length);
 	}
 	
 	function selectBookSuggestion(selectedHanzi) {
@@ -323,11 +336,20 @@
 		if (book) {
 			bookInitials = getBookInitialsForMethod(book, currentInputMethod);
 			bookInitialsAuto = true;
-			console.log('[AddVerse] Selected book:', selectedHanzi, 'Initials:', bookInitials);
 		}
 		filteredBookOptions = []; // Hide suggestions after selection
 		activeInput = null;
 		showKeyboard = null;
+	}
+
+	function updateBookInitialsFromBookName(force = false) {
+		// Auto-update book initials when book name or input method changes
+		if ((bookInitialsAuto || force) && bookName) {
+			const book = bibleBooks.find((b) => b.hanzi === bookName);
+			if (book) {
+				bookInitials = getBookInitialsForMethod(book, currentInputMethod);
+			}
+		}
 	}
 
 	function updateVersionSuggestions(inputValue = '') {
@@ -346,14 +368,35 @@
 		filteredVersionOptions = [];
 	}
 
+	function toggleCollectionDropdown() {
+		showCollectionDropdown = !showCollectionDropdown;
+		if (showCollectionDropdown) {
+			activeInput = null;
+			showKeyboard = null;
+		}
+	}
+
+	function toggleCollectionSelection(collectionId) {
+		if (selectedCollectionIds.includes(collectionId)) {
+			selectedCollectionIds = selectedCollectionIds.filter(id => id !== collectionId);
+		} else {
+			selectedCollectionIds = [...selectedCollectionIds, collectionId];
+		}
+	}
+
+	function getSelectedCollectionsText() {
+		if (selectedCollectionIds.length === 0) {
+			return t('none');
+		}
+		const names = selectedCollectionIds
+			.map(id => $collections.find(c => c.id === id)?.title)
+			.filter(Boolean);
+		const result = names.join(', ');
+		return result;
+	}
+
 	function saveVerse() {
 		// Validation
-		console.log('[AddVerse] Attempting to save verse', {
-			bookName,
-			chapterNumber,
-			verseNumber,
-			inputMethod: currentInputMethod
-		});
 		if (!verseText.trim() || !bookName.trim() || !chapterNumber || !verseNumber) {
 			modalMessage = t('fill_all_fields');
 			showModal = true;
@@ -414,11 +457,11 @@
 
 		verses.update((list) => [...list, newVerse]);
 
-		// Add to collection if selected
-		if (selectedCollectionId) {
+		// Add to selected collections
+		if (selectedCollectionIds.length > 0) {
 			collections.update(cols =>
 				cols.map(c =>
-					c.id === selectedCollectionId
+					selectedCollectionIds.includes(c.id)
 						? { ...c, verseIds: [...(c.verseIds || []), newVerse.id] }
 						: c
 				)
@@ -448,19 +491,23 @@
 
 		verses.update((list) => list.map((v) => (v.id === editingId ? updatedVerse : v)));
 
-		// Add to collection if selected (only if not already in it)
-		if (selectedCollectionId) {
-			const collection = $collections.find(c => c.id === selectedCollectionId);
-			if (collection && !collection.verseIds?.includes(editingId)) {
-				collections.update(cols =>
-					cols.map(c =>
-						c.id === selectedCollectionId
-							? { ...c, verseIds: [...(c.verseIds || []), editingId] }
-							: c
-					)
-				);
-			}
-		}
+		// Update collection memberships
+		collections.update(cols =>
+			cols.map(c => {
+				const verseIds = c.verseIds || [];
+				const isCurrentlyIn = verseIds.includes(editingId);
+				const shouldBeIn = selectedCollectionIds.includes(c.id);
+
+				if (!isCurrentlyIn && shouldBeIn) {
+					// Add to collection
+					return { ...c, verseIds: [...verseIds, editingId] };
+				} else if (isCurrentlyIn && !shouldBeIn) {
+					// Remove from collection
+					return { ...c, verseIds: verseIds.filter(id => id !== editingId) };
+				}
+				return c;
+			})
+		);
 
 		clearForm();
 	}
@@ -485,11 +532,13 @@
 		verseNumber = verse.verseNumber.toString();
 		verseInitials = verse.verseInitials;
 		bookInitials = verse.bookInitials;
+		bookInitialsAuto = false;
 		bibleVersion = verse.bibleVersion;
 		
-		// Find collection containing this verse
-		const verseCollection = $collections.find(c => c.verseIds?.includes(id));
-		selectedCollectionId = verseCollection?.id || '';
+		// Pre-select collections that contain this verse
+		selectedCollectionIds = $collections
+			.filter(c => c.verseIds?.includes(id))
+			.map(c => c.id);
 		
 		editingId = id;
 
@@ -502,7 +551,7 @@
 			verseInitials,
 			bookInitials,
 			bibleVersion,
-			selectedCollectionId
+			selectedCollectionIds: [...selectedCollectionIds]
 		};
 
 		// Scroll to top
@@ -536,7 +585,8 @@
 		verseInitials = '';
 		bookInitials = '';
 		bibleVersion = '';
-		selectedCollectionId = '';
+		selectedCollectionIds = [];
+		showCollectionDropdown = false;
 		editingId = null;
 		originalFormState = null;
 		showKeyboard = null;
@@ -627,6 +677,44 @@
 	}
 
 	$: groupedVerses = buildGroupedVerses(versesList);
+
+	// Close collection dropdown on resize or click outside
+	function handleResize() {
+		if (showCollectionDropdown) {
+			showCollectionDropdown = false;
+		}
+	}
+
+	function handleClickOutside(event) {
+		if (!showCollectionDropdown) return;
+		
+		// Don't close if clicking inside the dropdown
+		if (collectionDropdownElement && collectionDropdownElement.contains(event.target)) {
+			return;
+		}
+		
+		// Don't close if clicking the collection input field (let click handler toggle it)
+		const collectionInput = document.getElementById('collectionSelector');
+		if (collectionInput && collectionInput.contains(event.target)) {
+			return;
+		}
+		
+		showCollectionDropdown = false;
+	}
+
+	onMount(() => {
+		if (typeof window !== 'undefined') {
+			window.addEventListener('resize', handleResize);
+			window.addEventListener('click', handleClickOutside, true);
+		}
+	});
+
+	onDestroy(() => {
+		if (typeof window !== 'undefined') {
+			window.removeEventListener('resize', handleResize);
+			window.removeEventListener('click', handleClickOutside, true);
+		}
+	});
 </script>
 
 <svelte:document on:keydown={handlePhysicalKey} />
@@ -653,21 +741,18 @@
 						updateBookInitialsFromBookName(true);
 					}}
 					on:focus={() => {
-						console.log('[AddVerse] bookName field focused - bookName value:', bookName);
 						activeInput = null;
 						showKeyboard = null;
 						updateBookSuggestions(bookName);
 					}}
 					on:blur={() => {
-						console.log('[AddVerse] bookName field blurred');
 						setTimeout(() => {
 							filteredBookOptions = [];
-							console.log('[AddVerse] filteredBookOptions cleared on blur');
 						}, 200);
 					}}
 				/>
 				{#if filteredBookOptions.length > 0}
-					<div class="autocomplete-suggestions">
+					<div class="autocomplete-suggestions" bind:this={bookDropdownElement}>
 						{#each filteredBookOptions as option}
 							<div 
 								class="suggestion-item" 
@@ -836,7 +921,7 @@
 					}}
 				/>
 				{#if filteredVersionOptions.length > 0}
-					<div class="autocomplete-suggestions">
+					<div class="autocomplete-suggestions" bind:this={versionDropdownElement}>
 						{#each filteredVersionOptions as option}
 							<div 
 								class="suggestion-item" 
@@ -853,21 +938,52 @@
 			</div>
 
 			<!-- Row 7: Add to collection -->
-			<div class="field">
+			<div class="field" style="position: relative;">
 				<label for="collectionSelector">{t('add_to_collection_optional')}</label>
-				<select
+				<input
+					type="text"
 					id="collectionSelector"
-					bind:value={selectedCollectionId}
+					bind:value={collectionDisplayText}
+					readonly
+					autocomplete="off"
+					on:click={toggleCollectionDropdown}
 					on:focus={() => {
 						activeInput = null;
 						showKeyboard = null;
 					}}
-				>
-					<option value="">{t('none')}</option>
-					{#each $collections as collection (collection.id)}
-						<option value={collection.id}>{collection.title}</option>
-					{/each}
-				</select>
+					placeholder={t('none')}
+				/>
+				{#if showCollectionDropdown}
+					<div
+						class="autocomplete-suggestions collection-dropdown"
+						bind:this={collectionDropdownElement}
+					>
+						{#if $collections.length === 0}
+							<div class="suggestion-item disabled">
+								{t('no_collections')}
+							</div>
+						{:else}
+							{#each $collections as collection (collection.id)}
+								<div 
+									class="suggestion-item collection-item" 
+									on:click={() => toggleCollectionSelection(collection.id)}
+									on:keydown={(e) => e.key === 'Enter' && toggleCollectionSelection(collection.id)}
+									tabindex="0"
+									role="button"
+								>
+									<input 
+										type="checkbox" 
+										checked={selectedCollectionIds.includes(collection.id)}
+										on:click|stopPropagation
+										on:change={() => toggleCollectionSelection(collection.id)}
+										tabindex="-1"
+									/>
+									<span>{collection.title}</span>
+								</div>
+							{/each}
+						{/if}
+					</div>
+				{/if}
 			</div>
 
 			<!-- Numeric Keyboard for Chapter/Verse Numbers -->
@@ -1056,6 +1172,7 @@
 		box-sizing: border-box;
 		max-width: 100vw;
 		overflow-x: hidden;
+		overflow-y: visible;
 	}
 
 	@media (max-width: 767px) {
@@ -1072,6 +1189,10 @@
 		}
 	}
 
+	.add-verse-container {
+		overflow: visible;
+	}
+
 	.form-section,
 	.verses-section {
 		background: var(--panel-background);
@@ -1080,7 +1201,7 @@
 		box-shadow: var(--panel-shadow);
 		box-sizing: border-box;
 		max-width: 100%;
-		overflow-x: hidden;
+		overflow: visible;
 	}
 
 	@media (max-width: 767px) {
@@ -1102,6 +1223,7 @@
 		gap: 1rem;
 		box-sizing: border-box;
 		max-width: 100%;
+		overflow: visible;
 	}
 
 	.field {
@@ -1109,6 +1231,7 @@
 		gap: 0.5rem;
 		box-sizing: border-box;
 		max-width: 100%;
+		overflow: visible;
 	}
 
 	.field label {
@@ -1118,8 +1241,7 @@
 	}
 
 	.field input,
-	.field textarea,
-	.field select {
+	.field textarea {
 		padding: 0.75rem;
 		border: 1px solid var(--file-border);
 		background: var(--file-bg);
@@ -1133,8 +1255,7 @@
 	}
 
 	.field input:focus,
-	.field textarea:focus,
-	.field select:focus {
+	.field textarea:focus {
 		outline: none;
 		border-color: var(--accent-color);
 	}
@@ -1170,6 +1291,49 @@
 	
 	.autocomplete-suggestions .suggestion-item:last-child {
 		border-bottom: none;
+	}
+
+	/* Collection dropdown specific styles */
+	.collection-dropdown {
+		max-height: 300px;
+		z-index: 1000;
+	}
+
+	.collection-item {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 10px;
+	}
+
+	.collection-item input[type="checkbox"] {
+		margin: 0;
+		cursor: pointer;
+		width: 18px;
+		height: 18px;
+		flex-shrink: 0;
+	}
+
+	.collection-item span {
+		flex: 1;
+		cursor: pointer;
+	}
+
+	.collection-item:hover,
+	.collection-item:focus {
+		background-color: var(--accent-color);
+		color: var(--correct-color);
+	}
+
+	.suggestion-item.disabled {
+		cursor: not-allowed;
+		opacity: 0.6;
+		font-style: italic;
+	}
+
+	.suggestion-item.disabled:hover {
+		background-color: var(--panel-background);
+		color: var(--text-color);
 	}
 
 	.helper-text {
