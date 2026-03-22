@@ -37,6 +37,46 @@
 	let correctKey = null;
 	let lastCorrectKey = null;
 
+	// Reset keyboard feedback when verse or difficulty stage changes
+	$: {
+		// React to verse or stage changes to clear feedback
+		const _ = currentVerseIdx;
+		const __ = currentStage;
+		pressedKey = null;
+		correctKey = null;
+		lastCorrectKey = null;
+	}
+
+	// Check for input method mismatch and show warning
+	$: {
+		// Explicitly depend on both learnFullInitials and inputMethod
+		const currentMethod = $settings.inputMethod;
+		const fullInitials = learnFullInitials;
+		console.log('[LearningFlow] Mismatch check - currentMethod:', currentMethod, 'fullInitials:', fullInitials);
+		
+		if (fullInitials && currentMethod) {
+			const verseInputMethod = detectInputMethod(fullInitials);
+			console.log('[LearningFlow] Detected verse input method:', verseInputMethod);
+			
+			if (verseInputMethod && verseInputMethod !== currentMethod) {
+				console.log('[LearningFlow] MISMATCH DETECTED! Verse:', verseInputMethod, 'User setting:', currentMethod);
+				const methodNames = { 
+					pinyin: t('input_pinyin'), 
+					zhuyin: t('input_zhuyin'), 
+					cangjie: t('input_cangjie') 
+				};
+				feedbackMessage = t('input_method_mismatch').replace('{method}', methodNames[verseInputMethod] || verseInputMethod);
+				feedbackType = 'warning';
+				console.log('[LearningFlow] Set warning message:', feedbackMessage);
+			} else if (verseInputMethod === currentMethod && feedbackType === 'warning') {
+				// Only clear warning if we successfully detected a matching method
+				console.log('[LearningFlow] Methods match, clearing warning');
+				feedbackMessage = '';
+				feedbackType = '';
+			}
+		}
+	}
+
 	// Update keyboard layout when input method changes OR when switching to numeric
 	$: {
 		const nextCharIndex = userInput.length;
@@ -219,6 +259,54 @@
 		});
 	}
 
+	function detectInputMethod(initials) {
+		console.log('[LearningFlow] detectInputMethod called with initials:', initials);
+		if (!initials || initials.length === 0) {
+			console.log('[LearningFlow] No initials provided, returning null');
+			return null;
+		}
+		
+		// Sample first few characters (excluding numbers)
+		const sample = initials.split('').filter(c => !/[0-9]/.test(c)).slice(0, 5).join('');
+		console.log('[LearningFlow] Filtered sample (first 5 non-numeric chars):', sample);
+		
+		if (!sample) {
+			console.log('[LearningFlow] Sample is empty after filtering, returning null');
+			return null;
+		}
+		
+		// Log Unicode values of sample characters
+		const charCodes = sample.split('').map(c => `${c} (U+${c.charCodeAt(0).toString(16).toUpperCase().padStart(4, '0')})`).join(', ');
+		console.log('[LearningFlow] Sample character codes:', charCodes);
+		
+		// Check for Zhuyin (Bopomofo characters U+3105-U+3129 and tone marks)
+		const zhuyinMatch = /[\u3105-\u3129\u02CA\u02C7\u02CB\u02D9]/.test(sample);
+		console.log('[LearningFlow] Zhuyin regex test:', zhuyinMatch);
+		if (zhuyinMatch) {
+			console.log('[LearningFlow] Detected: zhuyin');
+			return 'zhuyin';
+		}
+		
+		// Check for Cangjie (Chinese characters used as input)
+		const cangjieMatch = /[\u4e00-\u9fa5]/.test(sample);
+		console.log('[LearningFlow] Cangjie regex test:', cangjieMatch);
+		if (cangjieMatch) {
+			console.log('[LearningFlow] Detected: cangjie');
+			return 'cangjie';
+		}
+		
+		// Check for Pinyin (lowercase Latin letters)
+		const pinyinMatch = /[a-z]/.test(sample);
+		console.log('[LearningFlow] Pinyin regex test:', pinyinMatch);
+		if (pinyinMatch) {
+			console.log('[LearningFlow] Detected: pinyin');
+			return 'pinyin';
+		}
+		
+		console.log('[LearningFlow] No match found, returning null');
+		return null;
+	}
+
 	function getCurrentVerse() {
 		if (!versesToLearn.length) return null;
 		return versesToLearn[currentVerseIdx];
@@ -322,39 +410,25 @@
 		console.log('Latest error char:', latestErrorChar);
 		console.log('Mapped char index:', mappedCharIndex);
 
-		// Update help text only when error changes
+		// Update error tracking for audio/haptic feedback
 		if (latestErrorIndex === -1) {
-			// No error - clear feedback
-			console.log('No errors found - clearing feedback');
-			feedbackMessage = '';
-			feedbackType = '';
+			// No error
+			console.log('No errors found');
 			lastErrorIndex = null;
 			lastErrorChar = null;
 		} else {
-			const chars = [...learnFullText];
-			const errorCharacter = mappedCharIndex !== -1 ? chars[mappedCharIndex] : '?';
+			console.log('Error at index:', latestErrorIndex);
 			
-			console.log('Error character:', errorCharacter);
-			console.log('Last error index:', lastErrorIndex);
-			console.log('Last error char:', lastErrorChar);
-			
-			// Only update if this is a new or different error
+			// Only trigger feedback if this is a new or different error
 			if (lastErrorIndex !== latestErrorIndex || lastErrorChar !== latestErrorChar) {
-				console.log('NEW/DIFFERENT ERROR - updating feedback');
-				feedbackMessage = t('incorrect_input')
-					.replace('{char}', errorCharacter)
-					.replace('{pos}', latestErrorIndex + 1)
-					.replace('{expected}', latestErrorChar);
-				feedbackType = 'error';
-				console.log('Feedback message:', feedbackMessage);
-				console.log('Feedback type:', feedbackType);
+				console.log('NEW/DIFFERENT ERROR - triggering feedback');
 				lastErrorIndex = latestErrorIndex;
 				lastErrorChar = latestErrorChar;
 				
 				// Trigger audio/haptic feedback
 				triggerErrorFeedback($settings);
 				
-				// Trigger viewport scroll to reveal error feedback
+				// Trigger viewport scroll
 				scrollTrigger++;
 				console.log('Scroll trigger incremented to:', scrollTrigger);
 			} else {

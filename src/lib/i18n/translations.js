@@ -170,6 +170,7 @@ export const translations = {
 		result: 'Result',
 		accuracy: 'Accuracy',
 		incorrect_input: 'Incorrect input for "{char}" (position {pos}). Expected "{expected}".',
+		input_method_mismatch: 'This verse was set up for {method}.',
 		due_count: '{count} due',
 		learned_count: '{count} learned',
 		
@@ -446,8 +447,7 @@ export const translations = {
 		learned: '已学习',		learned_tag: '已学',		verses: '节',
 		result: '结果',
 		accuracy: '正确率',
-		incorrect_input: '在"{char}"处输入错误（第{pos}个），应该是"{expected}"。',
-		due_count: '{count} 个待复习',
+		incorrect_input: '在"{char}"处输入错误（第{pos}个），应该是"{expected}"。',		input_method_mismatch: '此经文是用{method}设置的。',		due_count: '{count} 个待复习',
 		learned_count: '{count} 已学习',
 		
 		// Messages and confirmations
@@ -723,8 +723,7 @@ export const translations = {
 		learned: '已學習',		learned_tag: '已學',		verses: '節',
 		result: '結果',
 		accuracy: '正確率',
-		incorrect_input: '在"{char}"處輸入錯誤（第{pos}個），應該是"{expected}"。',
-		due_count: '{count} 個待複習',
+		incorrect_input: '在"{char}"處輸入錯誤（第{pos}個），應該是"{expected}"。',		input_method_mismatch: '此經文是用{method}設置的。',		due_count: '{count} 個待複習',
 		learned_count: '{count} 已學習',
 		
 		// Messages and confirmations

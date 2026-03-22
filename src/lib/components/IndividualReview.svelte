@@ -36,6 +36,45 @@
 	let correctKey = null;
 	let lastCorrectKey = null;
 	
+	// Reset keyboard feedback when verse changes
+	$: {
+		// React to verse change to clear feedback
+		const _ = currentIndex;
+		pressedKey = null;
+		correctKey = null;
+		lastCorrectKey = null;
+	}
+
+	// Check for input method mismatch and show warning
+	$: {
+		// Explicitly depend on both reviewFullInitials and inputMethod
+		const currentMethod = $settings.inputMethod;
+		const fullInitials = reviewFullInitials;
+		console.log('[IndividualReview] Mismatch check - currentMethod:', currentMethod, 'fullInitials:', fullInitials);
+		
+		if (fullInitials && currentMethod) {
+			const verseInputMethod = detectInputMethod(fullInitials);
+			console.log('[IndividualReview] Detected verse input method:', verseInputMethod);
+			
+			if (verseInputMethod && verseInputMethod !== currentMethod) {
+				console.log('[IndividualReview] MISMATCH DETECTED! Verse:', verseInputMethod, 'User setting:', currentMethod);
+				const methodNames = { 
+					pinyin: t('input_pinyin'), 
+					zhuyin: t('input_zhuyin'), 
+					cangjie: t('input_cangjie') 
+				};
+				feedbackMessage = t('input_method_mismatch').replace('{method}', methodNames[verseInputMethod] || verseInputMethod);
+				feedbackType = 'warning';
+				console.log('[IndividualReview] Set warning message:', feedbackMessage);
+			} else if (verseInputMethod === currentMethod && feedbackType === 'warning') {
+				// Only clear warning if we successfully detected a matching method
+				console.log('[IndividualReview] Methods match, clearing warning');
+				feedbackMessage = '';
+				feedbackType = '';
+			}
+		}
+	}
+	
 	// Data for current verse (like Learning Mode)
 	let reviewFullText = '';
 	let reviewFullInitials = '';
@@ -194,20 +233,11 @@
 		}
 
 		if (latestErrorIndex === -1) {
-			feedbackMessage = '';
-			feedbackType = '';
 			lastErrorIndex = null;
 			lastErrorChar = null;
 		} else {
-			const chars = [...reviewFullText];
-			const errorCharacter = mappedCharIndex !== -1 ? chars[mappedCharIndex] : '?';
-			
+			// Only trigger feedback if this is a new or different error
 			if (lastErrorIndex !== latestErrorIndex || lastErrorChar !== latestErrorChar) {
-				feedbackMessage = t('incorrect_input')
-					.replace('{char}', errorCharacter)
-					.replace('{pos}', latestErrorIndex + 1)
-					.replace('{expected}', latestErrorChar);
-				feedbackType = 'error';
 				lastErrorIndex = latestErrorIndex;
 				lastErrorChar = latestErrorChar;
 				
@@ -217,6 +247,54 @@
 				scrollTrigger++;
 			}
 		}
+	}
+
+	function detectInputMethod(initials) {
+		console.log('[IndividualReview] detectInputMethod called with initials:', initials);
+		if (!initials || initials.length === 0) {
+			console.log('[IndividualReview] No initials provided, returning null');
+			return null;
+		}
+		
+		// Sample first few characters (excluding numbers)
+		const sample = initials.split('').filter(c => !/[0-9]/.test(c)).slice(0, 5).join('');
+		console.log('[IndividualReview] Filtered sample (first 5 non-numeric chars):', sample);
+		
+		if (!sample) {
+			console.log('[IndividualReview] Sample is empty after filtering, returning null');
+			return null;
+		}
+		
+		// Log Unicode values of sample characters
+		const charCodes = sample.split('').map(c => `${c} (U+${c.charCodeAt(0).toString(16).toUpperCase().padStart(4, '0')})`).join(', ');
+		console.log('[IndividualReview] Sample character codes:', charCodes);
+		
+		// Check for Zhuyin (Bopomofo characters U+3105-U+3129 and tone marks)
+		const zhuyinMatch = /[\u3105-\u3129\u02CA\u02C7\u02CB\u02D9]/.test(sample);
+		console.log('[IndividualReview] Zhuyin regex test:', zhuyinMatch);
+		if (zhuyinMatch) {
+			console.log('[IndividualReview] Detected: zhuyin');
+			return 'zhuyin';
+		}
+		
+		// Check for Cangjie (Chinese characters used as input)
+		const cangjieMatch = /[\u4e00-\u9fa5]/.test(sample);
+		console.log('[IndividualReview] Cangjie regex test:', cangjieMatch);
+		if (cangjieMatch) {
+			console.log('[IndividualReview] Detected: cangjie');
+			return 'cangjie';
+		}
+		
+		// Check for Pinyin (lowercase Latin letters)
+		const pinyinMatch = /[a-z]/.test(sample);
+		console.log('[IndividualReview] Pinyin regex test:', pinyinMatch);
+		if (pinyinMatch) {
+			console.log('[IndividualReview] Detected: pinyin');
+			return 'pinyin';
+		}
+		
+		console.log('[IndividualReview] No match found, returning null');
+		return null;
 	}
 
 	function handleKeyInput(event) {
@@ -487,9 +565,9 @@
 		{/key}
 
 		<div class="input-section">
-			<!-- Feedback for errors during typing -->
-			{#if feedbackMessage && !showResult}
-				<div class="feedback" class:success={feedbackType === 'success'} class:error={feedbackType === 'error'} class:warning={feedbackType === 'warning'}>
+			<!-- Input method mismatch warning -->
+			{#if feedbackMessage && feedbackType === 'warning' && !showResult}
+				<div class="feedback warning">
 					{feedbackMessage}
 				</div>
 			{/if}
