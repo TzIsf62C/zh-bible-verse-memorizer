@@ -54,7 +54,7 @@
 			{#if title}
 				<h3 class="modal-title">{title}</h3>
 			{/if}
-			<div class="modal-message">{message}</div>
+		<div class="modal-message">{@html message}</div>
 			<div class="modal-buttons">
 				{#if buttons.length > 0}
 					{#each buttons as button}
@@ -116,8 +116,20 @@
 	.modal-message {
 		margin-bottom: 1.5rem;
 		color: var(--text-color);
-		font-size: 1.1rem;
+		font-size: 1.1em;
 		line-height: 1.5;
+	}
+
+	.modal-message :global(ul) {
+		text-align: left;
+		margin: 0.5rem 0;
+		padding-left: 2rem;
+		list-style-position: inside;
+	}
+
+	.modal-message :global(li) {
+		text-align: left;
+		margin: 0.25rem 0;
 	}
 
 	.modal-buttons {

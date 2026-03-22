@@ -282,7 +282,7 @@
 		text-align: center;
 		font-weight: 600;
 		margin-bottom: 1.5rem;
-		font-size: 1.1rem;
+		font-size: 1.1em;
 	}
 
 	.feedback.success {

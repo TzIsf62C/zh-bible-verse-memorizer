@@ -320,7 +320,7 @@
 	h3 {
 		margin: 0 0 1rem 0;
 		color: var(--text-color);
-		font-size: 1.1rem;
+		font-size: 1.1em;
 	}
 
 	.empty-state {
@@ -356,7 +356,7 @@
 
 	.option-title {
 		font-weight: 600;
-		font-size: 1.1rem;
+		font-size: 1.1em;
 		margin-bottom: 0.5rem;
 		color: var(--accent-color);
 	}

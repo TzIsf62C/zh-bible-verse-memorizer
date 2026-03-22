@@ -230,7 +230,7 @@ export const translations = {
 		update_error: 'Unable to check for updates.',
 		
 		// Clear data modal
-		clear_data_confirm: 'Are you sure you want to clear all data?<br><br>This will permanently delete:<ul style="margin: 8px 0; padding-left: 20px;"><li>All verses</li><li>All collections</li><li>All review progress</li><li>All settings</li></ul>This action cannot be undone.',
+		clear_data_confirm: 'Are you sure you want to clear all data?<br><br>This will permanently delete:<ul style="margin: 8px 0; padding-left: 4rem;"><li>All verses</li><li>All collections</li><li>All review progress</li><li>All settings</li></ul>This action cannot be undone.',
 		
 		// Backup reminders
 		backup_reminder_title: '⚠️ Backup Reminder',
@@ -506,7 +506,7 @@ export const translations = {
 		update_error: '无法检查更新。',
 		
 		// Clear data modal
-		clear_data_confirm: '您确定要清除所有数据吗？<br><br>这将永久删除：<ul style="margin: 8px 0; padding-left: 20px;"><li>所有经文</li><li>所有集合</li><li>所有复习进度</li><li>所有设置</li></ul>此操作无法撤消。',
+		clear_data_confirm: '您确定要清除所有数据吗？<br><br>这将永久删除：<ul style="margin: 8px 0; padding-left: 4rem;"><li>所有经文</li><li>所有集合</li><li>所有复习进度</li><li>所有设置</li></ul>此操作无法撤消。',
 		
 		// Backup reminders
 		backup_reminder_title: '⚠️ 备份提醒',
@@ -782,7 +782,7 @@ export const translations = {
 		update_error: '無法檢查更新。',
 		
 		// Clear data modal
-		clear_data_confirm: '您確定要清除所有資料嗎？<br><br>這將永久刪除：<ul style="margin: 8px 0; padding-left: 20px;"><li>所有經文</li><li>所有集合</li><li>所有複習進度</li><li>所有設置</li></ul>此操作無法撤消。',
+		clear_data_confirm: '您確定要清除所有資料嗎？<br><br>這將永久刪除：<ul style="margin: 8px 0; padding-left: 4rem;"><li>所有經文</li><li>所有集合</li><li>所有複習進度</li><li>所有設置</li></ul>此操作無法撤消。',
 		
 		// Backup reminders
 		backup_reminder_title: '⚠️ 備份提醒',
