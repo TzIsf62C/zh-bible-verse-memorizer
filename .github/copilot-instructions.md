@@ -248,6 +248,11 @@ Edit `src/lib/utils/spacedRepetition.js`:
 - **Theme variables**: `var(--accent-color)`, `var(--app-background)`, etc.
 - **Mobile-first**: Base styles for mobile, `@media (min-width: 768px)` for desktop
 - **Font**: Noto Sans SC loaded from `static/fonts/` for offline Chinese rendering
+- **Font sizing**: Always use `em` units for `font-size` (not `rem` or `px`) to ensure the global text-scale feature works throughout the app
+  - The text size setting applies `--text-scale` CSS variable to body element: `font-size: calc(16px * var(--text-scale))`
+  - Using `em` units allows font sizes to inherit and scale from the body font-size
+  - Using `rem` units will break text scaling (rem is always relative to root, which stays at 16px)
+  - Example: `font-size: 1.5em` for verse display text, `font-size: 0.9em` for labels
 - **Avoid excessive div embedding**: Keep HTML structure flat and semantic; use CSS Grid/Flexbox instead of wrapper divs when possible
 - **Mobile padding/margins**: Reduce padding and margins on mobile screens (max-width: 767px) to maximize usable space
   - Example: `padding: 1rem` on desktop becomes `padding: 0.5rem` on mobile

@@ -7,28 +7,59 @@
 
 	let { children } = $props();
 	let unsubscribe;
+	let mediaQueryListener;
+	let currentThemePreference = 'system';
 
 	function applyThemePreference(themePreference) {
 		if (!browser) return;
+		currentThemePreference = themePreference;
 		const root = document.documentElement;
 		if (themePreference === 'light') {
 			root.dataset.theme = 'light';
 		} else if (themePreference === 'dark') {
 			root.dataset.theme = 'dark';
 		} else {
-			root.dataset.theme = 'system';
+			// System preference - detect actual system theme
+			const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+			root.dataset.theme = prefersDark ? 'dark' : 'light';
+		}
+	}
+
+	function applyTextSize(scale) {
+		if (!browser) return;
+		const scaleValue = parseFloat(scale);
+		document.documentElement.style.setProperty('--text-scale', scaleValue);
+	}
+
+	function handleSystemThemeChange(e) {
+		// Only apply if user has selected 'system' theme
+		if (currentThemePreference === 'system') {
+			const root = document.documentElement;
+			root.dataset.theme = e.matches ? 'dark' : 'light';
 		}
 	}
 
 	onMount(() => {
 		if (!browser) return;
+		
+		// Subscribe to settings changes
 		unsubscribe = settings.subscribe((value) => {
 			applyThemePreference(value.themePreference);
+			applyTextSize(value.textSizePreference);
 		});
+		
+		// Listen for system theme changes
+		const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+		mediaQueryListener = handleSystemThemeChange;
+		mediaQuery.addEventListener('change', mediaQueryListener);
 	});
 
 	onDestroy(() => {
 		if (unsubscribe) unsubscribe();
+		if (browser && mediaQueryListener) {
+			const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+			mediaQuery.removeEventListener('change', mediaQueryListener);
+		}
 	});
 </script>
 

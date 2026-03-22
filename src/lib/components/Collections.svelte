@@ -227,7 +227,7 @@
 		color: var(--text-color);
 		border-radius: 4px;
 		font-family: inherit;
-		font-size: 1rem;
+		font-size: 1em;
 	}
 	
 	.create-collection-row button {
@@ -237,7 +237,7 @@
 		color: white;
 		border-radius: 4px;
 		cursor: pointer;
-		font-size: 1rem;
+		font-size: 1em;
 		font-weight: 500;
 		transition: all 0.3s;
 		white-space: nowrap;
@@ -279,7 +279,7 @@
 	
 	.verse-count {
 		font-weight: normal;
-		font-size: 0.9rem;
+		font-size: 0.9em;
 		color: var(--subtitle-color);
 	}
 	
@@ -296,7 +296,7 @@
 		color: var(--nav-button-color);
 		border-radius: 4px;
 		cursor: pointer;
-		font-size: 0.9rem;
+		font-size: 0.9em;
 		transition: all 0.3s;
 	}
 	

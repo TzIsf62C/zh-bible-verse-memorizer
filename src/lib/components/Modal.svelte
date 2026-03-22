@@ -131,7 +131,7 @@
 		padding: 0.75rem 2rem;
 		border: none;
 		border-radius: 4px;
-		font-size: 1rem;
+		font-size: 1em;
 		font-weight: 500;
 		cursor: pointer;
 		transition: all 0.3s;

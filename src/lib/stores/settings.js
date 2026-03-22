@@ -8,6 +8,7 @@ const defaultSettings = {
 	bookNameCharset: 'traditional',
 	defaultBibleVersion: '',
 	vibrationEnabled: false,
+	buzzerEnabled: false,
 	backupReminderEnabled: true,
 	textSizePreference: 1
 };
@@ -24,6 +25,10 @@ function readLegacySettings() {
 		vibrationEnabled:
 			localStorage.getItem('vibrationEnabled') !== null
 				? localStorage.getItem('vibrationEnabled') === 'true'
+				: undefined,
+		buzzerEnabled:
+			localStorage.getItem('buzzerEnabled') !== null
+				? localStorage.getItem('buzzerEnabled') === 'true'
 				: undefined,
 		backupReminderEnabled:
 			localStorage.getItem('backupReminderEnabled') !== null

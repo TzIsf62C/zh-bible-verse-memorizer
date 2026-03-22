@@ -350,6 +350,20 @@
 			<label class="checkbox-option">
 				<input 
 					type="checkbox" 
+					checked={$settings.buzzerEnabled}
+					on:change={(e) => updateSetting('buzzerEnabled', e.currentTarget.checked)}
+				/>
+				<div>
+					<span>{t('enable_buzzer')}</span>
+					<p class="help-text">{t('buzzer_note')}</p>
+				</div>
+			</label>
+		</div>
+		
+		<div class="setting-group">
+			<label class="checkbox-option">
+				<input 
+					type="checkbox" 
 					checked={$settings.backupReminderEnabled}
 					on:change={(e) => updateSetting('backupReminderEnabled', e.currentTarget.checked)}
 				/>
@@ -434,7 +448,7 @@
 	
 	h3 {
 		margin: 0 0 1rem 0;
-		font-size: 1.1rem;
+		font-size: 1.1em;
 		color: var(--text-color);
 	}
 	
@@ -456,7 +470,7 @@
 		margin-bottom: 0;
 	}
 	
-	.setting-group > label:first-child {
+	.setting-group > label:first-child:not(.checkbox-option) {
 		display: block;
 		font-weight: 500;
 		margin-bottom: 0.5rem;
@@ -493,6 +507,7 @@
 	
 	.checkbox-option {
 		display: flex;
+		flex-direction: row;
 		gap: 0.75rem;
 		cursor: pointer;
 		padding: 0.75rem;
@@ -506,9 +521,11 @@
 	}
 	
 	.checkbox-option input[type="checkbox"] {
-		margin-top: 0.2rem;
 		cursor: pointer;
 		flex-shrink: 0;
+		width: 18px;
+		height: 18px;
+		margin-top: 0.15rem;
 	}
 	
 	.checkbox-option div {
@@ -529,11 +546,11 @@
 		color: var(--text-color);
 		border-radius: 4px;
 		font-family: inherit;
-		font-size: 1rem;
+		font-size: 1em;
 	}
 	
 	.help-text {
-		font-size: 0.85rem;
+		font-size: 0.85em;
 		color: var(--subtitle-color);
 		margin: 0.25rem 0 0 0;
 		line-height: 1.4;
@@ -546,7 +563,7 @@
 		color: var(--nav-button-color);
 		border-radius: 4px;
 		cursor: pointer;
-		font-size: 1rem;
+		font-size: 1em;
 		font-weight: 500;
 		transition: all 0.3s;
 	}
@@ -567,7 +584,7 @@
 		color: white;
 		border-radius: 4px;
 		cursor: pointer;
-		font-size: 1rem;
+		font-size: 1em;
 		font-weight: 500;
 		transition: all 0.3s;
 	}
@@ -584,7 +601,7 @@
 	
 	.update-status {
 		margin-top: 0.5rem;
-		font-size: 0.85rem;
+		font-size: 0.85em;
 		color: var(--subtitle-color);
 	}
 	
@@ -598,7 +615,7 @@
 	
 	.app-info {
 		text-align: center;
-		font-size: 0.85rem;
+		font-size: 0.85em;
 		color: var(--subtitle-color);
 		margin-top: 2rem;
 		padding-top: 2rem;
@@ -606,6 +623,6 @@
 	}
 	
 	.app-info p {
-		margin: 0.25rem 0;
+		margin: 0.25em 0;
 	}
 </style>

@@ -1356,7 +1356,7 @@
 
 	.field label {
 		font-weight: 500;
-		font-size: 0.9rem;
+		font-size: 0.9em;
 		color: var(--subtitle-color);
 	}
 
@@ -1368,7 +1368,7 @@
 		color: var(--text-color);
 		border-radius: 4px;
 		font-family: inherit;
-		font-size: 1rem;
+		font-size: 1em;
 		box-sizing: border-box;
 		width: 100%;
 		max-width: 100%;
@@ -1484,7 +1484,7 @@
 		border: none;
 		border-radius: 4px;
 		cursor: pointer;
-		font-size: 1rem;
+		font-size: 1em;
 		font-weight: 500;
 		transition: all 0.3s;
 		box-sizing: border-box;
@@ -1525,7 +1525,7 @@
 	.verse-count {
 		margin-left: auto;
 		color: var(--subtitle-color);
-		font-size: 0.9rem;
+		font-size: 0.9em;
 	}
 
 	.verses-list {
@@ -1549,7 +1549,7 @@
 		user-select: none;
 		border: none;
 		width: 100%;
-		font-size: 1rem;
+		font-size: 1em;
 		color: inherit;
 		transition: background 0.3s;
 	}

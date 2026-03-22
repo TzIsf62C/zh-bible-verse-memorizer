@@ -6,6 +6,7 @@
 	import { keyboardLayouts } from '$lib/utils/keyboardLayouts';
 	import { spacedRepetitionBinary } from '$lib/utils/spacedRepetition';
 	import { zhuyinKeyMap, cangjieKeyMap } from '$lib/utils/inputMaps';
+	import { triggerErrorFeedback } from '$lib/utils/feedback';
 
 	let currentVerseIdx = 0;
 	let currentStage = 'basic'; // basic, intermediate, advanced - user can choose any
@@ -321,6 +322,9 @@
 				console.log('Feedback type:', feedbackType);
 				lastErrorIndex = latestErrorIndex;
 				lastErrorChar = latestErrorChar;
+				
+				// Trigger audio/haptic feedback
+				triggerErrorFeedback($settings);
 				
 				// Trigger viewport scroll to reveal error feedback
 				scrollTrigger++;
@@ -852,7 +856,7 @@
 		color: var(--nav-button-color);
 		border-radius: 4px;
 		cursor: pointer;
-		font-size: 1rem;
+		font-size: 1em;
 		font-weight: 500;
 		transition: all 0.3s;
 	}
@@ -883,11 +887,11 @@
 		color: var(--text-color);
 		border-radius: 4px;
 		font-family: inherit;
-		font-size: 1rem;
+		font-size: 1em;
 	}
 
 	.verse-display {
-		font-size: 1.5rem;
+		font-size: 1.5em;
 		line-height: 2;
 		padding: 1.5rem;
 		background: var(--panel-background);
@@ -1006,7 +1010,7 @@
 		border: none;
 		border-radius: 4px;
 		cursor: pointer;
-		font-size: 1rem;
+		font-size: 1em;
 		font-weight: 500;
 		transition: all 0.3s;
 	}
@@ -1062,7 +1066,7 @@
 	}
 	
 	.modal-message {
-		font-size: 1.2rem;
+		font-size: 1.2em;
 		margin-bottom: 1.5rem;
 		color: var(--text-color);
 	}
@@ -1074,7 +1078,7 @@
 		border: none;
 		border-radius: 4px;
 		cursor: pointer;
-		font-size: 1rem;
+		font-size: 1em;
 		font-weight: 500;
 		transition: all 0.3s;
 	}

@@ -15,6 +15,7 @@
 	--text-color: #1b1b1f;
 	--correct-color: #000000;
 	--error-color: #cc0000;
+	--text-scale: 1.0;
 }
 
 :root[data-theme='light'] {
@@ -50,6 +51,7 @@ body {
 	background: var(--app-background, #f7f7f9);
 	color: inherit;
 	overflow-x: hidden;
+	font-size: calc(16px * var(--text-scale));
 }
 
 * {
@@ -68,7 +70,7 @@ main.app-shell {
 
 .app-header h1 {
 	margin: 0 0 0.25rem;
-	font-size: 2rem;
+	font-size: 2em;
 }
 
 .subtitle {
@@ -124,6 +126,8 @@ select {
 	border: 1px solid var(--file-border, #d7d7df);
 	background: var(--file-bg, #f7f7fb);
 	color: inherit;
+	font-size: inherit;
+	font-family: inherit;
 }
 
 button {
@@ -134,6 +138,8 @@ button {
 	border-radius: 999px;
 	font-weight: 600;
 	cursor: pointer;
+	font-size: inherit;
+	font-family: inherit;
 }
 
 input[type='file'] {
@@ -141,6 +147,8 @@ input[type='file'] {
 	padding: 0.5rem;
 	border-radius: 8px;
 	background: var(--file-bg, #f7f7fb);
+	font-size: inherit;
+	font-family: inherit;
 }
 
 .status {
@@ -161,7 +169,7 @@ input[type='file'] {
 	border-radius: 12px;
 	border: 1px solid var(--file-border, #d7d7df);
 	background: var(--file-bg, #f7f7fb);
-	font-size: 1.1rem;
+	font-size: 1.1em;
 }
 
 .helper-text {
@@ -219,7 +227,7 @@ input[type='file'] {
 	min-width: 32px;
 	max-width: 50px;
 	flex: 1;
-	font-size: 1rem;
+	font-size: 1em;
 	cursor: pointer;
 	touch-action: manipulation;
 	transition: background 0.2s ease;
@@ -275,7 +283,7 @@ input[type='file'] {
 .keyboard.numeric .key {
 	min-width: 60px;
 	max-width: 80px;
-	font-size: 1.2rem;
+	font-size: 1.2em;
 }
 
 .keyboard.numeric .key.backspace,
@@ -300,7 +308,7 @@ input[type='file'] {
 		min-width: 26px;
 		max-width: 42px;
 		padding: 10px 4px;
-		font-size: 0.9rem;
+		font-size: 0.9em;
 	}
 	
 	.keyboard-row {
@@ -317,7 +325,7 @@ input[type='file'] {
 		min-width: 20px;
 		max-width: 28px;
 		padding: 10px 2px;
-		font-size: 0.85rem;
+		font-size: 0.85em;
 	}
 }
 

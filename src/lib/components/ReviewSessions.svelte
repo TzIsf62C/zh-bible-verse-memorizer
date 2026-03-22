@@ -360,7 +360,7 @@
 
 	.option-count {
 		color: var(--subtitle-color);
-		font-size: 0.9rem;
+		font-size: 0.9em;
 	}
 
 	.collection-selector {
@@ -376,7 +376,7 @@
 		color: var(--text-color);
 		border-radius: 4px;
 		font-family: inherit;
-		font-size: 1rem;
+		font-size: 1em;
 	}
 
 	.primary-btn {
@@ -386,7 +386,7 @@
 		color: white;
 		border-radius: 4px;
 		cursor: pointer;
-		font-size: 1rem;
+		font-size: 1em;
 		font-weight: 500;
 		transition: all 0.3s;
 		white-space: nowrap;
@@ -517,7 +517,7 @@
 
 	.option-desc {
 		margin-top: 0.5rem;
-		font-size: 0.9rem;
+		font-size: 0.9em;
 		color: var(--subtitle-color);
 		font-weight: normal;
 	}
@@ -530,7 +530,7 @@
 		color: var(--nav-button-color);
 		border-radius: 4px;
 		cursor: pointer;
-		font-size: 1rem;
+		font-size: 1em;
 		transition: all 0.3s;
 	}
 

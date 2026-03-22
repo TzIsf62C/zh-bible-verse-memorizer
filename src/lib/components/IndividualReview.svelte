@@ -8,6 +8,7 @@
 	import { keyboardLayouts } from '$lib/utils/keyboardLayouts';
 	import { spacedRepetitionBinary } from '$lib/utils/spacedRepetition';
 	import { zhuyinKeyMap, cangjieKeyMap } from '$lib/utils/inputMaps';
+	import { triggerErrorFeedback } from '$lib/utils/feedback';
 
 	export let verses = [];
 
@@ -140,6 +141,10 @@
 				feedbackType = 'error';
 				lastErrorIndex = latestErrorIndex;
 				lastErrorChar = latestErrorChar;
+				
+				// Trigger audio/haptic feedback
+				triggerErrorFeedback($settings);
+				
 				scrollTrigger++;
 			}
 		}
@@ -485,7 +490,7 @@
 	}
 
 	.verse-display {
-		font-size: 1.5rem;
+		font-size: 1.5em;
 		line-height: 2;
 		margin-bottom: 2rem;
 		padding: 2rem;
@@ -506,7 +511,7 @@
 		border: 2px solid var(--accent-color);
 		border-radius: 8px;
 		padding: 1.25rem;
-		font-size: 1.5rem;
+		font-size: 1.5em;
 		min-height: 60px;
 		display: flex;
 		align-items: center;
@@ -552,7 +557,7 @@
 	}
 
 	.accuracy-text {
-		font-size: 1.5rem;
+		font-size: 1.5em;
 		font-weight: 700;
 		margin-bottom: 0.5rem;
 	}
@@ -572,7 +577,7 @@
 		border: none;
 		border-radius: 8px;
 		cursor: pointer;
-		font-size: 1.1rem;
+		font-size: 1.1em;
 		font-weight: 600;
 		transition: all 0.3s;
 	}
@@ -625,14 +630,14 @@
 	}
 
 	.modal-message .accuracy-text {
-		font-size: 2rem;
+		font-size: 2em;
 		font-weight: 600;
 		margin-bottom: 1rem;
 		color: var(--text-color);
 	}
 
 	.modal-message .message {
-		font-size: 1.2rem;
+		font-size: 1.2em;
 		color: var(--subtitle-color);
 	}
 
@@ -646,7 +651,7 @@
 		padding: 0.75rem 2rem;
 		border: none;
 		border-radius: 4px;
-		font-size: 1rem;
+		font-size: 1.1em;
 		font-weight: 500;
 		cursor: pointer;
 		transition: all 0.3s;

@@ -245,7 +245,7 @@
 		background: var(--file-bg);
 		border-radius: 8px;
 		margin-bottom: 2rem;
-		font-size: 0.9rem;
+		font-size: 0.9em;
 		color: var(--subtitle-color);
 		border: 1px solid var(--file-border);
 	}
@@ -337,7 +337,7 @@
 
 	.input-hint {
 		color: var(--subtitle-color);
-		font-size: 0.9rem;
+		font-size: 0.9em;
 	}
 
 	/* Character styling */
@@ -364,12 +364,12 @@
 
 	@media (max-width: 768px) {
 		.passage-display {
-			font-size: 1.2rem;
+			font-size: 1.2em;
 			padding: 1.5rem;
 		}
 
 		.hidden-input {
-			font-size: 1.1rem;
+			font-size: 1.1em;
 		}
 	}
 </style>
