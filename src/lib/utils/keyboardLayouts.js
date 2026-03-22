@@ -7,11 +7,25 @@ const pinyinRows = [
 	['⌫', 'SPACER', '✔']
 ];
 
+// Rows without delete/enter for learn and review modes
+const pinyinRowsCompact = [
+	['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'],
+	['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l'],
+	['z', 'x', 'c', 'v', 'b', 'n', 'm']
+];
+
 const numericRows = [
 	['1', '2', '3'],
 	['4', '5', '6'],
 	['7', '8', '9'],
 	['⌫', '0', '✔']
+];
+
+const numericRowsCompact = [
+	['1', '2', '3'],
+	['4', '5', '6'],
+	['7', '8', '9'],
+	['0']
 ];
 
 const zhuyinRows = [
@@ -22,11 +36,24 @@ const zhuyinRows = [
 	['⌫', 'SPACER', '✔']
 ];
 
+const zhuyinRowsCompact = [
+	['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-'],
+	['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'],
+	['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';'],
+	['z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/']
+];
+
 const cangjieRows = [
 	['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'],
 	['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l'],
 	['z', 'x', 'c', 'v', 'b', 'n', 'm'],
 	['⌫', 'SPACER', '✔']
+];
+
+const cangjieRowsCompact = [
+	['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'],
+	['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l'],
+	['z', 'x', 'c', 'v', 'b', 'n', 'm']
 ];
 
 function mapDisplay(rows, map) {
@@ -53,5 +80,10 @@ export const keyboardLayouts = {
 	pinyin: mapDisplay(pinyinRows, {}),
 	zhuyin: mapDisplayZhuyin(zhuyinRows, zhuyinKeyMap),
 	cangjie: mapDisplay(cangjieRows, cangjieKeyMap),
-	numeric: mapDisplay(numericRows, {})
+	numeric: mapDisplay(numericRows, {}),
+	// Compact versions without delete/enter for learn and review modes
+	pinyinCompact: mapDisplay(pinyinRowsCompact, {}),
+	zhuyinCompact: mapDisplayZhuyin(zhuyinRowsCompact, zhuyinKeyMap),
+	cangjieCompact: mapDisplay(cangjieRowsCompact, cangjieKeyMap),
+	numericCompact: mapDisplay(numericRowsCompact, {})
 };

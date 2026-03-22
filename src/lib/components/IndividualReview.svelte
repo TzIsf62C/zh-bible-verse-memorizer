@@ -25,11 +25,16 @@
 	let lastErrorChar = null;
 	let scrollTrigger = 0;
 	let viewportAnchor;
-	let keyboardLayout = keyboardLayouts.pinyin;
+	let keyboardLayout = keyboardLayouts.pinyinCompact;
 	let isNumericKeyboard = false;
 	let verseHeaderOpacity = 1;
 	let showCompletionMsg = false;
 	let completionMessage = '';
+	
+	// Keyboard feedback tracking
+	let pressedKey = null;
+	let correctKey = null;
+	let lastCorrectKey = null;
 	
 	// Data for current verse (like Learning Mode)
 	let reviewFullText = '';
@@ -60,10 +65,12 @@
 		const isNextCharNumber = nextCharIndex < reviewFullInitials.length && /[0-9]/.test(reviewFullInitials[nextCharIndex]);
 		
 		if (isNextCharNumber) {
-			keyboardLayout = keyboardLayouts.numeric;
+			keyboardLayout = keyboardLayouts.numericCompact;
 			isNumericKeyboard = true;
 		} else {
-			keyboardLayout = keyboardLayouts[$settings.inputMethod] || keyboardLayouts.pinyin;
+			// Use compact layouts (no delete/enter row) for review mode
+			const inputMethod = $settings.inputMethod || 'pinyin';
+			keyboardLayout = keyboardLayouts[`${inputMethod}Compact`] || keyboardLayouts.pinyinCompact;
 			isNumericKeyboard = false;
 		}
 	}
@@ -165,6 +172,27 @@
 			return;
 		}
 
+		// Clear previous feedback before adding new input
+		pressedKey = null;
+		correctKey = null;
+		lastCorrectKey = null;
+		
+		// Determine what the expected key is at this position
+		const inputMethod = $settings.inputMethod || 'pinyin';
+		const nextExpectedChar = reviewFullInitials[userInput.length];
+		const normalizedKey = inputMethod === 'pinyin' ? key.toLowerCase() : key;
+		const normalizedExpected = inputMethod === 'pinyin' ? (nextExpectedChar || '').toLowerCase() : (nextExpectedChar || '');
+		
+		// Check if input is correct
+		if (normalizedKey === normalizedExpected) {
+			// Correct input - show success feedback
+			lastCorrectKey = key;
+		} else {
+			// Incorrect input - show error feedback
+			pressedKey = key;
+			correctKey = nextExpectedChar;
+		}
+
 		userInput += key;
 		updateErrorFeedback();
 
@@ -202,6 +230,27 @@
 
 		if (mappedValue) {
 			e.preventDefault();
+			
+			// Clear previous feedback before adding new input
+			pressedKey = null;
+			correctKey = null;
+			lastCorrectKey = null;
+			
+			// Determine what the expected key is at this position
+			const nextExpectedChar = reviewFullInitials[userInput.length];
+			const normalizedKey = inputMethod === 'pinyin' ? mappedValue.toLowerCase() : mappedValue;
+			const normalizedExpected = inputMethod === 'pinyin' ? (nextExpectedChar || '').toLowerCase() : (nextExpectedChar || '');
+			
+			// Check if input is correct
+			if (normalizedKey === normalizedExpected) {
+				// Correct input - show success feedback
+				lastCorrectKey = key; // Use the physical key for highlighting
+			} else {
+				// Incorrect input - show error feedback
+				pressedKey = key; // Use the physical key for highlighting
+				correctKey = nextExpectedChar;
+			}
+			
 			userInput += mappedValue;
 			updateErrorFeedback();
 			
@@ -389,7 +438,16 @@
 			<div bind:this={viewportAnchor} class="viewport-anchor" aria-hidden="true"></div>
 
 			{#if !showResult}
-				<Keyboard layout={keyboardLayout} on:key={handleKeyInput} showBackspace={false} showEnter={false} isNumeric={isNumericKeyboard} />
+				<Keyboard 
+					layout={keyboardLayout} 
+					on:key={handleKeyInput} 
+					showBackspace={false} 
+					showEnter={false} 
+					isNumeric={isNumericKeyboard}
+					pressedKey={pressedKey}
+					correctKey={correctKey}
+					lastCorrectKey={lastCorrectKey}
+				/>
 			{/if}
 		</div>
 	{/if}

@@ -31,6 +31,11 @@
 	let lastErrorChar = null;
 	let viewportAnchor; // Element to scroll into view for keyboard positioning
 	let scrollTrigger = 0; // Increment this to trigger viewport scroll
+	
+	// Keyboard feedback tracking
+	let pressedKey = null;
+	let correctKey = null;
+	let lastCorrectKey = null;
 
 	// Update keyboard layout when input method changes OR when switching to numeric
 	$: {
@@ -38,10 +43,12 @@
 		const isNextCharNumber = nextCharIndex < learnFullInitials.length && /[0-9]/.test(learnFullInitials[nextCharIndex]);
 		
 		if (isNextCharNumber) {
-			keyboardLayout = keyboardLayouts.numeric;
+			keyboardLayout = keyboardLayouts.numericCompact;
 			isNumericKeyboard = true;
 		} else {
-			keyboardLayout = keyboardLayouts[$settings.inputMethod] || keyboardLayouts.pinyin;
+			// Use compact layouts (no delete/enter row) for learning mode
+			const inputMethod = $settings.inputMethod || 'pinyin';
+			keyboardLayout = keyboardLayouts[`${inputMethod}Compact`] || keyboardLayouts.pinyinCompact;
 			isNumericKeyboard = false;
 		}
 	}
@@ -239,6 +246,27 @@
 				submitAnswer();
 			}
 			return;
+		}
+
+		// Clear previous feedback before adding new input
+		pressedKey = null;
+		correctKey = null;
+		lastCorrectKey = null;
+		
+		// Determine what the expected key is at this position
+		const inputMethod = $settings.inputMethod || 'pinyin';
+		const nextExpectedChar = learnFullInitials[userInput.length];
+		const normalizedKey = inputMethod === 'pinyin' ? key.toLowerCase() : key;
+		const normalizedExpected = inputMethod === 'pinyin' ? (nextExpectedChar || '').toLowerCase() : (nextExpectedChar || '');
+		
+		// Check if input is correct
+		if (normalizedKey === normalizedExpected) {
+			// Correct input - show success feedback
+			lastCorrectKey = key;
+		} else {
+			// Incorrect input - show error feedback
+			pressedKey = key;
+			correctKey = nextExpectedChar;
 		}
 
 		userInput += key;
@@ -653,6 +681,27 @@
 
 		if (mappedValue) {
 			e.preventDefault();
+			
+			// Clear previous feedback before adding new input
+			pressedKey = null;
+			correctKey = null;
+			lastCorrectKey = null;
+			
+			// Determine what the expected key is at this position
+			const nextExpectedChar = learnFullInitials[userInput.length];
+			const normalizedKey = inputMethod === 'pinyin' ? mappedValue.toLowerCase() : mappedValue;
+			const normalizedExpected = inputMethod === 'pinyin' ? (nextExpectedChar || '').toLowerCase() : (nextExpectedChar || '');
+			
+			// Check if input is correct
+			if (normalizedKey === normalizedExpected) {
+				// Correct input - show success feedback
+				lastCorrectKey = key; // Use the physical key for highlighting
+			} else {
+				// Incorrect input - show error feedback
+				pressedKey = key; // Use the physical key for highlighting
+				correctKey = nextExpectedChar;
+			}
+			
 			userInput += mappedValue;
 			console.log('[Learn] Physical keyboard input:', userInput, 'expected:', learnFullInitials);
 			
@@ -791,26 +840,43 @@
 			<!-- Onscreen Keyboard (no backspace/enter during learning) -->
 			<!-- Hide keyboard in intermediate mode when showRetryButton is true -->
 			{#if !showNextButton && !showRetryButton}
-				<Keyboard layout={keyboardLayout} on:key={handleKeyInput} showBackspace={false} showEnter={false} isNumeric={isNumericKeyboard} />
-			{:else if currentStage === 'intermediate' && showRetryButton}
-				<!-- Keyboard hidden in intermediate until retry pressed -->
-			{:else if showRetryButton}
-				<!-- Show keyboard for other stages even with retry button -->
-				<Keyboard layout={keyboardLayout} on:key={handleKeyInput} showBackspace={false} showEnter={false} isNumeric={isNumericKeyboard} />
-			{/if}
-
-			<!-- Action Buttons -->
-			<div class="control-buttons">
-				{#if showRetryButton}
-					<button class="retry-btn" on:click={handleRetry}>{t('retry')}</button>
-				{/if}
-				{#if showNextButton}
-					<button class="next-btn" on:click={handleNext}>{t('next')}</button>
-				{/if}
-			</div>
+			<Keyboard 
+				layout={keyboardLayout} 
+				on:key={handleKeyInput} 
+				showBackspace={false} 
+				showEnter={false} 
+				isNumeric={isNumericKeyboard}
+				pressedKey={pressedKey}
+				correctKey={correctKey}
+				lastCorrectKey={lastCorrectKey}
+			/>
+		{:else if currentStage === 'intermediate' && showRetryButton}
+			<!-- Keyboard hidden in intermediate until retry pressed -->
+		{:else if showRetryButton}
+			<!-- Show keyboard for other stages even with retry button -->
+			<Keyboard 
+				layout={keyboardLayout} 
+				on:key={handleKeyInput} 
+				showBackspace={false} 
+				showEnter={false} 
+				isNumeric={isNumericKeyboard}
+				pressedKey={pressedKey}
+				correctKey={correctKey}
+				lastCorrectKey={lastCorrectKey}
+			/>
 		{/if}
+
+		<!-- Action Buttons -->
+		<div class="control-buttons">
+			{#if showRetryButton}
+				<button class="retry-btn" on:click={handleRetry}>{t('retry')}</button>
+			{/if}
+			{#if showNextButton}
+				<button class="next-btn" on:click={handleNext}>{t('next')}</button>
+			{/if}
+		</div>
 	{/if}
-</div>
+{/if}
 
 <!-- Modal for Stage Completion -->
 {#if showModal}
@@ -827,6 +893,8 @@
 		</div>
 	</div>
 {/if}
+
+</div>
 
 <style>
 	.learning-container {
