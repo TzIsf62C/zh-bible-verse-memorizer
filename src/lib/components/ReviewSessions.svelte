@@ -304,9 +304,12 @@
 
 <style>
 	.review-container {
-		margin: 0 auto;
+		display: grid;
+		gap: 1.5rem;
 		padding: 1rem;
-		width: 100%;
+		padding-bottom: 400px; /* Add space for keyboard at bottom */
+		max-width: 1000px;
+		margin: 0 auto;
 	}
 
 	h2 {

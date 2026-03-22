@@ -80,6 +80,68 @@
 		initializeVerse(currentVerse);
 	}
 
+	// Scroll viewport to position content above keyboard
+	$: {
+		if (viewportAnchor && verses.length > 0 && !showResult && !showCompletionMsg) {
+			// Include scrollTrigger in reactive dependencies to trigger on errors
+			const _ = scrollTrigger;
+			
+			console.log('=== VIEWPORT SCROLL TRIGGER (IndividualReview) ===');
+			console.log('Anchor element:', viewportAnchor);
+			console.log('Anchor bounding rect:', viewportAnchor.getBoundingClientRect());
+			
+			setTimeout(() => {
+				console.log('=== EXECUTING SCROLL ===');
+				const anchorRect = viewportAnchor.getBoundingClientRect();
+				console.log('Before scroll - Anchor rect:', anchorRect);
+				console.log('Before scroll - Window scrollY:', window.scrollY);
+				console.log('Before scroll - Document scrollTop:', document.documentElement.scrollTop);
+				console.log('Viewport height:', window.innerHeight);
+				
+				// Find keyboard element (Svelte Keyboard component)
+				const keyboard = viewportAnchor.nextElementSibling;
+				if (keyboard) {
+					const keyboardRect = keyboard.getBoundingClientRect();
+					console.log('Keyboard element:', keyboard);
+					console.log('Keyboard rect:', keyboardRect);
+					console.log('Keyboard top position:', keyboardRect.top);
+					
+					// Calculate scroll position: we want the anchor to align with the keyboard's top edge
+					// The keyboard is fixed/sticky, so we scroll the anchor to match its viewport position
+					// scrollTarget = current scroll + (anchor position - desired position)
+					// desired position = keyboard top (where we want the anchor to be)
+					const scrollTarget = window.scrollY + (anchorRect.top - keyboardRect.top);
+					console.log('Calculated scroll target:', scrollTarget);
+					console.log('Current scrollY:', window.scrollY);
+					console.log('Anchor top from viewport:', anchorRect.top);
+					console.log('Keyboard top from viewport:', keyboardRect.top);
+					console.log('Scroll adjustment needed:', anchorRect.top - keyboardRect.top);
+					
+					window.scrollTo({ 
+						top: scrollTarget, 
+						behavior: 'smooth' 
+					});
+				} else {
+					console.log('WARNING: No keyboard element found after anchor');
+				}
+				
+				setTimeout(() => {
+					console.log('=== AFTER SCROLL (500ms) ===');
+					const newAnchorRect = viewportAnchor.getBoundingClientRect();
+					console.log('After scroll - Anchor rect:', newAnchorRect);
+					console.log('After scroll - Anchor top from viewport:', newAnchorRect.top);
+					console.log('After scroll - Window scrollY:', window.scrollY);
+					if (keyboard) {
+						const newKeyboardRect = keyboard.getBoundingClientRect();
+						console.log('After scroll - Keyboard rect:', newKeyboardRect);
+						console.log('After scroll - Keyboard top from viewport:', newKeyboardRect.top);
+						console.log('Alignment check - Anchor vs Keyboard:', newAnchorRect.top - newKeyboardRect.top);
+					}
+				}, 500);
+			}, 300);
+		}
+	}
+
 	function initializeVerse(verse) {
 		userInput = '';
 		feedbackMessage = '';
@@ -432,9 +494,7 @@
 				</div>
 			{/if}
 
-			<!-- Invisible viewport anchor -->
-			<div bind:this={viewportAnchor} class="viewport-anchor" aria-hidden="true"></div>
-			<!-- Invisible viewport anchor -->
+			<!-- Invisible viewport anchor for keyboard positioning -->
 			<div bind:this={viewportAnchor} class="viewport-anchor" aria-hidden="true"></div>
 
 			{#if !showResult}
@@ -489,9 +549,12 @@
 
 <style>
 	.individual-review {
-		margin: 0 auto;
+		display: grid;
+		gap: 1.5rem;
 		padding: 1rem;
-		width: 100%;
+		padding-bottom: 400px; /* Add space for keyboard at bottom */
+		max-width: 1000px;
+		margin: 0 auto;
 	}
 
 	.progress-bar {
