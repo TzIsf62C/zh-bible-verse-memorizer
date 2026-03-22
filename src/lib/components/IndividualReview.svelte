@@ -50,14 +50,11 @@
 		// Explicitly depend on both reviewFullInitials and inputMethod
 		const currentMethod = $settings.inputMethod;
 		const fullInitials = reviewFullInitials;
-		console.log('[IndividualReview] Mismatch check - currentMethod:', currentMethod, 'fullInitials:', fullInitials);
 		
 		if (fullInitials && currentMethod) {
 			const verseInputMethod = detectInputMethod(fullInitials);
-			console.log('[IndividualReview] Detected verse input method:', verseInputMethod);
 			
 			if (verseInputMethod && verseInputMethod !== currentMethod) {
-				console.log('[IndividualReview] MISMATCH DETECTED! Verse:', verseInputMethod, 'User setting:', currentMethod);
 				const methodNames = { 
 					pinyin: t('input_pinyin'), 
 					zhuyin: t('input_zhuyin'), 
@@ -65,10 +62,8 @@
 				};
 				feedbackMessage = t('input_method_mismatch').replace('{method}', methodNames[verseInputMethod] || verseInputMethod);
 				feedbackType = 'warning';
-				console.log('[IndividualReview] Set warning message:', feedbackMessage);
 			} else if (verseInputMethod === currentMethod && feedbackType === 'warning') {
 				// Only clear warning if we successfully detected a matching method
-				console.log('[IndividualReview] Methods match, clearing warning');
 				feedbackMessage = '';
 				feedbackType = '';
 			}
