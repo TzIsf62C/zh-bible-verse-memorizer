@@ -2,7 +2,7 @@ export const translations = {
 	english: {
 		// App title and navigation
 		app_title: 'ZH Bible Verse Memorizer',
-		app_title_chinese: '聖經經文背誦',
+		app_subtitle: '聖經經文背誦',
 		learn: 'Learn',
 		review: 'Review',
 		add_verse: 'Add Verse',
@@ -131,6 +131,7 @@ export const translations = {
 		
 		// Export/Import Panel
 		export_import_title: 'Export & Import',
+		export_data: 'Export Data',
 		select_export: 'Select what to export',
 		all_verses: 'All verses',
 		not_in_collection: 'Not in a collection',
@@ -284,7 +285,7 @@ export const translations = {
 	simplified: {
 		// App title and navigation
 		app_title: 'ZH Bible Verse Memorizer',
-		app_title_chinese: '聖經經文背誦',
+		app_subtitle: '聖經經文背誦',
 		learn: '学习',
 		review: '复习',
 		add_verse: '添加经文',
@@ -411,6 +412,7 @@ export const translations = {
 		
 		// Export/Import Panel
 		export_import_title: '导出导入',
+		export_data: '导出数据',
 		select_export: '选择要导出的内容',
 		all_verses: '所有经文',
 		not_in_collection: '未分组',
@@ -560,7 +562,7 @@ export const translations = {
 	traditional: {
 		// App title and navigation
 		app_title: 'ZH Bible Verse Memorizer',
-		app_title_chinese: '聖經經文背誦',
+		app_subtitle: '聖經經文背誦',
 		learn: '學習',
 		review: '複習',
 		add_verse: '新增經文',
@@ -687,6 +689,7 @@ export const translations = {
 		
 		// Export/Import Panel
 		export_import_title: '匯出匯入',
+		export_data: '匯出資料',
 		select_export: '選擇要匯出的內容',
 		all_verses: '所有經文',
 		not_in_collection: '未分組',
