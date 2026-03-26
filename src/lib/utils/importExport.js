@@ -18,8 +18,9 @@ export function parseImportPayload(payload) {
 export function mergeVerses(currentVerses, importedVerses, options = {}) {
 	const { includeReview = true } = options;
 	const merged = [...currentVerses];
+	const conflicts = [];
 
-	importedVerses.forEach((importedVerse) => {
+	importedVerses.forEach((importedVerse, importIndex) => {
 		const incoming = { ...importedVerse };
 		if (!includeReview) {
 			delete incoming.lastReviewed;
@@ -36,18 +37,36 @@ export function mergeVerses(currentVerses, importedVerses, options = {}) {
 
 		if (existingIndex !== -1) {
 			const existing = merged[existingIndex];
-			const existingReviewDate = existing?.lastReviewed ? new Date(existing.lastReviewed) : null;
-			const importedReviewDate = incoming?.lastReviewed ? new Date(incoming.lastReviewed) : null;
+			
+			// Check if content is identical (same translation/version)
+			const isIdenticalContent = 
+				existing.verseText === incoming.verseText &&
+				existing.verseInitials === incoming.verseInitials;
+			
+			if (isIdenticalContent) {
+				// Same content - merge normally, keeping most recent review data
+				const existingReviewDate = existing?.lastReviewed ? new Date(existing.lastReviewed) : null;
+				const importedReviewDate = incoming?.lastReviewed ? new Date(incoming.lastReviewed) : null;
 
-			if (importedReviewDate && (!existingReviewDate || importedReviewDate > existingReviewDate)) {
-				merged[existingIndex] = incoming;
+				if (importedReviewDate && (!existingReviewDate || importedReviewDate > existingReviewDate)) {
+					merged[existingIndex] = incoming;
+				}
+			} else {
+				// Different content - this is a conflict (different translation)
+				conflicts.push({
+					existing,
+					imported: incoming,
+					existingIndex,
+					importIndex
+				});
 			}
 		} else {
+			// New verse - add it
 			merged.push(incoming);
 		}
 	});
 
-	return merged;
+	return { merged, conflicts };
 }
 
 function findVerseIdByRef(verses, ref) {
@@ -141,4 +160,31 @@ export function buildExportPayload(verses, collections, options = {}) {
 		verses: cleaned,
 		collections: collectionsExport
 	};
+}
+
+/**
+ * Apply user's conflict resolution choices
+ * @param {Array} mergedVerses - The merged verses array
+ * @param {Array} conflicts - The conflicts array from mergeVerses
+ * @param {Array} resolutions - Array of resolution choices: 'existing', 'imported', or 'both'
+ * @returns {Array} Final verses array with conflicts resolved
+ */
+export function applyConflictResolutions(mergedVerses, conflicts, resolutions) {
+	const result = [...mergedVerses];
+	
+	conflicts.forEach((conflict, i) => {
+		const resolution = resolutions[i];
+		const { existing, imported, existingIndex } = conflict;
+		
+		if (resolution === 'imported') {
+			// Replace existing with imported
+			result[existingIndex] = imported;
+		} else if (resolution === 'both') {
+			// Keep existing and add imported as new verse
+			result.push(imported);
+		}
+		// If resolution === 'existing', do nothing (keep current state)
+	});
+	
+	return result;
 }

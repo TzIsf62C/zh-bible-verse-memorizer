@@ -7,6 +7,7 @@
 	import { spacedRepetitionBinary } from '$lib/utils/spacedRepetition';
 	import { zhuyinKeyMap, cangjieKeyMap } from '$lib/utils/inputMaps';
 	import { triggerErrorFeedback } from '$lib/utils/feedback';
+	import { createVerseReferenceFormatter } from '$lib/utils/bibleBooks';
 
 	let currentVerseIdx = 0;
 	let currentStage = 'basic'; // basic, intermediate, advanced - user can choose any
@@ -190,6 +191,9 @@
 			initializeVerse(versesToLearn[0]);
 		}
 	}
+
+	// Create verse reference formatter that checks ALL verses for duplicates (not just versesToLearn)
+	$: formatVerseRef = createVerseReferenceFormatter($verses);
 
 	function selectVerse(idx) {
 		currentVerseIdx = idx;
@@ -846,7 +850,7 @@
 			>
 				{#each versesToLearn as verse, idx}
 					<option value={idx}>
-						{verse.bookName} {verse.chapterNumber}:{verse.verseNumber}
+						{formatVerseRef(verse)}
 					</option>
 				{/each}
 			</select>

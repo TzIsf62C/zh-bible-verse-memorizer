@@ -5,10 +5,14 @@
 	import { t } from '$lib/i18n';
 	import { spacedRepetitionBinary } from '$lib/utils/spacedRepetition';
 	import Modal from './Modal.svelte';
+	import { createVerseReferenceFormatter } from '$lib/utils/bibleBooks';
 
 	export let verses = [];
 
 	const dispatch = createEventDispatcher();
+
+	// Create verse reference formatter that checks ALL verses for duplicates (not just current review set)
+	$: formatVerseRef = createVerseReferenceFormatter($versesStore);
 
 	let showCompletionMsg = false;
 	let completionMessage = '';
@@ -33,7 +37,7 @@
 			let refHtml = '';
 
 			if (i === 0 || !allSameBookChapter) {
-				ref = `${v.bookName} ${v.chapterNumber}:${v.verseNumber}`;
+				ref = formatVerseRef(v);
 				refHtml = `<span class="reference-inline">${ref}</span>`;
 			} else {
 				ref = `${v.verseNumber}`;

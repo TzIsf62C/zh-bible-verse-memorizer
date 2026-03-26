@@ -83,9 +83,11 @@
 		dispatch('close');
 	}
 	
-	function formatVerseReference(verse) {
-		return `${verse.bookName} ${verse.chapterNumber}:${verse.verseNumber}`;
-	}
+	// Import createVerseReferenceFormatter
+	import { createVerseReferenceFormatter } from '$lib/utils/bibleBooks';
+	
+	// Create formatter that checks all verses for duplicates
+	$: formatVerseReference = createVerseReferenceFormatter($verses);
 </script>
 
 <div class="collection-detail">

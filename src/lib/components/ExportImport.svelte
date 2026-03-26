@@ -2,7 +2,7 @@
 	import { verses } from '$lib/stores/verses';
 	import { collections } from '$lib/stores/collections';
 	import { t } from '$lib/i18n';
-	import { parseImportPayload, mergeVerses, mergeCollections, buildExportPayload } from '$lib/utils/importExport';
+	import { parseImportPayload, mergeVerses, mergeCollections, buildExportPayload, applyConflictResolutions } from '$lib/utils/importExport';
 	import Modal from './Modal.svelte';
 
 	// Export state
@@ -22,6 +22,13 @@
 	let showModal = false;
 	let modalMessage = '';
 	let modalType = 'alert';
+
+	// Conflict resolution state
+	let showConflictModal = false;
+	let conflicts = [];
+	let currentConflictIndex = 0;
+	let conflictResolutions = [];
+	let pendingImportData = null; // Store import data while resolving conflicts
 
 	// Computed values
 	$: uncollectedCount = $verses.filter(v => {
@@ -183,24 +190,25 @@
 					e.target.result
 				);
 
-				const mergedVerses = mergeVerses($verses, importedVerses, {
+				const mergeResult = mergeVerses($verses, importedVerses, {
 					includeReview: importIncludeReview
 				});
-				verses.set(mergedVerses);
 
-				if (importIncludeCollections && importedCollections?.length) {
-					const mergedCollections = mergeCollections($collections, importedCollections, mergedVerses);
-					collections.set(mergedCollections);
-				}
-
-				modalMessage = t('import_successful');
-				modalType = 'alert';
-				showModal = true;
-
-				// Reset file input
-				if (fileInput) {
-					fileInput.value = '';
-					selectedFileName = '';
+				// Check if there are conflicts
+				if (mergeResult.conflicts && mergeResult.conflicts.length > 0) {
+					console.log('[ExportImport] Found', mergeResult.conflicts.length, 'conflicts');
+					// Store data for later use
+					pendingImportData = {
+						mergedVerses: mergeResult.merged,
+						importedCollections
+					};
+					conflicts = mergeResult.conflicts;
+					conflictResolutions = new Array(conflicts.length).fill(null);
+					currentConflictIndex = 0;
+					showConflictModal = true;
+				} else {
+					// No conflicts - proceed with import
+					finishImport(mergeResult.merged, importedCollections);
 				}
 			} catch (error) {
 				modalMessage = t('error_importing') + ': ' + error.message;
@@ -209,6 +217,65 @@
 			}
 		};
 		reader.readAsText(file);
+	}
+
+	function finishImport(mergedVerses, importedCollections) {
+		verses.set(mergedVerses);
+
+		if (importIncludeCollections && importedCollections?.length) {
+			const mergedCollections = mergeCollections($collections, importedCollections, mergedVerses);
+			collections.set(mergedCollections);
+		}
+
+		modalMessage = t('import_successful');
+		modalType = 'alert';
+		showModal = true;
+
+		// Reset file input
+		if (fileInput) {
+			fileInput.value = '';
+			selectedFileName = '';
+		}
+	}
+
+	function resolveConflict(choice) {
+		console.log('[ExportImport] Conflict', currentConflictIndex, 'resolved as:', choice);
+		conflictResolutions[currentConflictIndex] = choice;
+		
+		if (currentConflictIndex < conflicts.length - 1) {
+			// Move to next conflict
+			currentConflictIndex++;
+		} else {
+			// All conflicts resolved - apply resolutions
+			console.log('[ExportImport] All conflicts resolved:', conflictResolutions);
+			const finalVerses = applyConflictResolutions(
+				pendingImportData.mergedVerses,
+				conflicts,
+				conflictResolutions
+			);
+			showConflictModal = false;
+			finishImport(finalVerses, pendingImportData.importedCollections);
+			
+			// Reset conflict state
+			conflicts = [];
+			currentConflictIndex = 0;
+			conflictResolutions = [];
+			pendingImportData = null;
+		}
+	}
+
+	function cancelImport() {
+		showConflictModal = false;
+		conflicts = [];
+		currentConflictIndex = 0;
+		conflictResolutions = [];
+		pendingImportData = null;
+		
+		// Reset file input
+		if (fileInput) {
+			fileInput.value = '';
+			selectedFileName = '';
+		}
 	}
 
 	function closeModal() {
@@ -319,6 +386,72 @@
 	on:confirm={closeModal}
 	on:cancel={closeModal}
 />
+
+<!-- Conflict Resolution Modal -->
+{#if showConflictModal && conflicts.length > 0}
+	<div class="conflict-modal-overlay">
+		<div class="conflict-modal">
+			<h3>{t('verse_conflict_title')}</h3>
+			<p class="conflict-subtitle">
+				{t('conflict_progress').replace('{current}', currentConflictIndex + 1).replace('{total}', conflicts.length)}
+			</p>
+			
+			{#if conflicts[currentConflictIndex]}
+				{@const conflict = conflicts[currentConflictIndex]}
+				<div class="conflict-reference">
+					<strong>{conflict.existing.bookName} {conflict.existing.chapterNumber}:{conflict.existing.verseNumber}</strong>
+				</div>
+				
+				<div class="conflict-comparison">
+					<div class="conflict-option">
+						<h4>{t('existing_verse')}</h4>
+						<div class="verse-preview">
+							<p class="verse-text">{conflict.existing.verseText}</p>
+							<p class="verse-meta">
+								{#if conflict.existing.bibleVersion}
+									<span class="version-badge">{conflict.existing.bibleVersion}</span>
+								{/if}
+								{#if conflict.existing.lastReviewed}
+									<span class="review-badge">{t('last_reviewed')}: {new Date(conflict.existing.lastReviewed).toLocaleDateString()}</span>
+								{/if}
+							</p>
+						</div>
+						<button class="conflict-btn keep-existing" on:click={() => resolveConflict('existing')}>
+							{t('keep_existing')}
+						</button>
+					</div>
+					
+					<div class="conflict-option">
+						<h4>{t('imported_verse')}</h4>
+						<div class="verse-preview">
+							<p class="verse-text">{conflict.imported.verseText}</p>
+							<p class="verse-meta">
+								{#if conflict.imported.bibleVersion}
+									<span class="version-badge">{conflict.imported.bibleVersion}</span>
+								{/if}
+								{#if conflict.imported.lastReviewed}
+									<span class="review-badge">{t('last_reviewed')}: {new Date(conflict.imported.lastReviewed).toLocaleDateString()}</span>
+								{/if}
+							</p>
+						</div>
+						<button class="conflict-btn use-imported" on:click={() => resolveConflict('imported')}>
+							{t('use_imported')}
+						</button>
+					</div>
+				</div>
+				
+				<div class="conflict-actions">
+					<button class="conflict-btn keep-both" on:click={() => resolveConflict('both')}>
+						{t('keep_both')}
+					</button>
+					<button class="conflict-btn cancel-import" on:click={cancelImport}>
+						{t('cancel_import')}
+					</button>
+				</div>
+			{/if}
+		</div>
+	</div>
+{/if}
 
 <style>
 	.export-import-container {
@@ -482,6 +615,169 @@
 
 		.tree-children {
 			margin-left: 1rem;
+		}
+	}
+
+	/* Conflict Resolution Modal */
+	.conflict-modal-overlay {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background: rgba(0, 0, 0, 0.5);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		z-index: 1000;
+		padding: 1rem;
+	}
+
+	.conflict-modal {
+		background: var(--panel-background);
+		border-radius: 8px;
+		max-width: 900px;
+		width: 100%;
+		max-height: 90vh;
+		overflow-y: auto;
+		padding: 2rem;
+		box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+	}
+
+	.conflict-modal h3 {
+		margin: 0 0 0.5rem 0;
+		color: var(--text-color);
+	}
+
+	.conflict-subtitle {
+		color: var(--subtitle-color);
+		font-size: 0.9em;
+		margin: 0 0 1.5rem 0;
+	}
+
+	.conflict-reference {
+		text-align: center;
+		margin-bottom: 1.5rem;
+		padding: 0.75rem;
+		background: var(--file-bg);
+		border-radius: 4px;
+	}
+
+	.conflict-reference strong {
+		color: var(--text-color);
+		font-size: 1.1em;
+	}
+
+	.conflict-comparison {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 1.5rem;
+		margin-bottom: 1.5rem;
+	}
+
+	.conflict-option {
+		border: 2px solid var(--file-border);
+		border-radius: 8px;
+		padding: 1rem;
+		display: flex;
+		flex-direction: column;
+	}
+
+	.conflict-option h4 {
+		margin: 0 0 1rem 0;
+		color: var(--text-color);
+		font-size: 1em;
+		font-weight: 600;
+	}
+
+	.verse-preview {
+		flex: 1;
+		margin-bottom: 1rem;
+	}
+
+	.verse-text {
+		color: var(--text-color);
+		line-height: 1.6;
+		margin: 0 0 1rem 0;
+		font-size: 1em;
+	}
+
+	.verse-meta {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+		margin: 0;
+	}
+
+	.version-badge,
+	.review-badge {
+		display: inline-block;
+		padding: 0.25rem 0.5rem;
+		background: var(--file-bg);
+		border-radius: 4px;
+		font-size: 0.85em;
+		color: var(--subtitle-color);
+	}
+
+	.version-badge {
+		font-weight: 600;
+		color: var(--accent-color);
+	}
+
+	.conflict-btn {
+		padding: 0.75rem 1rem;
+		border: none;
+		border-radius: 4px;
+		cursor: pointer;
+		font-size: 0.95em;
+		font-weight: 500;
+		transition: opacity 0.3s;
+	}
+
+	.conflict-btn:hover {
+		opacity: 0.9;
+	}
+
+	.keep-existing {
+		background: #2196F3;
+		color: white;
+	}
+
+	.use-imported {
+		background: #4CAF50;
+		color: white;
+	}
+
+	.conflict-actions {
+		display: flex;
+		gap: 1rem;
+		justify-content: center;
+		padding-top: 1rem;
+		border-top: 1px solid var(--file-border);
+	}
+
+	.keep-both {
+		background: #FF9800;
+		color: white;
+	}
+
+	.cancel-import {
+		background: #f44336;
+		color: white;
+	}
+
+	@media (max-width: 767px) {
+		.conflict-modal {
+			padding: 1rem;
+		}
+
+		.conflict-comparison {
+			grid-template-columns: 1fr;
+			gap: 1rem;
+		}
+
+		.conflict-actions {
+			flex-direction: column;
 		}
 	}
 </style>

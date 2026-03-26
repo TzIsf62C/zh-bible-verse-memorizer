@@ -9,10 +9,14 @@
 	import { spacedRepetitionBinary } from '$lib/utils/spacedRepetition';
 	import { zhuyinKeyMap, cangjieKeyMap } from '$lib/utils/inputMaps';
 	import { triggerErrorFeedback } from '$lib/utils/feedback';
+	import { createVerseReferenceFormatter } from '$lib/utils/bibleBooks';
 
 	export let verses = [];
 
 	const dispatch = createEventDispatcher();
+
+	// Create verse reference formatter that checks ALL verses for duplicates (not just current review set)
+	$: formatVerseRef = createVerseReferenceFormatter($versesStore);
 
 	let currentIndex = 0;
 	let userInput = '';
@@ -542,10 +546,7 @@
 	
 	{#if currentVerse}
 		<div class="verse-header" style="opacity: {verseHeaderOpacity}; transition: opacity 0.3s ease;">
-			<h3>{currentVerse.bookName} {currentVerse.chapterNumber}:{currentVerse.verseNumber}</h3>
-			{#if currentVerse.bibleVersion}
-				<span class="version-badge">{currentVerse.bibleVersion}</span>
-			{/if}
+			<h3>{formatVerseRef(currentVerse)}</h3>
 		</div>
 
 		{#key `${currentIndex}-${userInput.length}`}

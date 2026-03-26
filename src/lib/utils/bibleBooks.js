@@ -120,3 +120,32 @@ export const sortVersesByBibleOrder = (verses, charset = 'simplified') =>
 		const verseB = Number.parseInt(b.verseNumber, 10) || 0;
 		return verseA - verseB;
 	});
+
+/**
+ * Creates a function to format verse references with Bible version when duplicates exist.
+ * If multiple verses have the same reference (book, chapter, verse), the Bible version is appended.
+ * @param {Array} verses - Array of verse objects to check for duplicates
+ * @returns {Function} - Formatter function that takes a verse and returns formatted reference string
+ */
+export const createVerseReferenceFormatter = (verses) => {
+	// Build a map of verse references to count occurrences
+	const referenceMap = new Map();
+	verses.forEach(verse => {
+		const ref = `${verse.bookName}|${verse.chapterNumber}|${verse.verseNumber}`;
+		referenceMap.set(ref, (referenceMap.get(ref) || 0) + 1);
+	});
+
+	// Return formatter function
+	return (verse) => {
+		const ref = `${verse.bookName}|${verse.chapterNumber}|${verse.verseNumber}`;
+		const hasDuplicates = referenceMap.get(ref) > 1;
+		
+		const baseReference = `${verse.bookName} ${verse.chapterNumber}:${verse.verseNumber}`;
+		
+		if (hasDuplicates && verse.bibleVersion) {
+			return `${baseReference} (${verse.bibleVersion})`;
+		}
+		
+		return baseReference;
+	};
+};

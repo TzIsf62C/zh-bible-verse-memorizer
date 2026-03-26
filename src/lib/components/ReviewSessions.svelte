@@ -3,7 +3,7 @@
 	import { collections } from '$lib/stores/collections';
 	import { settings } from '$lib/stores/settings';
 	import { t } from '$lib/i18n';
-	import { sortVersesByBibleOrder } from '$lib/utils/bibleBooks';
+	import { sortVersesByBibleOrder, createVerseReferenceFormatter } from '$lib/utils/bibleBooks';
 	import IndividualReview from './IndividualReview.svelte';
 	import SingleTextReview from './SingleTextReview.svelte';
 	import Modal from './Modal.svelte';
@@ -21,6 +21,9 @@
 
 	// Get learned verses (verses that have been reviewed at least once)
 	$: learnedVerses = $verses.filter(v => v.lastReviewed);
+
+	// Create verse reference formatter that checks ALL verses for duplicates (not just learnedVerses)
+	$: formatVerseRef = createVerseReferenceFormatter($verses);
 
 	// Get due verses
 	$: dueVerses = $verses.filter(v => {
@@ -221,7 +224,7 @@
 							/>
 							<div class="verse-info">
 								<div class="verse-ref">
-									{verse.bookName} {verse.chapterNumber}:{verse.verseNumber}
+								{formatVerseRef(verse)}
 								</div>
 								<div class="verse-due">
 									{#if daysUntilDue !== null}

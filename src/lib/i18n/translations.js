@@ -144,6 +144,16 @@ export const translations = {
 		choose_file: 'Choose File',
 		no_file_selected: 'No file selected',
 		
+		// Conflict Resolution
+		verse_conflict_title: 'Verse Conflict Detected',
+		conflict_progress: 'Conflict {current} of {total}',
+		existing_verse: 'Existing Verse',
+		imported_verse: 'Imported Verse',
+		keep_existing: 'Keep Existing',
+		use_imported: 'Use Imported',
+		keep_both: 'Keep Both',
+		cancel_import: 'Cancel Import',
+		
 		// Bulk Actions
 		confirm: 'Confirm',
 		cancel: 'Cancel',
@@ -425,6 +435,16 @@ export const translations = {
 		choose_file: '选择文件',
 		no_file_selected: '未选择文件',
 		
+		// Conflict Resolution
+		verse_conflict_title: '检测到经文冲突',
+		conflict_progress: '冲突 {current} / {total}',
+		existing_verse: '现有经文',
+		imported_verse: '导入经文',
+		keep_existing: '保留现有',
+		use_imported: '使用导入',
+		keep_both: '两者都保留',
+		cancel_import: '取消导入',
+		
 		// Bulk Actions
 		confirm: '确定',
 		cancel: '取消',
@@ -701,6 +721,16 @@ export const translations = {
 		import_data: '匯入資料',
 		choose_file: '選擇檔案',
 		no_file_selected: '未選擇檔案',
+		
+		// Conflict Resolution
+		verse_conflict_title: '檢測到經文衝突',
+		conflict_progress: '衝突 {current} / {total}',
+		existing_verse: '現有經文',
+		imported_verse: '匯入經文',
+		keep_existing: '保留現有',
+		use_imported: '使用匯入',
+		keep_both: '兩者都保留',
+		cancel_import: '取消匯入',
 		
 		// Bulk Actions
 		confirm: '確定',
