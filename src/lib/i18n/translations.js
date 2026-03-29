@@ -84,7 +84,7 @@ export const translations = {
 		// Learn Panel
 		learn_mode: 'Learn Mode',
 		basic: 'Basic',
-		intermediate: 'Intermediate',
+		intermediate: 'Mid',
 		advanced: 'Advanced',
 		select_verse: 'Select Verse',
 		sound_off: 'Muted',

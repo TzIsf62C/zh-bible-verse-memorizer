@@ -989,13 +989,16 @@
 	}
 
 	.difficulty-controls {
-		display: flex;
-		gap: 0.5rem;
-		flex-wrap: wrap;
+  		display: flex;
+  		gap: 0.5rem;
+  		flex-wrap: wrap;
+  		width: 100%;
 	}
 
 	.mode-btn {
-		padding: 0.75rem 1.5rem;
+		flex: 1 1 auto;
+		min-width: min-content;
+		padding: 0.75rem 1rem;
 		border: 2px solid var(--accent-color);
 		background: var(--nav-button-bg);
 		color: var(--nav-button-color);
@@ -1004,6 +1007,8 @@
 		font-size: 1em;
 		font-weight: 500;
 		transition: all 0.3s;
+		white-space: nowrap;
+		text-align: center;
 	}
 
 	.mode-btn.active {
