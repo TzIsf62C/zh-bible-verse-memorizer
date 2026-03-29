@@ -719,6 +719,10 @@
 						shown = true;
 						// Punctuation appears as correct (white) when revealed
 						className = 'verse-character punctuation correct';
+					} else {
+						// Not yet revealed - hide with opacity: 0
+						shown = false;
+						className = 'verse-character punctuation hidden';
 					}
 				}
 			}
@@ -885,8 +889,10 @@
 							{#if rendered.intermediateHidden}
 								<!-- Intermediate mode: show full-width low line for hidden characters -->
 								<span class={rendered.className}>＿</span>
+							{:else}
+								<!-- Advanced mode: render character invisibly to maintain layout -->
+								<span class={rendered.className}>{rendered.char}</span>
 							{/if}
-							<!-- Advanced mode: show nothing (completely hidden) -->
 						{:else}
 							<span class={rendered.className}>{rendered.char}</span>
 						{/if}
@@ -1048,6 +1054,8 @@
 		border-radius: 8px;
 		min-height: 150px;
 		font-weight: 500;
+		width: 100%;
+		box-sizing: border-box;
 	}
 
 	.verse-character {
@@ -1079,8 +1087,9 @@
 	}
 
 	.verse-character.hidden {
-		/* Advanced mode: completely invisible */
-		visibility: hidden;
+		/* Advanced mode: completely invisible but still takes up space */
+		opacity: 0;
+		pointer-events: none;
 	}
 
 	.verse-character.intermediate-hidden {
