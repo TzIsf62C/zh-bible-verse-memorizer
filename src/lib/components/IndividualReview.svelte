@@ -526,6 +526,10 @@
 				if (prevMap !== null && userInput.length > prevMap) {
 					shown = true;
 					className = 'verse-character punctuation correct';
+				} else {
+					// Not yet revealed - hide with opacity: 0
+					shown = false;
+					className = 'verse-character punctuation hidden';
 				}
 			}
 
@@ -553,9 +557,7 @@
 			<div class="verse-display">
 				{#each [...reviewFullText] as char, i}
 					{@const rendered = renderCharacter(char, i)}
-					{#if !rendered.hidden}
-						<span class={rendered.className}>{rendered.char}</span>
-					{/if}
+					<span class={rendered.className}>{rendered.char}</span>
 				{/each}
 			</div>
 		{/key}
@@ -933,8 +935,8 @@
 	}
 
 	:global(.verse-character.hidden) {
-		color: transparent;
-		user-select: none;
+		opacity: 0;
+		pointer-events: none;
 	}
 
 	@media (max-width: 768px) {
