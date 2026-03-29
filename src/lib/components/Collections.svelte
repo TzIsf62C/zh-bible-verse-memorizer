@@ -193,9 +193,12 @@
 
 <style>
 	.collections-container {
-		max-width: 1000px;
+		max-width: 100%;
 		margin: 0 auto;
-		padding: 1rem;
+		padding: 1.5rem;
+		background: var(--panel-background, #ffffff);
+		border-radius: 16px;
+		box-shadow: var(--panel-shadow, 0 10px 30px rgba(24, 24, 27, 0.08));
 	}
 	
 	h2 {
@@ -217,10 +220,12 @@
 	.create-collection-row {
 		display: flex;
 		gap: 0.5rem;
+		flex-wrap: wrap;
 	}
 	
 	.create-collection-row input {
 		flex: 1;
+		min-width: 0;
 		padding: 0.75rem;
 		border: 1px solid var(--file-border);
 		background: var(--file-bg);
@@ -241,6 +246,7 @@
 		font-weight: 500;
 		transition: all 0.3s;
 		white-space: nowrap;
+		flex-shrink: 0;
 	}
 	
 	.create-collection-row button:hover {
@@ -262,6 +268,8 @@
 		border: 1px solid var(--file-border);
 		border-radius: 8px;
 		transition: all 0.3s;
+		min-width: 0;
+		max-width: 100%;
 	}
 	
 	.collection-item:hover {
@@ -275,6 +283,9 @@
 		display: flex;
 		align-items: center;
 		gap: 0.5rem;
+		min-width: 0;
+		overflow-wrap: break-word;
+		word-wrap: break-word;
 	}
 	
 	.verse-count {
@@ -287,6 +298,9 @@
 		display: flex;
 		gap: 0.5rem;
 		flex-wrap: wrap;
+		flex-shrink: 0;
+		min-width: 0;
+		max-width: 100%;
 	}
 	
 	.icon-btn {
@@ -324,18 +338,48 @@
 	}
 	
 	@media (max-width: 768px) {
+		.collections-container {
+			padding: 1rem;
+			width: 100%;
+			max-width: 100%;
+		}
+		
+		.create-collection {
+			padding: 0;
+			margin-bottom: 1rem;
+		}
+		
+		.create-collection-row {
+			flex-direction: column;
+		}
+		
+		.create-collection-row input,
+		.create-collection-row button {
+			width: 100%;
+		}
+		
+		.collections-list {
+			padding: 0;
+		}
+		
 		.collection-item {
 			flex-direction: column;
 			align-items: stretch;
 			gap: 1rem;
+			padding: 0.75rem;
+			width: 100%;
+			max-width: 100%;
+			box-sizing: border-box;
 		}
 		
 		.collection-actions {
-			justify-content: stretch;
+			gap: 0.5rem;
+			width: 100%;
+			max-width: 100%;
 		}
 		
 		.icon-btn {
-			flex: 1;
+			min-width: 44px;
 		}
 	}
 </style>

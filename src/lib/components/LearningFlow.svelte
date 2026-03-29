@@ -692,9 +692,13 @@
 			// Stage-specific logic for non-initial punctuation
 			if (!isInitialPunct) {
 				if (currentStage === 'basic') {
-					// Basic mode: show all punctuation as correct (white)
+					// Basic mode: show all punctuation, but only turn white after preceding char is typed
 					shown = true;
-					className = 'verse-character punctuation correct';
+					if (prevMap !== null && userInput.length > prevMap) {
+						className = 'verse-character punctuation correct';
+					} else {
+						className = 'verse-character punctuation';
+					}
 				} else if (currentStage === 'intermediate') {
 					// Intermediate: show if previous char is visible OR user has typed past it
 					const isOdd = ((prevMap + 1) % 2) === 1;

@@ -329,6 +329,13 @@ input[type='file'] {
 	}
 }
 
+/* Hide app header on mobile screens to save space */
+@media (max-width: 767px) {
+	.app-header {
+		display: none;
+	}
+}
+
 @media (prefers-color-scheme: dark) {
 	:root:not([data-theme='light']) {
 		background-color: #111114;

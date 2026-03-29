@@ -436,9 +436,12 @@
 
 <style>
 	.settings-container {
-		max-width: 800px;
+		max-width: 100%;
 		margin: 0 auto;
-		padding: 1rem;
+		padding: 1.5rem;
+		background: var(--panel-background, #ffffff);
+		border-radius: 16px;
+		box-shadow: var(--panel-shadow, 0 10px 30px rgba(24, 24, 27, 0.08));
 	}
 	
 	h2 {

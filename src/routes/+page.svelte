@@ -117,22 +117,16 @@
 	{:else if currentPanel === 'add'}
 		<AddVerseForm />
 	{:else if currentPanel === 'collections'}
-		<section class="panel">
-			{#key $settings.languagePreference}
-				<Collections />
-			{/key}
-		</section>
+		{#key $settings.languagePreference}
+			<Collections />
+		{/key}
 	{:else if currentPanel === 'settings'}
-		<section class="panel">
-			{#key $settings.languagePreference}
-				<Settings />
-			{/key}
-		</section>
+		{#key $settings.languagePreference}
+			<Settings />
+		{/key}
 	{:else if currentPanel === 'data'}
-		<section class="panel">
-			{#key $settings.languagePreference}
-				<ExportImport />
-			{/key}
-		</section>
+		{#key $settings.languagePreference}
+			<ExportImport />
+		{/key}
 	{/if}
 </main>

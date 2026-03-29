@@ -4,10 +4,50 @@
 	import { verses } from '$lib/stores/verses';
 	import { t } from '$lib/i18n';
 	import Modal from './Modal.svelte';
+	import { onMount, afterUpdate } from 'svelte';
 	
 	export let collection;
 	
 	const dispatch = createEventDispatcher();
+	let detailElement;
+	let headerElement;
+	let addVerseElement;
+	
+	onMount(() => {
+		logWidths();
+	});
+	
+	afterUpdate(() => {
+		logWidths();
+	});
+	
+	function logWidths() {
+		if (detailElement) {
+			const rect = detailElement.getBoundingClientRect();
+			console.log('=== COLLECTION DETAIL ===');
+			console.log('Detail element:', detailElement);
+			console.log('Width:', rect.width);
+			console.log('Offset width:', detailElement.offsetWidth);
+			console.log('Scroll width:', detailElement.scrollWidth);
+			console.log('Client width:', detailElement.clientWidth);
+			console.log('Is overflowing:', detailElement.scrollWidth > detailElement.clientWidth);
+		}
+		if (headerElement) {
+			const headerRect = headerElement.getBoundingClientRect();
+			console.log('=== DETAIL HEADER ===');
+			console.log('Header width:', headerRect.width);
+			console.log('Header offset width:', headerElement.offsetWidth);
+			console.log('Header scroll width:', headerElement.scrollWidth);
+			console.log('Header is overflowing:', headerElement.scrollWidth > headerElement.clientWidth);
+		}
+		if (addVerseElement) {
+			const addRect = addVerseElement.getBoundingClientRect();
+			console.log('=== ADD VERSE SECTION ===');
+			console.log('Add verse width:', addRect.width);
+			console.log('Add verse scroll width:', addVerseElement.scrollWidth);
+			console.log('Add verse is overflowing:', addVerseElement.scrollWidth > addVerseElement.clientWidth);
+		}
+	}
 	
 	let selectedVerseId = '';
 	let showModal = false;
@@ -91,7 +131,7 @@
 </script>
 
 <div class="collection-detail">
-	<div class="detail-header">
+	<div class="detail-header" bind:this={headerElement}>
 		<button class="back-btn" on:click={close}>
 			← {t('back')}
 		</button>
@@ -105,7 +145,7 @@
 				<option value="">{t('select_verse')}</option>
 				{#each availableVerses as verse (verse.id)}
 					<option value={verse.id}>
-						{formatVerseReference(verse)} - {verse.verseText.substring(0, 30)}...
+						{formatVerseReference(verse)}
 					</option>
 				{/each}
 			</select>
@@ -178,12 +218,17 @@
 		display: flex;
 		flex-direction: column;
 		gap: 1.5rem;
+		width: 100%;
+		max-width: 100%;
+		overflow-x: hidden;
 	}
 	
 	.detail-header {
 		display: flex;
 		align-items: center;
 		gap: 1rem;
+		min-width: 0;
+		max-width: 100%;
 	}
 	
 	.back-btn {
@@ -207,6 +252,9 @@
 		margin: 0;
 		color: var(--text-color);
 		flex: 1;
+		min-width: 0;
+		overflow-wrap: break-word;
+		word-wrap: break-word;
 	}
 	
 	h4 {
@@ -228,6 +276,8 @@
 		background: var(--panel-background);
 		border: 1px solid var(--file-border);
 		border-radius: 8px;
+		min-width: 0;
+		max-width: 100%;
 	}
 	
 	.add-verse-section label {
@@ -240,10 +290,13 @@
 	.add-verse-row {
 		display: flex;
 		gap: 0.5rem;
+		min-width: 0;
+		max-width: 100%;
 	}
 	
 	.add-verse-row select {
 		flex: 1;
+		min-width: 0;
 		padding: 0.75rem;
 		border: 1px solid var(--file-border);
 		background: var(--file-bg);
@@ -264,6 +317,7 @@
 		font-weight: 500;
 		transition: all 0.3s;
 		white-space: nowrap;
+		flex-shrink: 0;
 	}
 	
 	.add-verse-row button:hover:not(:disabled) {
@@ -279,6 +333,8 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.75rem;
+		min-width: 0;
+		max-width: 100%;
 	}
 	
 	.verse-item {
@@ -290,6 +346,8 @@
 		border: 1px solid var(--file-border);
 		border-radius: 8px;
 		transition: all 0.3s;
+		min-width: 0;
+		max-width: 100%;
 	}
 	
 	.verse-item:hover {
@@ -301,6 +359,8 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.5rem;
+		min-width: 0;
+		overflow-wrap: break-word;
 	}
 	
 	.verse-reference {
@@ -312,6 +372,8 @@
 	.verse-text {
 		color: var(--text-color);
 		line-height: 1.6;
+		word-wrap: break-word;
+		overflow-wrap: break-word;
 	}
 	
 	.verse-actions {
@@ -359,9 +421,41 @@
 	}
 	
 	@media (max-width: 768px) {
+		.collection-detail {
+			padding: 0;
+			gap: 1rem;
+			width: 100% !important;
+			max-width: 100% !important;
+			box-sizing: border-box;
+		}
+		
+		.detail-header {
+			padding: 0.75rem 1rem;
+			background: var(--panel-background);
+			margin: 0;
+			width: 100%;
+			box-sizing: border-box;
+		}
+		
+		.add-verse-section {
+			padding: 1rem;
+			border-radius: 0;
+			margin: 0;
+			width: 100%;
+			box-sizing: border-box;
+		}
+		
+		.verses-list {
+			padding: 0 1rem;
+			width: 100%;
+			box-sizing: border-box;
+		}
+		
 		.verse-item {
 			flex-direction: column;
 			gap: 1rem;
+			padding: 0.75rem;
+			border-radius: 4px;
 		}
 		
 		.verse-actions {
@@ -370,6 +464,18 @@
 		
 		.icon-btn {
 			flex: 1;
+		}
+		
+		.detail-header {
+			flex-wrap: wrap;
+		}
+		
+		.add-verse-row {
+			flex-direction: column;
+		}
+		
+		.add-verse-row button {
+			width: 100%;
 		}
 	}
 </style>
