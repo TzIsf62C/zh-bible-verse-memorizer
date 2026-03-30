@@ -1046,6 +1046,17 @@
 		font-size: 1em;
 	}
 
+	.learn-helper-text {
+		margin-bottom: 0;
+	}
+
+	.learn-helper-text p {
+		margin: 0;
+		font-size: 0.9em;
+		color: var(--subtitle-color);
+		font-style: italic;
+	}
+
 	.verse-display {
 		font-size: 1.5em;
 		line-height: 2;
