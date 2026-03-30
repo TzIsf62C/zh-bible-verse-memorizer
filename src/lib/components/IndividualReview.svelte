@@ -639,7 +639,7 @@
 		height: 32px;
 		background: var(--file-bg);
 		border-radius: 16px;
-		margin-bottom: 2rem;
+		margin-bottom: 1rem;
 		overflow: hidden;
 		border: 1px solid var(--file-border);
 	}
@@ -941,7 +941,7 @@
 
 	@media (max-width: 768px) {
 		.verse-display {
-			font-size: 1.25rem;
+			font-size: 1.5rem;
 			padding: 1.5rem;
 		}
 

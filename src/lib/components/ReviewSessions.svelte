@@ -544,7 +544,14 @@
 		background: var(--file-bg);
 	}
 
-	@media (max-width: 768px) {
+	@media (max-width: 767px) {
+		.review-container {
+			padding-left: 0;
+			padding-right: 0;
+			gap: 1rem;
+			margin: 0;
+		}
+
 		.collection-selector {
 			flex-direction: column;
 		}
