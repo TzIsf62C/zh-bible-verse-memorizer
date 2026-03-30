@@ -11,6 +11,9 @@
 	export let correctKey = null; // The key that should have been pressed (show green if pressedKey is wrong)
 	export let lastCorrectKey = null; // The last correctly pressed key (show white/grey feedback)
 
+	// Debug feedback props
+	$: console.log('[Keyboard] Feedback props:', { pressedKey, correctKey, lastCorrectKey });
+
 	const dispatch = createEventDispatcher();
 
 	function handleKeyPress(keyObj) {
@@ -41,25 +44,44 @@
 	}
 	
 	// Helper function to check if a key should have feedback styling
-	function getKeyFeedback(keyValue) {
+	// Pass feedback props as parameters so Svelte tracks the dependency for {@const} reactivity
+	function getKeyFeedback(keyValue, pressed, correct, lastCorrect) {
 		// Normalize key for comparison (handle both raw keys and display values)
 		const normalizedKey = keyValue.toLowerCase();
-		const normalizedPressed = pressedKey ? pressedKey.toLowerCase() : null;
-		const normalizedCorrect = correctKey ? correctKey.toLowerCase() : null;
-		const normalizedLastCorrect = lastCorrectKey ? lastCorrectKey.toLowerCase() : null;
+		const normalizedPressed = pressed ? pressed.toLowerCase() : null;
+		const normalizedCorrect = correct ? correct.toLowerCase() : null;
+		const normalizedLastCorrect = lastCorrect ? lastCorrect.toLowerCase() : null;
+		
+		// Log EVERY comparison for debugging
+		if (normalizedPressed || normalizedCorrect || normalizedLastCorrect) {
+			console.log('[Keyboard] getKeyFeedback check:', {
+				keyValue,
+				normalizedKey,
+				normalizedPressed,
+				normalizedCorrect,
+				normalizedLastCorrect
+			});
+		}
+		
+		let result = null;
 		
 		if (normalizedPressed && normalizedCorrect && normalizedPressed !== normalizedCorrect) {
 			// There was an error
 			if (normalizedKey === normalizedPressed) {
-				return 'incorrect'; // Red background for the pressed wrong key
+				result = 'incorrect'; // Red background for the pressed wrong key
 			} else if (normalizedKey === normalizedCorrect) {
-				return 'correct'; // Green background for the key that should have been pressed
+				result = 'correct'; // Green background for the key that should have been pressed
 			}
 		} else if (normalizedLastCorrect && normalizedKey === normalizedLastCorrect) {
 			// Last input was correct
-			return 'success'; // White/grey background for the last correct key
+			result = 'success'; // White/grey background for the last correct key
 		}
-		return null;
+		
+		if (result) {
+			console.log('[Keyboard] getKeyFeedback MATCH:', keyValue, '→', result);
+		}
+		
+		return result;
 	}
 </script>
 
@@ -70,7 +92,7 @@
 				{#if key.key === 'SPACER'}
 					<div class="key spacer"></div>
 				{:else}
-					{@const feedback = getKeyFeedback(key.display)}
+					{@const feedback = getKeyFeedback(key.display, pressedKey, correctKey, lastCorrectKey)}
 					<button 
 						type="button" 
 						class="key" 

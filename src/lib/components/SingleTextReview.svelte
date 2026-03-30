@@ -5,7 +5,11 @@
 	import { t } from '$lib/i18n';
 	import { spacedRepetitionBinary } from '$lib/utils/spacedRepetition';
 	import Modal from './Modal.svelte';
+	import Keyboard from './Keyboard.svelte';
 	import { createVerseReferenceFormatter } from '$lib/utils/bibleBooks';
+	import { keyboardLayouts } from '$lib/utils/keyboardLayouts';
+	import { zhuyinKeyMap, cangjieKeyMap } from '$lib/utils/inputMaps';
+	import { triggerErrorFeedback } from '$lib/utils/feedback';
 
 	export let verses = [];
 
@@ -20,9 +24,360 @@
 	let currentIndex = 0;
 	let userInput = '';
 	let successCount = 0;
-	let displayLines = [];
 	let feedbackText = '';
 	let feedbackClass = '';
+
+	// Keyboard state variables
+	let keyboardLayout = keyboardLayouts.pinyinCompact;
+	let isNumericKeyboard = false;
+	let pressedKey = null;
+	let correctKey = null;
+	let lastCorrectKey = null;
+
+	// Error tracking
+	let lastErrorIndex = null;
+	let lastErrorChar = null;
+	let scrollTrigger = 0;
+	let viewportAnchor;
+	let showInputMismatchWarning = false;
+
+	// Current verse data
+	let reviewFullText = '';
+	let reviewFullInitials = '';
+	let charToInputIndex = [];
+	let inputIndexToCharIndex = [];
+	let initializedVerseId = null;
+
+	// Reset keyboard feedback when verse changes
+	$: {
+		const _ = currentIndex;
+		pressedKey = null;
+		correctKey = null;
+		lastCorrectKey = null;
+		console.log('[SingleTextReview] Verse changed, feedback reset');
+	}
+
+	// Track feedback changes for debugging
+	$: console.log('[SingleTextReview] Feedback state:', { pressedKey, correctKey, lastCorrectKey });
+
+	// Create reactive rendered characters array for progressive reveal
+	// Explicitly depend on both reviewFullText AND userInput for Svelte reactivity
+	$: renderedChars = (userInput, reviewFullText, [...reviewFullText].map((char, index) => ({
+		char,
+		...renderCharacter(char, index)
+	})));
+	$: console.log('[SingleTextReview] renderedChars updated, userInput.length:', userInput.length, 'renderedChars.length:', renderedChars.length);
+
+	// Check for input method mismatch and show warning
+	$: {
+		const currentMethod = $settings.inputMethod;
+		const fullInitials = reviewFullInitials;
+		
+		if (fullInitials && currentMethod) {
+			const verseInputMethod = detectInputMethod(fullInitials);
+			
+			if (verseInputMethod && verseInputMethod !== currentMethod) {
+				const methodNames = { 
+					pinyin: t('input_pinyin'), 
+					zhuyin: t('input_zhuyin'), 
+					cangjie: t('input_cangjie') 
+				};
+				feedbackText = t('input_method_mismatch').replace('{method}', methodNames[verseInputMethod] || verseInputMethod);
+				feedbackClass = 'warning';
+			} else if (verseInputMethod === currentMethod && feedbackClass === 'warning') {
+				feedbackText = '';
+				feedbackClass = '';
+			}
+		}
+	}
+
+	// Update keyboard layout based on input method (no numeric keyboard needed in SingleTextReview)
+	$: {
+		const inputMethod = $settings.inputMethod || 'pinyin';
+		keyboardLayout = keyboardLayouts[`${inputMethod}Compact`] || keyboardLayouts.pinyinCompact;
+		isNumericKeyboard = false;
+	}
+
+	$: currentVerse = verses[currentIndex];
+
+	// Initialize verse data when current verse changes (based on ID)
+	$: if (currentVerse && currentVerse.id !== initializedVerseId && feedbackClass !== 'success' && feedbackClass !== 'error') {
+		initializeVerse(currentVerse);
+		initializedVerseId = currentVerse.id;
+	}
+
+	// Auto-focus hidden input for physical keyboard
+	let hiddenInputElement;
+	$: if (currentVerse && !feedbackText && hiddenInputElement) {
+		console.log('[SingleTextReview] Auto-focusing hidden input');
+		setTimeout(() => hiddenInputElement?.focus(), 100);
+	}
+
+	function detectInputMethod(initials) {
+		if (!initials || initials.length === 0) return null;
+		
+		const sample = initials.split('').filter(c => !/[0-9]/.test(c)).slice(0, 5).join('');
+		if (!sample) return null;
+		
+		if (/[\u3105-\u3129\u02CA\u02C7\u02CB\u02D9]/.test(sample)) return 'zhuyin';
+		if (/[\u4e00-\u9fa5]/.test(sample)) return 'cangjie';
+		if (/[a-z]/.test(sample)) return 'pinyin';
+		
+		return null;
+	}
+
+	function initializeVerse(verse) {
+		console.log('[SingleTextReview] initializeVerse called for verse:', verse.id);
+		userInput = '';
+		
+		// In continuous review, user only types verse TEXT, not the reference
+		// References are displayed automatically as separators between verses
+		reviewFullText = verse.verseText;
+		
+		// Only verse text initials - NO reference initials
+		reviewFullInitials = verse.verseInitials;
+
+		console.log('[SingleTextReview] reviewFullText:', reviewFullText);
+		console.log('[SingleTextReview] reviewFullInitials:', reviewFullInitials);
+
+		// Build character-to-input mapping for verse text only (Chinese chars only, no digits)
+		const chars = [...reviewFullText];
+		charToInputIndex = new Array(chars.length).fill(null);
+		inputIndexToCharIndex = [];
+		let inputIdx = 0;
+		
+		for (let i = 0; i < chars.length; i++) {
+			const ch = chars[i];
+			if (/[\u4e00-\u9fa5]/.test(ch)) {
+				charToInputIndex[i] = inputIdx;
+				inputIndexToCharIndex[inputIdx] = i;
+				inputIdx++;
+			} else {
+				charToInputIndex[i] = null;
+			}
+		}
+		console.log('[SingleTextReview] Mapping complete. Total input chars:', inputIdx);
+	}
+
+	function renderCharacter(char, charIndex) {
+		const map = charToInputIndex[charIndex];
+		console.log('[SingleTextReview] renderCharacter called - charIndex:', charIndex, 'map:', map, 'userInput.length:', userInput.length);
+
+		if (map !== null) {
+			// Input-requiring character
+			const expected = reviewFullInitials[map];
+			let className = 'verse-character';
+			let hidden = true; // Always hidden initially (like advanced mode)
+
+			// Reveal as user types
+			if (userInput.length > map) {
+				const inputMethod = $settings.inputMethod || 'pinyin';
+				const typedChar = inputMethod === 'pinyin' ? userInput[map].toLowerCase() : userInput[map];
+				const expectedChar = inputMethod === 'pinyin' ? expected.toLowerCase() : expected;
+				const isCorrect = typedChar === expectedChar;
+				return { 
+					char, 
+					className: className + (isCorrect ? ' correct' : ' incorrect'), 
+					hidden: false 
+				};
+			} else {
+				return { char, className: className + ' hidden', hidden: true };
+			}
+		} else {
+			// Punctuation
+			let className = 'verse-character punctuation';
+			let shown = false;
+
+			// Find nearest previous input-requiring character
+			let prevMap = null;
+			for (let k = charIndex - 1; k >= 0; k--) {
+				if (charToInputIndex[k] !== null) {
+					prevMap = charToInputIndex[k];
+					break;
+				}
+			}
+
+			const isInitialPunct = (prevMap === null);
+
+			if (isInitialPunct) {
+				shown = true;
+				className = 'verse-character correct';
+			} else {
+				// Show when previous character is typed
+				if (prevMap !== null && userInput.length > prevMap) {
+					shown = true;
+					className = 'verse-character punctuation correct';
+				} else {
+					shown = false;
+					className = 'verse-character punctuation hidden';
+				}
+			}
+
+			return { char, className, hidden: !shown };
+		}
+	}
+
+	function handleKeyInput(event) {
+		const key = event.detail;
+		console.log('[SingleTextReview] handleKeyInput called with key:', key);
+		console.log('[SingleTextReview] Current userInput:', userInput);
+		console.log('[SingleTextReview] Expected initials:', reviewFullInitials);
+
+		if (key === '⌫' || key === 'Backspace') {
+			console.log('[SingleTextReview] Backspace pressed - disabled in review');
+			// Backspace disabled in review
+			return;
+		}
+
+		if (key === '↵' || key === 'Enter') {
+			console.log('[SingleTextReview] Enter pressed');
+			if (userInput.length === reviewFullInitials.length) {
+				checkAnswer();
+			}
+			return;
+		}
+
+		// Clear previous feedback
+		console.log('[SingleTextReview] Clearing previous feedback');
+		pressedKey = null;
+		correctKey = null;
+		lastCorrectKey = null;
+		
+		// Check correctness
+		const inputMethod = $settings.inputMethod || 'pinyin';
+		const nextExpectedChar = reviewFullInitials[userInput.length];
+		const normalizedKey = inputMethod === 'pinyin' ? key.toLowerCase() : key;
+		const normalizedExpected = inputMethod === 'pinyin' ? (nextExpectedChar || '').toLowerCase() : (nextExpectedChar || '');
+		
+		console.log('[SingleTextReview] Next expected char:', nextExpectedChar, 'Normalized:', normalizedExpected);
+		console.log('[SingleTextReview] Key pressed:', key, 'Normalized:', normalizedKey);
+		
+		if (normalizedKey === normalizedExpected) {
+			console.log('[SingleTextReview] Key is CORRECT');
+			lastCorrectKey = key;
+			console.log('[SingleTextReview] Set lastCorrectKey to:', lastCorrectKey);
+		} else {
+			console.log('[SingleTextReview] Key is INCORRECT');
+			pressedKey = key;
+			correctKey = nextExpectedChar;
+			console.log('[SingleTextReview] Set pressedKey to:', pressedKey, 'correctKey to:', correctKey);
+		}
+
+		userInput += key;
+		console.log('[SingleTextReview] Updated userInput:', userInput);
+		console.log('[SingleTextReview] Feedback variables after update:', { pressedKey, correctKey, lastCorrectKey });
+		updateErrorFeedback();
+
+		// Auto-submit when complete
+		if (userInput.length === reviewFullInitials.length) {
+			console.log('[SingleTextReview] Input complete, checking answer');
+			checkAnswer();
+		}
+	}
+
+	function handlePhysicalKeyboard(e) {
+		console.log('[SingleTextReview] handlePhysicalKeyboard called with key:', e.key);
+		if (!currentVerse) {
+			console.log('[SingleTextReview] No currentVerse, ignoring key');
+			return;
+		}
+		if (feedbackClass === 'success' || feedbackClass === 'error') {
+			console.log('[SingleTextReview] Feedback showing, ignoring key');
+			return;
+		}
+
+		if (e.key === 'Enter' && userInput.length === reviewFullInitials.length) {
+			console.log('[SingleTextReview] Enter pressed with complete input');
+			e.preventDefault();
+			checkAnswer();
+			return;
+		}
+
+		if (e.key === 'Backspace' || e.key === 'Delete') {
+			console.log('[SingleTextReview] Backspace/Delete pressed - disabled in review');
+			e.preventDefault();
+			return;
+		}
+
+		const inputMethod = $settings.inputMethod || 'pinyin';
+		const key = e.key.toLowerCase();
+		let mappedValue = '';
+
+		if (inputMethod === 'zhuyin') {
+			mappedValue = zhuyinKeyMap[key] || '';
+		} else if (inputMethod === 'cangjie') {
+			mappedValue = cangjieKeyMap[key] || '';
+		} else if (/^[a-z0-9]$/i.test(key)) {
+			mappedValue = key;
+		}
+
+		console.log('[SingleTextReview] Mapped value:', mappedValue);
+
+		if (mappedValue) {
+			e.preventDefault();
+			
+			pressedKey = null;
+			correctKey = null;
+			lastCorrectKey = null;
+			
+			const nextExpectedChar = reviewFullInitials[userInput.length];
+			const normalizedKey = inputMethod === 'pinyin' ? mappedValue.toLowerCase() : mappedValue;
+			const normalizedExpected = inputMethod === 'pinyin' ? (nextExpectedChar || '').toLowerCase() : (nextExpectedChar || '');
+			
+			console.log('[SingleTextReview] Physical KB - Expected:', normalizedExpected, 'Got:', normalizedKey);
+			
+				if (normalizedKey === normalizedExpected) {
+				console.log('[SingleTextReview] Physical KB - Key is CORRECT');
+				lastCorrectKey = mappedValue;
+				console.log('[SingleTextReview] Physical KB - Set lastCorrectKey to:', lastCorrectKey);
+			} else {
+				console.log('[SingleTextReview] Physical KB - Key is INCORRECT');
+				pressedKey = mappedValue;
+				correctKey = nextExpectedChar;
+				console.log('[SingleTextReview] Physical KB - Set pressedKey to:', pressedKey, 'correctKey to:', correctKey);
+			}
+			
+			userInput += mappedValue;
+			console.log('[SingleTextReview] Physical KB - Updated userInput:', userInput);
+			console.log('[SingleTextReview] Physical KB - Feedback variables:', { pressedKey, correctKey, lastCorrectKey });
+			updateErrorFeedback();
+			
+			if (userInput.length === reviewFullInitials.length) {
+				console.log('[SingleTextReview] Physical KB - Input complete, checking answer');
+				checkAnswer();
+			}
+		}
+	}
+
+	function updateErrorFeedback() {
+		const inputMethod = $settings.inputMethod || 'pinyin';
+		let latestErrorIndex = -1;
+		let latestErrorChar = '';
+
+		for (let i = 0; i < userInput.length; i++) {
+			const expected = reviewFullInitials[i];
+			const typed = userInput[i];
+			const expectedNorm = inputMethod === 'pinyin' ? expected.toLowerCase() : expected;
+			const typedNorm = inputMethod === 'pinyin' ? typed.toLowerCase() : typed;
+			
+			if (typedNorm !== expectedNorm) {
+				latestErrorIndex = i;
+				latestErrorChar = expected;
+			}
+		}
+
+		if (latestErrorIndex === -1) {
+			lastErrorIndex = null;
+			lastErrorChar = null;
+		} else {
+			if (lastErrorIndex !== latestErrorIndex || lastErrorChar !== latestErrorChar) {
+				lastErrorIndex = latestErrorIndex;
+				lastErrorChar = latestErrorChar;
+				triggerErrorFeedback($settings);
+				scrollTrigger++;
+			}
+		}
+	}
 
 	// Check if all verses are from same book/chapter
 	$: allSameBookChapter = verses.every(v => 
@@ -30,60 +385,39 @@
 		v.chapterNumber === verses[0]?.chapterNumber
 	);
 
-	// Build display lines
-	$: {
-		displayLines = verses.map((v, i) => {
-			let ref = '';
-			let refHtml = '';
-
-			if (i === 0 || !allSameBookChapter) {
-				ref = formatVerseRef(v);
-				refHtml = `<span class="reference-inline">${ref}</span>`;
-			} else {
-				ref = `${v.verseNumber}`;
-				refHtml = `<span class="reference-inline">${ref}</span>`;
-			}
-
-			return {
-				ref,
-				refHtml,
-				text: v.verseText,
-				fullText: `${ref} ${v.verseText}`,
-				finalHtml: ''
-			};
-		});
-	}
-
-	$: currentVerse = verses[currentIndex];
-	$: expectedInput = currentVerse?.verseInitials || '';
-
-	function handleInput(e) {
-		const rawInput = e.target.value;
-		userInput = rawInput.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
-
-		// Check for completion
-		if (userInput.length === expectedInput.length) {
-			checkAnswer();
-		}
-	}
+	// Store completed verses with their final rendering for display
+	let completedVerses = [];
 
 	function checkAnswer() {
-		// Calculate accuracy
+		// Calculate accuracy against reviewFullInitials
+		const inputMethod = $settings.inputMethod || 'pinyin';
 		let correct = 0;
-		for (let i = 0; i < expectedInput.length; i++) {
-			if (userInput[i] && userInput[i].toLowerCase() === expectedInput[i].toLowerCase()) {
+		for (let i = 0; i < reviewFullInitials.length; i++) {
+			const expected = reviewFullInitials[i];
+			const typed = userInput[i];
+			const expectedNorm = inputMethod === 'pinyin' ? expected.toLowerCase() : expected;
+			const typedNorm = inputMethod === 'pinyin' ? (typed || '').toLowerCase() : (typed || '');
+			
+			if (typedNorm === expectedNorm) {
 				correct++;
 			}
 		}
 
-		const accuracy = expectedInput.length > 0 ? (correct / expectedInput.length) * 100 : 0;
+		const accuracy = reviewFullInitials.length > 0 ? (correct / reviewFullInitials.length) * 100 : 0;
 		feedbackText = `${t('accuracy')}: ${accuracy.toFixed(1)}%`;
 		feedbackClass = accuracy >= 90 ? 'success' : 'error';
 
-		// Save final colored HTML
-		displayLines[currentIndex].finalHtml = renderCurrentVerse();
+		// Save current verse's final rendered state BEFORE advancing
+		const finalRenderedChars = [...reviewFullText].map((char, index) => ({
+			char,
+			...renderCharacter(char, index)
+		}));
+		completedVerses = [...completedVerses, {
+			verse: currentVerse,
+			renderedChars: finalRenderedChars
+		}];
 
-		// Update spaced repetition
+		// Update spaced repetition (silently - no modals)
 		const now = new Date();
 		const success = accuracy >= 90;
 
@@ -99,7 +433,8 @@
 					...v,
 					interval: updated.interval,
 					repetitions: updated.repetitions,
-					dueDate: updated.dueDate.toISOString(),
+					// dueDate from spacedRepetitionBinary is a Date object
+					dueDate: updated.dueDate instanceof Date ? updated.dueDate.toISOString() : updated.dueDate,
 					lastReviewed: success ? now.toISOString() : v.lastReviewed
 				};
 			}
@@ -136,47 +471,6 @@
 		showCompletionMsg = false;
 		dispatch('complete');
 	}
-
-	function renderCurrentVerse() {
-		const text = currentVerse.verseText;
-		const initials = currentVerse.verseInitials;
-		let html = '';
-		let initialIndex = 0;
-
-		for (const char of text) {
-			const isHanChar = /\p{Script=Han}/u.test(char) || /[0-9]/.test(char);
-			let className = 'verse-character';
-
-			if (isHanChar && initialIndex < initials.length) {
-				const expected = initials[initialIndex];
-				const typed = userInput[initialIndex];
-
-				if (initialIndex < userInput.length) {
-					if (typed && typed.toLowerCase() === expected.toLowerCase()) {
-						className += ' correct';
-					} else {
-						className += ' incorrect';
-					}
-				} else {
-					className += ' hidden';
-				}
-
-				html += `<span class="${className}">${char}</span>`;
-				initialIndex++;
-			} else {
-				// Punctuation - reveal when previous character is typed
-				if (initialIndex <= userInput.length) {
-					className += ' correct';
-					html += `<span class="${className}">${char}</span>`;
-				} else {
-					className += ' hidden';
-					html += `<span class="${className}">${char}</span>`;
-				}
-			}
-		}
-
-		return html;
-	}
 </script>
 
 <div class="single-text-review">
@@ -186,21 +480,34 @@
 	</div>
 
 	<div class="passage-display">
-		<!-- Completed verses -->
-		{#each displayLines.slice(0, currentIndex) as line}
+		<!-- Completed verses with preserved styling -->
+		{#each completedVerses as {verse, renderedChars}, i (verse.id)}
 			<div class="completed-verse">
-				{@html line.refHtml}
-				{@html line.finalHtml || line.text}
+				{#if i === 0 || !allSameBookChapter}
+					<span class="reference-inline">{formatVerseRef(verse)}</span>
+				{:else}
+					<span class="reference-inline">{verse.verseNumber}</span>
+				{/if}
+				<!-- Render with preserved correct/incorrect styling -->
+				{#each renderedChars as rendered, charIndex (charIndex)}
+					<span class="{rendered.className}">{rendered.char}</span>
+				{/each}
 			</div>
 		{/each}
 
-		<!-- Current verse -->
-		{#if currentIndex < verses.length}
+		<!-- Current verse being typed (hidden during feedback to prevent duplication) -->
+		{#if currentVerse && !feedbackText}
 			<div class="current-verse">
-				{@html displayLines[currentIndex].refHtml}
-				<span id="currentVerseDisplay">
-					{@html renderCurrentVerse()}
-				</span>
+				<!-- Show reference first (always visible) -->
+				{#if currentIndex === 0 || !allSameBookChapter}
+					<span class="reference-inline">{formatVerseRef(currentVerse)}</span>
+				{:else}
+					<span class="reference-inline">{currentVerse.verseNumber}</span>
+				{/if}
+				<!-- Then verse text with hidden characters -->
+			{#each renderedChars as rendered, charIndex (charIndex)}
+				<span class="{rendered.className}">{rendered.char}</span>
+				{/each}
 			</div>
 		{/if}
 	</div>
@@ -211,19 +518,59 @@
 		</div>
 	{/if}
 
-	{#if currentIndex < verses.length}
-		<div class="input-section">
-			<input
-				type="text"
-				class="hidden-input"
-				bind:value={userInput}
-				on:input={handleInput}
-				autofocus
-				placeholder={t('type_to_continue')}
-			/>
-			<div class="input-hint">
-				{t('type_initials')}...
+	{#if currentVerse}
+		<!-- Hidden input for physical keyboard capture -->
+		<!-- Note: Positioned off-screen but must remain focusable for keyboard events -->
+		<input
+			bind:this={hiddenInputElement}
+			type="text"
+			class="visually-hidden-input"
+			value=""
+			on:input={(e) => { e.target.value = ''; console.log('[SingleTextReview] Input event blocked'); }}
+			on:keydown={(e) => { 
+				if (feedbackText) { 
+					console.log('[SingleTextReview] Keyboard disabled during feedback'); 
+					e.preventDefault(); 
+					return; 
+				}
+				console.log('[SingleTextReview] Keydown event fired:', e.key); 
+				handlePhysicalKeyboard(e); 
+			}}
+			on:focus={() => console.log('[SingleTextReview] Input focused')}
+			on:blur={() => console.log('[SingleTextReview] Input blurred')}
+			autocomplete="off"
+			autocorrect="off"
+			autocapitalize="off"
+			spellcheck="false"
+			inputmode="none"
+			aria-label="Hidden input for keyboard capture"
+		/>
+
+		<!-- Warning for mismatched input methods -->
+		{#if showInputMismatchWarning}
+			<div class="warning-message">
+				{t('input_method_mismatch_warning')}
 			</div>
+		{/if}
+
+		<!-- Onscreen keyboard - always visible, but disabled during feedback -->
+		<div class="keyboard-space" class:keyboard-disabled={feedbackText}>
+			<Keyboard 
+				layout={keyboardLayout}
+				showBackspace={false}
+				showEnter={false}
+				isNumeric={isNumericKeyboard}
+				pressedKey={pressedKey}
+				correctKey={correctKey}
+				lastCorrectKey={lastCorrectKey}
+				on:key={(e) => {
+					if (feedbackText) {
+						console.log('[SingleTextReview] Onscreen keyboard disabled during feedback');
+						return;
+					}
+					handleKeyInput(e);
+				}}
+			/>
 		</div>
 	{/if}
 </div>
@@ -259,9 +606,15 @@
 		padding: 2rem;
 		border-radius: 8px;
 		margin-bottom: 1.5rem;
-		font-size: 1.4rem;
+		font-size: 1.5em;
 		line-height: 2;
 		min-height: 200px;
+		/* Prevent horizontal overflow from hidden characters */
+		overflow-wrap: break-word;
+		word-wrap: break-word;
+		word-break: break-word;
+		overflow-x: hidden;
+		position: relative;
 	}
 
 	.completed-verse {
@@ -311,37 +664,41 @@
 		color: #ef5350;
 	}
 
-	.input-section {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 0.5rem;
+	.visually-hidden-input {
+		position: absolute;
+		left: -9999px;
+		width: 1px;
+		height: 1px;
+		opacity: 0;
+		/* Note: pointer-events must NOT be none - it blocks keyboard events! */
+		/* Input must remain focusable to capture keyboard events */
 	}
 
-	.hidden-input {
-		width: 100%;
-		max-width: 500px;
-		padding: 1rem;
-		border: 2px solid var(--accent-color);
-		background: var(--file-bg);
-		color: var(--text-color);
-		border-radius: 8px;
-		font-size: 1.25rem;
+	.warning-message {
 		text-align: center;
-		font-weight: 600;
-		letter-spacing: 0.1em;
-		font-family: inherit;
-	}
-
-	.hidden-input:focus {
-		outline: none;
-		border-color: var(--accent-color);
-		box-shadow: 0 0 0 3px rgba(var(--accent-color-rgb), 0.1);
-	}
-
-	.input-hint {
-		color: var(--subtitle-color);
+		padding: 0.75rem;
+		background: #fff3e0;
+		color: #e65100;
+		border-radius: 8px;
+		margin-bottom: 1rem;
 		font-size: 0.9em;
+		border: 1px solid #ff9800;
+	}
+
+	[data-theme='dark'] .warning-message {
+		background: #e65100;
+		color: #ffb74d;
+		border-color: #ffb74d;
+	}
+
+	.keyboard-space {
+		margin-top: 1.5rem;
+	}
+
+	/* Keyboard disabled state during feedback */
+	.keyboard-space.keyboard-disabled {
+		pointer-events: none;
+		opacity: 0.6;
 	}
 
 	/* Character styling */
@@ -362,18 +719,42 @@
 	}
 
 	:global(.verse-character.hidden) {
-		color: transparent;
-		user-select: none;
+		opacity: 0;
+		pointer-events: none;
+	}
+
+	:global(.verse-character.punctuation) {
+		color: var(--text-color);
+	}
+
+	.completed-verse {
+		margin-bottom: 1rem;
+		color: var(--text-color);
+	}
+
+	.verse-text {
+		color: var(--text-color);
+	}
+
+	.reference-inline {
+		color: var(--subtitle-color);
+		font-size: 0.9em;
+		margin-right: 0.5em;
+		font-weight: 500;
 	}
 
 	@media (max-width: 768px) {
+		.single-text-review {
+			padding: 1rem 0.5rem;
+		}
+
 		.passage-display {
 			font-size: 1.2em;
 			padding: 1.5rem;
 		}
 
-		.hidden-input {
-			font-size: 1.1em;
+		.keyboard-space {
+			margin-top: 1rem;
 		}
 	}
 </style>
