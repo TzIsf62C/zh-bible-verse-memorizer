@@ -3,12 +3,15 @@ export const translations = {
 		// App title and navigation
 		app_title: 'ZH Bible Verse Memorizer',
 		app_subtitle: '聖經經文背誦',
+		menu: 'Menu',
 		learn: 'Learn',
+		practice: 'Practice',
 		review: 'Review',
 		add_verse: 'Add Verse',
 		collections: 'Collections',
 		settings: 'Settings',
 		export_import: 'Export & Import',
+		share_app: 'Share App',
 		
 		// Settings panel
 		language: 'Language',
@@ -296,12 +299,15 @@ export const translations = {
 		// App title and navigation
 		app_title: 'ZH Bible Verse Memorizer',
 		app_subtitle: '聖經經文背誦',
+		menu: '菜单',
 		learn: '学习',
+		practice: '练习',
 		review: '复习',
 		add_verse: '添加经文',
 		collections: '集合',
 		settings: '设置',
 		export_import: '导出导入',
+		share_app: '分享应用',
 		
 		// Settings panel
 		language: '语言',
@@ -583,12 +589,15 @@ export const translations = {
 		// App title and navigation
 		app_title: 'ZH Bible Verse Memorizer',
 		app_subtitle: '聖經經文背誦',
+		menu: '選單',
 		learn: '學習',
+		practice: '練習',
 		review: '複習',
 		add_verse: '新增經文',
 		collections: '集合',
 		settings: '設定',
 		export_import: '匯出匯入',
+		share_app: '分享應用',
 		
 		// Settings panel
 		language: '語言',

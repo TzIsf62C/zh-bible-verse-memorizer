@@ -11,17 +11,12 @@
 	import Settings from '$lib/components/Settings.svelte';
 	import Collections from '$lib/components/Collections.svelte';
 	import ExportImport from '$lib/components/ExportImport.svelte';
+	import IconNav from '$lib/components/IconNav.svelte';
+	import MenuOverlay from '$lib/components/MenuOverlay.svelte';
 	import { t } from '$lib/i18n/index.js';
 
-	const panels = [
-		{ id: 'learn', label: 'learn' },
-		{ id: 'review', label: 'review' },
-		{ id: 'add', label: 'add_verse' },
-		{ id: 'collections', label: 'collections' },
-		{ id: 'settings', label: 'settings' },
-		{ id: 'data', label: 'export_import' }
-	];
 	let currentPanel = 'learn';
+	let showMenu = false;
 
 	let keyboardInput = '';
 	let keyboardLayout = keyboardLayouts.pinyin;
@@ -62,6 +57,52 @@
 		currentPanel = panelId;
 	}
 
+	function handleMenuClick() {
+		showMenu = true;
+	}
+
+	function handleMenuNavigate(event) {
+		const panelId = event.detail;
+		
+		if (panelId === 'share') {
+			handleShare();
+			showMenu = false;
+			return;
+		}
+		
+		currentPanel = panelId;
+		showMenu = false;
+	}
+	
+	async function handleShare() {
+		if (browser && navigator.share) {
+			try {
+				await navigator.share({
+					title: 'ZH Bible Verse Memorizer',
+					text: 'Check out this Chinese Bible verse memorization app!',
+					url: window.location.href
+				});
+			} catch (err) {
+				// User cancelled share or share failed
+				console.log('Share cancelled or failed:', err);
+			}
+		} else {
+			// Fallback: copy URL to clipboard
+			if (browser) {
+				try {
+					await navigator.clipboard.writeText(window.location.href);
+					alert('App URL copied to clipboard!');
+				} catch (err) {
+					alert('Share URL: ' + window.location.href);
+				}
+			}
+		}
+	}
+
+	function handleMenuClose() {
+		showMenu = false;
+	}
+
 	function updateSetting(key, value) {
 		if (key === 'inputMethod') {
 			keyboardInput = '';
@@ -96,19 +137,17 @@
 		<p class="subtitle">{t('app_subtitle')}</p>
 	</header>
 
-	<nav class="panel-nav">
-		{#each panels as panel}
-			<button
-				type="button"
-				class:active={currentPanel === panel.id}
-				on:click={() => switchPanel(panel.id)}
-			>
-				{#key $settings.languagePreference}
-					{t(panel.label)}
-				{/key}
-			</button>
-		{/each}
-	</nav>
+	<IconNav
+		currentPanel={currentPanel}
+		onMenuClick={handleMenuClick}
+		on:navigate={(e) => switchPanel(e.detail)}
+	/>
+
+	<MenuOverlay
+		bind:show={showMenu}
+		on:navigate={handleMenuNavigate}
+		on:close={handleMenuClose}
+	/>
 
 	{#if currentPanel === 'learn'}
 		<LearningFlow />
@@ -128,5 +167,10 @@
 		{#key $settings.languagePreference}
 			<ExportImport />
 		{/key}
+	{:else if currentPanel === 'practice'}
+		<div class="panel">
+			<h2>{t('practice')}</h2>
+			<p style="color: var(--subtitle-color);">Practice panel coming soon...</p>
+		</div>
 	{/if}
 </main>
