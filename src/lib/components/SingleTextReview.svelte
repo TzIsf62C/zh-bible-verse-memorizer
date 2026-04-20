@@ -34,12 +34,39 @@
 	let correctKey = null;
 	let lastCorrectKey = null;
 
-	// Error tracking
+	// Error tracking and scrolling
 	let lastErrorIndex = null;
 	let lastErrorChar = null;
 	let scrollTrigger = 0;
 	let viewportAnchor;
 	let showInputMismatchWarning = false;
+
+	// Scroll viewport to position content above keyboard after each input
+	$: {
+		if (viewportAnchor && currentVerse && !feedbackText) {
+			// Include userInput and scrollTrigger in reactive dependencies
+			const _ = userInput.length;
+			const __ = scrollTrigger;
+			
+			setTimeout(() => {
+				const anchorRect = viewportAnchor.getBoundingClientRect();
+				
+				// Find keyboard element
+				const keyboard = viewportAnchor.nextElementSibling;
+				if (keyboard) {
+					const keyboardRect = keyboard.getBoundingClientRect();
+					
+					// Calculate scroll position: align anchor with keyboard's top edge
+					const scrollTarget = window.scrollY + (anchorRect.top - keyboardRect.top);
+					
+					window.scrollTo({ 
+						top: scrollTarget, 
+						behavior: 'smooth' 
+					});
+				}
+			}, 100);
+		}
+	}
 
 	// Current verse data
 	let reviewFullText = '';
@@ -62,11 +89,13 @@
 
 	// Create reactive rendered characters array for progressive reveal
 	// Explicitly depend on both reviewFullText AND userInput for Svelte reactivity
-	$: renderedChars = (userInput, reviewFullText, [...reviewFullText].map((char, index) => ({
-		char,
-		...renderCharacter(char, index)
-	})));
-	$: console.log('[SingleTextReview] renderedChars updated, userInput.length:', userInput.length, 'renderedChars.length:', renderedChars.length);
+	// Only compute when reviewFullText has content to prevent narrow initial width
+	$: renderedChars = (userInput, reviewFullText && reviewFullText.length > 0) 
+		? [...reviewFullText].map((char, index) => ({
+			char,
+			...renderCharacter(char, index)
+		}))
+		: [];
 
 	// Check for input method mismatch and show warning
 	$: {
@@ -130,6 +159,12 @@
 		console.log('[SingleTextReview] initializeVerse called for verse:', verse.id);
 		userInput = '';
 		
+		// Clear renderedChars immediately to prevent showing old verse's characters
+		// (especially initial punctuation from previous verse)
+		reviewFullText = '';
+		reviewFullInitials = '';
+		
+		// Then set new verse data (triggers reactive renderedChars update)
 		// In continuous review, user only types verse TEXT, not the reference
 		// References are displayed automatically as separators between verses
 		reviewFullText = verse.verseText;
@@ -161,7 +196,6 @@
 
 	function renderCharacter(char, charIndex) {
 		const map = charToInputIndex[charIndex];
-		console.log('[SingleTextReview] renderCharacter called - charIndex:', charIndex, 'map:', map, 'userInput.length:', userInput.length);
 
 		if (map !== null) {
 			// Input-requiring character
@@ -276,25 +310,20 @@
 	}
 
 	function handlePhysicalKeyboard(e) {
-		console.log('[SingleTextReview] handlePhysicalKeyboard called with key:', e.key);
 		if (!currentVerse) {
-			console.log('[SingleTextReview] No currentVerse, ignoring key');
 			return;
 		}
 		if (feedbackClass === 'success' || feedbackClass === 'error') {
-			console.log('[SingleTextReview] Feedback showing, ignoring key');
 			return;
 		}
 
 		if (e.key === 'Enter' && userInput.length === reviewFullInitials.length) {
-			console.log('[SingleTextReview] Enter pressed with complete input');
 			e.preventDefault();
 			checkAnswer();
 			return;
 		}
 
 		if (e.key === 'Backspace' || e.key === 'Delete') {
-			console.log('[SingleTextReview] Backspace/Delete pressed - disabled in review');
 			e.preventDefault();
 			return;
 		}
@@ -311,8 +340,6 @@
 			mappedValue = key;
 		}
 
-		console.log('[SingleTextReview] Mapped value:', mappedValue);
-
 		if (mappedValue) {
 			e.preventDefault();
 			
@@ -324,26 +351,18 @@
 			const normalizedKey = inputMethod === 'pinyin' ? mappedValue.toLowerCase() : mappedValue;
 			const normalizedExpected = inputMethod === 'pinyin' ? (nextExpectedChar || '').toLowerCase() : (nextExpectedChar || '');
 			
-			console.log('[SingleTextReview] Physical KB - Expected:', normalizedExpected, 'Got:', normalizedKey);
 			
 				if (normalizedKey === normalizedExpected) {
-				console.log('[SingleTextReview] Physical KB - Key is CORRECT');
 				lastCorrectKey = mappedValue;
-				console.log('[SingleTextReview] Physical KB - Set lastCorrectKey to:', lastCorrectKey);
 			} else {
-				console.log('[SingleTextReview] Physical KB - Key is INCORRECT');
 				pressedKey = mappedValue;
 				correctKey = nextExpectedChar;
-				console.log('[SingleTextReview] Physical KB - Set pressedKey to:', pressedKey, 'correctKey to:', correctKey);
 			}
 			
 			userInput += mappedValue;
-			console.log('[SingleTextReview] Physical KB - Updated userInput:', userInput);
-			console.log('[SingleTextReview] Physical KB - Feedback variables:', { pressedKey, correctKey, lastCorrectKey });
 			updateErrorFeedback();
 			
 			if (userInput.length === reviewFullInitials.length) {
-				console.log('[SingleTextReview] Physical KB - Input complete, checking answer');
 				checkAnswer();
 			}
 		}
@@ -553,6 +572,9 @@
 			</div>
 		{/if}
 
+		<!-- Invisible viewport anchor for keyboard positioning -->
+		<div bind:this={viewportAnchor} class="viewport-anchor" aria-hidden="true"></div>
+
 		<!-- Onscreen keyboard - always visible, but disabled during feedback -->
 		<div class="keyboard-space" class:keyboard-disabled={feedbackText}>
 			<Keyboard 
@@ -689,6 +711,13 @@
 		background: #e65100;
 		color: #ffb74d;
 		border-color: #ffb74d;
+	}
+
+	.viewport-anchor {
+		height: 0;
+		width: 0;
+		overflow: hidden;
+		visibility: hidden;
 	}
 
 	.keyboard-space {

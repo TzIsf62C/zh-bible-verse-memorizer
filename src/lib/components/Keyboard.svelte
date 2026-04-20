@@ -46,42 +46,24 @@
 	// Helper function to check if a key should have feedback styling
 	// Pass feedback props as parameters so Svelte tracks the dependency for {@const} reactivity
 	function getKeyFeedback(keyValue, pressed, correct, lastCorrect) {
-		// Normalize key for comparison (handle both raw keys and display values)
-		const normalizedKey = keyValue.toLowerCase();
-		const normalizedPressed = pressed ? pressed.toLowerCase() : null;
-		const normalizedCorrect = correct ? correct.toLowerCase() : null;
-		const normalizedLastCorrect = lastCorrect ? lastCorrect.toLowerCase() : null;
-		
-		// Log EVERY comparison for debugging
-		if (normalizedPressed || normalizedCorrect || normalizedLastCorrect) {
-			console.log('[Keyboard] getKeyFeedback check:', {
-				keyValue,
-				normalizedKey,
-				normalizedPressed,
-				normalizedCorrect,
-				normalizedLastCorrect
-			});
-		}
-		
-		let result = null;
-		
-		if (normalizedPressed && normalizedCorrect && normalizedPressed !== normalizedCorrect) {
-			// There was an error
-			if (normalizedKey === normalizedPressed) {
-				result = 'incorrect'; // Red background for the pressed wrong key
-			} else if (normalizedKey === normalizedCorrect) {
-				result = 'correct'; // Green background for the key that should have been pressed
-			}
-		} else if (normalizedLastCorrect && normalizedKey === normalizedLastCorrect) {
-			// Last input was correct
-			result = 'success'; // White/grey background for the last correct key
-		}
-		
-		if (result) {
-			console.log('[Keyboard] getKeyFeedback MATCH:', keyValue, '→', result);
-		}
-		
-		return result;
+    	const normalizedKey = keyValue.toLowerCase();
+    	const normalizedPressed = pressed ? pressed.toLowerCase() : null;
+    	const normalizedCorrect = correct ? correct.toLowerCase() : null;
+    	const normalizedLastCorrect = lastCorrect ? lastCorrect.toLowerCase() : null;
+
+    	let result = null;
+
+    	if (normalizedPressed && normalizedCorrect && normalizedPressed !== normalizedCorrect) {
+       	 	if (normalizedKey === normalizedPressed) {
+            	result = 'incorrect';
+        	} else if (normalizedKey === normalizedCorrect) {
+            	result = 'correct';
+        	}
+    	} else if (normalizedLastCorrect && normalizedKey === normalizedLastCorrect) {
+        	result = 'success';
+    	}
+
+    	return result;
 	}
 </script>
 
