@@ -605,8 +605,11 @@
 
 <style>
 	.single-text-review {
+		width: 100%;
 		max-width: 900px;
 		margin: 0 auto;
+		justify-self: stretch;
+		min-width: 0;
 		padding: 2rem 1rem;
 	}
 
@@ -624,6 +627,7 @@
 	}
 
 	.passage-display {
+		width: 100%;
 		background: var(--panel-background);
 		padding: 2rem;
 		border-radius: 8px;
