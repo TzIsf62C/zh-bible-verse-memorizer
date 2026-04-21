@@ -23,6 +23,7 @@
 	let showResult = false;
 	let accuracy = 0;
 	let successCount = 0;
+	let reviewedVerseIds = new Set(); // Track which verses have been successfully reviewed (prevents double-counting on retry)
 	let feedbackMessage = '';
 	let feedbackType = '';
 	let lastErrorIndex = null;
@@ -439,8 +440,10 @@
 			return v;
 		}));
 
-		if (success) {
+		// Only increment successCount if this verse hasn't been successfully reviewed yet in this session
+		if (success && !reviewedVerseIds.has(currentVerse.id)) {
 			successCount++;
+			reviewedVerseIds.add(currentVerse.id);
 		}
 
 		feedbackMessage = '';

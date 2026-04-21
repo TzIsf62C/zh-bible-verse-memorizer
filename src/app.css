@@ -396,3 +396,35 @@ input[type='file'] {
 	--correct-color: #000000;
 	--error-color: #cc0000;
 }
+
+/* Badge for notification counts (e.g., review due count) */
+.badge {
+	display: inline-block;
+	min-width: 20px;
+	height: 20px;
+	padding: 0 6px;
+	margin-left: 6px;
+	background: #ff4444;
+	color: white;
+	border-radius: 10px;
+	font-size: 0.75em;
+	font-weight: bold;
+	line-height: 20px;
+	text-align: center;
+	vertical-align: middle;
+}
+
+/* Due date status indicators */
+.overdue {
+	color: #ff4444;
+	font-weight: 500;
+}
+
+.due-soon {
+	color: #ff9800;
+	font-weight: 500;
+}
+
+.due-future {
+	color: #4caf50;
+}

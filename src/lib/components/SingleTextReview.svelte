@@ -51,10 +51,10 @@
 			setTimeout(() => {
 				const anchorRect = viewportAnchor.getBoundingClientRect();
 				
-				// Find keyboard element
-				const keyboard = viewportAnchor.nextElementSibling;
-				if (keyboard) {
-					const keyboardRect = keyboard.getBoundingClientRect();
+				// Find keyboard element (it's inside the keyboard-space div)
+				const keyboardSpace = viewportAnchor.nextElementSibling;
+				if (keyboardSpace) {
+					const keyboardRect = keyboardSpace.getBoundingClientRect();
 					
 					// Calculate scroll position: align anchor with keyboard's top edge
 					const scrollTarget = window.scrollY + (anchorRect.top - keyboardRect.top);
@@ -64,7 +64,37 @@
 						behavior: 'smooth' 
 					});
 				}
-			}, 100);
+			}, 150);
+		}
+	}
+
+	// Scroll when feedback message appears to ensure it's visible above keyboard
+	$: {
+		if (feedbackText && viewportAnchor) {
+			setTimeout(() => {
+				const keyboardSpace = viewportAnchor.nextElementSibling;
+				if (keyboardSpace) {
+					const keyboardRect = keyboardSpace.getBoundingClientRect();
+					const viewportHeight = window.innerHeight;
+					
+					// Scroll to ensure there's comfortable space above keyboard
+					// Use passage-display as reference point
+					const passageDisplay = document.querySelector('.passage-display');
+					if (passageDisplay) {
+						const passageRect = passageDisplay.getBoundingClientRect();
+						const passageBottom = passageRect.bottom;
+						
+						// If passage bottom + feedback is too close to keyboard, scroll up
+						if (passageBottom > keyboardRect.top - 50) {
+							const scrollAdjustment = passageBottom - keyboardRect.top + 100; // Add 100px buffer
+							window.scrollTo({
+								top: window.scrollY + scrollAdjustment,
+								behavior: 'smooth'
+							});
+						}
+					}
+				}
+			}, 150);
 		}
 	}
 
@@ -74,6 +104,8 @@
 	let charToInputIndex = [];
 	let inputIndexToCharIndex = [];
 	let initializedVerseId = null;
+	let verseReadyToRender = false; // Flag to prevent rendering before mapping is built
+	let renderedChars = []; // Rendered characters array (computed reactively)
 
 	// Reset keyboard feedback when verse changes
 	$: {
@@ -81,21 +113,34 @@
 		pressedKey = null;
 		correctKey = null;
 		lastCorrectKey = null;
-		console.log('[SingleTextReview] Verse changed, feedback reset');
+		verseReadyToRender = false; // Prevent stale renderedChars computation
+		console.log('[SingleTextReview] Verse changed, feedback reset, verseReadyToRender = false');
 	}
 
 	// Track feedback changes for debugging
 	$: console.log('[SingleTextReview] Feedback state:', { pressedKey, correctKey, lastCorrectKey });
 
 	// Create reactive rendered characters array for progressive reveal
-	// Explicitly depend on both reviewFullText AND userInput for Svelte reactivity
-	// Only compute when reviewFullText has content to prevent narrow initial width
-	$: renderedChars = (userInput, reviewFullText && reviewFullText.length > 0) 
-		? [...reviewFullText].map((char, index) => ({
-			char,
-			...renderCharacter(char, index)
-		}))
-		: [];
+	// Explicitly depend on reviewFullText, userInput, verseReadyToRender, AND currentVerse.id
+	// Only compute when reviewFullText has content AND mapping is ready to prevent stale data
+	$: {
+		// Explicit dependency tracking
+		const _text = reviewFullText;
+		const _input = userInput;
+		const _ready = verseReadyToRender;
+		const _verseId = currentVerse?.id; // Ensure recomputation on verse change
+		
+		if (_text && _text.length > 0 && _ready) {
+			renderedChars = [..._text].map((char, index) => ({
+				char,
+				...renderCharacter(char, index)
+			}));
+			console.log('[SingleTextReview] renderedChars computed, length:', renderedChars.length, 'userInput:', _input, 'verseId:', _verseId);
+		} else {
+			renderedChars = [];
+			console.log('[SingleTextReview] renderedChars cleared (empty array)', 'reviewFullText.length:', _text.length, 'verseReadyToRender:', _ready, 'verseId:', _verseId);
+		}
+	}
 
 	// Check for input method mismatch and show warning
 	$: {
@@ -157,19 +202,22 @@
 
 	function initializeVerse(verse) {
 		console.log('[SingleTextReview] initializeVerse called for verse:', verse.id);
+		
+		// Prevent rendering during initialization to avoid using stale mapping data
+		verseReadyToRender = false;
+		console.log('[SingleTextReview] Set verseReadyToRender = false');
 		userInput = '';
 		
-		// Clear renderedChars immediately to prevent showing old verse's characters
-		// (especially initial punctuation from previous verse)
+		// CRITICAL: Clear ALL state before setting new verse to prevent stale data
+		// Clear mapping arrays FIRST (before setting reviewFullText) so renderCharacter 
+		// doesn't use old verse's mapping when reactive renderedChars triggers
+		charToInputIndex = [];
+		inputIndexToCharIndex = [];
 		reviewFullText = '';
 		reviewFullInitials = '';
 		
-		// Then set new verse data (triggers reactive renderedChars update)
-		// In continuous review, user only types verse TEXT, not the reference
-		// References are displayed automatically as separators between verses
+		// Now set new verse data - reactive renderedChars will use clean slate
 		reviewFullText = verse.verseText;
-		
-		// Only verse text initials - NO reference initials
 		reviewFullInitials = verse.verseInitials;
 
 		console.log('[SingleTextReview] reviewFullText:', reviewFullText);
@@ -192,6 +240,17 @@
 			}
 		}
 		console.log('[SingleTextReview] Mapping complete. Total input chars:', inputIdx);
+		
+		// Now it's safe to render - mapping arrays are built
+		verseReadyToRender = true;
+		console.log('[SingleTextReview] Set verseReadyToRender = true');
+		
+		// Immediately compute initial renderedChars to show initial punctuation
+		renderedChars = [...reviewFullText].map((char, index) => ({
+			char,
+			...renderCharacter(char, index)
+		}));
+		console.log('[SingleTextReview] Initial renderedChars computed in initializeVerse, length:', renderedChars.length);
 	}
 
 	function renderCharacter(char, charIndex) {
@@ -466,10 +525,13 @@
 
 		// Advance to next verse after delay
 		setTimeout(() => {
-			currentIndex++;
-			userInput = '';
+			// Clear feedback BEFORE incrementing currentIndex
+			// This ensures the reactive initializeVerse statement can run properly
 			feedbackText = '';
 			feedbackClass = '';
+			userInput = '';
+			
+			currentIndex++;
 
 			if (currentIndex >= verses.length) {
 				// Session complete
@@ -516,6 +578,7 @@
 
 		<!-- Current verse being typed (hidden during feedback to prevent duplication) -->
 		{#if currentVerse && !feedbackText}
+			{#key currentVerse.id}
 			<div class="current-verse">
 				<!-- Show reference first (always visible) -->
 				{#if currentIndex === 0 || !allSameBookChapter}
@@ -528,6 +591,7 @@
 				<span class="{rendered.className}">{rendered.char}</span>
 				{/each}
 			</div>
+			{/key}
 		{/if}
 	</div>
 
@@ -633,7 +697,7 @@
 		border-radius: 8px;
 		margin-bottom: 1.5rem;
 		font-size: 1.5em;
-		line-height: 2;
+		line-height: 1.5;
 		min-height: 200px;
 		/* Prevent horizontal overflow from hidden characters */
 		overflow-wrap: break-word;
@@ -644,11 +708,15 @@
 	}
 
 	.completed-verse {
-		margin-bottom: 1rem;
+		display: block;
+		margin-bottom: 0rem;
+		line-height: 1.5;
 		color: var(--text-color);
 	}
 
 	.current-verse {
+		display: block;
+		line-height: 1.5;
 		color: var(--text-color);
 	}
 
@@ -660,33 +728,24 @@
 	}
 
 	.feedback {
-		padding: 1rem;
-		border-radius: 8px;
 		text-align: center;
-		font-weight: 600;
-		margin-bottom: 1.5rem;
-		font-size: 1.1em;
+		font-size: 1em;
+		margin-bottom: 1rem;
 	}
 
 	.feedback.success {
-		background: #e8f5e9;
-		color: #2e7d32;
-		border: 2px solid #4caf50;
+		color: #4caf50;
 	}
 
 	.feedback.error {
-		background: #ffebee;
-		color: #c62828;
-		border: 2px solid #f44336;
+		color: #f44336;
 	}
 
 	[data-theme='dark'] .feedback.success {
-		background: #1b5e20;
 		color: #81c784;
 	}
 
 	[data-theme='dark'] .feedback.error {
-		background: #b71c1c;
 		color: #ef5350;
 	}
 
@@ -761,7 +820,6 @@
 	}
 
 	.completed-verse {
-		margin-bottom: 1rem;
 		color: var(--text-color);
 	}
 

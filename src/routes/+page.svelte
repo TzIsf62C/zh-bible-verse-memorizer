@@ -2,6 +2,7 @@
 	import { onDestroy, onMount } from 'svelte';
 	import { browser } from '$app/environment';
 	import { settings } from '$lib/stores/settings.js';
+	import { verses } from '$lib/stores/verses.js';
 	import { keyboardLayouts } from '$lib/utils/keyboardLayouts.js';
 	import { zhuyinKeyMap, cangjieKeyMap } from '$lib/utils/inputMaps.js';
 	import Keyboard from '$lib/components/Keyboard.svelte';
@@ -23,6 +24,13 @@
 	let removeListener = () => {};
 
 	$: keyboardLayout = keyboardLayouts[$settings.inputMethod] || keyboardLayouts.pinyin;
+	
+	// Calculate badge count for review button (number of verses due for review)
+	$: reviewBadgeCount = $verses.filter(v => {
+		if (!v.lastReviewed) return false; // Only count learned verses
+		if (!v.dueDate) return true; // Verses without dueDate are considered due
+		return new Date(v.dueDate) <= new Date(); // Verses with past due dates
+	}).length;
 
 	function appendKeyboardInput(key) {
 		if (key === 'Backspace') {
@@ -139,6 +147,7 @@
 
 	<IconNav
 		currentPanel={currentPanel}
+		badges={{ review: reviewBadgeCount }}
 		onMenuClick={handleMenuClick}
 		on:navigate={(e) => switchPanel(e.detail)}
 	/>

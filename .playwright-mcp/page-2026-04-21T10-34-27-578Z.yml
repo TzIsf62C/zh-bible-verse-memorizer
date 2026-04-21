@@ -1,0 +1,48 @@
+- main [ref=e3]:
+  - generic [ref=e5]:
+    - heading "ZH Bible Verse Memorizer" [level=1]
+    - paragraph: 聖經經文背誦
+  - navigation [ref=e8]:
+    - button "Menu" [ref=e9] [cursor=pointer]:
+      - img [ref=e11]
+    - button "Add Verse" [ref=e13] [cursor=pointer]:
+      - img [ref=e15]
+    - button "Learn" [ref=e17] [cursor=pointer]:
+      - img [ref=e19]
+    - button "Practice" [ref=e21] [cursor=pointer]:
+      - img [ref=e23]
+    - button "Review" [ref=e27] [cursor=pointer]:
+      - img [ref=e29]
+    - button "Collections" [ref=e31] [cursor=pointer]:
+      - img [ref=e33]
+  - generic [ref=e106]:
+    - heading "Export & Import" [level=2]
+    - generic [ref=e107]:
+      - heading "Export Data" [level=3]
+      - generic [ref=e108]:
+        - generic [ref=e109] [cursor=pointer]:
+          - checkbox "All verses" [checked] [ref=e110]
+          - strong: All verses
+        - generic [ref=e112] [cursor=pointer]:
+          - checkbox "Not in a collection (0 verses)" [ref=e113]
+          - generic: Not in a collection (0 verses)
+      - generic [ref=e114]:
+        - generic [ref=e115] [cursor=pointer]:
+          - checkbox "Include review data (last reviewed, due dates)" [checked] [ref=e116]
+          - generic: Include review data (last reviewed, due dates)
+        - generic [ref=e117] [cursor=pointer]:
+          - checkbox "Include collection data (titles, verse order)" [checked] [ref=e118]
+          - generic: Include collection data (titles, verse order)
+      - button "Download Data" [ref=e119] [cursor=pointer]
+    - generic [ref=e120]:
+      - heading "Import Data" [level=3]
+      - generic [ref=e121] [cursor=pointer]: Choose File
+      - generic [ref=e122]: No file selected
+      - generic [ref=e123]:
+        - generic [ref=e124] [cursor=pointer]:
+          - checkbox "Import review data (last reviewed, due dates)" [checked] [ref=e125]
+          - generic: Import review data (last reviewed, due dates)
+        - generic [ref=e126] [cursor=pointer]:
+          - checkbox "Import collection data (titles, verse order)" [checked] [ref=e127]
+          - generic: Import collection data (titles, verse order)
+      - button "Import Data" [ref=e128] [cursor=pointer]

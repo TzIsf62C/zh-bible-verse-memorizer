@@ -4,6 +4,7 @@
 	
 	export let currentPanel = '';
 	export let onMenuClick = () => {};
+	export let badges = {}; // Object with nav item IDs as keys and badge counts as values
 	
 	const dispatch = createEventDispatcher();
 	
@@ -22,6 +23,11 @@
 		} else {
 			dispatch('navigate', item.id);
 		}
+	}
+	
+	// Get badge count for a nav item
+	function getBadgeCount(itemId) {
+		return badges[itemId] || 0;
 	}
 	
 	// SVG icon paths
@@ -44,16 +50,21 @@
 			on:click={() => handleClick(item)}
 			aria-label={t(item.label)}
 		>
-			<svg
-				class="icon-nav-svg"
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="2"
-				aria-hidden="true"
-			>
-				{@html icons[item.icon]}
-			</svg>
+			<div class="icon-wrapper">
+				<svg
+					class="icon-nav-svg"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					aria-hidden="true"
+				>
+					{@html icons[item.icon]}
+				</svg>
+				{#if getBadgeCount(item.id) > 0}
+					<span class="nav-badge">{getBadgeCount(item.id)}</span>
+				{/if}
+			</div>
 		</button>
 	{/each}
 </nav>
@@ -101,6 +112,32 @@
 		flex-shrink: 0;
 	}
 	
+	.icon-wrapper {
+		position: relative;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+	}
+	
+	.nav-badge {
+		position: absolute;
+		top: -4px;
+		right: -8px;
+		min-width: 18px;
+		height: 18px;
+		padding: 0 5px;
+		background: #ff4444;
+		color: white;
+		border-radius: 9px;
+		font-size: 0.7em;
+		font-weight: bold;
+		line-height: 18px;
+		text-align: center;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+	}
+	
 	/* Responsive adjustments */
 	@media (max-width: 480px) {
 		.icon-nav {
@@ -115,6 +152,15 @@
 		.icon-nav-svg {
 			width: 1.75rem;
 			height: 1.75rem;
+		}
+		
+		.nav-badge {
+			top: -3px;
+			right: -6px;
+			min-width: 16px;
+			height: 16px;
+			font-size: 0.65em;
+			line-height: 16px;
 		}
 	}
 </style>

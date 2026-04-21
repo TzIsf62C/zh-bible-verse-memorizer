@@ -4,6 +4,7 @@
 	import { settings } from '$lib/stores/settings';
 	import { t } from '$lib/i18n';
 	import { sortVersesByBibleOrder, createVerseReferenceFormatter } from '$lib/utils/bibleBooks';
+	import { getDaysUntilDue, countDueVerses } from '$lib/utils/spacedRepetition';
 	import IndividualReview from './IndividualReview.svelte';
 	import SingleTextReview from './SingleTextReview.svelte';
 	import Modal from './Modal.svelte';
@@ -12,8 +13,9 @@
 	let state = 'selection';
 	let reviewMode = null; // 'individual' | 'singleText'
 	let selectedVerses = [];
-	let selectedCollectionId = '';
+	let selectedCollectionIds = []; // Changed from single ID to array for multi-select
 	let sortedVerses = [];
+	let expandedCollections = new Set(); // Track which collections are expanded
 	
 	// Modal state
 	let showModal = false;
@@ -62,21 +64,23 @@
 	}
 
 	function reviewCollection() {
-		if (!selectedCollectionId) {
+		if (selectedCollectionIds.length === 0) {
 			modalMessage = t('select_collection_to_review');
 			showModal = true;
 			return;
 		}
 
-		const collection = $collections.find(c => c.id === selectedCollectionId);
-		if (!collection) {
-			modalMessage = t('collection_not_found');
-			showModal = true;
-			return;
-		}
+		// Gather all verses from selected collections (use Set to deduplicate)
+		const verseIdSet = new Set();
+		selectedCollectionIds.forEach(collId => {
+			const collection = $collections.find(c => c.id === collId);
+			if (collection) {
+				collection.verseIds.forEach(vId => verseIdSet.add(vId));
+			}
+		});
 
-		// Get learned verses from collection
-		const collectionLearnedVerses = collection.verseIds
+		// Get learned verses from the collected IDs
+		const collectionLearnedVerses = Array.from(verseIdSet)
 			.map(id => $verses.find(v => v.id === id))
 			.filter(v => v && v.lastReviewed);
 
@@ -88,6 +92,23 @@
 
 		selectedVerses = collectionLearnedVerses;
 		proceedToReviewMode();
+	}
+	
+	function toggleCollectionSelection(collectionId) {
+		if (selectedCollectionIds.includes(collectionId)) {
+			selectedCollectionIds = selectedCollectionIds.filter(id => id !== collectionId);
+		} else {
+			selectedCollectionIds = [...selectedCollectionIds, collectionId];
+		}
+	}
+	
+	function toggleCollectionExpand(collectionId) {
+		if (expandedCollections.has(collectionId)) {
+			expandedCollections.delete(collectionId);
+		} else {
+			expandedCollections.add(collectionId);
+		}
+		expandedCollections = expandedCollections; // Trigger reactivity
 	}
 
 	function toggleVerseSelection(id) {
@@ -156,7 +177,7 @@
 	function handleReviewComplete() {
 		state = 'selection';
 		selectedVerses = [];
-		selectedCollectionId = '';
+		selectedCollectionIds = [];
 		reviewMode = null;
 		sortedVerses = [];
 	}
@@ -164,6 +185,7 @@
 	function cancelReview() {
 		state = 'selection';
 		selectedVerses = [];
+		selectedCollectionIds = [];
 		reviewMode = null;
 	}
 </script>
@@ -179,32 +201,109 @@
 		{:else}
 			<!-- Review Due Verses Button -->
 			<div class="review-section">
-				<button class="review-option-btn" on:click={reviewDueVerses}>
-					<div class="option-title">{t('review_due_verses')}</div>
-					<div class="option-count">{dueVerses.length} {t('due_count')}</div>
+				<button class="review-due-btn" on:click={reviewDueVerses}>
+					{t('review_due_verses')}
 				</button>
 			</div>
 
-			<!-- Review Collection -->
+			<!-- Review Collection - Expandable Checkbox List -->
 			<div class="review-section">
 				<h3>{t('review_collection_learned')}</h3>
-				<div class="collection-selector">
-					<select bind:value={selectedCollectionId}>
-						<option value="">{t('select_collection')}</option>
+				<div class="collections-list">
+					{#if $collections.length === 0}
+						<p class="empty-message">{t('no_collections')}</p>
+					{:else}
 						{#each $collections as collection (collection.id)}
-							{@const learnedCount = collection.verseIds.filter(id => {
-								const v = $verses.find(verse => verse.id === id);
-								return v && v.lastReviewed;
-							}).length}
-							<option value={collection.id}>
-								{collection.title} ({learnedCount} {t('learned')})
-							</option>
+							{@const learnedInCollection = collection.verseIds.map(id => $verses.find(v => v.id === id)).filter(v => v && v.lastReviewed)}
+							{@const dueCount = countDueVerses(collection.verseIds, $verses)}
+							{@const isExpanded = expandedCollections.has(collection.id)}
+							<div class="collection-item">
+								<div 
+									class="collection-header"
+									on:click={(e) => {
+										// If clicking the checkbox or expand button, let their handlers take over
+										if (e.target.classList.contains('collection-checkbox') || 
+										    e.target.classList.contains('expand-icon')) {
+											return;
+										}
+										// Otherwise toggle the checkbox
+										toggleCollectionSelection(collection.id);
+									}}
+									on:keydown={(e) => {
+										if (e.key === 'Enter' || e.key === ' ') {
+											e.preventDefault();
+											toggleCollectionSelection(collection.id);
+										}
+									}}
+									role="button"
+									tabindex="0"
+								>
+									<input
+										type="checkbox"
+										checked={selectedCollectionIds.includes(collection.id)}
+										on:change|stopPropagation={() => toggleCollectionSelection(collection.id)}
+										class="collection-checkbox"
+									/>
+									<span class="collection-title">
+										{collection.title}
+										<span class="collection-counts">({t('due_count', { count: dueCount })} / {t('learned_count', { count: learnedInCollection.length })})</span>
+									</span>
+									<button 
+										class="expand-icon"
+										class:expanded={isExpanded}
+										on:click|stopPropagation={() => toggleCollectionExpand(collection.id)}
+										aria-label="Expand"
+										type="button"
+									>▶</button>
+								</div>
+								<div class="collection-verses" class:expanded={isExpanded}>
+									{#each learnedInCollection as verse (verse.id)}
+										{@const dueInfo = getDaysUntilDue(verse.dueDate)}
+										<div class="collection-verse-item">
+											<div class="verse-ref">{formatVerseRef(verse)}</div>
+											<div class="verse-status">
+												{#if verse.lastReviewed}
+													{@const date = new Date(verse.lastReviewed)}
+													<span class="last-reviewed-text">{t('last_reviewed')}: {date.toLocaleDateString()}</span>
+													{#if dueInfo !== null}
+														{#if dueInfo.milliseconds < 0}
+															{#if dueInfo.days <= -2}
+																<span class="overdue">({t('days_overdue', { count: Math.abs(dueInfo.days) })})</span>
+															{:else}
+																<span class="due-soon">({t('due_today')})</span>
+															{/if}
+														{:else if dueInfo.days >= 1}
+															{#if dueInfo.days === 1}
+																<span class="due-future">({t('due_in_day')})</span>
+															{:else}
+																<span class="due-future">({t('due_in_days', { count: dueInfo.days })})</span>
+															{/if}
+														{:else if dueInfo.hours >= 2}
+															<span class="due-soon">({t('due_in_hours', { count: dueInfo.hours })})</span>
+														{:else if dueInfo.hours === 1}
+															<span class="due-soon">({t('due_in_hour')})</span>
+														{:else if dueInfo.minutes >= 1}
+															<span class="due-soon">({t('due_in_minutes', { count: dueInfo.minutes })})</span>
+														{:else}
+															<span class="due-soon">({t('due_today')})</span>
+														{/if}
+													{/if}
+												{:else}
+													{t('not_reviewed_yet')}
+												{/if}
+											</div>
+										</div>
+									{/each}
+								</div>
+							</div>
 						{/each}
-					</select>
+					{/if}
+				</div>
+				{#if selectedCollectionIds.length > 0}
 					<button class="primary-btn" on:click={reviewCollection}>
 						{t('review_verses')}
 					</button>
-				</div>
+				{/if}
 			</div>
 
 			<!-- Review Selected Verses -->
@@ -213,9 +312,7 @@
 				<div class="verse-list">
 					{#each learnedVerses as verse (verse.id)}
 						{@const isSelected = selectedVerses.some(v => v.id === verse.id)}
-						{@const daysUntilDue = verse.dueDate 
-							? Math.ceil((new Date(verse.dueDate) - new Date()) / (1000 * 60 * 60 * 24))
-							: null}
+						{@const dueInfo = getDaysUntilDue(verse.dueDate)}
 						<label class="verse-item">
 							<input
 								type="checkbox"
@@ -223,16 +320,36 @@
 								on:change={() => toggleVerseSelection(verse.id)}
 							/>
 							<div class="verse-info">
-								<div class="verse-ref">
-								{formatVerseRef(verse)}
-								</div>
-								<div class="verse-due">
-									{#if daysUntilDue !== null}
-										{#if daysUntilDue <= 0}
-											<span class="overdue">{t('due_today')}</span>
-										{:else}
-											{t('due_in_days', { count: daysUntilDue })}
+								<div class="verse-ref">{formatVerseRef(verse)}</div>
+								<div class="verse-status">
+									{#if verse.lastReviewed}
+										{@const date = new Date(verse.lastReviewed)}
+										<span class="last-reviewed-text">{t('last_reviewed')}: {date.toLocaleDateString()}</span>
+										{#if dueInfo !== null}
+											{#if dueInfo.milliseconds < 0}
+												{#if dueInfo.days <= -2}
+													<span class="overdue">({t('days_overdue', { count: Math.abs(dueInfo.days) })})</span>
+												{:else}
+													<span class="due-soon">({t('due_today')})</span>
+												{/if}
+											{:else if dueInfo.days >= 1}
+												{#if dueInfo.days === 1}
+													<span class="due-future">({t('due_in_day')})</span>
+												{:else}
+													<span class="due-future">({t('due_in_days', { count: dueInfo.days })})</span>
+												{/if}
+											{:else if dueInfo.hours >= 2}
+												<span class="due-soon">({t('due_in_hours', { count: dueInfo.hours })})</span>
+											{:else if dueInfo.hours === 1}
+												<span class="due-soon">({t('due_in_hour')})</span>
+											{:else if dueInfo.minutes >= 1}
+												<span class="due-soon">({t('due_in_minutes', { count: dueInfo.minutes })})</span>
+											{:else}
+												<span class="due-soon">({t('due_today')})</span>
+											{/if}
 										{/if}
+									{:else}
+										{t('not_reviewed_yet')}
 									{/if}
 								</div>
 							</div>
@@ -342,6 +459,23 @@
 		border: 1px solid var(--file-border);
 		border-radius: 8px;
 	}
+	
+	.review-due-btn {
+		width: 100%;
+		padding: 1.5rem;
+		border: none;
+		background: #d32f2f;
+		color: white;
+		border-radius: 8px;
+		cursor: pointer;
+		font-size: 1.1em;
+		font-weight: 600;
+		transition: all 0.3s;
+	}
+	
+	.review-due-btn:hover {
+		background: #b71c1c;
+	}
 
 	.review-option-btn {
 		width: 100%;
@@ -370,6 +504,102 @@
 	.option-count {
 		color: var(--subtitle-color);
 		font-size: 0.9em;
+	}
+	
+	/* Expandable collection list styles */
+	.collections-list {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+		margin-bottom: 1rem;
+	}
+	
+	.empty-message {
+		color: var(--subtitle-color);
+		font-style: italic;
+		padding: 1rem;
+		text-align: center;
+	}
+	
+	.collection-item {
+		background: var(--file-bg);
+		border-radius: 6px;
+		overflow: hidden;
+	}
+	
+	.collection-header {
+		display: flex;
+		align-items: center;
+		padding: 0.75rem;
+		gap: 0.75rem;
+		cursor: pointer;
+		transition: background 0.2s;
+	}
+	
+	.collection-header:hover {
+		background: var(--nav-button-bg);
+	}
+	
+	.collection-checkbox {
+		cursor: pointer;
+		width: 18px;
+		height: 18px;
+		flex-shrink: 0;
+	}
+	
+	.collection-title {
+		flex: 1;
+		font-weight: 600;
+		color: var(--text-color);
+	}
+	
+	.collection-counts {
+		font-weight: normal;
+		color: var(--subtitle-color);
+		font-size: 0.9em;
+	}
+	
+	.expand-icon {
+		background: transparent;
+		border: none;
+		color: var(--subtitle-color);
+		cursor: pointer;
+		padding: 0.25rem;
+		font-size: 0.8em;
+		transition: transform 0.2s;
+		flex-shrink: 0;
+	}
+	
+	.expand-icon.expanded {
+		transform: rotate(90deg);
+	}
+	
+	.collection-verses {
+		display: none;
+		padding: 0 0.75rem 0.75rem 2.5rem;
+		background: var(--nav-button-bg);
+	}
+	
+	.collection-verses.expanded {
+		display: block;
+	}
+	
+	.collection-verse-item {
+		padding: 0.5rem;
+		margin: 0.25rem 0;
+		background: var(--panel-background);
+		border-radius: 4px;
+		font-size: 0.9em;
+	}
+	
+	.verse-status {
+		font-size: 0.85em;
+		color: var(--subtitle-color);
+		margin-top: 0.25rem;
+	}
+	
+	.last-reviewed-text {
+		margin-right: 0.5rem;
 	}
 
 	.collection-selector {
@@ -451,13 +681,22 @@
 	}
 
 	.verse-due {
-		font-size: 0.85rem;
+		font-size: 0.85em;
 		color: var(--subtitle-color);
 	}
 
 	.overdue {
-		color: #f44336;
-		font-weight: 600;
+		color: #ff4444;
+		font-weight: 500;
+	}
+	
+	.due-soon {
+		color: #ff9800;
+		font-weight: 500;
+	}
+	
+	.due-future {
+		color: #4caf50;
 	}
 
 	.selection-footer {

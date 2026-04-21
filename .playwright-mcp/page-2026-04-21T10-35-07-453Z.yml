@@ -1,0 +1,26 @@
+- main [ref=e3]:
+  - generic [ref=e4]: english
+  - generic [ref=e5]:
+    - heading "ZH Bible Verse Memorizer" [level=1] [ref=e6]
+    - paragraph [ref=e7]: 聖經經文背誦
+  - navigation [ref=e8]:
+    - button "Menu" [ref=e9] [cursor=pointer]:
+      - img [ref=e11]
+    - button "Add Verse" [ref=e13] [cursor=pointer]:
+      - img [ref=e15]
+    - button "Learn" [ref=e17] [cursor=pointer]:
+      - img [ref=e19]
+    - button "Practice" [ref=e21] [cursor=pointer]:
+      - img [ref=e23]
+    - button "Review" [ref=e27] [cursor=pointer]:
+      - img [ref=e29]
+    - button "Collections" [ref=e31] [cursor=pointer]:
+      - img [ref=e33]
+  - generic [ref=e35]: english
+  - generic [ref=e36]:
+    - heading "Learn Mode" [level=2] [ref=e37]
+    - generic [ref=e38]:
+      - button "Basic" [ref=e39] [cursor=pointer]
+      - button "Mid" [ref=e40] [cursor=pointer]
+      - button "Advanced" [ref=e41] [cursor=pointer]
+    - paragraph [ref=e43]: No new verses to learn.

@@ -1,0 +1,83 @@
+- main [ref=e3]:
+  - generic [ref=e5]:
+    - heading "ZH Bible Verse Memorizer" [level=1]
+    - paragraph: 聖經經文背誦
+  - navigation [ref=e8]:
+    - button "Menu" [active] [ref=e9] [cursor=pointer]:
+      - img [ref=e11]
+    - button "Add Verse" [ref=e13] [cursor=pointer]:
+      - img [ref=e15]
+    - button "Learn" [ref=e17] [cursor=pointer]:
+      - img [ref=e19]
+    - button "Practice" [ref=e21] [cursor=pointer]:
+      - img [ref=e23]
+    - button "Review" [ref=e27] [cursor=pointer]:
+      - img [ref=e29]
+    - button "Collections" [ref=e31] [cursor=pointer]:
+      - img [ref=e33]
+  - generic [ref=e76]:
+    - heading "Menu" [level=2]
+    - generic [ref=e77]:
+      - button "Add Verse" [ref=e78] [cursor=pointer]:
+        - img [ref=e79]
+        - generic: Add Verse
+      - button "Learn" [ref=e81] [cursor=pointer]:
+        - img [ref=e82]
+        - generic: Learn
+      - button "Practice" [ref=e84] [cursor=pointer]:
+        - img [ref=e85]
+        - generic: Practice
+      - button "Review" [ref=e89] [cursor=pointer]:
+        - img [ref=e90]
+        - generic: Review
+      - button "Collections" [ref=e92] [cursor=pointer]:
+        - img [ref=e93]
+        - generic: Collections
+      - button "Export & Import" [ref=e95] [cursor=pointer]:
+        - img [ref=e96]
+        - generic: Export & Import
+      - button "Settings" [ref=e98] [cursor=pointer]:
+        - img [ref=e99]
+        - generic: Settings
+      - button "Share App" [ref=e102] [cursor=pointer]:
+        - img [ref=e103]
+        - generic: Share App
+  - generic [ref=e48]:
+    - generic [ref=e49]:
+      - heading "Save Verse" [level=3]
+      - generic [ref=e50]:
+        - generic [ref=e51]:
+          - generic: Chinese Book Name
+          - textbox "Chinese Book Name" [ref=e52]
+        - generic [ref=e53]:
+          - generic [ref=e54]:
+            - generic: Chapter
+            - spinbutton "Chapter" [ref=e55]
+          - generic [ref=e56]:
+            - generic: Verse
+            - spinbutton "Verse" [ref=e57]
+        - generic [ref=e58]:
+          - generic: Chinese Verse Text
+          - textbox "Chinese Verse Text" [ref=e59]
+        - generic [ref=e60]:
+          - generic: Pinyin Initials for Verse
+          - paragraph [ref=e61]: Type the first letter of each character's pinyin
+          - textbox "Pinyin Initials for Verse" [ref=e62]
+        - generic [ref=e63]:
+          - generic: Pinyin Initials for Book Name
+          - textbox "Pinyin Initials for Book Name" [ref=e64]
+        - generic [ref=e65]:
+          - generic: Bible version (optional)
+          - textbox "Bible version (optional)" [ref=e66]:
+            - /placeholder: e.g., ESV
+        - generic [ref=e67]:
+          - generic: Add to collection (optional)
+          - textbox "Add to collection (optional)" [ref=e68]:
+            - /placeholder: (none)
+            - text: (none)
+        - generic [ref=e69]:
+          - button "Save Verse" [disabled] [ref=e70]
+          - button "Clear Form" [disabled] [ref=e71]
+    - generic [ref=e72]:
+      - heading "My Verses" [level=3]
+      - generic [ref=e74]: No new verses to learn.
