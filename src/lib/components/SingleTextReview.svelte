@@ -550,7 +550,8 @@
 
 	function handleCompletionConfirm() {
 		showCompletionMsg = false;
-		dispatch('complete');
+		// Don't dispatch 'complete' here - stay on page to review mistakes
+		// User will navigate away manually via navigation buttons
 	}
 </script>
 
@@ -664,7 +665,7 @@
 <Modal 
 	show={showCompletionMsg} 
 	message={completionMessage}
-	on:confirm={handleCompletionConfirm}
+	on:close={handleCompletionConfirm}
 />
 
 <style>
