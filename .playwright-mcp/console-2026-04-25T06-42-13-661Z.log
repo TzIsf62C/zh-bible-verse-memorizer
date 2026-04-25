@@ -1,0 +1,25 @@
+[     435ms] [LOG] [Learn] Filtered unlearned verses: {total: 3, unlearned: 0, filtered: Array(0)} @ http://localhost:5174/src/lib/components/LearningFlow.svelte?t=1777099233482:834
+[    1540ms] [LOG] [Keyboard] Feedback props: {pressedKey: null, correctKey: null, lastCorrectKey: null} @ http://localhost:5174/src/lib/components/Keyboard.svelte:94
+[    1553ms] [LOG] === VIEWPORT SCROLL TRIGGER (IndividualReview) === @ http://localhost:5174/src/lib/components/IndividualReview.svelte?t=1777099267049:647
+[    1554ms] [LOG] Anchor element: JSHandle@node @ http://localhost:5174/src/lib/components/IndividualReview.svelte?t=1777099267049:648
+[    1574ms] [LOG] Anchor bounding rect: DOMRect @ http://localhost:5174/src/lib/components/IndividualReview.svelte?t=1777099267049:649
+[    1876ms] [LOG] === EXECUTING SCROLL === @ http://localhost:5174/src/lib/components/IndividualReview.svelte?t=1777099267049:653
+[    1877ms] [LOG] Before scroll - Anchor rect: DOMRect @ http://localhost:5174/src/lib/components/IndividualReview.svelte?t=1777099267049:657
+[    1877ms] [LOG] Before scroll - Window scrollY: 0 @ http://localhost:5174/src/lib/components/IndividualReview.svelte?t=1777099267049:658
+[    1877ms] [LOG] Before scroll - Document scrollTop: 0 @ http://localhost:5174/src/lib/components/IndividualReview.svelte?t=1777099267049:659
+[    1877ms] [LOG] Viewport height: 493 @ http://localhost:5174/src/lib/components/IndividualReview.svelte?t=1777099267049:660
+[    1877ms] [LOG] Keyboard element: JSHandle@node @ http://localhost:5174/src/lib/components/IndividualReview.svelte?t=1777099267049:668
+[    1877ms] [LOG] Keyboard rect: DOMRect @ http://localhost:5174/src/lib/components/IndividualReview.svelte?t=1777099267049:669
+[    1877ms] [LOG] Keyboard top position: 328 @ http://localhost:5174/src/lib/components/IndividualReview.svelte?t=1777099267049:670
+[    1877ms] [LOG] Calculated scroll target: 233 @ http://localhost:5174/src/lib/components/IndividualReview.svelte?t=1777099267049:678
+[    1877ms] [LOG] Current scrollY: 0 @ http://localhost:5174/src/lib/components/IndividualReview.svelte?t=1777099267049:679
+[    1877ms] [LOG] Anchor top from viewport: 561 @ http://localhost:5174/src/lib/components/IndividualReview.svelte?t=1777099267049:680
+[    1877ms] [LOG] Keyboard top from viewport: 328 @ http://localhost:5174/src/lib/components/IndividualReview.svelte?t=1777099267049:681
+[    1878ms] [LOG] Scroll adjustment needed: 233 @ http://localhost:5174/src/lib/components/IndividualReview.svelte?t=1777099267049:682
+[    2378ms] [LOG] === AFTER SCROLL (500ms) === @ http://localhost:5174/src/lib/components/IndividualReview.svelte?t=1777099267049:690
+[    2378ms] [LOG] After scroll - Anchor rect: DOMRect @ http://localhost:5174/src/lib/components/IndividualReview.svelte?t=1777099267049:694
+[    2378ms] [LOG] After scroll - Anchor top from viewport: 328 @ http://localhost:5174/src/lib/components/IndividualReview.svelte?t=1777099267049:695
+[    2378ms] [LOG] After scroll - Window scrollY: 233 @ http://localhost:5174/src/lib/components/IndividualReview.svelte?t=1777099267049:696
+[    2378ms] [LOG] After scroll - Keyboard rect: DOMRect @ http://localhost:5174/src/lib/components/IndividualReview.svelte?t=1777099267049:701
+[    2378ms] [LOG] After scroll - Keyboard top from viewport: 328 @ http://localhost:5174/src/lib/components/IndividualReview.svelte?t=1777099267049:702
+[    2379ms] [LOG] Alignment check - Anchor vs Keyboard: 0 @ http://localhost:5174/src/lib/components/IndividualReview.svelte?t=1777099267049:703

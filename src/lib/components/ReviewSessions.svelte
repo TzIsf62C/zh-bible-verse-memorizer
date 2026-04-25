@@ -254,6 +254,8 @@
 	function chooseOrder(order) {
 		if (order === 'biblical') {
 			sortedVerses = sortVersesByBibleOrder(selectedVerses, $settings.bookNameCharset || 'simplified');
+		} else if (order === 'reverseBiblical') {
+			sortedVerses = sortVersesByBibleOrder(selectedVerses, $settings.bookNameCharset || 'simplified').reverse();
 		} else if (order === 'dueDate') {
 			sortedVerses = sortByDueDate(selectedVerses);
 		} else if (order === 'random') {
@@ -263,6 +265,15 @@
 	}
 
 	function handleReviewComplete() {
+		state = 'initial';
+		selectedVerses = [];
+		selectedCollectionIds = [];
+		reviewMode = null;
+		sortedVerses = [];
+	}
+
+	function handleReviewExit() {
+		// Same as handleReviewComplete - return to initial three-button state
 		state = 'initial';
 		selectedVerses = [];
 		selectedCollectionIds = [];
@@ -525,6 +536,9 @@
 					<button class="modal-option" on:click={() => chooseOrder('biblical')}>
 						<div class="option-title">{t('order_biblical')}</div>
 					</button>
+					<button class="modal-option" on:click={() => chooseOrder('reverseBiblical')}>
+						<div class="option-title">{t('order_reverse_biblical')}</div>
+					</button>
 					<button class="modal-option" on:click={() => chooseOrder('dueDate')}>
 						<div class="option-title">{t('order_due_date')}</div>
 					</button>
@@ -532,15 +546,15 @@
 						<div class="option-title">{t('order_random')}</div>
 					</button>
 				</div>
-				<button class="cancel-btn" on:click={cancelReview}>{t('cancel')}</button>
+				<button class="cancel-btn" on:click={() => state = 'reviewMode'}>{t('back')}</button>
 			</div>
 		</div>
 
 	{:else if state === 'reviewing'}
 		{#if reviewMode === 'individual'}
-			<IndividualReview verses={sortedVerses} on:complete={handleReviewComplete} />
+			<IndividualReview verses={sortedVerses} on:complete={handleReviewComplete} on:exit={handleReviewExit} />
 		{:else if reviewMode === 'singleText'}
-			<SingleTextReview verses={sortedVerses} on:complete={handleReviewComplete} />
+			<SingleTextReview verses={sortedVerses} on:complete={handleReviewComplete} on:exit={handleReviewExit} />
 		{/if}
 	{/if}
 </div>
@@ -956,6 +970,7 @@
 		.review-container {
 			padding-left: 0.5rem;
 			padding-right: 0.5rem;
+			padding-top: 0px;
 			gap: 1rem;
 		}
 

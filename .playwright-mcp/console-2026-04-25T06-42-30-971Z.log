@@ -1,0 +1,34 @@
+[     285ms] [LOG] [Learn] Filtered unlearned verses: {total: 3, unlearned: 0, filtered: Array(0)} @ http://localhost:5174/src/lib/components/LearningFlow.svelte?t=1777099233482:834
+[   23900ms] [LOG] [Learn] Filtered unlearned verses: {total: 3, unlearned: 0, filtered: Array(0)} @ http://localhost:5174/src/lib/components/LearningFlow.svelte?t=1777099233482:834
+[   25109ms] [LOG] [SingleTextReview] Verse changed, feedback reset, verseReadyToRender = false @ http://localhost:5174/src/lib/components/SingleTextReview.svelte?t=1777099267056:651
+[   25110ms] [LOG] [SingleTextReview] Feedback state: {pressedKey: null, correctKey: null, lastCorrectKey: null} @ http://localhost:5174/src/lib/components/SingleTextReview.svelte?t=1777099267056:655
+[   25113ms] [LOG] [SingleTextReview] renderedChars cleared (empty array) reviewFullText.length: 0 verseReadyToRender: false verseId: 1 @ http://localhost:5174/src/lib/components/SingleTextReview.svelte?t=1777099267056:681
+[   25119ms] [LOG] [SingleTextReview] initializeVerse called for verse: 1 @ http://localhost:5174/src/lib/components/SingleTextReview.svelte?t=1777099267056:138
+[   25120ms] [LOG] [SingleTextReview] Set verseReadyToRender = false @ http://localhost:5174/src/lib/components/SingleTextReview.svelte?t=1777099267056:143
+[   25120ms] [LOG] [SingleTextReview] reviewFullText: 起初 神创造天地 @ http://localhost:5174/src/lib/components/SingleTextReview.svelte?t=1777099267056:159
+[   25120ms] [LOG] [SingleTextReview] reviewFullInitials: qcscztd @ http://localhost:5174/src/lib/components/SingleTextReview.svelte?t=1777099267056:160
+[   25128ms] [LOG] [SingleTextReview] Mapping complete. Total input chars: 7 @ http://localhost:5174/src/lib/components/SingleTextReview.svelte?t=1777099267056:182
+[   25128ms] [LOG] [SingleTextReview] Set verseReadyToRender = true @ http://localhost:5174/src/lib/components/SingleTextReview.svelte?t=1777099267056:187
+[   25129ms] [LOG] [SingleTextReview] Initial renderedChars computed in initializeVerse, length: 8 @ http://localhost:5174/src/lib/components/SingleTextReview.svelte?t=1777099267056:192
+[   25162ms] [LOG] [Keyboard] Feedback props: {pressedKey: null, correctKey: null, lastCorrectKey: null} @ http://localhost:5174/src/lib/components/Keyboard.svelte:94
+[   25179ms] [LOG] [SingleTextReview] Auto-focusing hidden input @ http://localhost:5174/src/lib/components/SingleTextReview.svelte?t=1777099267056:715
+[   25279ms] [LOG] [SingleTextReview] Input focused @ http://localhost:5174/src/lib/components/SingleTextReview.svelte?t=1777099267056:1074
+[   26221ms] [LOG] [SingleTextReview] Input blurred @ http://localhost:5174/src/lib/components/SingleTextReview.svelte?t=1777099267056:1075
+[   72748ms] [LOG] [Learn] Filtered unlearned verses: {total: 3, unlearned: 0, filtered: Array(0)} @ http://localhost:5174/src/lib/components/LearningFlow.svelte?t=1777099233482:834
+[   73685ms] [LOG] [SingleTextReview] Verse changed, feedback reset, verseReadyToRender = false @ http://localhost:5174/src/lib/components/SingleTextReview.svelte?t=1777099267056:651
+[   73685ms] [LOG] [SingleTextReview] Feedback state: {pressedKey: null, correctKey: null, lastCorrectKey: null} @ http://localhost:5174/src/lib/components/SingleTextReview.svelte?t=1777099267056:655
+[   73686ms] [LOG] [SingleTextReview] renderedChars cleared (empty array) reviewFullText.length: 0 verseReadyToRender: false verseId: 1 @ http://localhost:5174/src/lib/components/SingleTextReview.svelte?t=1777099267056:681
+[   73686ms] [LOG] [SingleTextReview] initializeVerse called for verse: 1 @ http://localhost:5174/src/lib/components/SingleTextReview.svelte?t=1777099267056:138
+[   73687ms] [LOG] [SingleTextReview] Set verseReadyToRender = false @ http://localhost:5174/src/lib/components/SingleTextReview.svelte?t=1777099267056:143
+[   73691ms] [LOG] [SingleTextReview] reviewFullText: 起初 神创造天地 @ http://localhost:5174/src/lib/components/SingleTextReview.svelte?t=1777099267056:159
+[   73695ms] [LOG] [SingleTextReview] reviewFullInitials: qcscztd @ http://localhost:5174/src/lib/components/SingleTextReview.svelte?t=1777099267056:160
+[   73695ms] [LOG] [SingleTextReview] Mapping complete. Total input chars: 7 @ http://localhost:5174/src/lib/components/SingleTextReview.svelte?t=1777099267056:182
+[   73696ms] [LOG] [SingleTextReview] Set verseReadyToRender = true @ http://localhost:5174/src/lib/components/SingleTextReview.svelte?t=1777099267056:187
+[   73696ms] [LOG] [SingleTextReview] Initial renderedChars computed in initializeVerse, length: 8 @ http://localhost:5174/src/lib/components/SingleTextReview.svelte?t=1777099267056:192
+[   73702ms] [LOG] [Keyboard] Feedback props: {pressedKey: null, correctKey: null, lastCorrectKey: null} @ http://localhost:5174/src/lib/components/Keyboard.svelte:94
+[   73718ms] [LOG] [SingleTextReview] Auto-focusing hidden input @ http://localhost:5174/src/lib/components/SingleTextReview.svelte?t=1777099267056:715
+[   73819ms] [LOG] [SingleTextReview] Input focused @ http://localhost:5174/src/lib/components/SingleTextReview.svelte?t=1777099267056:1074
+[   74800ms] [LOG] [SingleTextReview] Input blurred @ http://localhost:5174/src/lib/components/SingleTextReview.svelte?t=1777099267056:1075
+[   75548ms] [LOG] [Learn] Filtered unlearned verses: {total: 3, unlearned: 0, filtered: Array(0)} @ http://localhost:5174/src/lib/components/LearningFlow.svelte?t=1777099233482:834
+[   76585ms] [LOG] [Learn] Filtered unlearned verses: {total: 3, unlearned: 0, filtered: Array(0)} @ http://localhost:5174/src/lib/components/LearningFlow.svelte?t=1777099233482:834
+[  534604ms] [LOG] [Learn] Filtered unlearned verses: {total: 3, unlearned: 0, filtered: Array(0)} @ http://localhost:5174/src/lib/components/LearningFlow.svelte?t=1777099233482:834

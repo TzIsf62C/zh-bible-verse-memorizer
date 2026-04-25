@@ -13,6 +13,7 @@ export const translations = {
 		settings: 'Settings',
 		export_import: 'Export & Import',
 		share_app: 'Share App',
+		copy_url: 'Copy URL',
 		
 		// Settings panel
 		language: 'Language',
@@ -117,6 +118,7 @@ export const translations = {
 		order_biblical: 'Biblical Order',
 		order_due_date: 'By Due Date',
 		order_random: 'Random Order',
+		order_reverse_biblical: 'Reverse Biblical Order',
 		
 		// Collections Panel
 		collections_title: 'Collections',
@@ -129,6 +131,7 @@ export const translations = {
 		add: 'Add',
 		remove: 'Remove',
 		back: 'Back',
+		exit: 'Exit',
 		add_verse_to_collection: 'Add verse to collection',
 		verses_in_collection: 'Verses in collection',
 		no_verses_in_collection: 'No verses in this collection yet',
@@ -310,6 +313,7 @@ export const translations = {
 		settings: '设置',
 		export_import: '导出导入',
 		share_app: '分享应用',
+		copy_url: '复制链接',
 		
 		// Settings panel
 		language: '语言',
@@ -412,6 +416,7 @@ export const translations = {
 		order_biblical: '圣经顺序',
 		order_due_date: '按到期日期',
 		order_random: '随机顺序',
+		order_reverse_biblical: '倒序圣经顺序',
 		
 		// Collections Panel
 		collections_title: '经文集合',
@@ -424,6 +429,7 @@ export const translations = {
 		add: '添加',
 		remove: '移除',
 		back: '返回',
+		exit: '退出',
 		add_verse_to_collection: '添加经文到集合',
 		verses_in_collection: '集合中的经文',
 		no_verses_in_collection: '此集合中还没有经文',
@@ -599,6 +605,7 @@ export const translations = {
 		settings: '設定',
 		export_import: '匯出匯入',
 		share_app: '分享應用',
+		copy_url: '複製連結',
 		
 		// Settings panel
 		language: '語言',
@@ -701,6 +708,7 @@ export const translations = {
 		order_biblical: '聖經順序',
 		order_due_date: '按到期日期',
 		order_random: '隨機順序',
+		order_reverse_biblical: '倒序聖經順序',
 		
 		// Collections Panel
 		collections_title: '經文集合',
@@ -713,6 +721,7 @@ export const translations = {
 		add: '新增',
 		remove: '移除',
 		back: '返回',
+		exit: '退出',
 		add_verse_to_collection: '新增經文到集合',
 		verses_in_collection: '集合中的經文',
 		no_verses_in_collection: '此集合中還沒有經文',

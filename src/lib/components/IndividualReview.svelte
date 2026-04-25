@@ -481,6 +481,10 @@
 		dispatch('complete');
 	}
 
+	function exitReview() {
+		dispatch('exit');
+	}
+
 	// Character rendering (same as Advanced Learning Mode)
 	function renderCharacter(char, charIndex) {
 		const map = charToInputIndex[charIndex];
@@ -544,6 +548,10 @@
 <svelte:document on:keydown={handlePhysicalKeyboard} />
 
 <div class="individual-review">
+	<div class="review-header">
+		<button class="exit-btn" on:click={exitReview} aria-label={t('exit')}>×</button>
+	</div>
+	
 	<div class="progress-bar">
 		<div class="progress-text">
 			{currentIndex + 1} / {verses.length}
@@ -631,9 +639,39 @@
 		display: grid;
 		gap: 1.5rem;
 		padding: 1rem;
+		padding-top: 0px;
 		padding-bottom: 400px; /* Add space for keyboard at bottom */
 		max-width: 1000px;
 		margin: 0 auto;
+	}
+
+	.review-header {
+		display: flex;
+		justify-content: flex-end;
+		margin-bottom: -1rem;
+	}
+
+	.exit-btn {
+		padding: 0.5rem;
+		width: 2.5rem;
+		height: 2.5rem;
+		border: none;
+		background: transparent;
+		color: #000;
+		cursor: pointer;
+		font-size: 1.5em;
+		font-weight: 300;
+		line-height: 1;
+		transition: opacity 0.2s;
+		opacity: 0.6;
+	}
+
+	.exit-btn:hover {
+		opacity: 1;
+	}
+
+	:global([data-theme='dark']) .exit-btn {
+		color: #fff;
 	}
 
 	.progress-bar {
@@ -641,8 +679,7 @@
 		width: 100%;
 		height: 32px;
 		background: var(--file-bg);
-		border-radius: 16px;
-		margin-bottom: 1rem;
+		border-radius: 8px;
 		overflow: hidden;
 		border: 1px solid var(--file-border);
 	}
@@ -670,9 +707,6 @@
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		margin-bottom: 1.5rem;
-		padding-bottom: 1rem;
-		border-bottom: 2px solid var(--file-border);
 	}
 
 	.verse-header h3 {
@@ -943,6 +977,10 @@
 	}
 
 	@media (max-width: 768px) {
+		.single-text-review {
+			padding: 1rem 0.5rem;
+			padding-top: 0px;
+		}
 		.verse-display {
 			font-size: 1.5rem;
 			padding: 1.5rem;

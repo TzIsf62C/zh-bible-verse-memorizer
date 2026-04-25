@@ -553,12 +553,22 @@
 		// Don't dispatch 'complete' here - stay on page to review mistakes
 		// User will navigate away manually via navigation buttons
 	}
+
+	function exitReview() {
+		dispatch('exit');
+	}
 </script>
 
 <div class="single-text-review">
-	<div class="progress-info">
-		<span>{currentIndex + 1} / {verses.length}</span>
-		<span>{successCount} {t('learned')}</span>
+	<div class="review-header">
+		<button class="exit-btn" on:click={exitReview} aria-label={t('exit')}>×</button>
+	</div>
+	
+	<div class="progress-bar">
+		<div class="progress-text">
+			<div>{currentIndex + 1} / {verses.length}</div>
+		</div>
+		<div class="progress-fill" style="width: {((currentIndex + 1) / verses.length) * 100}%"></div>
 	</div>
 
 	<div class="passage-display">
@@ -676,20 +686,70 @@
 		justify-self: stretch;
 		min-width: 0;
 		padding: 2rem 1rem;
+		padding-top: 0px;
+
 	}
 
-	.progress-info {
+	.review-header {
 		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		padding: 0.75rem 1rem;
+		justify-content: flex-end;
+		margin-bottom: 1rem;
+	}
+
+	.exit-btn {
+		padding: 0.5rem;
+		width: 2.5rem;
+		height: 2.5rem;
+		border: none;
+		background: transparent;
+		color: #000;
+		cursor: pointer;
+		font-size: 1.5em;
+		font-weight: 300;
+		line-height: 1;
+		transition: opacity 0.2s;
+		opacity: 0.6;
+	}
+
+	.exit-btn:hover {
+		opacity: 1;
+	}
+
+	:global([data-theme='dark']) .exit-btn {
+		color: #fff;
+	}
+
+	.progress-bar {
+		position: relative;
+		width: 100%;
+		height: 32px;
 		background: var(--file-bg);
 		border-radius: 8px;
-		margin-bottom: 2rem;
-		font-size: 0.9em;
-		color: var(--subtitle-color);
+		overflow: hidden;
 		border: 1px solid var(--file-border);
+		margin-bottom: 1.5rem;
 	}
+
+	.progress-fill {
+		position: absolute;
+		top: 0;
+		left: 0;
+		height: 100%;
+		background: var(--accent-color);
+		transition: width 0.3s ease;
+	}
+
+	.progress-text {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		font-weight: 600;
+		color: var(--text-color);
+		z-index: 1;
+		text-align: center;
+	}
+
 
 	.passage-display {
 		width: 100%;
@@ -838,6 +898,8 @@
 	@media (max-width: 768px) {
 		.single-text-review {
 			padding: 1rem 0.5rem;
+			padding-top: 0px;
+
 		}
 
 		.passage-display {

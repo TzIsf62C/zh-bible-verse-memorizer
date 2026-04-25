@@ -14,10 +14,12 @@
 	import ExportImport from '$lib/components/ExportImport.svelte';
 	import IconNav from '$lib/components/IconNav.svelte';
 	import MenuOverlay from '$lib/components/MenuOverlay.svelte';
+	import ShareOverlay from '$lib/components/ShareOverlay.svelte';
 	import { t } from '$lib/i18n/index.js';
 
 	let currentPanel = 'learn';
 	let showMenu = false;
+	let showShare = false;
 
 	let keyboardInput = '';
 	let keyboardLayout = keyboardLayouts.pinyin;
@@ -73,7 +75,7 @@
 		const panelId = event.detail;
 		
 		if (panelId === 'share') {
-			handleShare();
+			showShare = true;
 			showMenu = false;
 			return;
 		}
@@ -109,6 +111,10 @@
 
 	function handleMenuClose() {
 		showMenu = false;
+	}
+
+	function handleShareClose() {
+		showShare = false;
 	}
 
 	function updateSetting(key, value) {
@@ -156,6 +162,11 @@
 		bind:show={showMenu}
 		on:navigate={handleMenuNavigate}
 		on:close={handleMenuClose}
+	/>
+
+	<ShareOverlay
+		bind:show={showShare}
+		on:close={handleShareClose}
 	/>
 
 	{#if currentPanel === 'learn'}
