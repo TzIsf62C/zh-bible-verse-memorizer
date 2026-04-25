@@ -9,7 +9,7 @@
 	import SingleTextReview from './SingleTextReview.svelte';
 	import Modal from './Modal.svelte';
 
-	// State machine: 'initial' | 'selectCollection' | 'selectVerses' | 'reviewMode' | 'reviewOrder' | 'reviewing'
+	// State machine: 'initial' | 'selectCollection' | 'selectVerses' | 'editInterval' | 'reviewMode' | 'reviewOrder' | 'reviewing'
 	let state = 'initial';
 	let reviewMode = null; // 'individual' | 'singleText'
 	let selectedVerses = [];
@@ -17,6 +17,10 @@
 	let sortedVerses = [];
 	let expandedCollections = new Set(); // Track which collections are expanded
 	let verseSortOrder = 'biblical'; // 'biblical' | 'dueDate'
+	
+	// Interval modal state
+	let showIntervalModal = false;
+	let currentInterval = 1;
 	
 	// Modal state
 	let showModal = false;
@@ -88,6 +92,17 @@
 			return;
 		}
 		state = 'selectVerses';
+		selectedVerses = [];
+		verseSortOrder = 'biblical';
+	}
+
+	function showEditInterval() {
+		if (learnedVerses.length === 0) {
+			modalMessage = t('no_learned_verses');
+			showModal = true;
+			return;
+		}
+		state = 'editInterval';
 		selectedVerses = [];
 		verseSortOrder = 'biblical';
 	}
@@ -287,6 +302,73 @@
 		selectedCollectionIds = [];
 		reviewMode = null;
 	}
+
+	// Interval change functions
+	function openIntervalModal() {
+		if (selectedVerses.length === 0) {
+			modalMessage = t('select_verse_to_change_interval');
+			showModal = true;
+			return;
+		}
+		currentInterval = 1;
+		showIntervalModal = true;
+	}
+
+	function closeIntervalModal() {
+		showIntervalModal = false;
+	}
+
+	function incrementInterval() {
+		if (currentInterval < 20) {
+			currentInterval++;
+		}
+	}
+
+	function decrementInterval() {
+		if (currentInterval > 1) {
+			currentInterval--;
+		}
+	}
+
+	function calculateDaysFromInterval(interval) {
+		// Using same spaced repetition algorithm as the app
+		// interval 1 = 1 day, interval 2 = 6 days, then exponential
+		if (interval === 1) return 1;
+		if (interval === 2) return 6;
+		return Math.round(6 * Math.pow(2, interval - 2));
+	}
+
+	function confirmIntervalChange() {
+		if (selectedVerses.length === 0) {
+			closeIntervalModal();
+			return;
+		}
+
+		// Update intervals for selected verses
+		selectedVerses.forEach(selectedVerse => {
+			verses.update(list => {
+				return list.map(v => {
+					if (v.id === selectedVerse.id) {
+						const days = calculateDaysFromInterval(currentInterval);
+						const newDueDate = new Date();
+						newDueDate.setDate(newDueDate.getDate() + days);
+						
+						return {
+							...v,
+							interval: currentInterval,
+							dueDate: newDueDate.toISOString()
+						};
+					}
+					return v;
+				});
+			});
+		});
+
+		// Close modal and return to initial state
+		closeIntervalModal();
+		backToInitial();
+	}
+
 </script>
 
 <div class="review-container">
@@ -315,6 +397,11 @@
 				
 				<button class="initial-btn" on:click={showVerseSelection}>
 					{t('or_select_individual')}
+					<span class="btn-count">({learnedVerses.length})</span>
+				</button>
+				
+				<button class="initial-btn" on:click={showEditInterval}>
+					{t('edit_review_interval')}
 					<span class="btn-count">({learnedVerses.length})</span>
 				</button>
 			</div>
@@ -508,6 +595,87 @@
 			</div>
 		{/if}
 
+	{:else if state === 'editInterval'}
+		<div class="header-with-back">
+			<button class="back-btn" on:click={backToInitial}>
+				← {t('back')}
+			</button>
+			<h2>{t('edit_review_interval')}</h2>
+		</div>
+
+		<div class="sort-controls">
+			<button 
+				class="sort-btn" 
+				class:active={verseSortOrder === 'biblical'}
+				on:click={() => verseSortOrder = 'biblical'}
+			>
+				{t('order_biblical')}
+			</button>
+			<button 
+				class="sort-btn" 
+				class:active={verseSortOrder === 'dueDate'}
+				on:click={() => verseSortOrder = 'dueDate'}
+			>
+				{t('order_due_date')}
+			</button>
+		</div>
+
+		<div class="verse-list">
+			{#each sortedLearnedVerses as verse (verse.id)}
+				{@const isSelected = selectedVerses.some(v => v.id === verse.id)}
+				{@const dueInfo = getDaysUntilDue(verse.dueDate)}
+				<label class="verse-item">
+					<input
+						type="checkbox"
+						checked={isSelected}
+						on:change={() => toggleVerseSelection(verse.id)}
+					/>
+					<div class="verse-info">
+						<div class="verse-ref">{formatVerseRef(verse)}</div>
+						<div class="verse-status">
+							{#if verse.lastReviewed}
+								{@const date = new Date(verse.lastReviewed)}
+								<span class="last-reviewed-text">{t('last_reviewed')}: {date.toLocaleDateString()}</span>
+								{#if dueInfo !== null}
+									{#if dueInfo.milliseconds < 0}
+										{#if dueInfo.days <= -2}
+											<span class="overdue">({t('days_overdue', { count: Math.abs(dueInfo.days) })})</span>
+										{:else}
+											<span class="due-soon">({t('due_today')})</span>
+										{/if}
+									{:else if dueInfo.days >= 1}
+										{#if dueInfo.days === 1}
+											<span class="due-future">({t('due_in_day')})</span>
+										{:else}
+											<span class="due-future">({t('due_in_days', { count: dueInfo.days })})</span>
+										{/if}
+									{:else if dueInfo.hours >= 2}
+										<span class="due-soon">({t('due_in_hours', { count: dueInfo.hours })})</span>
+									{:else if dueInfo.hours === 1}
+										<span class="due-soon">({t('due_in_hour')})</span>
+									{:else if dueInfo.minutes >= 1}
+										<span class="due-soon">({t('due_in_minutes', { count: dueInfo.minutes })})</span>
+									{:else}
+										<span class="due-soon">({t('due_today')})</span>
+									{/if}
+								{/if}
+							{:else}
+								{t('not_reviewed_yet')}
+							{/if}
+						</div>
+					</div>
+				</label>
+			{/each}
+		</div>
+
+		{#if selectedVerses.length > 0}
+			<div class="fixed-bottom-btn">
+				<button class="primary-btn large" on:click={openIntervalModal}>
+					{t('change_interval')}
+				</button>
+			</div>
+		{/if}
+
 	{:else if state === 'reviewMode'}
 		<!-- Review Mode Modal -->
 		<div class="modal-overlay" on:click={cancelReview} on:keydown={(e) => e.key === 'Escape' && cancelReview()} role="dialog" aria-modal="true">
@@ -565,6 +733,32 @@
 	message={modalMessage}
 	on:close={() => showModal = false}
 />
+
+<!-- Change Interval Modal -->
+{#if showIntervalModal}
+	<div class="modal-overlay" on:click={closeIntervalModal} on:keydown={(e) => e.key === 'Escape' && closeIntervalModal()} role="dialog" aria-modal="true">
+		<div class="modal-content interval-modal" on:click|stopPropagation role="document">
+			<h3>{t('change_interval_title')}</h3>
+			
+			<div class="interval-control">
+				<div class="interval-label">{t('interval_label')}</div>
+				<div class="interval-adjuster">
+					<button class="interval-btn" on:click={decrementInterval} aria-label="Decrease">−</button>
+					<div class="interval-value">{currentInterval}</div>
+					<button class="interval-btn" on:click={incrementInterval} aria-label="Increase">+</button>
+				</div>
+				<div class="interval-days">
+					{t('review_in_days', { count: calculateDaysFromInterval(currentInterval) })}
+				</div>
+			</div>
+
+			<div class="modal-buttons-horizontal">
+				<button class="modal-btn secondary" on:click={closeIntervalModal}>{t('cancel')}</button>
+				<button class="modal-btn primary" on:click={confirmIntervalChange}>{t('confirm')}</button>
+			</div>
+		</div>
+	</div>
+{/if}
 
 <style>
 	.review-container {
@@ -964,6 +1158,100 @@
 
 	.cancel-btn:hover {
 		background: var(--file-bg);
+	}
+
+	/* Interval Modal Styles */
+	.interval-modal {
+		max-width: 400px;
+	}
+
+	.interval-control {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 1rem;
+		margin: 2rem 0;
+	}
+
+	.interval-label {
+		font-size: 1em;
+		color: var(--subtitle-color);
+	}
+
+	.interval-adjuster {
+		display: flex;
+		align-items: center;
+		gap: 1.5rem;
+	}
+
+	.interval-btn {
+		width: 48px;
+		height: 48px;
+		border: 2px solid var(--accent-color);
+		background: var(--file-bg);
+		color: var(--accent-color);
+		border-radius: 50%;
+		font-size: 1.5em;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		transition: all 0.3s;
+		font-weight: bold;
+	}
+
+	.interval-btn:hover {
+		background: var(--accent-color);
+		color: white;
+	}
+
+	.interval-value {
+		font-size: 2.5em;
+		font-weight: bold;
+		color: var(--accent-color);
+		min-width: 80px;
+		text-align: center;
+	}
+
+	.interval-days {
+		font-size: 0.9em;
+		color: var(--subtitle-color);
+	}
+
+	.modal-buttons-horizontal {
+		display: flex;
+		gap: 1rem;
+		margin-top: 1.5rem;
+	}
+
+	.modal-btn {
+		flex: 1;
+		padding: 0.75rem 1.5rem;
+		border: none;
+		border-radius: 8px;
+		cursor: pointer;
+		font-size: 1em;
+		font-weight: 600;
+		transition: all 0.3s;
+	}
+
+	.modal-btn.primary {
+		background: var(--accent-color);
+		color: white;
+	}
+
+	.modal-btn.primary:hover {
+		opacity: 0.9;
+	}
+
+	.modal-btn.secondary {
+		background: var(--file-bg);
+		color: var(--text-color);
+		border: 1px solid var(--file-border);
+	}
+
+	.modal-btn.secondary:hover {
+		background: var(--nav-button-bg);
 	}
 
 	@media (max-width: 767px) {
