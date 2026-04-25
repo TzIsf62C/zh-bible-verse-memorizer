@@ -1,0 +1,30 @@
+- main [ref=e3]:
+  - generic [ref=e5]:
+    - heading "ZH Bible Verse Memorizer" [level=1]
+    - paragraph: 聖經經文背誦
+  - navigation [ref=e6]:
+    - button "Menu" [ref=e7] [cursor=pointer]:
+      - img [ref=e9]
+    - button "Add Verse" [ref=e11] [cursor=pointer]:
+      - img [ref=e13]
+    - button "Learn" [ref=e15] [cursor=pointer]:
+      - img [ref=e17]
+    - button "Practice" [ref=e19] [cursor=pointer]:
+      - img [ref=e21]
+    - button "Review" [ref=e25] [cursor=pointer]:
+      - generic [ref=e26]:
+        - img [ref=e27]
+        - generic [ref=e29]: "2"
+    - button "Collections" [ref=e30] [cursor=pointer]:
+      - img [ref=e32]
+  - dialog [ref=e40]:
+    - document [ref=e41]:
+      - heading "Choose Review Mode" [level=3]
+      - generic [ref=e42]:
+        - button "Review verses individually Review verses one at a time in Advanced stage" [ref=e43] [cursor=pointer]:
+          - generic: Review verses individually
+          - generic: Review verses one at a time in Advanced stage
+        - button "Review as a single text Review as a continuous passage" [ref=e44] [cursor=pointer]:
+          - generic: Review as a single text
+          - generic: Review as a continuous passage
+      - button "Cancel" [ref=e45] [cursor=pointer]
