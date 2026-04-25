@@ -814,7 +814,7 @@
 <div class="add-verse-container">
 	<!-- Form Section -->
 	<div class="form-section">
-		<h3>{editingId ? t('update_verse') : t('save_verse')}</h3>
+		<h3>{editingId ? t('update_verse') : t('add_verse')}</h3>
 
 		<div class="form-grid">
 			<!-- Row 1: Chinese book name -->
@@ -1116,7 +1116,7 @@
 					on:click={saveVerse}
 					disabled={!isSaveEnabled}
 				>
-					{editingId ? t('update_verse') : t('save_verse')}
+					{editingId ? t('update_verse') : t('add_verse')}
 				</button>
 				<button 
 					class="secondary" 
