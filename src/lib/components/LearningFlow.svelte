@@ -77,6 +77,7 @@
 	$: {
 		const nextCharIndex = userInput.length;
 		const isNextCharNumber = nextCharIndex < learnFullInitials.length && /[0-9]/.test(learnFullInitials[nextCharIndex]);
+		const previousKeyboardType = isNumericKeyboard;
 		
 		if (isNextCharNumber) {
 			keyboardLayout = keyboardLayouts.numericCompact;
@@ -86,6 +87,12 @@
 			const inputMethod = $settings.inputMethod || 'pinyin';
 			keyboardLayout = keyboardLayouts[`${inputMethod}Compact`] || keyboardLayouts.pinyinCompact;
 			isNumericKeyboard = false;
+		}
+		
+		// Trigger viewport scroll when keyboard type changes
+		if (previousKeyboardType !== isNumericKeyboard && userInput.length > 0) {
+			scrollTrigger++;
+			console.log('Keyboard type changed, scroll trigger incremented to:', scrollTrigger);
 		}
 	}
 
