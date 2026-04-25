@@ -10,6 +10,7 @@
 	import { keyboardLayouts } from '$lib/utils/keyboardLayouts';
 	import { zhuyinKeyMap, cangjieKeyMap } from '$lib/utils/inputMaps';
 	import { triggerErrorFeedback } from '$lib/utils/feedback';
+	import { initializeHeatArray, updateHeatArray, buildCorrectnessMap } from '$lib/utils/heatTracking';
 
 	export let verses = [];
 
@@ -485,6 +486,19 @@
 		feedbackText = `${t('accuracy')}: ${accuracy.toFixed(1)}%`;
 		feedbackClass = accuracy >= 90 ? 'success' : 'error';
 
+		// Build correctness map for heat tracking (verse text only)
+		const correctnessMap = buildCorrectnessMap(
+			currentVerse.verseText,
+			currentVerse.bookName,
+			currentVerse.chapterNumber,
+			currentVerse.verseNumber,
+			currentVerse.verseInitials,
+			currentVerse.bookInitials,
+			userInput,
+			inputMethod,
+			true // verseTextOnly: only track verse text in SingleTextReview
+		);
+
 		// Save current verse's final rendered state BEFORE advancing
 		const finalRenderedChars = [...reviewFullText].map((char, index) => ({
 			char,
@@ -507,13 +521,29 @@
 					dueDate: v.dueDate
 				};
 				const updated = spacedRepetitionBinary(card, success, now);
+				
+				// Initialize or update heatArray (verse text only)
+				let newHeatArray = v.heatArray;
+				if (!newHeatArray) {
+					// First review: initialize heat array for full verse + reference
+					newHeatArray = initializeHeatArray(
+						v.verseText,
+						v.bookName,
+						v.chapterNumber,
+						v.verseNumber
+					);
+				}
+				// Update based on this review's performance (verse text only, reference unchanged)
+				newHeatArray = updateHeatArray(newHeatArray, correctnessMap);
+				
 				return {
 					...v,
 					interval: updated.interval,
 					repetitions: updated.repetitions,
 					// dueDate from spacedRepetitionBinary is a Date object
 					dueDate: updated.dueDate instanceof Date ? updated.dueDate.toISOString() : updated.dueDate,
-					lastReviewed: success ? now.toISOString() : v.lastReviewed
+					lastReviewed: success ? now.toISOString() : v.lastReviewed,
+					heatArray: newHeatArray
 				};
 			}
 			return v;

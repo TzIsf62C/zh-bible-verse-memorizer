@@ -54,6 +54,19 @@ export const translations = {
 		update_description: 'Check if a new version of the app is available.',
 		check_update_btn: 'Check for Updates',
 		
+		// Stats Panel
+		stats: 'Stats',
+		new_learning: 'New/Learning',
+		developing: 'Developing',
+		solid: 'Solid',
+		mastered: 'Mastered',
+		heat_maps: 'Heat Maps',
+		heat_map: 'Heat Map',
+		practice_now: 'Practice Now',
+		sort_biblical: 'Sort: Biblical',
+		sort_by_score: 'Sort: Score',
+		no_reviewed_verses: 'No verses reviewed yet. Complete some reviews to see stats!',
+		
 		// Add Verse Panel
 		add_verse_title: 'Add Verse',
 		my_verses: 'My Verses',
@@ -356,6 +369,19 @@ export const translations = {
 		update_description: '检查是否有新版本可用。',
 		check_update_btn: '检查更新',
 		
+		// Stats Panel
+		stats: '统计',
+		new_learning: '新学/学习中',
+		developing: '发展中',
+		solid: '巩固',
+		mastered: '精通',
+		heat_maps: '热力图',
+		heat_map: '热力图',
+		practice_now: '现在练习',
+		sort_biblical: '排序：圣经顺序',
+		sort_by_score: '排序：得分',
+		no_reviewed_verses: '还没有复习过经文。完成一些复习后查看统计！',
+		
 		// Add Verse Panel
 		add_verse_title: '添加经文',
 		my_verses: '我的经文',
@@ -652,6 +678,20 @@ export const translations = {
 		update_description: '檢查是否有新版本可用。',
 		check_update_btn: '檢查更新',
 		
+		// Stats Panel
+		stats: '統計',
+		new_learning: '新學/學習中',
+		developing: '發展中',
+		solid: '鞏固',
+		mastered: '精通',
+		heat_maps: '熱力圖',
+		heat_map: '熱力圖',
+		practice_now: '現在練習',
+		sort_biblical: '排序：聖經順序',
+		sort_by_score: '排序：得分',
+		no_reviewed_verses: '還沒有複習過經文。完成一些複習後查看統計！',
+		
+		// Add Verse Panel
 		// Add Verse Panel
 		add_verse_title: '新增經文',
 		my_verses: '我的經文',

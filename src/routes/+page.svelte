@@ -12,6 +12,7 @@
 	import Settings from '$lib/components/Settings.svelte';
 	import Collections from '$lib/components/Collections.svelte';
 	import ExportImport from '$lib/components/ExportImport.svelte';
+	import Stats from '$lib/components/Stats.svelte';
 	import IconNav from '$lib/components/IconNav.svelte';
 	import MenuOverlay from '$lib/components/MenuOverlay.svelte';
 	import ShareOverlay from '$lib/components/ShareOverlay.svelte';
@@ -186,6 +187,13 @@
 	{:else if currentPanel === 'data'}
 		{#key $settings.languagePreference}
 			<ExportImport />
+		{/key}
+	{:else if currentPanel === 'stats'}
+		{#key $settings.languagePreference}
+			<Stats 
+				on:exit={() => currentPanel = 'learn'}
+				on:practice={() => alert(t('practice') + ' mode coming soon!')}
+			/>
 		{/key}
 	{:else if currentPanel === 'practice'}
 		<div class="panel">

@@ -10,6 +10,7 @@
 	import { zhuyinKeyMap, cangjieKeyMap } from '$lib/utils/inputMaps';
 	import { triggerErrorFeedback } from '$lib/utils/feedback';
 	import { createVerseReferenceFormatter } from '$lib/utils/bibleBooks';
+	import { initializeHeatArray, updateHeatArray, buildCorrectnessMap } from '$lib/utils/heatTracking';
 
 	export let verses = [];
 
@@ -417,6 +418,19 @@
 
 		accuracy = reviewFullInitials.length > 0 ? Math.round((correct / reviewFullInitials.length) * 100) : 0;
 
+		// Build correctness map for heat tracking
+		const correctnessMap = buildCorrectnessMap(
+			currentVerse.verseText,
+			currentVerse.bookName,
+			currentVerse.chapterNumber,
+			currentVerse.verseNumber,
+			currentVerse.verseInitials,
+			currentVerse.bookInitials,
+			userInput,
+			inputMethod,
+			false // Track both verse text and reference
+		);
+
 		// Update verse with spaced repetition
 		const now = new Date();
 		const success = accuracy >= 90;
@@ -429,12 +443,28 @@
 					dueDate: v.dueDate ? (typeof v.dueDate === 'string' ? new Date(v.dueDate) : v.dueDate) : now
 				};
 				const updated = spacedRepetitionBinary(card, success, now);
+				
+				// Initialize or update heatArray
+				let newHeatArray = v.heatArray;
+				if (!newHeatArray) {
+					// First review: initialize heat array
+					newHeatArray = initializeHeatArray(
+						v.verseText,
+						v.bookName,
+						v.chapterNumber,
+						v.verseNumber
+					);
+				}
+				// Update based on this review's performance
+				newHeatArray = updateHeatArray(newHeatArray, correctnessMap);
+				
 				return {
 					...v,
 					interval: updated.interval,
 					repetitions: updated.repetitions,
 					dueDate: updated.dueDate,
-					lastReviewed: success ? now.toISOString() : v.lastReviewed
+					lastReviewed: success ? now.toISOString() : v.lastReviewed,
+					heatArray: newHeatArray
 				};
 			}
 			return v;

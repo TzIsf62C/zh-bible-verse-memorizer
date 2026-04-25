@@ -8,6 +8,7 @@
 	import { zhuyinKeyMap, cangjieKeyMap } from '$lib/utils/inputMaps';
 	import { triggerErrorFeedback } from '$lib/utils/feedback';
 	import { createVerseReferenceFormatter } from '$lib/utils/bibleBooks';
+	import { initializeHeatArray, updateHeatArray, buildCorrectnessMap } from '$lib/utils/heatTracking';
 
 	let currentVerseIdx = 0;
 	let currentStage = 'basic'; // basic, intermediate, advanced - user can choose any
@@ -495,8 +496,8 @@
 				userInput = '';
 			} else if (currentStage === 'advanced') {
 				console.log('[Learn] Completed advanced stage - verse learned');
-				// Mark verse as learned
-				updateVerseProgress(getCurrentVerse());
+				// Mark verse as learned and update heat tracking
+				updateVerseProgress(getCurrentVerse(), userInput);
 				// Show modal for completion
 				modalMessage = `${t('congratulations_mastered')} (${accuracy}%)`;
 				showModal = true;
@@ -535,12 +536,40 @@
 		}
 	}
 
-	function updateVerseProgress(verse) {
+	function updateVerseProgress(verse, userInput) {
 		const today = new Date();
 		const updatedVerse = spacedRepetitionBinary(verse, true, today);
 
+		// Build correctness map for heat tracking (only in Advanced stage)
+		const inputMethod = $settings.inputMethod || 'pinyin';
+		const correctnessMap = buildCorrectnessMap(
+			verse.verseText,
+			verse.bookName,
+			verse.chapterNumber,
+			verse.verseNumber,
+			verse.verseInitials,
+			verse.bookInitials,
+			userInput,
+			inputMethod,
+			false // Track both verse text and reference
+		);
+
+		// Initialize or update heatArray
+		let newHeatArray = verse.heatArray;
+		if (!newHeatArray) {
+			// First time completing Advanced stage: initialize heat array
+			newHeatArray = initializeHeatArray(
+				verse.verseText,
+				verse.bookName,
+				verse.chapterNumber,
+				verse.verseNumber
+			);
+		}
+		// Update based on this review's performance
+		newHeatArray = updateHeatArray(newHeatArray, correctnessMap);
+
 		verses.update((list) =>
-			list.map((v) => (v.id === verse.id ? { ...updatedVerse, lastReviewed: today.toISOString() } : v))
+			list.map((v) => (v.id === verse.id ? { ...updatedVerse, lastReviewed: today.toISOString(), heatArray: newHeatArray } : v))
 		);
 	}
 

@@ -547,6 +547,13 @@
 	function updateVerseData(resetReviewData) {
 		const existingVerse = $verses.find((v) => v.id === editingId);
 		
+		// Check if verse content has changed (text or reference)
+		const contentChanged = 
+			existingVerse.verseText !== verseText.trim() ||
+			existingVerse.bookName !== bookName.trim() ||
+			existingVerse.chapterNumber !== parseInt(chapterNumber) ||
+			existingVerse.verseNumber !== parseInt(verseNumber);
+		
 		const updatedVerse = {
 			id: editingId,
 			verseText: verseText.trim(),
@@ -559,7 +566,9 @@
 			lastReviewed: resetReviewData ? null : (existingVerse?.lastReviewed || null),
 			dueDate: resetReviewData ? null : (existingVerse?.dueDate || null),
 			interval: resetReviewData ? 1 : (existingVerse?.interval || 1),
-			repetitions: resetReviewData ? 0 : (existingVerse?.repetitions || 0)
+			repetitions: resetReviewData ? 0 : (existingVerse?.repetitions || 0),
+			// Reset heatArray if content changed, otherwise preserve it
+			heatArray: contentChanged ? undefined : existingVerse?.heatArray
 		};
 
 		verses.update((list) => list.map((v) => (v.id === editingId ? updatedVerse : v)));
