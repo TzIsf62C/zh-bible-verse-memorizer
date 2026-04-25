@@ -566,9 +566,9 @@
 	
 	<div class="progress-bar">
 		<div class="progress-text">
-			<div>{currentIndex + 1} / {verses.length}</div>
+			<div>{currentIndex} / {verses.length}</div>
 		</div>
-		<div class="progress-fill" style="width: {((currentIndex + 1) / verses.length) * 100}%"></div>
+		<div class="progress-fill" style="width: {((currentIndex) / verses.length) * 100}%"></div>
 	</div>
 
 	<div class="passage-display">

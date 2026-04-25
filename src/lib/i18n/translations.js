@@ -226,6 +226,7 @@ export const translations = {
 		// Learning mode feedback
 		congratulations_mastered: 'Congratulations you have mastered this verse!',
 		great_job_continue: 'Great job! Let\'s continue with the next verse.',
+		great_job_finish: 'Great job! Review complete.',
 		great_job_intermediate: 'Great job! You can recite it with hints, now let\'s master it.',
 		great_job_basic: 'Great job! Now that you\'re familiar with this verse, try to Memorize it.',
 		nice_try: 'Nice Try! Aim for greater than 90%',
@@ -522,6 +523,7 @@ export const translations = {
 		// Learning mode feedback
 		congratulations_mastered: '恭喜，您已掌握此经文！',
 		great_job_continue: '做得好！让我们继续复习下一节。',
+		great_job_finish: '做得好！复习完成。',
 		great_job_intermediate: '做得好！现在您可以在带提示的情况下朗诵，接下来让我们熟练掌握它。',
 		great_job_basic: '做得好！既然您对这节经文已有熟悉，可以尝试背诵它。',
 		nice_try: '差一点就成功了！目标是超过90%',
@@ -816,6 +818,7 @@ export const translations = {
 		// Learning mode feedback
 		congratulations_mastered: '恭喜，您已掌握此經文！',
 		great_job_continue: '做得好！讓我們繼續複習下一節。',
+		great_job_finish: '做得好！複習完成。',
 		great_job_intermediate: '做得好！現在您可以在帶提示的情況下朗誦，接下來讓我們熟練掌握它。',
 		great_job_basic: '做得好！既然您對這節經文已有熟悉，可以嘗試背誦它。',
 		nice_try: '差一點就成功了！目標是超過90%',

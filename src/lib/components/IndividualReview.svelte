@@ -554,9 +554,9 @@
 	
 	<div class="progress-bar">
 		<div class="progress-text">
-			{currentIndex + 1} / {verses.length}
+			{currentIndex} / {verses.length}
 		</div>
-		<div class="progress-fill" style="width: {((currentIndex + 1) / verses.length) * 100}%"></div>
+		<div class="progress-fill" style="width: {((currentIndex) / verses.length) * 100}%"></div>
 	</div>
 	
 	{#if currentVerse}
@@ -609,7 +609,7 @@
 					{t('accuracy')}: {accuracy}%
 				</div>
 				{#if accuracy >= 90}
-					<div class="message">{t('great_job_continue')}</div>
+					<div class="message">{currentIndex === verses.length - 1 ? t('great_job_finish') : t('great_job_continue')}</div>
 				{:else}
 					<div class="message">{t('nice_try')}</div>
 				{/if}
