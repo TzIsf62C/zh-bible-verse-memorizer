@@ -629,6 +629,8 @@
 			return v;
 		}));
 
+		dispatch('reviewed');
+
 		if (success) {
 			successCount++;
 		}

@@ -470,6 +470,8 @@
 			return v;
 		}));
 
+		dispatch('reviewed');
+
 		// Only increment successCount if this verse hasn't been successfully reviewed yet in this session
 		if (success && !reviewedVerseIds.has(currentVerse.id)) {
 			successCount++;

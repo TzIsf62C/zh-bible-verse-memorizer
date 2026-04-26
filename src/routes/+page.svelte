@@ -1,9 +1,10 @@
 <script>
 	import { onDestroy, onMount } from 'svelte';
 	import { browser } from '$app/environment';
-	import { settings } from '$lib/stores/settings.js';
-	import { verses } from '$lib/stores/verses.js';
-	import { collections } from '$lib/stores/collections.js';
+	import { settings } from '$lib/stores/settings';
+	import { verses } from '$lib/stores/verses';
+	import { collections } from '$lib/stores/collections';
+	import { STORE_SYNC_EVENT } from '$lib/stores/localStorage.js';
 	import { keyboardLayouts } from '$lib/utils/keyboardLayouts.js';
 	import { zhuyinKeyMap, cangjieKeyMap } from '$lib/utils/inputMaps.js';
 	import Keyboard from '$lib/components/Keyboard.svelte';
@@ -28,15 +29,54 @@
 	let keyboardInput = '';
 	let keyboardLayout = keyboardLayouts.pinyin;
 	let removeListener = () => {};
+	let reviewBadgeCount = 0;
+	let lastKnownVersesSnapshot = '';
 
 	$: keyboardLayout = keyboardLayouts[$settings.inputMethod] || keyboardLayouts.pinyin;
-	
-	// Calculate badge count for review button (number of verses due for review)
-	$: reviewBadgeCount = $verses.filter(v => {
-		if (!v.lastReviewed) return false; // Only count learned verses
-		if (!v.dueDate) return true; // Verses without dueDate are considered due
-		return new Date(v.dueDate) <= new Date(); // Verses with past due dates
-	}).length;
+
+	function countDueReviewVerses(verseList) {
+		return verseList.filter((verse) => {
+			if (!verse.lastReviewed) return false;
+			if (!verse.dueDate) return true;
+			return new Date(verse.dueDate) <= new Date();
+		}).length;
+	}
+
+	function refreshReviewBadgeCount(verseList = null) {
+		if (Array.isArray(verseList)) {
+			lastKnownVersesSnapshot = JSON.stringify(verseList);
+			reviewBadgeCount = countDueReviewVerses(verseList);
+			return;
+		}
+
+		if (!browser) {
+			return;
+		}
+
+		try {
+			const rawVerses = localStorage.getItem('verses') || '[]';
+			lastKnownVersesSnapshot = rawVerses;
+			const storedVerses = JSON.parse(rawVerses);
+			reviewBadgeCount = countDueReviewVerses(storedVerses);
+		} catch {
+			reviewBadgeCount = countDueReviewVerses($verses);
+		}
+	}
+
+	function syncReviewBadgeFromStorage() {
+		if (!browser) {
+			return;
+		}
+
+		const rawVerses = localStorage.getItem('verses') || '[]';
+		if (rawVerses === lastKnownVersesSnapshot) {
+			return;
+		}
+
+		refreshReviewBadgeCount();
+	}
+
+	$: reviewBadgeCount = countDueReviewVerses($verses);
 	
 	// Check if onboarding should be shown
 	$: {
@@ -141,8 +181,24 @@
 	onMount(() => {
 		if (!browser) return;
 		settings.update((value) => value);
+		refreshReviewBadgeCount();
+
+		const handleStoreSync = (event) => {
+			if (event.detail?.key !== 'verses') {
+				return;
+			}
+
+			refreshReviewBadgeCount(event.detail.value || []);
+		};
+
 		window.addEventListener('keydown', handlePhysicalKey);
-		removeListener = () => window.removeEventListener('keydown', handlePhysicalKey);
+		window.addEventListener(STORE_SYNC_EVENT, handleStoreSync);
+		const badgePollId = window.setInterval(syncReviewBadgeFromStorage, 250);
+		removeListener = () => {
+			window.removeEventListener('keydown', handlePhysicalKey);
+			window.removeEventListener(STORE_SYNC_EVENT, handleStoreSync);
+			window.clearInterval(badgePollId);
+		};
 	});
 
 	onDestroy(() => {
@@ -161,12 +217,14 @@
 		<p class="subtitle">{t('app_subtitle')}</p>
 	</header>
 
-	<IconNav
-		currentPanel={currentPanel}
-		badges={{ review: reviewBadgeCount }}
-		onMenuClick={handleMenuClick}
-		on:navigate={(e) => switchPanel(e.detail)}
-	/>
+	{#key `${currentPanel}:${reviewBadgeCount}`}
+		<IconNav
+			currentPanel={currentPanel}
+			badges={{ review: reviewBadgeCount }}
+			onMenuClick={handleMenuClick}
+			on:navigate={(e) => switchPanel(e.detail)}
+		/>
+	{/key}
 
 	<MenuOverlay
 		bind:show={showMenu}
@@ -182,7 +240,7 @@
 	{#if currentPanel === 'learn'}
 		<LearningFlow />
 	{:else if currentPanel === 'review'}
-		<ReviewSessions />
+		<ReviewSessions on:reviewupdated={() => refreshReviewBadgeCount()} />
 	{:else if currentPanel === 'add'}
 		<AddVerseForm />
 	{:else if currentPanel === 'collections'}
@@ -195,7 +253,7 @@
 		{/key}
 	{:else if currentPanel === 'data'}
 		{#key $settings.languagePreference}
-			<ExportImport />
+			<ExportImport on:imported={() => refreshReviewBadgeCount()} />
 		{/key}
 	{:else if currentPanel === 'stats'}
 		{#key $settings.languagePreference}

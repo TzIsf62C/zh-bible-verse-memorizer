@@ -1,9 +1,12 @@
 <script>
+	import { createEventDispatcher } from 'svelte';
 	import { verses } from '$lib/stores/verses';
 	import { collections } from '$lib/stores/collections';
 	import { t } from '$lib/i18n';
 	import { parseImportPayload, mergeVerses, mergeCollections, buildExportPayload, applyConflictResolutions } from '$lib/utils/importExport';
 	import Modal from './Modal.svelte';
+
+	const dispatch = createEventDispatcher();
 
 	// Export state
 	let exportAllChecked = true;
@@ -236,6 +239,8 @@
 			fileInput.value = '';
 			selectedFileName = '';
 		}
+
+		dispatch('imported');
 	}
 
 	function resolveConflict(choice) {

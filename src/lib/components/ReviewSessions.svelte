@@ -1,4 +1,5 @@
 <script>
+	import { createEventDispatcher } from 'svelte';
 	import { verses } from '$lib/stores/verses';
 	import { collections } from '$lib/stores/collections';
 	import { settings } from '$lib/stores/settings';
@@ -8,6 +9,8 @@
 	import IndividualReview from './IndividualReview.svelte';
 	import SingleTextReview from './SingleTextReview.svelte';
 	import Modal from './Modal.svelte';
+
+	const dispatch = createEventDispatcher();
 
 	// State machine: 'initial' | 'selectCollection' | 'selectVerses' | 'editInterval' | 'reviewMode' | 'reviewOrder' | 'reviewing'
 	let state = 'initial';
@@ -112,6 +115,10 @@
 		selectedVerses = [];
 		selectedCollectionIds = [];
 		expandedCollections = new Set();
+	}
+
+	function handleReviewedVerse() {
+		dispatch('reviewupdated');
 	}
 
 	function proceedFromCollectionSelection() {
@@ -717,9 +724,9 @@
 
 	{:else if state === 'reviewing'}
 		{#if reviewMode === 'individual'}
-			<IndividualReview verses={sortedVerses} on:complete={handleReviewComplete} on:exit={handleReviewExit} />
+			<IndividualReview verses={sortedVerses} on:complete={handleReviewComplete} on:exit={handleReviewExit} on:reviewed={handleReviewedVerse} />
 		{:else if reviewMode === 'singleText'}
-			<SingleTextReview verses={sortedVerses} on:complete={handleReviewComplete} on:exit={handleReviewExit} />
+			<SingleTextReview verses={sortedVerses} on:complete={handleReviewComplete} on:exit={handleReviewExit} on:reviewed={handleReviewedVerse} />
 		{/if}
 	{/if}
 </div>
