@@ -27,8 +27,9 @@
 
 	function applyTextSize(scale) {
 		if (!browser) return;
-		const scaleValue = parseFloat(scale);
-		document.documentElement.style.setProperty('--text-scale', scaleValue);
+		const scaleValue = Number.parseFloat(scale);
+		const safeScale = Number.isFinite(scaleValue) && scaleValue > 0 ? scaleValue : 1;
+		document.documentElement.style.setProperty('--text-scale', safeScale);
 	}
 
 	function handleSystemThemeChange(e) {

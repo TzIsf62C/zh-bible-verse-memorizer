@@ -3,6 +3,7 @@
 	import { browser } from '$app/environment';
 	import { settings } from '$lib/stores/settings.js';
 	import { verses } from '$lib/stores/verses.js';
+	import { collections } from '$lib/stores/collections.js';
 	import { keyboardLayouts } from '$lib/utils/keyboardLayouts.js';
 	import { zhuyinKeyMap, cangjieKeyMap } from '$lib/utils/inputMaps.js';
 	import Keyboard from '$lib/components/Keyboard.svelte';
@@ -16,11 +17,13 @@
 	import IconNav from '$lib/components/IconNav.svelte';
 	import MenuOverlay from '$lib/components/MenuOverlay.svelte';
 	import ShareOverlay from '$lib/components/ShareOverlay.svelte';
+	import Onboarding from '$lib/components/Onboarding.svelte';
 	import { t } from '$lib/i18n/index.js';
 
 	let currentPanel = 'learn';
 	let showMenu = false;
 	let showShare = false;
+	let showOnboarding = false;
 
 	let keyboardInput = '';
 	let keyboardLayout = keyboardLayouts.pinyin;
@@ -34,6 +37,12 @@
 		if (!v.dueDate) return true; // Verses without dueDate are considered due
 		return new Date(v.dueDate) <= new Date(); // Verses with past due dates
 	}).length;
+	
+	// Check if onboarding should be shown
+	$: {
+		const shouldShow = !$settings.hasCompletedOnboarding && $verses.length === 0;
+		showOnboarding = shouldShow;
+	}
 
 	function appendKeyboardInput(key) {
 		if (key === 'Backspace') {
@@ -200,5 +209,10 @@
 			<h2>{t('practice')}</h2>
 			<p style="color: var(--subtitle-color);">Practice panel coming soon...</p>
 		</div>
+	{/if}
+	
+	<!-- Onboarding overlay (shown on first run) -->
+	{#if showOnboarding}
+		<Onboarding on:complete={() => { showOnboarding = false; }} />
 	{/if}
 </main>

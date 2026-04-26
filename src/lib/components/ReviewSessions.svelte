@@ -388,21 +388,18 @@
 					{/if}
 				</button>
 				
-				<button class="initial-btn" on:click={showCollectionSelection}>
-					{t('review_collection_learned')}
-					{#if $collections.length > 0}
-						<span class="btn-count">({$collections.length})</span>
-					{/if}
-				</button>
+				{#if $collections.length > 0}
+					<button class="initial-btn" on:click={showCollectionSelection}>
+						{t('review_collection_learned')}
+					</button>
+				{/if}
 				
 				<button class="initial-btn" on:click={showVerseSelection}>
 					{t('or_select_individual')}
-					<span class="btn-count">({learnedVerses.length})</span>
 				</button>
 				
 				<button class="initial-btn" on:click={showEditInterval}>
 					{t('edit_review_interval')}
-					<span class="btn-count">({learnedVerses.length})</span>
 				</button>
 			</div>
 		{/if}

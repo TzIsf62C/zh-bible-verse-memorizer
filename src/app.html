@@ -4,9 +4,9 @@
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="theme-color" content="#1a1a1a" />
-		<link rel="manifest" href="/manifest.json" />
-		<link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
-		<link rel="apple-touch-icon" href="/icons/icon-192.png" />
+		<link rel="manifest" href="%sveltekit.assets%/manifest.json" />
+		<link rel="icon" type="image/png" sizes="192x192" href="%sveltekit.assets%/icons/icon-192x192.png" />
+		<link rel="apple-touch-icon" href="%sveltekit.assets%/icons/icon-192x192.png" />
 		%sveltekit.head%
 	</head>
 	<body data-sveltekit-preload-data="hover">
@@ -15,7 +15,7 @@
 			// Register service worker
 			if ('serviceWorker' in navigator) {
 				window.addEventListener('load', () => {
-					navigator.serviceWorker.register('/sw.js')
+					navigator.serviceWorker.register('%sveltekit.assets%/sw.js')
 						.then((registration) => {
 							console.log('SW registered:', registration.scope);
 							

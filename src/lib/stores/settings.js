@@ -10,8 +10,27 @@ const defaultSettings = {
 	vibrationEnabled: false,
 	buzzerEnabled: false,
 	backupReminderEnabled: true,
-	textSizePreference: 1
+	textSizePreference: 1,
+	hasCompletedOnboarding: false
 };
+
+function mergeDefinedSettings(base, overrides) {
+	return Object.fromEntries(
+		Object.entries({ ...base, ...overrides }).filter(([, value]) => value !== undefined)
+	);
+}
+
+function sanitizeSettings(settings) {
+	const merged = mergeDefinedSettings(defaultSettings, settings);
+	const textSizePreference = Number(merged.textSizePreference);
+
+	return {
+		...merged,
+		textSizePreference: Number.isFinite(textSizePreference) && textSizePreference > 0
+			? textSizePreference
+			: defaultSettings.textSizePreference
+	};
+}
 
 function readLegacySettings() {
 	if (!browser) return {};
@@ -47,13 +66,13 @@ if (browser) {
 	const raw = localStorage.getItem('settings');
 	if (raw) {
 		try {
-			initialSettings = { ...defaultSettings, ...JSON.parse(raw) };
+			initialSettings = sanitizeSettings(JSON.parse(raw));
 		} catch (error) {
 			console.warn('Failed to parse settings from localStorage', error);
 		}
 	} else {
 		const legacy = readLegacySettings();
-		initialSettings = { ...defaultSettings, ...legacy };
+		initialSettings = sanitizeSettings(legacy);
 	}
 }
 
@@ -61,6 +80,6 @@ export const settings = writable(initialSettings);
 
 if (browser) {
 	settings.subscribe((value) => {
-		localStorage.setItem('settings', JSON.stringify(value));
+		localStorage.setItem('settings', JSON.stringify(sanitizeSettings(value)));
 	});
 }
