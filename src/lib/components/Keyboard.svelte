@@ -5,6 +5,12 @@
 	export let showBackspace = true;
 	export let showEnter = false;
 	export let isNumeric = false;
+
+	$: isCompact = layout.length > 0 && !layout.some((row) => row.some((k) => k.key === '⌫' || k.key === '✔'));
+	$: maxRowKeys = Math.max(
+		1,
+		...layout.map((row) => row.filter((k) => k.key !== 'SPACER').length)
+	);
 	
 	// Feedback props for learn/review modes
 	export let pressedKey = null; // The key that was just pressed (show red if incorrect)
@@ -67,7 +73,12 @@
 	}
 </script>
 
-<div class="keyboard" class:numeric={isNumeric}>
+<div
+	class="keyboard"
+	class:numeric={isNumeric}
+	class:compact={isCompact}
+	style={`--layout-max-keys: ${maxRowKeys};`}
+>
 	{#each layout as row}
 		<div class="keyboard-row">
 			{#each row as key}

@@ -190,15 +190,16 @@ input[type='file'] {
 }
 
 .keyboard {
+	--keyboard-side-padding: 8px;
 	position: fixed;
 	bottom: 0;
 	left: 0;
 	right: 0;
 	background: var(--panel-background);
 	border-top: 2px solid var(--file-border);
-	padding: 12px 8px;
+	padding: 12px var(--keyboard-side-padding) 36px var(--keyboard-side-padding);
 	z-index: 1001;
-	width: 100%;
+	width: 100vw;
 	max-width: 100vw;
 	box-sizing: border-box;
 	display: grid;
@@ -208,10 +209,20 @@ input[type='file'] {
 	touch-action: manipulation;
 }
 
+@media (min-width: 960px) {
+	.keyboard {
+		left: 50%;
+		right: auto;
+		width: 896px;
+		max-width: 896px;
+		transform: translateX(-50%);
+	}
+}
+
 .keyboard-row {
 	display: flex;
 	justify-content: center;
-	gap: 4px;
+	gap: 6px;
 	width: 100%;
 	max-width: 100%;
 	box-sizing: border-box;
@@ -224,13 +235,18 @@ input[type='file'] {
 	border: 1px solid var(--file-border);
 	border-radius: 4px;
 	padding: 10px 8px;
-	min-width: 32px;
+	min-width: 28px;
 	max-width: 50px;
 	flex: 1;
 	font-size: 1em;
 	cursor: pointer;
 	touch-action: manipulation;
 	transition: background 0.2s ease;
+	height: 40px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
 }
 
 .key:hover {
@@ -273,6 +289,37 @@ input[type='file'] {
 	pointer-events: none;
 	flex: 1;
 	min-width: 32px;
+	height: 24px;
+}
+
+/* Enhanced ergonomic styling for compact keyboards (learn and review modes) */
+.keyboard.compact:not(.numeric) {
+	--compact-row-gap: 12px;
+	padding-bottom: calc(44px + env(safe-area-inset-bottom));
+}
+
+.keyboard.compact:not(.numeric) .keyboard-row {
+	--compact-key-width: calc((100% - ((var(--layout-max-keys, 10) - 1) * var(--compact-row-gap))) / var(--layout-max-keys, 10));
+	gap: var(--compact-row-gap);
+	width: 100%;
+	max-width: 100%;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.keyboard.compact:not(.numeric) .key {
+	height: 42px;
+	font-size: 1.15em;
+	padding: 4px 6px;
+	min-width: 0;
+	flex: 0 0 var(--compact-key-width);
+	max-width: var(--compact-key-width);
+}
+
+.keyboard.compact:not(.numeric) .key.spacer {
+	min-width: 0;
+	flex: 0 0 var(--compact-key-width);
+	max-width: var(--compact-key-width);
 }
 
 /* Numeric keyboard styling - wider keys and gaps */
@@ -305,7 +352,7 @@ input[type='file'] {
 /* Responsive adjustments for narrow screens */
 @media (max-width: 400px) {
 	.key {
-		min-width: 26px;
+		min-width: 22px;
 		max-width: 42px;
 		padding: 10px 4px;
 		font-size: 0.9em;
@@ -322,10 +369,26 @@ input[type='file'] {
 	/* Make Zhuyin tone keys narrower on small screens */
 	.key.narrow {
 		flex: 0.6;
-		min-width: 20px;
-		max-width: 28px;
-		padding: 10px 2px;
+		min-width: 16px;
+		max-width: 24px;
+		padding: 8px 2px;
 		font-size: 0.85em;
+	}
+
+	.keyboard.compact:not(.numeric) {
+		--compact-row-gap: 8px;
+		padding-bottom: calc(48px + env(safe-area-inset-bottom));
+	}
+
+	.keyboard.compact:not(.numeric) .keyboard-row {
+		gap: var(--compact-row-gap);
+	}
+
+	.keyboard.compact:not(.numeric) .key,
+	.keyboard.compact:not(.numeric) .key.spacer {
+		height: 40px;
+		font-size: 1.12em;
+		padding: 3px 4px;
 	}
 }
 
