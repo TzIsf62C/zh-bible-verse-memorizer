@@ -116,6 +116,14 @@
 		});
 	}
 
+	function getDefaultExportFilename() {
+		const today = new Date();
+		const year = today.getFullYear();
+		const month = String(today.getMonth() + 1).padStart(2, '0');
+		const day = String(today.getDate()).padStart(2, '0');
+		return `${year}-${month}-${day}-verse-data.json`;
+	}
+
 	function handleExport() {
 		const allVerses = $verses;
 		const cols = $collections;
@@ -161,7 +169,7 @@
 		const url = URL.createObjectURL(blob);
 		const a = document.createElement('a');
 		a.href = url;
-		a.download = 'bible-verses.json';
+		a.download = getDefaultExportFilename();
 		document.body.appendChild(a);
 		a.click();
 		document.body.removeChild(a);

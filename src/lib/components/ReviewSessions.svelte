@@ -388,12 +388,12 @@
 			</div>
 		{:else}
 			<div class="initial-buttons">
-				<button class="initial-btn due-btn" on:click={showDueVersesFlow}>
-					{t('review_due_verses')}
-					{#if dueVerses.length > 0}
+				{#if dueVerses.length > 0}
+					<button class="initial-btn due-btn" on:click={showDueVersesFlow}>
+						{t('review_due_verses')}
 						<span class="btn-count">({dueVerses.length})</span>
-					{/if}
-				</button>
+					</button>
+				{/if}
 				
 				{#if $collections.length > 0}
 					<button class="initial-btn" on:click={showCollectionSelection}>
@@ -686,13 +686,11 @@
 			<div class="modal-content" on:click|stopPropagation role="document">
 				<h3>{t('choose_review_mode')}</h3>
 				<div class="modal-buttons">
-					<button class="modal-option" on:click={chooseIndividualReview}>
-						<div class="option-title">{t('review_individually')}</div>
-						<div class="option-desc">Review verses one at a time in Advanced stage</div>
+					<button class="initial-btn" on:click={chooseIndividualReview}>
+						{t('review_individually')}
 					</button>
-					<button class="modal-option" on:click={chooseSingleTextReview}>
-						<div class="option-title">{t('review_single_text')}</div>
-						<div class="option-desc">Review as a continuous passage</div>
+					<button class="initial-btn" on:click={chooseSingleTextReview}>
+						{t('review_single_text')}
 					</button>
 				</div>
 				<button class="cancel-btn" on:click={cancelReview}>{t('cancel')}</button>
@@ -1139,13 +1137,6 @@
 		font-weight: 600;
 		font-size: 1.1em;
 		color: var(--accent-color);
-	}
-
-	.option-desc {
-		margin-top: 0.5rem;
-		font-size: 0.9em;
-		color: var(--subtitle-color);
-		font-weight: normal;
 	}
 
 	.cancel-btn {
