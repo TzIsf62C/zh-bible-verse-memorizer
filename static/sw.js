@@ -1,5 +1,5 @@
 // Service Worker for ZH Bible Verse Memorizer (SvelteKit)
-const CACHE_NAME = 'zh-bible-memorizer-v0.9.5';
+const CACHE_NAME = 'zh-bible-memorizer-v0.9.6';
 
 // Core app shell files to cache
 const CORE_CACHE = [

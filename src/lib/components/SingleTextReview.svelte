@@ -44,58 +44,138 @@
 
 	// Scroll viewport to position content above keyboard after each input
 	$: {
-		if (viewportAnchor && currentVerse && !feedbackText) {
+		console.log('[SingleTextReview] Scroll reactive block triggered', {
+			hasViewportAnchor: !!viewportAnchor,
+			hasCurrentVerse: !!currentVerse,
+			userInputLength: userInput.length,
+			scrollTrigger: scrollTrigger
+		});
+		
+		if (viewportAnchor && currentVerse) {
 			// Include userInput and scrollTrigger in reactive dependencies
 			const _ = userInput.length;
 			const __ = scrollTrigger;
 			
+			console.log('[SingleTextReview] Scroll conditions met, scheduling scroll');
+			
 			setTimeout(() => {
-				const anchorRect = viewportAnchor.getBoundingClientRect();
+				console.log('[SingleTextReview] Executing scroll logic');
 				
-				// Find keyboard element (it's inside the keyboard-space div)
+				// Find the actual keyboard element (not just the wrapper div)
 				const keyboardSpace = viewportAnchor.nextElementSibling;
 				if (keyboardSpace) {
-					const keyboardRect = keyboardSpace.getBoundingClientRect();
-					
-					// Calculate scroll position: align anchor with keyboard's top edge
-					const scrollTarget = window.scrollY + (anchorRect.top - keyboardRect.top);
-					
-					window.scrollTo({ 
-						top: scrollTarget, 
-						behavior: 'smooth' 
-					});
+					const keyboardElement = keyboardSpace.querySelector('.keyboard');
+					if (keyboardElement) {
+						const keyboardRect = keyboardElement.getBoundingClientRect();
+						console.log('[SingleTextReview] Keyboard rect:', keyboardRect);
+						
+						// Get the passage display to scroll it above keyboard
+						const passageDisplay = document.querySelector('.passage-display');
+						if (passageDisplay) {
+							const passageRect = passageDisplay.getBoundingClientRect();
+							console.log('[SingleTextReview] Passage rect:', passageRect);
+							
+							// Calculate how much to scroll to position passage bottom above keyboard top
+							// Add buffer of 20px between passage and keyboard
+							const bufferSpace = 20;
+							const passageBottom = passageRect.bottom;
+							const keyboardTop = keyboardRect.top;
+							
+							if (passageBottom > keyboardTop - bufferSpace) {
+								const scrollAdjustment = passageBottom - keyboardTop + bufferSpace;
+								const scrollTarget = window.scrollY + scrollAdjustment;
+								
+								console.log('[SingleTextReview] Scroll calculation:', {
+									currentScrollY: window.scrollY,
+									passageBottom: passageBottom,
+									keyboardTop: keyboardTop,
+									scrollAdjustment: scrollAdjustment,
+									scrollTarget: scrollTarget
+								});
+								
+								window.scrollTo({ 
+									top: scrollTarget, 
+									behavior: 'smooth' 
+								});
+								console.log('[SingleTextReview] Scroll executed to:', scrollTarget);
+							} else {
+								console.log('[SingleTextReview] No scroll needed, passage above keyboard');
+							}
+						} else {
+							console.warn('[SingleTextReview] Passage display not found');
+						}
+					} else {
+						console.warn('[SingleTextReview] Keyboard element not found inside keyboard-space');
+					}
+				} else {
+					console.warn('[SingleTextReview] Keyboard space element not found');
 				}
 			}, 150);
+		} else {
+			console.log('[SingleTextReview] Scroll conditions NOT met');
 		}
 	}
 
 	// Scroll when feedback message appears to ensure it's visible above keyboard
 	$: {
+		console.log('[SingleTextReview] Feedback scroll reactive block triggered', {
+			hasFeedbackText: !!feedbackText,
+			hasViewportAnchor: !!viewportAnchor
+		});
+		
 		if (feedbackText && viewportAnchor) {
+			console.log('[SingleTextReview] Feedback scroll conditions met, scheduling scroll');
+			
 			setTimeout(() => {
+				console.log('[SingleTextReview] Executing feedback scroll');
 				const keyboardSpace = viewportAnchor.nextElementSibling;
 				if (keyboardSpace) {
-					const keyboardRect = keyboardSpace.getBoundingClientRect();
-					const viewportHeight = window.innerHeight;
-					
-					// Scroll to ensure there's comfortable space above keyboard
-					// Use passage-display as reference point
-					const passageDisplay = document.querySelector('.passage-display');
-					if (passageDisplay) {
-						const passageRect = passageDisplay.getBoundingClientRect();
-						const passageBottom = passageRect.bottom;
+					const keyboardElement = keyboardSpace.querySelector('.keyboard');
+					if (keyboardElement) {
+						const keyboardRect = keyboardElement.getBoundingClientRect();
+						const viewportHeight = window.innerHeight;
+						console.log('[SingleTextReview] Feedback scroll context:', {
+							keyboardRect,
+							viewportHeight
+						});
 						
-						// If passage bottom + feedback is too close to keyboard, scroll up
-						if (passageBottom > keyboardRect.top - 50) {
-							const scrollAdjustment = passageBottom - keyboardRect.top + 100; // Add 100px buffer
-							window.scrollTo({
-								top: window.scrollY + scrollAdjustment,
-								behavior: 'smooth'
+						// Scroll to ensure there's comfortable space above keyboard
+						// Use passage-display as reference point
+						const passageDisplay = document.querySelector('.passage-display');
+						if (passageDisplay) {
+							const passageRect = passageDisplay.getBoundingClientRect();
+							const passageBottom = passageRect.bottom;
+							console.log('[SingleTextReview] Passage display:', {
+								passageRect,
+								passageBottom,
+								keyboardTop: keyboardRect.top,
+								needsScroll: passageBottom > keyboardRect.top - 50
 							});
+							
+							// If passage bottom + feedback is too close to keyboard, scroll up
+							if (passageBottom > keyboardRect.top - 50) {
+								const scrollAdjustment = passageBottom - keyboardRect.top + 100; // Add 100px buffer
+								console.log('[SingleTextReview] Feedback scroll adjustment:', scrollAdjustment);
+								window.scrollTo({
+									top: window.scrollY + scrollAdjustment,
+									behavior: 'smooth'
+								});
+								console.log('[SingleTextReview] Feedback scroll executed');
+							} else {
+								console.log('[SingleTextReview] No feedback scroll needed (enough space)');
+							}
+						} else {
+							console.warn('[SingleTextReview] Passage display element not found');
 						}
+					} else {
+						console.warn('[SingleTextReview] Keyboard element not found for feedback scroll');
 					}
+				} else {
+					console.warn('[SingleTextReview] Keyboard space not found for feedback scroll');
 				}
 			}, 150);
+		} else {
+			console.log('[SingleTextReview] Feedback scroll conditions NOT met');
 		}
 	}
 

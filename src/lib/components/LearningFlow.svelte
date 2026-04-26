@@ -55,8 +55,15 @@
 		const currentMethod = $settings.inputMethod;
 		const fullInitials = learnFullInitials;
 		
+		console.log('[LearningFlow] Input method mismatch check:', {
+			currentMethod,
+			fullInitials: fullInitials ? fullInitials.substring(0, 10) + '...' : null,
+			fullInitialsLength: fullInitials ? fullInitials.length : 0
+		});
+		
 		if (fullInitials && currentMethod) {
 			const verseInputMethod = detectInputMethod(fullInitials);
+			console.log('[LearningFlow] Detected verse input method:', verseInputMethod, 'Current setting:', currentMethod);
 			
 			if (verseInputMethod && verseInputMethod !== currentMethod) {
 				const methodNames = { 
@@ -64,13 +71,18 @@
 					zhuyin: t('input_zhuyin'), 
 					cangjie: t('input_cangjie') 
 				};
-				feedbackMessage = t('input_method_mismatch').replace('{method}', methodNames[verseInputMethod] || verseInputMethod);
+				const warningMsg = t('input_method_mismatch').replace('{method}', methodNames[verseInputMethod] || verseInputMethod);
+				console.log('[LearningFlow] MISMATCH DETECTED! Setting warning:', warningMsg);
+				feedbackMessage = warningMsg;
 				feedbackType = 'warning';
 			} else if (verseInputMethod === currentMethod && feedbackType === 'warning') {
 				// Only clear warning if we successfully detected a matching method
+				console.log('[LearningFlow] Methods match, clearing warning');
 				feedbackMessage = '';
 				feedbackType = '';
 			}
+		} else {
+			console.log('[LearningFlow] Skipping mismatch check - missing fullInitials or currentMethod');
 		}
 	}
 
