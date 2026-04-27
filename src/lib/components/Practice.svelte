@@ -435,6 +435,7 @@
 	.verse-ref {
 		font-weight: 600;
 		flex-shrink: 0;
+		color: var(--text-color);
 	}
 	
 	.verse-count,
@@ -507,6 +508,7 @@
 	.activity-label {
 		font-weight: 600;
 		font-size: 1.1em;
+		color: var(--text-color);
 	}
 	
 	.best-time {

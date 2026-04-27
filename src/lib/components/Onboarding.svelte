@@ -124,15 +124,15 @@
 	}
 </script>
 
-<div class="onboarding-overlay" style="background: #f7f7f9;">
-	<div class="onboarding-card" style="background: white; color: #1b1b1f;">
+<div class="onboarding-overlay">
+	<div class="onboarding-card">
 		{#if step === 1}
 			<div class="step">
 				<h2>Welcome to ZH Bible Verse Memorizer! 📖</h2>
 				<p>Memorize Chinese Bible verses using spaced repetition.</p>
 				<p>This is a Progressive Web App (PWA) that works offline and can be installed on your device.</p>
 				<div class="button-group">
-					<button class="btn btn-primary" on:click={nextStep} style="background: #3264ff; color: white;">
+				<button class="btn btn-primary" on:click={nextStep}>
 						Get Started
 					</button>
 					<button class="btn btn-text" on:click={skip}>
@@ -162,8 +162,8 @@
 					{/each}
 				</div>
 				<div class="button-group">
-					<button class="btn btn-secondary" on:click={prevStep} style="background: #d7d7df; color: #1b1b1f;">Back</button>
-					<button class="btn btn-primary" on:click={nextStep} style="background: #3264ff; color: white;">Next</button>
+				<button class="btn btn-secondary" on:click={prevStep}>Back</button>
+				<button class="btn btn-primary" on:click={nextStep}>Next</button>
 				</div>
 			</div>
 			
@@ -202,8 +202,8 @@
 					<span>Load sample verses and collections</span>
 				</label>
 				<div class="button-group">
-					<button class="btn btn-secondary" on:click={prevStep} style="background: #d7d7df; color: #1b1b1f;">Back</button>
-					<button class="btn btn-primary" on:click={finish} disabled={loading} style="background: #3264ff; color: white;">
+				<button class="btn btn-secondary" on:click={prevStep}>Back</button>
+				<button class="btn btn-primary" on:click={finish} disabled={loading}>
 						{#if loading}
 							Loading...
 						{:else}

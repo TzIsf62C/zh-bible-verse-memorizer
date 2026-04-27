@@ -1,12 +1,14 @@
 <script>
 	import { createEventDispatcher } from 'svelte';
 	import { settings } from '$lib/stores/settings';
+	import { verses } from '$lib/stores/verses';
 	import { practice } from '$lib/stores/practice';
 	import { t } from '$lib/i18n';
-	import Modal from './Modal.svelte';
 	import Keyboard from './Keyboard.svelte';
 	import { keyboardLayouts } from '$lib/utils/keyboardLayouts';
 	import { triggerErrorFeedback } from '$lib/utils/feedback';
+	import { createVerseReferenceFormatter } from '$lib/utils/bibleBooks';
+	import { zhuyinKeyMap, cangjieKeyMap } from '$lib/utils/inputMaps';
 
 	export let verse;
 
@@ -15,8 +17,10 @@
 	// Timer state
 	let timerStarted = false;
 	let startTime = 0;
+	let currentTime = 0; // For reactive timer display
 	let rawTime = 0;
 	let penalties = 0;
+	let timerInterval;
 	
 	// Input state
 	let userInput = '';
@@ -35,7 +39,24 @@
 	let showCompletionModal = false;
 	let isNewBest = false;
 	
-	// Build full text (reference + verse text)
+	// Verse reference header opacity (fade out as user types)
+	let verseSelectorOpacity = 1;
+	
+	// Verse reference formatter
+	$: formatVerseRef = createVerseReferenceFormatter($verses);
+	
+	// Update opacity based on progress
+	$: {
+		if (fullInitials.length > 0) {
+			const progress = userInput.length / fullInitials.length;
+			verseSelectorOpacity = Math.max(0, 1 - progress * 2);
+		}
+	}
+	
+	// Get best time for this verse
+	$: bestTime = $practice.bestVerseTimes[verse?.id];
+	
+	// Build full text (verse text + reference)
 	$: {
 		if (verse) {
 			buildFullText();
@@ -63,12 +84,12 @@
 	}
 	
 	function buildFullText() {
-		// Build string: bookName chapter:verse verseText
-		const refText = `${verse.bookName} ${verse.chapterNumber}:${verse.verseNumber} `;
+		// Build string: verseText then reference
+		const refText = ` ${verse.bookName} ${verse.chapterNumber}:${verse.verseNumber}`;
 		const refInitials = `${verse.bookInitials}${verse.chapterNumber}${verse.verseNumber}`;
 		
-		fullText = refText + verse.verseText;
-		fullInitials = refInitials + verse.verseInitials;
+		fullText = verse.verseText + refText;
+		fullInitials = verse.verseInitials + refInitials;
 		
 		// Build char to input index mapping
 		const charMap = [];
@@ -94,6 +115,10 @@
 		if (!timerStarted) {
 			startTime = Date.now();
 			timerStarted = true;
+			// Start timer interval for live updates
+			timerInterval = setInterval(() => {
+				currentTime = Date.now() - startTime;
+			}, 50); // Update every 50ms for smooth display
 		}
 		
 		// Clear previous feedback
@@ -131,6 +156,12 @@
 	}
 	
 	function completeChallenge() {
+		// Stop timer
+		if (timerInterval) {
+			clearInterval(timerInterval);
+			timerInterval = null;
+		}
+		
 		rawTime = Date.now() - startTime;
 		const officialTime = rawTime + (penalties * 1000);
 		
@@ -153,17 +184,31 @@
 		penalties = 0;
 		timerStarted = false;
 		startTime = 0;
+		currentTime = 0;
 		pressedKey = null;
 		correctKey = null;
 		lastCorrectKey = null;
 		isNewBest = false;
+		verseSelectorOpacity = 1;
+		if (timerInterval) {
+			clearInterval(timerInterval);
+			timerInterval = null;
+		}
 	}
 	
 	function done() {
+		if (timerInterval) {
+			clearInterval(timerInterval);
+			timerInterval = null;
+		}
 		dispatch('complete');
 	}
 	
 	function exit() {
+		if (timerInterval) {
+			clearInterval(timerInterval);
+			timerInterval = null;
+		}
 		dispatch('exit');
 	}
 	
@@ -214,7 +259,74 @@
 	function formatTime(ms) {
 		return (ms / 1000).toFixed(1) + 's';
 	}
+	
+	function handlePhysicalKeyboard(e) {
+		if (!verse) return;
+		if (showCompletionModal) return;
+
+		// Backspace is disabled in practice mode
+		if (e.key === 'Backspace' || e.key === 'Delete') {
+			e.preventDefault();
+			return;
+		}
+
+		const inputMethod = $settings.inputMethod || 'pinyin';
+		const key = e.key.toLowerCase();
+		let mappedValue = '';
+
+		if (inputMethod === 'zhuyin') {
+			mappedValue = zhuyinKeyMap[key] || '';
+		} else if (inputMethod === 'cangjie') {
+			mappedValue = cangjieKeyMap[key] || '';
+		} else if (/^[a-z0-9]$/i.test(key)) {
+			mappedValue = key;
+		}
+
+		if (mappedValue) {
+			e.preventDefault();
+			
+			// Start timer on first input
+			if (!timerStarted) {
+				startTime = Date.now();
+				timerStarted = true;
+				// Start timer interval for live updates
+				timerInterval = setInterval(() => {
+					currentTime = Date.now() - startTime;
+				}, 50); // Update every 50ms for smooth display
+			}
+			
+			// Clear previous feedback before adding new input
+			pressedKey = null;
+			correctKey = null;
+			lastCorrectKey = null;
+			
+			// Determine what the expected key is at this position
+			const nextExpectedChar = fullInitials[userInput.length];
+			const normalizedKey = inputMethod === 'pinyin' ? mappedValue.toLowerCase() : mappedValue;
+			const normalizedExpected = inputMethod === 'pinyin' ? (nextExpectedChar || '').toLowerCase() : (nextExpectedChar || '');
+			
+			// Check if input is correct
+			if (normalizedKey === normalizedExpected) {
+				// Correct input - show success feedback
+				lastCorrectKey = key; // Use the physical key for highlighting
+			} else {
+				// Incorrect input - count penalty
+				penalties++;
+				pressedKey = key; // Use the physical key for highlighting
+				correctKey = nextExpectedChar;
+				triggerErrorFeedback($settings);
+			}
+			
+			userInput += mappedValue;
+			
+			if (userInput.length === fullInitials.length) {
+				completeChallenge();
+			}
+		}
+	}
 </script>
+
+<svelte:document on:keydown={handlePhysicalKeyboard} />
 
 <div class="speed-challenge-container">
 	<div class="header">
@@ -222,29 +334,42 @@
 		<h2>{t('speed_challenge')}</h2>
 		<div class="timer">
 			{#if timerStarted}
-				⏱ {formatTime(Date.now() - startTime)}
+				⏱ {formatTime(currentTime)}
 			{:else}
 				⏱ 0.0s
 			{/if}
 		</div>
 	</div>
 	
+	{#if verse && formatVerseRef}
+		<div 
+			class="verse-selector-header"
+			style="opacity: {verseSelectorOpacity}; transition: opacity 0.3s ease;"
+		>
+			{formatVerseRef(verse)}
+		</div>
+	{/if}
+	
 	<div class="stats-bar">
 		<span class="stat">
 			<span class="stat-label">{t('penalties')}:</span>
 			<span class="stat-value">{penalties}</span>
 		</span>
-		<span class="stat">
-			<span class="stat-label">{t('progress')}:</span>
-			<span class="stat-value">{userInput.length}/{fullInitials.length}</span>
-		</span>
+		{#if bestTime}
+			<span class="stat">
+				<span class="stat-label">{t('best_time').replace('{time}', '')}:</span>
+				<span class="stat-value">{formatTime(bestTime.officialTime)}</span>
+			</span>
+		{/if}
 	</div>
 	
 	<div class="verse-display">
-		{#each fullText.split('') as char, idx}
-			{@const rendered = renderCharacter(char, idx)}
-			<span class={rendered.className}>{rendered.char}</span>
-		{/each}
+		{#key userInput}
+			{#each fullText.split('') as char, idx}
+				{@const rendered = renderCharacter(char, idx)}
+				<span class={rendered.className}>{rendered.char}</span>
+			{/each}
+		{/key}
 	</div>
 	
 	<div class="keyboard-space">
@@ -262,12 +387,12 @@
 </div>
 
 {#if showCompletionModal}
-	<Modal show={true} type="success" on:close={done}>
-		<div class="completion-content">
+	<div class="modal-overlay" on:click={done} on:keydown={(e) => e.key === 'Escape' && done()} role="button" tabindex="0">
+		<div class="modal-content" on:click|stopPropagation on:keydown|stopPropagation role="dialog" aria-modal="true" tabindex="-1">
 			<h3>{t('speed_challenge')} {t('finish')}</h3>
 			
 			{#if isNewBest}
-				<p class="new-best">{t('new_best')}</p>
+				<p class="new-best">🎉 {t('new_best')}!</p>
 			{/if}
 			
 			<div class="time-stats">
@@ -285,10 +410,10 @@
 				</div>
 				
 				{#if $practice.bestVerseTimes[verse.id] && !isNewBest}
-					{@const bestTime = $practice.bestVerseTimes[verse.id]}
+					{@const currentBestTime = $practice.bestVerseTimes[verse.id]}
 					<div class="time-stat best">
 						<span class="label">{t('best_time').replace('{time}', '')}:</span>
-						<span class="value">{formatTime(bestTime.officialTime)}</span>
+						<span class="value">{formatTime(currentBestTime.officialTime)}</span>
 					</div>
 				{/if}
 			</div>
@@ -302,7 +427,7 @@
 				</button>
 			</div>
 		</div>
-	</Modal>
+	</div>
 {/if}
 
 <style>
@@ -311,14 +436,13 @@
 		flex-direction: column;
 		height: 100vh;
 		padding: 1rem;
-		overflow-y: auto;
 	}
 	
 	.header {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		margin-bottom: 1rem;
+		margin-bottom: 0.5rem;
 	}
 	
 	.exit-button {
@@ -341,8 +465,16 @@
 		font-weight: 600;
 		font-size: 1.1em;
 		color: var(--accent-color);
-		min-width: 60px;
+		min-width: 70px;
 		text-align: right;
+	}
+	
+	.verse-selector-header {
+		text-align: center;
+		font-weight: 600;
+		font-size: 1.1em;
+		margin-bottom: 0.5rem;
+		color: var(--text-color);
 	}
 	
 	.stats-bar {
@@ -411,19 +543,42 @@
 		margin-top: auto;
 	}
 	
-	.completion-content {
-		text-align: center;
+	/* Modal styles */
+	.modal-overlay {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background: rgba(0, 0, 0, 0.5);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		z-index: 2000;
+		padding: 1rem;
 	}
 	
-	.completion-content h3 {
-		margin-bottom: 1rem;
+	.modal-content {
+		background: var(--panel-background);
+		padding: 2rem;
+		border-radius: 12px;
+		max-width: 400px;
+		width: 100%;
+		box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+	}
+	
+	.modal-content h3 {
+		margin: 0 0 1rem 0;
+		text-align: center;
+		color: var(--text-color);
 	}
 	
 	.new-best {
 		color: var(--accent-color);
 		font-size: 1.3em;
 		font-weight: bold;
-		margin-bottom: 1rem;
+		margin: 0 0 1rem 0;
+		text-align: center;
 	}
 	
 	.time-stats {
@@ -437,18 +592,36 @@
 		display: flex;
 		justify-content: space-between;
 		padding: 0.5rem;
-		background: var(--panel-background);
+		background: var(--app-background);
 		border-radius: 4px;
 	}
 	
+	.time-stat .label {
+		color: var(--subtitle-color);
+	}
+	
+	.time-stat .value {
+		font-weight: 600;
+		color: var(--text-color);
+	}
+	
 	.time-stat.official {
-		background: var(--accent-color-light, rgba(76, 175, 80, 0.1));
+		background: rgba(76, 175, 80, 0.1);
 		font-weight: 600;
 		font-size: 1.1em;
 	}
 	
+	.time-stat.official .label,
+	.time-stat.official .value {
+		color: #4caf50;
+	}
+	
 	.time-stat.best {
 		background: rgba(33, 150, 243, 0.1);
+	}
+	
+	.time-stat.best .label,
+	.time-stat.best .value {
 		color: #2196f3;
 	}
 	
@@ -466,6 +639,7 @@
 		border-radius: 6px;
 		font-size: 1em;
 		cursor: pointer;
+		font-weight: 600;
 	}
 	
 	.primary-button {
@@ -473,10 +647,18 @@
 		color: white;
 	}
 	
+	.primary-button:hover {
+		opacity: 0.9;
+	}
+	
 	.secondary-button {
 		background: var(--panel-background);
 		color: var(--text-color);
 		border: 1px solid var(--border-color);
+	}
+	
+	.secondary-button:hover {
+		background: var(--app-background);
 	}
 	
 	@media (max-width: 767px) {
@@ -486,11 +668,16 @@
 		
 		.verse-display {
 			font-size: 1.2em;
+			padding: 0.75rem;
 		}
 		
 		.stats-bar {
 			gap: 1rem;
 			font-size: 0.9em;
+		}
+		
+		.modal-content {
+			padding: 1.5rem;
 		}
 	}
 </style>
