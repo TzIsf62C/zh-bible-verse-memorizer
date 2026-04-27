@@ -1,13 +1,14 @@
 <script>
 	import { createEventDispatcher } from 'svelte';
 	import { settings } from '$lib/stores/settings';
+	import { verses as versesStore } from '$lib/stores/verses';
 	import { practice } from '$lib/stores/practice';
 	import { t } from '$lib/i18n';
-	import Modal from './Modal.svelte';
 	import Keyboard from './Keyboard.svelte';
 	import { createVerseReferenceFormatter } from '$lib/utils/bibleBooks';
 	import { keyboardLayouts } from '$lib/utils/keyboardLayouts';
 	import { triggerErrorFeedback } from '$lib/utils/feedback';
+	import { zhuyinKeyMap, cangjieKeyMap } from '$lib/utils/inputMaps';
 
 	export let collection;
 	export let verses = [];
@@ -17,8 +18,10 @@
 	// Timer state
 	let timerStarted = false;
 	let startTime = 0;
+	let currentTime = 0; // For reactive timer display
 	let rawTime = 0;
 	let penalties = 0;
+	let timerInterval;
 	
 	// Input state
 	let userInput = '';
@@ -38,6 +41,9 @@
 	let showCompletionModal = false;
 	let isNewBest = false;
 	let collectionWasChanged = false;
+	
+	// Get best time for this collection
+	$: bestTime = $practice.bestTimes[collection?.id];
 	
 	// Build full text from all verses
 	$: {
@@ -67,27 +73,39 @@
 	}
 	
 	function buildFullText() {
-		// Build continuous string: bookInitials + chapter + verse + verseInitials (no spaces between verses)
+		// Determine reference abbreviation strategy
+		const allSameBook = verses.every(v => v.bookName === verses[0].bookName);
+		const allSameChapter = allSameBook && verses.every(v => v.chapterNumber === verses[0].chapterNumber);
+		
 		let text = '';
 		let initials = '';
 		const charMap = [];
 		let inputIdx = 0;
 		
 		verses.forEach((verse, vIdx) => {
-			// Add verse reference
-			const refText = `${verse.bookName} ${verse.chapterNumber}:${verse.verseNumber} `;
-			const refInitials = `${verse.bookInitials}${verse.chapterNumber}${verse.verseNumber}`;
-			
-			for (let i = 0; i < refText.length; i++) {
-				if (/[0-9]/.test(refText[i]) || /[\u4e00-\u9fa5]/.test(refText[i])) {
-					charMap.push(inputIdx);
-					inputIdx++;
-				} else {
-					charMap.push(null);
-				}
+			// Determine reference text based on position and strategy
+			let refText;
+			if (vIdx === 0) {
+				// First verse always gets full reference
+				refText = `${verse.bookName} ${verse.chapterNumber}:${verse.verseNumber} `;
+			} else if (allSameChapter) {
+				// Same chapter: just verse number
+				refText = `${verse.verseNumber} `;
+			} else if (allSameBook) {
+				// Same book, different chapters: chapter:verse
+				refText = `${verse.chapterNumber}:${verse.verseNumber} `;
+			} else {
+				// Different books: full reference
+				refText = `${verse.bookName} ${verse.chapterNumber}:${verse.verseNumber} `;
 			}
 			
-			// Add verse text
+			// Add reference characters to text and charMap
+			// References are marked as null (auto-reveal, no user input needed)
+			for (let i = 0; i < refText.length; i++) {
+				charMap.push(null);
+			}
+			
+			// Add verse text characters
 			for (let i = 0; i < verse.verseText.length; i++) {
 				if (/[\u4e00-\u9fa5]/.test(verse.verseText[i]) || /[0-9]/.test(verse.verseText[i])) {
 					charMap.push(inputIdx);
@@ -97,14 +115,14 @@
 				}
 			}
 			
-			// Add space between verses (except last)
+			// Build fullText and fullInitials
 			if (vIdx < verses.length - 1) {
 				text += refText + verse.verseText + ' ';
-				initials += refInitials + verse.verseInitials;
-				charMap.push(null);
+				initials += verse.verseInitials;
+				charMap.push(null); // Space between verses
 			} else {
 				text += refText + verse.verseText;
-				initials += refInitials + verse.verseInitials;
+				initials += verse.verseInitials;
 			}
 		});
 		
@@ -120,6 +138,10 @@
 		if (!timerStarted) {
 			startTime = Date.now();
 			timerStarted = true;
+			// Start timer interval for live updates
+			timerInterval = setInterval(() => {
+				currentTime = Date.now() - startTime;
+			}, 50); // Update every 50ms for smooth display
 		}
 		
 		// Clear previous feedback
@@ -157,6 +179,12 @@
 	}
 	
 	function completeChallenge() {
+		// Stop timer
+		if (timerInterval) {
+			clearInterval(timerInterval);
+			timerInterval = null;
+		}
+		
 		rawTime = Date.now() - startTime;
 		const officialTime = rawTime + (penalties * 1000);
 		
@@ -187,18 +215,31 @@
 		penalties = 0;
 		timerStarted = false;
 		startTime = 0;
+		currentTime = 0;
 		pressedKey = null;
 		correctKey = null;
 		lastCorrectKey = null;
 		isNewBest = false;
 		collectionWasChanged = false;
+		if (timerInterval) {
+			clearInterval(timerInterval);
+			timerInterval = null;
+		}
 	}
 	
 	function done() {
+		if (timerInterval) {
+			clearInterval(timerInterval);
+			timerInterval = null;
+		}
 		dispatch('complete');
 	}
 	
 	function exit() {
+		if (timerInterval) {
+			clearInterval(timerInterval);
+			timerInterval = null;
+		}
 		dispatch('exit');
 	}
 	
@@ -228,7 +269,7 @@
 			}
 			return { char, className: className + ' hidden', hidden: true };
 		} else {
-			// Punctuation - reveal based on previous character
+			// Punctuation/reference - reveal based on previous character
 			let prevCharInputIndex = null;
 			for (let i = charIndex - 1; i >= 0; i--) {
 				if (charToInputIndex[i] !== null) {
@@ -237,7 +278,11 @@
 				}
 			}
 			
-			const shouldReveal = prevCharInputIndex !== null && userInput.length > prevCharInputIndex;
+			// If no previous input char (start of text), always reveal
+			// Otherwise, reveal when past the previous input character
+			const shouldReveal = prevCharInputIndex === null 
+				? true 
+				: userInput.length > prevCharInputIndex;
 			return {
 				char,
 				className: 'verse-punctuation' + (shouldReveal ? '' : ' hidden'),
@@ -249,7 +294,74 @@
 	function formatTime(ms) {
 		return (ms / 1000).toFixed(1) + 's';
 	}
+	
+	function handlePhysicalKeyboard(e) {
+		if (!verses || verses.length === 0) return;
+		if (showCompletionModal) return;
+
+		// Backspace is disabled in practice mode
+		if (e.key === 'Backspace' || e.key === 'Delete') {
+			e.preventDefault();
+			return;
+		}
+
+		const inputMethod = $settings.inputMethod || 'pinyin';
+		const key = e.key.toLowerCase();
+		let mappedValue = '';
+
+		if (inputMethod === 'zhuyin') {
+			mappedValue = zhuyinKeyMap[key] || '';
+		} else if (inputMethod === 'cangjie') {
+			mappedValue = cangjieKeyMap[key] || '';
+		} else if (/^[a-z0-9]$/i.test(key)) {
+			mappedValue = key;
+		}
+
+		if (mappedValue) {
+			e.preventDefault();
+			
+			// Start timer on first input
+			if (!timerStarted) {
+				startTime = Date.now();
+				timerStarted = true;
+				// Start timer interval for live updates
+				timerInterval = setInterval(() => {
+					currentTime = Date.now() - startTime;
+				}, 50); // Update every 50ms for smooth display
+			}
+			
+			// Clear previous feedback before adding new input
+			pressedKey = null;
+			correctKey = null;
+			lastCorrectKey = null;
+			
+			// Determine what the expected key is at this position
+			const nextExpectedChar = fullInitials[userInput.length];
+			const normalizedKey = inputMethod === 'pinyin' ? mappedValue.toLowerCase() : mappedValue;
+			const normalizedExpected = inputMethod === 'pinyin' ? (nextExpectedChar || '').toLowerCase() : (nextExpectedChar || '');
+			
+			// Check if input is correct
+			if (normalizedKey === normalizedExpected) {
+				// Correct input - show success feedback
+				lastCorrectKey = key; // Use the physical key for highlighting
+			} else {
+				// Incorrect input - count penalty
+				penalties++;
+				pressedKey = key; // Use the physical key for highlighting
+				correctKey = nextExpectedChar;
+				triggerErrorFeedback($settings);
+			}
+			
+			userInput += mappedValue;
+			
+			if (userInput.length === fullInitials.length) {
+				completeChallenge();
+			}
+		}
+	}
 </script>
+
+<svelte:document on:keydown={handlePhysicalKeyboard} />
 
 <div class="speed-challenge-container">
 	<div class="header">
@@ -257,7 +369,7 @@
 		<h2>{t('speed_challenge')}</h2>
 		<div class="timer">
 			{#if timerStarted}
-				⏱ {formatTime(Date.now() - startTime)}
+				⏱ {formatTime(currentTime)}
 			{:else}
 				⏱ 0.0s
 			{/if}
@@ -269,17 +381,21 @@
 			<span class="stat-label">{t('penalties')}:</span>
 			<span class="stat-value">{penalties}</span>
 		</span>
-		<span class="stat">
-			<span class="stat-label">{t('progress')}:</span>
-			<span class="stat-value">{userInput.length}/{fullInitials.length}</span>
-		</span>
+		{#if bestTime}
+			<span class="stat">
+				<span class="stat-label">{t('best_time').replace('{time}', '')}:</span>
+				<span class="stat-value">{formatTime(bestTime.officialTime)}</span>
+			</span>
+		{/if}
 	</div>
 	
 	<div class="passage-display">
-		{#each fullText.split('') as char, idx}
-			{@const rendered = renderCharacter(char, idx)}
-			<span class={rendered.className}>{rendered.char}</span>
-		{/each}
+		{#key userInput}
+			{#each fullText.split('') as char, idx}
+				{@const rendered = renderCharacter(char, idx)}
+				<span class={rendered.className}>{rendered.char}</span>
+			{/each}
+		{/key}
 	</div>
 	
 	<div class="keyboard-space">
@@ -297,16 +413,16 @@
 </div>
 
 {#if showCompletionModal}
-	<Modal show={true} type="success" on:close={done}>
-		<div class="completion-content">
+	<div class="modal-overlay" on:click={done} on:keydown={(e) => e.key === 'Escape' && done()} role="button" tabindex="0">
+		<div class="modal-content" on:click|stopPropagation on:keydown|stopPropagation role="dialog" aria-modal="true" tabindex="-1">
 			<h3>{t('speed_challenge')} {t('finish')}</h3>
 			
 			{#if collectionWasChanged}
-				<p class="warning">{t('collection_changed')}</p>
+				<p class="warning">⚠️ {t('collection_changed')}</p>
 			{/if}
 			
 			{#if isNewBest}
-				<p class="new-best">{t('new_best')}</p>
+				<p class="new-best">🎉 {t('new_best')}!</p>
 			{/if}
 			
 			<div class="time-stats">
@@ -324,10 +440,10 @@
 				</div>
 				
 				{#if $practice.bestTimes[collection.id] && !isNewBest}
-					{@const bestTime = $practice.bestTimes[collection.id]}
+					{@const bestTimeData = $practice.bestTimes[collection.id]}
 					<div class="time-stat best">
 						<span class="label">{t('best_time').replace('{time}', '')}:</span>
-						<span class="value">{formatTime(bestTime.officialTime)}</span>
+						<span class="value">{formatTime(bestTimeData.officialTime)}</span>
 					</div>
 				{/if}
 			</div>
@@ -341,7 +457,7 @@
 				</button>
 			</div>
 		</div>
-	</Modal>
+	</div>
 {/if}
 
 <style>
@@ -450,25 +566,50 @@
 		margin-top: auto;
 	}
 	
-	.completion-content {
-		text-align: center;
+	/* Modal styles */
+	.modal-overlay {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background: rgba(0, 0, 0, 0.5);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		z-index: 2000;
+		padding: 1rem;
 	}
 	
-	.completion-content h3 {
-		margin-bottom: 1rem;
+	.modal-content {
+		background: var(--panel-background);
+		padding: 2rem;
+		border-radius: 12px;
+		max-width: 400px;
+		width: 100%;
+		box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+	}
+	
+	.modal-content h3 {
+		margin: 0 0 1rem 0;
+		text-align: center;
+		color: var(--text-color);
 	}
 	
 	.warning {
 		color: #ff9800;
 		font-weight: 600;
-		margin-bottom: 1rem;
+		margin: 0 0 1rem 0;
+		text-align: center;
+		font-size: 1.1em;
 	}
 	
 	.new-best {
 		color: var(--accent-color);
 		font-size: 1.3em;
 		font-weight: bold;
-		margin-bottom: 1rem;
+		margin: 0 0 1rem 0;
+		text-align: center;
 	}
 	
 	.time-stats {
@@ -482,18 +623,36 @@
 		display: flex;
 		justify-content: space-between;
 		padding: 0.5rem;
-		background: var(--panel-background);
+		background: var(--app-background);
 		border-radius: 4px;
 	}
 	
+	.time-stat .label {
+		color: var(--subtitle-color);
+	}
+	
+	.time-stat .value {
+		font-weight: 600;
+		color: var(--text-color);
+	}
+	
 	.time-stat.official {
-		background: var(--accent-color-light, rgba(76, 175, 80, 0.1));
+		background: rgba(76, 175, 80, 0.1);
 		font-weight: 600;
 		font-size: 1.1em;
 	}
 	
+	.time-stat.official .label,
+	.time-stat.official .value {
+		color: #4caf50;
+	}
+	
 	.time-stat.best {
 		background: rgba(33, 150, 243, 0.1);
+	}
+	
+	.time-stat.best .label,
+	.time-stat.best .value {
 		color: #2196f3;
 	}
 	
@@ -511,6 +670,7 @@
 		border-radius: 6px;
 		font-size: 1em;
 		cursor: pointer;
+		font-weight: 600;
 	}
 	
 	.primary-button {
@@ -518,10 +678,18 @@
 		color: white;
 	}
 	
+	.primary-button:hover {
+		opacity: 0.9;
+	}
+	
 	.secondary-button {
 		background: var(--panel-background);
 		color: var(--text-color);
 		border: 1px solid var(--border-color);
+	}
+	
+	.secondary-button:hover {
+		background: var(--app-background);
 	}
 	
 	@media (max-width: 767px) {

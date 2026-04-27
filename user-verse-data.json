@@ -1543,5 +1543,30 @@
         }
       ]
     }
+    {
+      "title": "Other",
+      "verseRefs": [
+        {
+          "bookName": "礼物故事",
+          "chapterNumber": "1",
+          "verseNumber": "16"
+        },
+        {
+          "bookName": "腓立比书",
+          "chapterNumber": "4",
+          "verseNumber": "13"
+        },
+        {
+          "bookName": "馬太福音",
+          "chapterNumber": "6",
+          "verseNumber": "3"
+        },
+        {
+          "bookName": "馬太福音",
+          "chapterNumber": "6",
+          "verseNumber": "4"
+        }
+      ]
+    }
   ]
 }
