@@ -26,6 +26,7 @@
 	let showMenu = false;
 	let showShare = false;
 	let showOnboarding = false;
+	let selectedPracticeVerseId = null; // For \"Practice Now\" from Stats
 
 	let keyboardInput = '';
 	let keyboardLayout = keyboardLayouts.pinyin;
@@ -260,11 +261,21 @@
 		{#key $settings.languagePreference}
 			<Stats 
 				on:exit={() => currentPanel = 'learn'}
-				on:practice={() => currentPanel = 'practice'}
+				on:practice={(e) => {
+					selectedPracticeVerseId = e.detail?.verseId || null;
+					currentPanel = 'practice';
+				}}
 			/>
 		{/key}
 	{:else if currentPanel === 'practice'}
-		<Practice on:exit={() => currentPanel = 'learn'} />
+		<Practice 
+			preselectedVerseId={selectedPracticeVerseId}
+			on:clearPreselection={() => { selectedPracticeVerseId = null; }}
+			on:exit={() => {
+				selectedPracticeVerseId = null;
+				currentPanel = 'learn';
+			}}
+		/>
 	{/if}
 	
 	<!-- Onboarding overlay (shown on first run) -->

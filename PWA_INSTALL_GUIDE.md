@@ -3,7 +3,7 @@
 ## ✅ PWA is now ready!
 
 The production build is running on **port 8080** with:
-- Service Worker v0.9.5
+- Service Worker v0.9.7
 - Updated manifest.json
 - Proper offline caching
 - Standalone display mode
@@ -99,7 +99,7 @@ On your phone:
 ## Current Server Status
 
 ✅ PWA Build Server running on port **8080**
-✅ Service Worker version **0.9.5**
+✅ Service Worker version **0.9.7**
 ✅ Manifest updated with correct paths
 ✅ Ready for testing
 

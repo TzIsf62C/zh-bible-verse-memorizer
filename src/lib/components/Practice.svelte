@@ -14,12 +14,16 @@
 	
 	const dispatch = createEventDispatcher();
 	
+	// Export prop for preselected verse (from Stats "Practice Now" button)
+	export let preselectedVerseId = null;
+	
 	// State machine: 'initial' | 'selectCollection' | 'selectVerse' | 'selectActivity' | 'practicing'
 	let state = 'initial';
 	let practiceType = null; // 'collection' | 'verse'
 	let selectedCollection = null;
 	let selectedVerse = null;
 	let selectedActivity = null;
+	let processedPreselection = false; // Prevent reactive loop with preselection
 	
 	// Modal state
 	let showModal = false;
@@ -101,6 +105,11 @@
 	
 	function goBack() {
 		if (state === 'selectActivity') {
+			processedPreselection = false; // Clear preselection flag when user manually navigates
+			// Clear the parent's preselection when manually navigating back
+			if (preselectedVerseId) {
+				dispatch('clearPreselection');
+			}
 			state = practiceType === 'collection' ? 'selectCollection' : 'selectVerse';
 		} else if (state === 'selectCollection' || state === 'selectVerse') {
 			reset();
@@ -116,6 +125,7 @@
 		selectedCollection = null;
 		selectedVerse = null;
 		selectedActivity = null;
+		processedPreselection = false; // Reset preselection flag
 	}
 	
 	function exitPractice() {
@@ -130,18 +140,28 @@
 			$settings.bookNameCharset || 'simplified'
 		)
 		: [];
+	
+	// Handle preselected verse (from Stats "Practice Now")
+	$: if (preselectedVerseId && $verses.length > 0 && state === 'initial' && !processedPreselection) {
+		const verse = $verses.find(v => v.id === preselectedVerseId);
+		if (verse) {
+			practiceType = 'verse';
+			selectedVerse = verse;
+			state = 'selectActivity';
+			processedPreselection = true; // Prevent re-triggering
+		}
+	}
+	
+	// Reset flag when preselection is cleared
+	$: if (preselectedVerseId === null) {
+		processedPreselection = false;
+	}
 </script>
 
 {#if state === 'initial'}
 	<div class="panel practice-panel">
 		<div class="panel-header">
-			<button class="back-button" on:click={exitPractice} aria-label={t('exit')}>
-				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-					<path d="M19 12H5M5 12l7 7M5 12l7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-				</svg>
-			</button>
 			<h2>{t('practice_mode')}</h2>
-			<div class="spacer"></div>
 		</div>
 		
 		<div class="button-group">
@@ -242,6 +262,14 @@
 			</button>
 			<h2>{t('select_activity')}</h2>
 			<div class="spacer"></div>
+		</div>
+		
+		<div class="selected-target">
+			{#if practiceType === 'collection'}
+				<span class="target-label">{selectedCollection?.title}</span>
+			{:else if practiceType === 'verse'}
+				<span class="target-label">{formatVerseRef(selectedVerse)}</span>
+			{/if}
 		</div>
 		
 		<div class="activity-grid">
@@ -373,10 +401,6 @@
 		cursor: not-allowed;
 	}
 	
-	.button-icon {
-		font-size: 1.5em;
-	}
-	
 	.collection-list,
 	.verse-list {
 		flex: 1;
@@ -434,6 +458,20 @@
 		padding: 1rem;
 		background: var(--app-background);
 		border-top: 1px solid var(--border-color);
+	}
+	
+	.selected-target {
+		text-align: center;
+		margin-bottom: 1rem;
+		padding: 0.75rem 1rem;
+		background: var(--accent-color-light, rgba(76, 175, 80, 0.1));
+		border-radius: 8px;
+	}
+	
+	.target-label {
+		font-size: 1.1em;
+		font-weight: 600;
+		color: var(--text-color);
 	}
 	
 	.activity-grid {

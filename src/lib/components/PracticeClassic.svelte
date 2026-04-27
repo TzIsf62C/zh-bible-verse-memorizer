@@ -1,11 +1,13 @@
 <script>
 	import { createEventDispatcher } from 'svelte';
 	import { settings } from '$lib/stores/settings';
+	import { verses } from '$lib/stores/verses';
 	import { t } from '$lib/i18n';
-	import Modal from './Modal.svelte';
 	import Keyboard from './Keyboard.svelte';
 	import { keyboardLayouts } from '$lib/utils/keyboardLayouts';
 	import { triggerErrorFeedback } from '$lib/utils/feedback';
+	import { createVerseReferenceFormatter } from '$lib/utils/bibleBooks';
+	import { zhuyinKeyMap, cangjieKeyMap } from '$lib/utils/inputMaps';
 
 	export let verse;
 
@@ -13,11 +15,11 @@
 
 	// Practice state
 	let currentStage = 'basic'; //  'basic' | 'intermediate' | 'advanced'
+	let intermediateVariant = 'odd'; // 'odd' | 'even' - for toggling intermediate mode
 	let userInput = '';
 	let accuracy = 0;
 	let showResult = false;
-	let showStageCompleteModal = false;
-	let stageCompleteMessage = '';
+	let verseSelectorOpacity = 1;
 	
 	// Verse data
 	let fullText = '';
@@ -30,6 +32,11 @@
 	let pressedKey = null;
 	let correctKey = null;
 	let lastCorrectKey = null;
+	let viewportAnchor; // Element to scroll into view for keyboard positioning
+	let scrollTrigger = 0; // Increment this to trigger viewport scroll
+	
+	// Verse reference formatter
+	$: formatVerseRef = createVerseReferenceFormatter($verses);
 	
 	// Build verse data
 	$: {
@@ -68,12 +75,74 @@
 		lastCorrectKey = null;
 	}
 	
-	function buildVerseData() {
-		const refText = `${verse.bookName} ${verse.chapterNumber}:${verse.verseNumber} `;
-		const refInitials = `${verse.bookInitials}${verse.chapterNumber}${verse.verseNumber}`;
+	// Fade out verse reference header as user types
+	$: {
+		const totalInputsRequired = fullInitials.length;
+		const typedRatio = totalInputsRequired > 0 ? (userInput.length / totalInputsRequired) : 0;
 		
-		fullText = refText + verse.verseText;
-		fullInitials = refInitials + verse.verseInitials;
+		if (currentStage === 'intermediate' || currentStage === 'advanced') {
+			// No fade below 25%, fully invisible at 50% or above
+			if (typedRatio <= 0.25) {
+				verseSelectorOpacity = 1;
+			} else if (typedRatio >= 0.5) {
+				verseSelectorOpacity = 0;
+			} else {
+				// Linear fade from 1 -> 0 as typedRatio goes 0.25 -> 0.5
+				verseSelectorOpacity = 1 - (typedRatio - 0.25) / 0.25;
+			}
+		} else {
+			// Ensure fully visible in basic mode
+			verseSelectorOpacity = 1;
+		}
+	}
+	
+	// Scroll viewport to position content above keyboard
+	$: {
+		if (viewportAnchor && verse && !showResult) {
+			// Include scrollTrigger in reactive dependencies
+			const _ = scrollTrigger;
+			
+			setTimeout(() => {
+				if (!viewportAnchor) return;
+				
+				// Get keyboard height (fixed at bottom of viewport)
+				const keyboardEl = document.querySelector('.keyboard');
+				if (!keyboardEl) return;
+				
+				const keyboardHeight = keyboardEl.offsetHeight;
+				const viewportHeight = window.innerHeight;
+				const anchorRect = viewportAnchor.getBoundingClientRect();
+				
+				// Calculate target position: anchor should be above the keyboard with 20px margin
+				const targetAnchorPosition = viewportHeight - keyboardHeight - 20;
+				
+				// Calculate scroll adjustment needed
+				const scrollAdjustment = anchorRect.top - targetAnchorPosition;
+				
+				// Only scroll if anchor would be hidden behind keyboard
+				if (scrollAdjustment > 0) {
+					window.scrollTo({
+						top: window.scrollY + scrollAdjustment,
+						behavior: 'smooth'
+					});
+				}
+			}, 500); // Delay to ensure keyboard is rendered
+		}
+	}
+	
+	function toggleIntermediateVariant() {
+		intermediateVariant = intermediateVariant === 'odd' ? 'even' : 'odd';
+		userInput = '';
+		showResult = false;
+		pressedKey = null;
+		correctKey = null;
+		lastCorrectKey = null;
+	}
+	
+	function buildVerseData() {
+		// Combine verse text and reference like LearningFlow: text first, then newline, then reference
+		fullText = `${verse.verseText}\n${verse.bookName} ${verse.chapterNumber}:${verse.verseNumber}`;
+		fullInitials = `${verse.verseInitials}${verse.bookInitials}${verse.chapterNumber}${verse.verseNumber}`;
 		
 		// Build character to input mapping
 		const charMap = [];
@@ -126,6 +195,183 @@
 		}
 	}
 	
+	
+	function selectStage(stage) {
+		currentStage = stage;
+	}
+
+	function exit() {
+		dispatch('exit');
+	}
+	
+	function renderCharacter(char, charIndex) {
+		const map = charToInputIndex[charIndex];
+
+		if (map !== null) {
+			// Input-requiring character (Chinese or digit)
+			const expected = fullInitials[map];
+			let className = 'verse-character';
+			let hidden = false;
+			let intermediateHidden = false;
+
+			// Determine visibility based on stage
+			if (currentStage === 'intermediate') {
+				const isOdd = ((map + 1) % 2) === 1;
+				const visibleByVariant = (intermediateVariant === 'odd') ? isOdd : !isOdd;
+				if (!visibleByVariant) {
+					hidden = true;
+					intermediateHidden = true;
+				}
+			} else if (currentStage === 'advanced') {
+				hidden = true;
+			}
+
+			// If hidden, only reveal when user has typed that index
+			if (hidden) {
+				if (userInput.length > map) {
+					const inputMethod = $settings.inputMethod || 'pinyin';
+					const typedChar = inputMethod === 'pinyin' ? userInput[map].toLowerCase() : userInput[map];
+					const expectedChar = inputMethod === 'pinyin' ? expected.toLowerCase() : expected;
+					const isCorrect = typedChar === expectedChar;
+					return { char, className: className + (isCorrect ? ' correct' : ' incorrect'), hidden: false, intermediateHidden: false };
+				} else {
+					// Return different hidden state for intermediate vs advanced
+					if (intermediateHidden) {
+						return { char, className: className + ' intermediate-hidden', hidden: true, intermediateHidden: true };
+					} else {
+						return { char, className: className + ' hidden', hidden: true, intermediateHidden: false };
+					}
+				}
+			}
+
+			// Not hidden: mark correct/incorrect if user has typed
+			if (userInput.length > map) {
+				const inputMethod = $settings.inputMethod || 'pinyin';
+				const typedChar = inputMethod === 'pinyin' ? userInput[map].toLowerCase() : userInput[map];
+				const expectedChar = inputMethod === 'pinyin' ? expected.toLowerCase() : expected;
+				const isCorrect = typedChar === expectedChar;
+				className += isCorrect ? ' correct' : ' incorrect';
+			}
+
+			return { char, className, hidden: false, intermediateHidden: false };
+		} else {
+			// Punctuation/whitespace - complex visibility logic from LearningFlow
+			let className = 'verse-character punctuation';
+			let shown = false;
+
+			// Find nearest previous input-requiring character
+			let prevMap = null;
+			for (let k = charIndex - 1; k >= 0; k--) {
+				if (charToInputIndex[k] !== null) {
+					prevMap = charToInputIndex[k];
+					break;
+				}
+			}
+
+			const isInitialPunct = (prevMap === null);
+
+			// Show initial punctuation immediately in all modes
+			if (isInitialPunct) {
+				shown = true;
+				className = 'verse-character correct'; // Initial punctuation always shown as correct (white)
+			}
+
+			// Stage-specific logic for non-initial punctuation
+			if (!isInitialPunct) {
+				if (currentStage === 'basic') {
+					// Basic mode: show all punctuation, but only turn white after preceding char is typed
+					shown = true;
+					if (prevMap !== null && userInput.length > prevMap) {
+						className = 'verse-character punctuation correct';
+					} else {
+						className = 'verse-character punctuation';
+					}
+				} else if (currentStage === 'intermediate') {
+					// Intermediate: show if previous char is visible OR user has typed past it
+					const isOdd = ((prevMap + 1) % 2) === 1;
+					const visibleByVariant = (intermediateVariant === 'odd') ? isOdd : !isOdd;
+					if (visibleByVariant || (prevMap !== null && userInput.length > prevMap)) {
+						shown = true;
+						// Inherit opacity from preceding character
+						if (prevMap !== null && userInput.length > prevMap) {
+							className = 'verse-character punctuation correct';
+						} else {
+							// Preceding char is visible but not typed yet - use default opacity
+							className = 'verse-character punctuation';
+						}
+					}
+				} else if (currentStage === 'advanced') {
+					// Advanced: only show when user has typed past preceding character
+					if (prevMap !== null && userInput.length > prevMap) {
+						shown = true;
+						// Punctuation appears as correct (white) when revealed
+						className = 'verse-character punctuation correct';
+					} else {
+						// Not yet revealed - hide with opacity: 0
+						shown = false;
+						className = 'verse-character punctuation hidden';
+					}
+				}
+			}
+
+			return { char, className, hidden: !shown };
+		}
+	}
+	
+	function handlePhysicalKeyboard(e) {
+		if (!verse) return;
+		if (showResult) return;
+
+		// Backspace is disabled in practice mode
+		if (e.key === 'Backspace' || e.key === 'Delete') {
+			e.preventDefault();
+			return;
+		}
+
+		const inputMethod = $settings.inputMethod || 'pinyin';
+		const key = e.key.toLowerCase();
+		let mappedValue = '';
+
+		if (inputMethod === 'zhuyin') {
+			mappedValue = zhuyinKeyMap[key] || '';
+		} else if (inputMethod === 'cangjie') {
+			mappedValue = cangjieKeyMap[key] || '';
+		} else if (/^[a-z0-9]$/i.test(key)) {
+			mappedValue = key;
+		}
+
+		if (mappedValue) {
+			e.preventDefault();
+			
+			// Clear previous feedback before adding new input
+			pressedKey = null;
+			correctKey = null;
+			lastCorrectKey = null;
+			
+			// Determine what the expected key is at this position
+			const nextExpectedChar = fullInitials[userInput.length];
+			const normalizedKey = inputMethod === 'pinyin' ? mappedValue.toLowerCase() : mappedValue;
+			const normalizedExpected = inputMethod === 'pinyin' ? (nextExpectedChar || '').toLowerCase() : (nextExpectedChar || '');
+			
+			// Check if input is correct
+			if (normalizedKey === normalizedExpected) {
+				// Correct input - show success feedback
+				lastCorrectKey = key; // Use the physical key for highlighting
+			} else {
+				// Incorrect input - show error feedback
+				pressedKey = key; // Use the physical key for highlighting
+				correctKey = nextExpectedChar;
+				triggerErrorFeedback($settings);
+			}
+			
+			userInput += mappedValue;
+			
+			if (userInput.length === fullInitials.length) {
+				checkAnswer();
+			}
+		}
+	}
+	
 	function checkAnswer() {
 		// Calculate accuracy
 		let correct = 0;
@@ -144,124 +390,20 @@
 	}
 	
 	function retry() {
+		// In intermediate mode, toggle variant on retry
+		if (currentStage === 'intermediate') {
+			intermediateVariant = intermediateVariant === 'odd' ? 'even' : 'odd';
+		}
 		userInput = '';
 		showResult = false;
 		pressedKey = null;
 		correctKey = null;
 		lastCorrectKey = null;
-	}
-	
-	function advanceStage() {
-		if (accuracy >= 90) {
-			if (currentStage === 'basic') {
-				stageCompleteMessage = t('great_job_basic');
-				showStageCompleteModal = true;
-			} else if (currentStage === 'intermediate') {
-				stageCompleteMessage = t('great_job_intermediate');
-				showStageCompleteModal = true;
-			} else if (currentStage === 'advanced') {
-				// Practice complete!
-				stageCompleteMessage = t('great_job_continue');
-				showStageCompleteModal = true;
-			}
-		} else {
-			retry();
-		}
-	}
-	
-	function closeStageModal() {
-		showStageCompleteModal = false;
-		
-		if (currentStage === 'basic') {
-			currentStage = 'intermediate';
-		} else if (currentStage === 'intermediate') {
-			currentStage = 'advanced';
-		} else {
-			// Advanced complete - return to activity selection
-			dispatch('complete');
-		}
-	}
-	
-	function selectStage(stage) {
-		currentStage = stage;
-	}
-	
-	function exit() {
-		dispatch('exit');
-	}
-	
-	function renderCharacter(char, charIndex) {
-		const map = charToInputIndex[charIndex];
-		
-		if (map !== null) {
-			// Character requires input
-			const inputMethod = $settings.inputMethod || 'pinyin';
-			let className = 'verse-character';
-			
-			// Determine visibility based on stage
-			if (currentStage === 'basic') {
-				// Always show in basic
-				if (userInput.length > map) {
-					const typedChar = inputMethod === 'pinyin' ? userInput[map].toLowerCase() : userInput[map];
-					const expectedChar = inputMethod === 'pinyin' ? fullInitials[map].toLowerCase() : fullInitials[map];
-					const isCorrect = typedChar === expectedChar;
-					return { char, className: className + (isCorrect ? ' correct' : ' incorrect'), hidden: false };
-				}
-				return { char, className, hidden: false };
-			} else if (currentStage === 'intermediate') {
-				// Show odd characters (index 0, 2, 4...), hide even
-				const isOdd = map % 2 === 0;
-				if (isOdd) {
-					if (userInput.length > map) {
-						const typedChar = inputMethod === 'pinyin' ? userInput[map].toLowerCase() : userInput[map];
-						const expectedChar = inputMethod === 'pinyin' ? fullInitials[map].toLowerCase() : fullInitials[map];
-						const isCorrect = typedChar === expectedChar;
-						return { char, className: className + (isCorrect ? ' correct' : ' incorrect'), hidden: false };
-					}
-					return { char, className, hidden: false };
-				} else {
-					// Even index - show after typed
-					if (userInput.length > map) {
-						const typedChar = inputMethod === 'pinyin' ? userInput[map].toLowerCase() : userInput[map];
-						const expectedChar = inputMethod === 'pinyin' ? fullInitials[map].toLowerCase() : fullInitials[map];
-						const isCorrect = typedChar === expectedChar;
-						return { char, className: className + (isCorrect ? ' correct' : ' incorrect'), hidden: false };
-					}
-					return { char, className: className + ' hidden', hidden: true };
-				}
-			} else {
-				// Advanced - all hidden until typed
-				if (userInput.length > map) {
-					const typedChar = inputMethod === 'pinyin' ? userInput[map].toLowerCase() : userInput[map];
-					const expectedChar = inputMethod === 'pinyin' ? fullInitials[map].toLowerCase() : fullInitials[map];
-					const isCorrect = typedChar === expectedChar;
-					return { char, className: className + (isCorrect ? ' correct' : ' incorrect'), hidden: false };
-				}
-				return { char, className: className + ' hidden', hidden: true };
-			}
-		} else {
-			// Punctuation - always visible in basic, conditional in other stages
-			if (currentStage === 'basic') {
-				return { char, className: 'verse-punctuation', hidden: false };
-			} else {
-				// Reveal based on previous character typed
-				let prevCharInputIndex = null;
-				for (let i = charIndex - 1; i >= 0; i--) {
-					if (charToInputIndex[i] !== null) {
-						prevCharInputIndex = charToInputIndex[i];
-						break;
-					}
-				}
-				const shouldReveal = prevCharInputIndex !== null && userInput.length > prevCharInputIndex;
-				return {
-					char,
-					className: 'verse-punctuation' + (shouldReveal ? '' : ' hidden'),
-					hidden: !shouldReveal
-				};
-			}
-		}
+		scrollTrigger++; // Re-trigger autoscroll after retry
 	}
 </script>
+
+<svelte:document on:keydown={handlePhysicalKeyboard} />
 
 <div class="practice-classic-container">
 	<div class="header">
@@ -281,7 +423,13 @@
 		<button 
 			class="stage-button" 
 			class:active={currentStage === 'intermediate'}
-			on:click={() => selectStage('intermediate')}
+			on:click={() => {
+				if (currentStage === 'intermediate') {
+					toggleIntermediateVariant();
+				} else {
+					selectStage('intermediate');
+				}
+			}}
 		>
 			{t('intermediate')}
 		</button>
@@ -294,32 +442,50 @@
 		</button>
 	</div>
 	
-	<div class="verse-display">
-		{#each fullText.split('') as char, idx}
-			{@const rendered = renderCharacter(char, idx)}
-			<span class={rendered.className}>{rendered.char}</span>
-		{/each}
-	</div>
+	<!-- Verse Reference Header (fades out as user types) -->
+	{#if verse && formatVerseRef}
+		<div 
+			class="verse-reference-header" 
+			style="opacity: {verseSelectorOpacity}; transition: opacity 0.3s ease;"
+		>
+			{formatVerseRef(verse)}
+		</div>
+	{/if}
+	
+	{#key `${currentStage}-${intermediateVariant}-${userInput.length}`}
+		<div class="verse-display">
+			{#each fullText.split('') as char, idx}
+				{@const rendered = renderCharacter(char, idx)}
+				{#if rendered.hidden}
+					{#if rendered.intermediateHidden}
+						<!-- Intermediate mode: show full-width low line for hidden characters -->
+						<span class={rendered.className}>＿</span>
+					{:else}
+						<!-- Advanced mode: render character invisibly to maintain layout -->
+						<span class={rendered.className}>{rendered.char}</span>
+					{/if}
+				{:else}
+					<span class={rendered.className}>{rendered.char}</span>
+				{/if}
+			{/each}
+		</div>
+	{/key}
 	
 	{#if showResult}
 		<div class="result-panel">
 			<div class="accuracy-display">
 				{t('accuracy')}: {accuracy}%
 			</div>
-			<div class="result-buttons">
-				<button class="secondary-button" on:click={retry}>
-					{t('retry')}
-				</button>
-				<button 
-					class="primary-button"
-					on:click={advanceStage}
-				>
-					{accuracy >= 90 ? t('next') : t('retry')}
-				</button>
-			</div>
+			<button class="retry-button" on:click={retry}>
+				↺
+			</button>
 		</div>
 	{/if}
 	
+	<!-- Invisible viewport anchor for keyboard positioning -->
+	<div bind:this={viewportAnchor} class="viewport-anchor" aria-hidden="true"></div>
+	
+	{#if !showResult}
 	<div class="keyboard-space">
 		<Keyboard 
 			layout={keyboardLayout}
@@ -332,16 +498,8 @@
 			lastCorrectKey={lastCorrectKey}
 		/>
 	</div>
+	{/if}
 </div>
-
-<Modal show={showStageCompleteModal} type="success" on:close={closeStageModal}>
-	<div class="modal-content">
-		<p>{stageCompleteMessage}</p>
-		<button class="primary-button" on:click={closeStageModal}>
-			{t('ok')}
-		</button>
-	</div>
-</Modal>
 
 <style>
 	.practice-classic-container {
@@ -402,40 +560,74 @@
 		border-color: var(--accent-color);
 	}
 	
+	.verse-reference-header {
+		text-align: center;
+		font-size: 1em;
+		font-weight: 500;
+		color: var(--text-color);
+		margin-bottom: 1rem;
+		padding: 0.5rem;
+	}
+	
 	.verse-display {
-		flex: 1;
 		font-size: 1.5em;
 		line-height: 2;
 		padding: 1.5rem;
 		background: var(--panel-background);
 		border-radius: 8px;
 		margin-bottom: 1rem;
-		overflow-y: auto;
+		min-height: 150px;
+		font-weight: 500;
+		white-space: pre-line; /* Preserve newlines between verse text and reference */
+		width: 100%;
+		box-sizing: border-box;
 	}
 	
-	:global(.verse-character),
-	:global(.verse-punctuation) {
-		transition: opacity 0.1s;
+	:global(.verse-character) {
+		display: inline;
+		transition: all 0.3s;
+		opacity: 0.5;
 	}
 	
 	:global(.verse-character.correct) {
-		color: var(--text-color);
+		color: var(--correct-color);
 		opacity: 1;
 	}
 	
 	:global(.verse-character.incorrect) {
-		color: #f44336;
-		background: rgba(244, 67, 54, 0.1);
-		padding: 0 2px;
-		border-radius: 2px;
+		color: var(--error-color);
+		opacity: 1;
 	}
 	
-	:global(.verse-character.hidden),
-	:global(.verse-punctuation.hidden) {
+	:global(.verse-character.punctuation) {
+		/* Punctuation inherits opacity from preceding character */
+		opacity: 0.5;
+	}
+	
+	:global(.verse-character.punctuation.correct) {
+		/* When punctuation is revealed (preceding char typed), show as white */
+		color: var(--correct-color);
+		opacity: 1;
+	}
+	
+	:global(.verse-character.hidden) {
+		/* Advanced mode: completely invisible but still takes up space */
 		opacity: 0;
+		pointer-events: none;
+	}
+	
+	:global(.verse-character.intermediate-hidden) {
+		/* Intermediate mode: show underscore placeholder */
+		visibility: visible;
+		opacity: 0.5;
+		color: var(--text-color);
 	}
 	
 	.result-panel {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 1rem;
 		padding: 1rem;
 		background: var(--panel-background);
 		border-radius: 8px;
@@ -443,56 +635,33 @@
 	}
 	
 	.accuracy-display {
-		text-align: center;
 		font-size: 1.3em;
 		font-weight: 600;
-		margin-bottom: 1rem;
 		color: var(--accent-color);
 	}
 	
-	.result-buttons {
-		display: flex;
-		gap: 0.75rem;
-	}
-	
-	.primary-button,
-	.secondary-button {
-		flex: 1;
-		padding: 0.75rem;
+	.retry-button {
+		padding: 0.5rem 0.75rem;
 		border: none;
 		border-radius: 6px;
-		font-size: 1em;
+		font-size: 1.5em;
 		cursor: pointer;
-	}
-	
-	.primary-button {
 		background: var(--accent-color);
 		color: white;
+		line-height: 1;
 	}
 	
-	.secondary-button {
-		background: var(--panel-background);
-		color: var(--text-color);
-		border: 1px solid var(--border-color);
+	.viewport-anchor {
+		height: 0;
+		overflow: hidden;
 	}
 	
 	.keyboard-space {
 		margin-top: auto;
 	}
 	
-	.modal-content {
-		text-align: center;
-		padding: 1rem;
-	}
 	
-	.modal-content p {
-		margin-bottom: 1.5rem;
-		font-size: 1.1em;
-	}
 	
-	.modal-content .primary-button {
-		width: 100%;
-	}
 	
 	@media (max-width: 767px) {
 		.practice-classic-container {
@@ -500,7 +669,6 @@
 		}
 		
 		.verse-display {
-			font-size: 1.2em;
 			padding: 1rem;
 		}
 		
