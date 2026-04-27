@@ -15,6 +15,7 @@
 	import Collections from '$lib/components/Collections.svelte';
 	import ExportImport from '$lib/components/ExportImport.svelte';
 	import Stats from '$lib/components/Stats.svelte';
+	import Practice from '$lib/components/Practice.svelte';
 	import IconNav from '$lib/components/IconNav.svelte';
 	import MenuOverlay from '$lib/components/MenuOverlay.svelte';
 	import ShareOverlay from '$lib/components/ShareOverlay.svelte';
@@ -259,14 +260,11 @@
 		{#key $settings.languagePreference}
 			<Stats 
 				on:exit={() => currentPanel = 'learn'}
-				on:practice={() => alert(t('practice') + ' mode coming soon!')}
+				on:practice={() => currentPanel = 'practice'}
 			/>
 		{/key}
 	{:else if currentPanel === 'practice'}
-		<div class="panel">
-			<h2>{t('practice')}</h2>
-			<p style="color: var(--subtitle-color);">Practice panel coming soon...</p>
-		</div>
+		<Practice on:exit={() => currentPanel = 'learn'} />
 	{/if}
 	
 	<!-- Onboarding overlay (shown on first run) -->
