@@ -11,6 +11,8 @@
 	import SpeedChallengeVerse from './SpeedChallengeVerse.svelte';
 	import ReferenceQuiz from './ReferenceQuiz.svelte';
 	import PracticeClassic from './PracticeClassic.svelte';
+	import Reverse from './Reverse.svelte';
+	import BlindChallenge from './BlindChallenge.svelte';
 	
 	const dispatch = createEventDispatcher();
 	
@@ -41,7 +43,9 @@
 		{ id: 'reference-quiz', label: t('reference_quiz'), icon: '❓' }
 	] : [
 		{ id: 'classic', label: t('classic'), icon: '📖' },
-		{ id: 'speed-challenge', label: t('speed_challenge'), icon: '⚡' }
+		{ id: 'speed-challenge', label: t('speed_challenge'), icon: '⚡' },
+		{ id: 'reverse', label: t('reverse'), icon: '🔄' },
+		{ id: 'blind-challenge', label: t('blind_challenge'), icon: '🙈' }
 	];
 	
 	// Button handlers
@@ -319,6 +323,18 @@
 		/>
 	{:else if selectedActivity === 'classic'}
 		<PracticeClassic 
+			verse={selectedVerse}
+			on:complete={handleActivityComplete}
+			on:exit={handleActivityExit}
+		/>
+	{:else if selectedActivity === 'reverse'}
+		<Reverse 
+			verse={selectedVerse}
+			on:complete={handleActivityComplete}
+			on:exit={handleActivityExit}
+		/>
+	{:else if selectedActivity === 'blind-challenge'}
+		<BlindChallenge 
 			verse={selectedVerse}
 			on:complete={handleActivityComplete}
 			on:exit={handleActivityExit}

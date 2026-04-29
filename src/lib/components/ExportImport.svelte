@@ -2,6 +2,7 @@
 	import { createEventDispatcher } from 'svelte';
 	import { verses } from '$lib/stores/verses';
 	import { collections } from '$lib/stores/collections';
+	import { practice } from '$lib/stores/practice';
 	import { t } from '$lib/i18n';
 	import { parseImportPayload, mergeVerses, mergeCollections, buildExportPayload, applyConflictResolutions } from '$lib/utils/importExport';
 	import Modal from './Modal.svelte';
@@ -11,12 +12,12 @@
 	// Export state
 	let exportAllChecked = true;
 	let selectedCollectionIds = [];
-	let includeReview = true;
+	let includeUserData = true;
 	let includeCollections = true;
 	let hasInitialized = false; // Flag to prevent re-initialization
 
 	// Import state
-	let importIncludeReview = true;
+	let importIncludeUserData = true;
 	let importIncludeCollections = true;
 	let selectedFileName = '';
 	let fileInput;
@@ -159,9 +160,10 @@
 		const collectionIdsToExport = actualColIds.length > 0 ? actualColIds : [];
 
 		const payload = buildExportPayload(versesToExport, cols, {
-			includeReview,
+			includeReview: includeUserData,
 			includeCollections,
-			collectionIds: collectionIdsToExport
+			collectionIds: collectionIdsToExport,
+			practiceData: includeUserData ? $practice : null
 		});
 
 		const dataStr = JSON.stringify(payload, null, 2);
@@ -197,12 +199,12 @@
 		const reader = new FileReader();
 		reader.onload = (e) => {
 			try {
-				const { verses: importedVerses, collections: importedCollections } = parseImportPayload(
+				const { verses: importedVerses, collections: importedCollections, practiceData: importedPracticeData } = parseImportPayload(
 					e.target.result
 				);
 
 				const mergeResult = mergeVerses($verses, importedVerses, {
-					includeReview: importIncludeReview
+					includeReview: importIncludeUserData
 				});
 
 				// Check if there are conflicts
@@ -211,7 +213,8 @@
 					// Store data for later use
 					pendingImportData = {
 						mergedVerses: mergeResult.merged,
-						importedCollections
+						importedCollections,
+						importedPracticeData
 					};
 					conflicts = mergeResult.conflicts;
 					conflictResolutions = new Array(conflicts.length).fill(null);
@@ -219,7 +222,7 @@
 					showConflictModal = true;
 				} else {
 					// No conflicts - proceed with import
-					finishImport(mergeResult.merged, importedCollections);
+					finishImport(mergeResult.merged, importedCollections, importedPracticeData);
 				}
 			} catch (error) {
 				modalMessage = t('error_importing') + ': ' + error.message;
@@ -230,12 +233,17 @@
 		reader.readAsText(file);
 	}
 
-	function finishImport(mergedVerses, importedCollections) {
+	function finishImport(mergedVerses, importedCollections, importedPracticeData) {
 		verses.set(mergedVerses);
 
 		if (importIncludeCollections && importedCollections?.length) {
 			const mergedCollections = mergeCollections($collections, importedCollections, mergedVerses);
 			collections.set(mergedCollections);
+		}
+
+		// Import practice data (speed challenge times) if available
+		if (importIncludeUserData && importedPracticeData) {
+			practice.set(importedPracticeData);
 		}
 
 		modalMessage = t('import_successful');
@@ -267,7 +275,7 @@
 				conflictResolutions
 			);
 			showConflictModal = false;
-			finishImport(finalVerses, pendingImportData.importedCollections);
+			finishImport(finalVerses, pendingImportData.importedCollections, pendingImportData.importedPracticeData);
 			
 			// Reset conflict state
 			conflicts = [];
@@ -340,13 +348,13 @@
 
 		<div class="options">
 			<label class="checkbox-option">
-				<input type="checkbox" bind:checked={includeReview} />
-				<span>{t('include_review_data')}</span>
+				<input type="checkbox" bind:checked={includeCollections} />
+				<span>{t('include_collection_data')}</span>
 			</label>
 			
 			<label class="checkbox-option">
-				<input type="checkbox" bind:checked={includeCollections} />
-				<span>{t('include_collection_data')}</span>
+				<input type="checkbox" bind:checked={includeUserData} />
+				<span>{t('include_user_data')}</span>
 			</label>
 		</div>
 
@@ -376,13 +384,13 @@
 
 		<div class="options">
 			<label class="checkbox-option">
-				<input type="checkbox" bind:checked={importIncludeReview} />
-				<span>{t('import_review_data')}</span>
+				<input type="checkbox" bind:checked={importIncludeCollections} />
+				<span>{t('import_collection_data')}</span>
 			</label>
 			
 			<label class="checkbox-option">
-				<input type="checkbox" bind:checked={importIncludeCollections} />
-				<span>{t('import_collection_data')}</span>
+				<input type="checkbox" bind:checked={importIncludeUserData} />
+				<span>{t('import_user_data')}</span>
 			</label>
 		</div>
 

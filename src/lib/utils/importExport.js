@@ -5,12 +5,13 @@ function normalizeVerseNumbers(value) {
 export function parseImportPayload(payload) {
 	const parsed = typeof payload === 'string' ? JSON.parse(payload) : payload;
 	if (Array.isArray(parsed)) {
-		return { verses: parsed, collections: [], raw: parsed };
+		return { verses: parsed, collections: [], practiceData: null, raw: parsed };
 	}
 
 	return {
 		verses: parsed?.verses ?? [],
 		collections: parsed?.collections ?? [],
+		practiceData: parsed?.practiceData ?? null,
 		raw: parsed
 	};
 }
@@ -119,7 +120,7 @@ export function mergeCollections(currentCollections, importedCollections, verses
 }
 
 export function buildExportPayload(verses, collections, options = {}) {
-	const { includeReview = true, includeCollections = false, collectionIds = [] } = options;
+	const { includeReview = true, includeCollections = false, collectionIds = [], practiceData = null } = options;
 
 	const cleaned = verses.map((verse) => {
 		const entry = { ...verse };
@@ -155,13 +156,20 @@ export function buildExportPayload(verses, collections, options = {}) {
 		return { title: collection.title, verseRefs };
 	});
 
-	return {
+	const payload = {
 		type: 'cbm-export',
 		version: 2,
 		generatedAt: new Date().toISOString(),
 		verses: cleaned,
 		collections: collectionsExport
 	};
+
+	// Include practice data (speed challenge times) if review data is included
+	if (includeReview && practiceData) {
+		payload.practiceData = practiceData;
+	}
+
+	return payload;
 }
 
 /**

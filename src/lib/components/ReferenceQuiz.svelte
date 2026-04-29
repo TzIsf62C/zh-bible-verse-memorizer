@@ -1,11 +1,6 @@
 <script>
 	import { createEventDispatcher } from 'svelte';
-	import { settings } from '$lib/stores/settings';
 	import { t } from '$lib/i18n';
-	import Modal from './Modal.svelte';
-	import Keyboard from './Keyboard.svelte';
-	import { keyboardLayouts } from '$lib/utils/keyboardLayouts';
-	import { triggerErrorFeedback } from '$lib/utils/feedback';
 
 	export let verses = [];
 
@@ -14,18 +9,7 @@
 	// Quiz state
 	let shuffledVerses = [];
 	let currentIndex = 0;
-	let userInput = '';
-	let showFeedback = false;
-	let feedbackCorrect = false;
-	let allSameBook = false;
-	let expectedInput = '';
-	
-	// Keyboard feedback
-	let keyboardLayout = keyboardLayouts.pinyinCompact;
-	let isNumericKeyboard = false;
-	let pressedKey = null;
-	let correctKey = null;
-	let lastCorrectKey = null;
+	let revealed = false;
 	
 	// Completion modal
 	let showCompletionModal = false;
@@ -37,36 +21,9 @@
 		}
 	}
 	
-	// Update keyboard layout based on next character
-	$: {
-		const nextCharIndex = userInput.length;
-		const isNextCharNumber = nextCharIndex < expectedInput.length && /[0-9:]/.test(expectedInput[nextCharIndex]);
-		
-		if (isNextCharNumber) {
-			keyboardLayout = keyboardLayouts.numericCompact;
-			isNumericKeyboard = true;
-		} else {
-			const inputMethod = $settings.inputMethod || 'pinyin';
-			const layoutMap = {
-				pinyin: keyboardLayouts.pinyinCompact,
-				zhuyin: keyboardLayouts.zhuyinCompact,
-				cangjie: keyboardLayouts.cangjieCompact
-			};
-			keyboardLayout = layoutMap[inputMethod] || keyboardLayouts.pinyinCompact;
-			isNumericKeyboard = false;
-		}
-	}
-	
 	function initializeQuiz() {
 		// Shuffle verses
 		shuffledVerses = shuffleArray([...verses]);
-		
-		// Check if all verses are from same book
-		const books = new Set(verses.map(v => v.bookName));
-		allSameBook = books.size === 1;
-		
-		// Set expected input for first verse
-		updateExpectedInput();
 	}
 	
 	function shuffleArray(array) {
@@ -78,85 +35,34 @@
 		return arr;
 	}
 	
-	function updateExpectedInput() {
-		const verse = shuffledVerses[currentIndex];
-		if (!verse) return;
-		
-		if (allSameBook) {
-			// Only chapter:verse (e.g., "3:16")
-			expectedInput = `${verse.chapterNumber}:${verse.verseNumber}`;
-		} else {
-			// Full reference with book initials (e.g., "yhfy3:16")
-			expectedInput = `${verse.bookInitials}${verse.chapterNumber}:${verse.verseNumber}`;
-		}
+	function revealAnswer() {
+		revealed = true;
 	}
 	
-	function handleKeyInput(event) {
-		const key = event.detail;
-		
-		// Clear previous feedback
-		pressedKey = null;
-		correctKey = null;
-		lastCorrectKey = null;
-		
-		// Special handling for colon key - allow both : and the actual character
-		const inputMethod = $settings.inputMethod || 'pinyin';
-		const nextExpectedChar = expectedInput[userInput.length];
-		
-		let normalizedKey = key;
-		let normalizedExpected = nextExpectedChar;
-		
-		// For numbers and colons, exact match
-		if (/[0-9:]/.test(nextExpectedChar)) {
-			normalizedKey = key;
-			normalizedExpected = nextExpectedChar;
-		} else {
-			// For initials, apply pinyin lowercase
-			normalizedKey = inputMethod === 'pinyin' ? key.toLowerCase() : key;
-			normalizedExpected = inputMethod === 'pinyin' 
-				? nextExpectedChar.toLowerCase() 
-				: nextExpectedChar;
-		}
-		
-		if (normalizedKey === normalizedExpected) {
-			// Correct
-			lastCorrectKey = key;
-			userInput += key;
-			
-			// Check if complete
-			if (userInput === expectedInput) {
-				showCorrectFeedback();
-			}
-		} else {
-			// Incorrect
-			pressedKey = key;
-			correctKey = nextExpectedChar;
-			triggerErrorFeedback($settings);
-		}
-	}
-	
-	function showCorrectFeedback() {
-		feedbackCorrect = true;
-		showFeedback = true;
-		
-		// Auto-advance after short delay
-		setTimeout(() => {
-			showFeedback = false;
-			nextVerse();
-		}, 800);
-	}
-	
-	function nextVerse() {
+	function markCorrect() {
+		// Move to next verse (marks as practiced)
 		if (currentIndex < shuffledVerses.length - 1) {
 			currentIndex++;
-			userInput = '';
-			updateExpectedInput();
-			pressedKey = null;
-			correctKey = null;
-			lastCorrectKey = null;
+			revealed = false;
 		} else {
 			// Quiz complete
 			showCompletionModal = true;
+		}
+	}
+	
+	function markIncorrect() {
+		// Shuffle verse back into the array (add to end)
+		const currentVerse = shuffledVerses[currentIndex];
+		shuffledVerses = [...shuffledVerses, currentVerse];
+		
+		// Move to next verse
+		if (currentIndex < shuffledVerses.length - 1) {
+			currentIndex++;
+			revealed = false;
+		} else {
+			// All verses shown, but added one back so continue
+			currentIndex++;
+			revealed = false;
 		}
 	}
 	
@@ -179,70 +85,43 @@
 		<div class="progress">{progress}</div>
 	</div>
 	
-	{#if allSameBook && currentVerse}
-		<div class="hint">
-			<span class="hint-label">{t('chinese_book_name')}:</span>
-			<span class="hint-value">{currentVerse.bookName}</span>
-		</div>
-	{/if}
-	
 	<div class="instructions">
-		{t('enter_reference')}
+		{t('try_recall_reference')}
 	</div>
 	
 	{#if currentVerse}
 		<div class="verse-text">
 			{currentVerse.verseText}
 		</div>
-	{/if}
-	
-	<div class="input-display">
-		<div class="expected-format">
-			{#if allSameBook}
-				<span class="format-label">{t('chapter')}:{t('verse')}</span>
+		
+		<div class="reference-display">
+			{#if revealed}
+				<div class="reference-answer">
+					{currentVerse.bookName} {currentVerse.chapterNumber}:{currentVerse.verseNumber}
+				</div>
 			{:else}
-				<span class="format-label">{t('chinese_book_name')} {t('chapter')}:{t('verse')}</span>
+				<div class="reference-hidden">
+					{t('reference_hidden')}
+				</div>
 			{/if}
 		</div>
 		
-		<div class="user-input-text">
-			{#each expectedInput.split('') as char, idx}
-				{#if idx < userInput.length}
-					{@const typedChar = userInput[idx]}
-					{@const isCorrect = typedChar === char}
-					<span class="input-char" class:correct={isCorrect} class:incorrect={!isCorrect}>
-						{char}
-					</span>
-				{:else}
-					<span class="input-char placeholder">_</span>
-				{/if}
-			{/each}
+		<div class="button-group">
+			{#if !revealed}
+				<button class="secondary-button" on:click={revealAnswer}>
+					{t('reveal_answer')}
+				</button>
+			{:else}
+				<button class="incorrect-button" on:click={markIncorrect}>✗</button>
+				<button class="correct-button" on:click={markCorrect}>✓</button>
+			{/if}
 		</div>
-		
-		{#if showFeedback && feedbackCorrect}
-			<div class="feedback correct-feedback">
-				✓ {t('correct_reference')}
-			</div>
-		{/if}
-	</div>
-	
-	<div class="keyboard-space">
-		<Keyboard 
-			layout={keyboardLayout}
-			on:key={handleKeyInput}
-			showBackspace={false}
-			showEnter={false}
-			isNumeric={isNumericKeyboard}
-			pressedKey={pressedKey}
-			correctKey={correctKey}
-			lastCorrectKey={lastCorrectKey}
-		/>
-	</div>
+	{/if}
 </div>
 
 {#if showCompletionModal}
-	<Modal show={true} type="success" on:close={done}>
-		<div class="completion-content">
+	<div class="modal-overlay" on:click={done} on:keydown={(e) => e.key === 'Escape' && done()} role="button" tabindex="0">
+		<div class="modal-content" on:click|stopPropagation on:keydown|stopPropagation role="dialog" aria-modal="true" tabindex="-1">
 			<h3>{t('reference_quiz')} {t('finish')}</h3>
 			<p>{t('congratulations_reviewed_count').replace('{count}', verses.length)}</p>
 			
@@ -250,23 +129,22 @@
 				{t('done')}
 			</button>
 		</div>
-	</Modal>
+	</div>
 {/if}
 
 <style>
 	.reference-quiz-container {
 		display: flex;
 		flex-direction: column;
-		height: 100vh;
+		height: 80vh;
 		padding: 1rem;
-		overflow-y: auto;
+		gap: 1.5rem;
 	}
 	
 	.header {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		margin-bottom: 1rem;
 	}
 	
 	.exit-button {
@@ -292,30 +170,9 @@
 		text-align: right;
 	}
 	
-	.hint {
-		display: flex;
-		gap: 0.5rem;
-		justify-content: center;
-		padding: 0.5rem;
-		background: var(--accent-color-light, rgba(76, 175, 80, 0.1));
-		border-radius: 6px;
-		margin-bottom: 1rem;
-	}
-	
-	.hint-label {
-		color: var(--subtitle-color);
-		font-size: 0.9em;
-	}
-	
-	.hint-value {
-		font-weight: 600;
-		color: var(--text-color);
-	}
-	
 	.instructions {
 		text-align: center;
 		color: var(--subtitle-color);
-		margin-bottom: 1rem;
 		font-size: 0.95em;
 	}
 	
@@ -327,69 +184,81 @@
 		background: var(--panel-background);
 		border-radius: 8px;
 		text-align: center;
-		margin-bottom: 1.5rem;
-	}
-	
-	.input-display {
-		margin-bottom: 1.5rem;
-	}
-	
-	.expected-format {
-		text-align: center;
-		color: var(--subtitle-color);
-		font-size: 0.85em;
-		margin-bottom: 0.5rem;
-	}
-	
-	.user-input-text {
-		display: flex;
-		justify-content: center;
-		gap: 0.25rem;
-		font-size: 1.5em;
-		font-family: monospace;
-		min-height: 2em;
-		align-items: center;
-	}
-	
-	.input-char {
-		width: 1.2em;
-		height: 1.5em;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		border-radius: 4px;
 	}
 	
-	.input-char.placeholder {
-		color: var(--subtitle-color);
-		opacity: 0.3;
-	}
-	
-	.input-char.correct {
-		color: var(--text-color);
-		background: var(--accent-color-light, rgba(76, 175, 80, 0.1));
-	}
-	
-	.input-char.incorrect {
-		color: #f44336;
-		background: rgba(244, 67, 54, 0.1);
-	}
-	
-	.feedback {
+	.reference-display {
 		text-align: center;
-		margin-top: 1rem;
-		padding: 0.75rem;
-		border-radius: 6px;
+		min-height: 3em;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+	
+	.reference-answer {
+		font-size: 1.3em;
 		font-weight: 600;
-	}
-	
-	.correct-feedback {
 		color: var(--accent-color);
+		padding: 1rem;
 		background: var(--accent-color-light, rgba(76, 175, 80, 0.1));
+		border-radius: 8px;
 	}
 	
-	.keyboard-space {
-		margin-top: auto;
+	.reference-hidden {
+		font-size: 1.1em;
+		color: var(--subtitle-color);
+		font-style: italic;
+	}
+	
+	.button-group {
+		display: flex;
+		gap: 1rem;
+	}
+	
+	.primary-button,
+	.secondary-button,
+	.incorrect-button,
+	.correct-button {
+		flex: 1;
+		padding: 1rem;
+		border: none;
+		border-radius: 8px;
+		font-size: 1em;
+		font-weight: 600;
+		cursor: pointer;
+		transition: transform 0.1s;
+	}
+	
+	.primary-button {
+		background: var(--accent-color);
+		color: white;
+	}
+	
+	.secondary-button {
+		background: var(--panel-background);
+		color: var(--text-color);
+		border: 2px solid var(--accent-color);
+	}
+	
+	.incorrect-button {
+		background: #f44336;
+		color: white;
+		font-size: 1.5em;
+	}
+	
+	.correct-button {
+		background: #4CAF50;
+		color: white;
+		font-size: 1.5em;
+	}
+	
+	.primary-button:active,
+	.secondary-button:active,
+	.incorrect-button:active,
+	.correct-button:active {
+		transform: scale(0.98);
 	}
 	
 	.completion-content {
@@ -405,29 +274,56 @@
 		margin-bottom: 1.5rem;
 	}
 	
-	.primary-button {
+	.completion-content .primary-button {
 		width: 100%;
-		padding: 0.75rem;
-		background: var(--accent-color);
-		color: white;
-		border: none;
-		border-radius: 6px;
-		font-size: 1em;
-		cursor: pointer;
+	}
+	
+	.modal-overlay {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background: rgba(0, 0, 0, 0.7);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		z-index: 1000;
+	}
+	
+	.modal-content {
+		background: var(--app-background);
+		padding: 2rem;
+		border-radius: 12px;
+		max-width: 400px;
+		width: 90%;
+		text-align: center;
+	}
+	
+	.modal-content h3 {
+		margin: 0 0 1rem 0;
+		color: var(--accent-color);
+	}
+	
+	.modal-content p {
+		margin: 1rem 0;
+		color: var(--text-color);
+		font-size: 1.1em;
+	}
+	
+	.modal-content .primary-button {
+		margin-top: 1rem;
+		width: 100%;
 	}
 	
 	@media (max-width: 767px) {
 		.reference-quiz-container {
 			padding: 0.5rem;
+			gap: 1rem;
 		}
 		
 		.verse-text {
-			font-size: 1.2em;
 			padding: 1rem;
-		}
-		
-		.user-input-text {
-			font-size: 1.2em;
 		}
 	}
 </style>

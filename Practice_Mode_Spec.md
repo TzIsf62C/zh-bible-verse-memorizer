@@ -60,7 +60,7 @@ The app displays each verse reference one at a time. The user enters only the fi
 
 ### Reference Quiz
 
-The app randomly selects a verse from the collection and displays only the verse text, without the reference. The user types the reference. The app continues until every verse in the collection has been selected once, with no long-term data stored for this activity. If all of the verses in a collection are from the same book, the user is only tested on the chapter and verse numbers.
+The app randomly selects a verse from the collection and displays only the verse text, without the reference. The user is challenged to remember the reference and clicks a button to reveal the answer. The app continues until every verse in the collection has been selected once, with no long-term data stored for this activity. 
 
 ## Verse Activities
 
@@ -74,10 +74,10 @@ This version of Speed Challenge is for a single verse and includes both verse te
 
 ### Reverse
 
-Reverse is a character-by-character backward build. The app shows the last character of the verse first, then the user enters the initial and the character changes color to provide feedback. Then after a short pause, the app shows the second-to-last character plus a blank, and the user types the initial for the shown character and also for the character represented by the blank. As input is typed the visible character changes color and the blank is replaced with a visible character (like intermediate difficulty LearningFlow). When all blanks have become characters, after a pause the third to last character is shown followed by two blanks. This continues until the full verse is reconstructed. Feedback should remain color-coded for both text and keyboard input.
+Reverse is a character-by-character backward build. The app shows the last character of the verse first, then the user enters the initial and the character changes color to provide feedback. Then after a short pause, the app shows the second-to-last character plus a blank, and the user types the initial for the shown character and also for the character represented by the blank. As input is typed the visible character changes color and the blank is replaced with a visible character (like intermediate difficulty LearningFlow). When all blanks have become characters, after a pause the third to last character is shown followed by two blanks. This continues until the full verse is reconstructed (Verse Reference + Verse Text). Feedback should remain color-coded for both text and keyboard input.
 
 ### Blind Challenge
 
-Blind Challenge hides character-level correctness until the full verse is entered. Each typed character is represented onscreen as `* * * *`, while the keyboard gives feedback as though the input were correct so the user can keep their place. Once the final input matches the full expected verse length, the app reveals the complete verse text at once along with color-coded feedback and an accuracy score.
+Blind Challenge, displays the verse reference and prompts the user to enter the verse text. This activity hides character-level correctness until the full verse text is entered. Each typed character is represented onscreen as `* * * *`, while the keyboard gives feedback as though the input were correct so the user can keep their place. Once the final input matches the full expected verse length, the app reveals the complete verse text at once along with color-coded feedback and an accuracy score.
 
 ```

@@ -82,7 +82,7 @@ BASE_PATH='' npm run build
 cd build && cp 404.html index.html && cd ..
 
 # 2. Update service worker version in static/sw.js
-# Change: const CACHE_NAME = 'zh-bible-memorizer-v0.9.6';
+# Change: const CACHE_NAME = 'zh-bible-memorizer-v0.9.8.2';
 
 # 3. Restart server (if needed)
 pkill -f "python3 -m http.server 8080"
