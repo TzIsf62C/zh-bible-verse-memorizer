@@ -13,6 +13,8 @@
 	import PracticeClassic from './PracticeClassic.svelte';
 	import Reverse from './Reverse.svelte';
 	import BlindChallenge from './BlindChallenge.svelte';
+	import ReverseByVerse from './ReverseByVerse.svelte';
+	import FirstAndLast from './FirstAndLast.svelte';
 	
 	const dispatch = createEventDispatcher();
 	
@@ -40,7 +42,9 @@
 	// Activity choices based on practice type
 	$: activityChoices = practiceType === 'collection' ? [
 		{ id: 'speed-challenge', label: t('speed_challenge'), icon: 'lightning' },
-		{ id: 'reference-quiz', label: t('reference_quiz'), icon: 'question' }
+		{ id: 'reference-quiz', label: t('reference_quiz'), icon: 'question' },
+		{ id: 'reverse-by-verse', label: t('reverse_by_verse'), icon: 'layers' },
+		{ id: 'first-and-last', label: t('first_and_last'), icon: 'brackets' }
 	] : [
 		{ id: 'classic', label: t('classic'), icon: 'book-open' },
 		{ id: 'speed-challenge', label: t('speed_challenge'), icon: 'lightning' },
@@ -54,7 +58,9 @@
 		'lightning': '<path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>',
 		'arrows-reverse': '<path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3"/>',
 		'eye-off': '<path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"/>',
-		'question': '<path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"/>'
+		'question': '<path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"/>',
+		'layers': '<path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z"/>',
+		'brackets': '<path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21V3M16.5 21V3M3 7.5h4.5M3 16.5h4.5M16.5 7.5H21M16.5 16.5H21"/>'
 	};
 	
 	// Button handlers
@@ -357,6 +363,20 @@
 			on:complete={handleActivityComplete}
 			on:exit={handleActivityExit}
 		/>
+	{:else if selectedActivity === 'reverse-by-verse'}
+		<ReverseByVerse 
+			collection={selectedCollection}
+			verses={collectionVerses}
+			on:complete={handleActivityComplete}
+			on:exit={handleActivityExit}
+		/>
+	{:else if selectedActivity === 'first-and-last'}
+		<FirstAndLast 
+			collection={selectedCollection}
+			verses={collectionVerses}
+			on:complete={handleActivityComplete}
+			on:exit={handleActivityExit}
+		/>
 	{/if}
 {/if}
 
@@ -540,6 +560,7 @@
 		width: 3rem;
 		height: 3rem;
 		flex-shrink: 0;
+		color: var(--text-color);
 	}
 	
 	.activity-label {

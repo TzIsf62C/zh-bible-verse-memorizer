@@ -552,7 +552,6 @@
 	.heat-char {
 		display: inline-block;
 		padding: 0.1em 0.05em;
-		border-radius: 4px;
 		transition: background-color 0.2s ease;
 	}
 

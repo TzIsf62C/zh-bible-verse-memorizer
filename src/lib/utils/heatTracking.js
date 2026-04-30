@@ -171,8 +171,8 @@ export function buildCorrectnessMap(
  * 
  * Gradient: Cyan (high scores) to Vivid Coral (low scores)
  * - Score 99: Cyan rgb(0, 255, 255)
- * - Score 60 and below: Vivid Coral rgb(255, 99, 71)
- * - Scores 61-98: Linear interpolation between cyan and coral
+ * - Score 70 and below: Vivid Coral rgb(255, 99, 71)
+ * - Scores 71-98: Linear interpolation between cyan and coral
  * 
  * @param {number} score - Heat score (0-99)
  * @returns {string} CSS rgb color string
@@ -181,14 +181,14 @@ export function getHeatColor(score) {
 	if (score >= 99) {
 		// Perfect: cyan
 		return 'rgb(0, 255, 255)';
-	} else if (score <= 60) {
+	} else if (score <= 70) {
 		// Low score: vivid coral
 		return 'rgb(255, 99, 71)';
 	} else {
-		// 61-98: linear interpolation from coral to cyan
-		// At score 61: nearly coral
+		// 71-98: linear interpolation from coral to cyan
+		// At score 71: nearly coral
 		// At score 98: nearly cyan
-		const t = (score - 60) / 39; // 0 at score 60, 1 at score 99
+		const t = (score - 71) / 27; // 0 at score 71, 1 at score 98
 		
 		// Interpolate between coral (255, 99, 71) and cyan (0, 255, 255)
 		const r = Math.round(255 * (1 - t) + 0 * t);
