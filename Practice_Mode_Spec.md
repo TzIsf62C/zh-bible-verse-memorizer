@@ -56,7 +56,7 @@ Typing feedback should work the same way as in other modes, with colored text an
 
 ### First & Last
 
-The app displays each verse reference one at a time. The user enters only the first and last characters of the verse text, while the middle portion is represented visually by a six-dot ellipsis. This activity is intended to strengthen recall of verse structure without requiring full-text typing.
+The app displays each verse reference one at a time. The user enters only the first and last characters of the verse text, while the middle portion is represented visually by a six-dot ellipsis. This activity is intended to strengthen recall of passage structure without requiring full-text typing.
 
 ### Reference Quiz
 

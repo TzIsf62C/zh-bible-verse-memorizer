@@ -15,7 +15,7 @@
 	// Input state
 	let userInput = '';
 	let verseInitials = '';
-	let charToInputIndex = [];
+	let verseCharacters = []; // Array of Chinese characters (excluding punctuation)
 	let isComplete = false;
 	
 	// Keyboard feedback (always show as correct during typing)
@@ -26,32 +26,24 @@
 	// Completion state
 	let showResult = false;
 	let accuracyScore = 0;
-	let correctCount = 0;
-	let totalCount = 0;
+	let alignmentData = null; // Stores the alignment result for display
 	
 	// Verse reference formatter
 	$: formatVerseRef = createVerseReferenceFormatter($verses);
 	
-	// Build character to input index mapping
+	// Build verse data
 	$: {
 		if (verse) {
 			verseInitials = verse.verseInitials;
 			
-			// Build char to input index mapping (skip punctuation)
-			const charMap = [];
-			let inputIdx = 0;
-			
+			// Extract Chinese characters (excluding punctuation) for alignment display
+			verseCharacters = [];
 			for (let i = 0; i < verse.verseText.length; i++) {
 				const char = verse.verseText[i];
 				if (/[\u4e00-\u9fa5]/.test(char) || /[0-9]/.test(char)) {
-					charMap.push(inputIdx);
-					inputIdx++;
-				} else {
-					charMap.push(null); // Punctuation - no input needed
+					verseCharacters.push(char);
 				}
 			}
-			
-			charToInputIndex = charMap;
 		}
 	}
 	
@@ -75,6 +67,129 @@
 		}
 	}
 	
+	/**
+	 * Align user input with expected verse initials using edit distance algorithm
+	 * Returns alignment data showing matches, mismatches, insertions, deletions
+	 */
+	function alignStrings(expected, userTyped, inputMethod) {
+		// Normalize for comparison
+		const normalize = (str) => inputMethod === 'pinyin' ? str.toLowerCase() : str;
+		const exp = normalize(expected);
+		const usr = normalize(userTyped);
+		
+		const m = exp.length;
+		const n = usr.length;
+		
+		// Dynamic programming table for edit distance
+		const dp = Array(m + 1).fill(null).map(() => Array(n + 1).fill(0));
+		const ops = Array(m + 1).fill(null).map(() => Array(n + 1).fill(null));
+		
+		// Initialize base cases
+		for (let i = 0; i <= m; i++) {
+			dp[i][0] = i; // Deletions
+			ops[i][0] = 'delete';
+		}
+		for (let j = 0; j <= n; j++) {
+			dp[0][j] = j; // Insertions
+			ops[0][j] = 'insert';
+		}
+		ops[0][0] = 'match';
+		
+		// Fill DP table
+		for (let i = 1; i <= m; i++) {
+			for (let j = 1; j <= n; j++) {
+				if (exp[i-1] === usr[j-1]) {
+					// Match
+					dp[i][j] = dp[i-1][j-1];
+					ops[i][j] = 'match';
+				} else {
+					// Find minimum cost operation
+					const substitute = dp[i-1][j-1] + 1;
+					const deleteOp = dp[i-1][j] + 1;
+					const insert = dp[i][j-1] + 1;
+					
+					const minCost = Math.min(substitute, deleteOp, insert);
+					dp[i][j] = minCost;
+					
+					if (minCost === substitute) {
+						ops[i][j] = 'substitute';
+					} else if (minCost === deleteOp) {
+						ops[i][j] = 'delete';
+					} else {
+						ops[i][j] = 'insert';
+					}
+				}
+			}
+		}
+		
+		// Backtrack to build alignment
+		const alignment = [];
+		let i = m, j = n;
+		
+		while (i > 0 || j > 0) {
+			const op = ops[i][j];
+			
+			if (op === 'match') {
+				alignment.unshift({
+					type: 'match',
+					expectedChar: exp[i-1],
+					expectedOriginal: expected[i-1],
+					userChar: usr[j-1],
+					userOriginal: userTyped[j-1],
+					verseChar: verseCharacters[i-1]
+				});
+				i--;
+				j--;
+			} else if (op === 'substitute') {
+				alignment.unshift({
+					type: 'mismatch',
+					expectedChar: exp[i-1],
+					expectedOriginal: expected[i-1],
+					userChar: usr[j-1],
+					userOriginal: userTyped[j-1],
+					verseChar: verseCharacters[i-1]
+				});
+				i--;
+				j--;
+			} else if (op === 'delete') {
+				alignment.unshift({
+					type: 'deletion',
+					expectedChar: exp[i-1],
+					expectedOriginal: expected[i-1],
+					userChar: null,
+					userOriginal: null,
+					verseChar: verseCharacters[i-1]
+				});
+				i--;
+			} else if (op === 'insert') {
+				alignment.unshift({
+					type: 'insertion',
+					expectedChar: null,
+					expectedOriginal: null,
+					userChar: usr[j-1],
+					userOriginal: userTyped[j-1],
+					verseChar: null
+				});
+				j--;
+			}
+		}
+		
+		// Calculate accuracy
+		const matches = alignment.filter(a => a.type === 'match').length;
+		const totalExpected = expected.length;
+		const accuracy = Math.round((matches / totalExpected) * 100);
+		
+		return {
+			alignment,
+			accuracy,
+			matches,
+			mismatches: alignment.filter(a => a.type === 'mismatch').length,
+			insertions: alignment.filter(a => a.type === 'insertion').length,
+			deletions: alignment.filter(a => a.type === 'deletion').length,
+			editDistance: dp[m][n]
+		};
+	}
+	
 	function handleKeyInput(event) {
 		if (isComplete) return;
 		
@@ -88,25 +203,13 @@
 	function completeChallenge() {
 		isComplete = true;
 		
-		// Calculate accuracy
+		// Align and score
 		const inputMethod = $settings.inputMethod || 'pinyin';
-		correctCount = 0;
-		totalCount = verseInitials.length;
+		const result = alignStrings(verseInitials, userInput, inputMethod);
 		
-		for (let i = 0; i < verseInitials.length; i++) {
-			const typedChar = inputMethod === 'pinyin' 
-				? userInput[i].toLowerCase() 
-				: userInput[i];
-			const expectedChar = inputMethod === 'pinyin' 
-				? verseInitials[i].toLowerCase() 
-				: verseInitials[i];
-			
-			if (typedChar === expectedChar) {
-				correctCount++;
-			}
-		}
+		alignmentData = result;
+		accuracyScore = result.accuracy;
 		
-		accuracyScore = Math.round((correctCount / totalCount) * 100);
 		showResult = true;
 	}
 	
@@ -121,8 +224,7 @@
 		isComplete = false;
 		lastCorrectKey = null;
 		accuracyScore = 0;
-		correctCount = 0;
-		totalCount = 0;
+		alignmentData = null;
 	}
 	
 	function done() {
@@ -131,42 +233,6 @@
 	
 	function exit() {
 		dispatch('exit');
-	}
-	
-	function renderCharacter(char, charIndex) {
-		const inputMethod = $settings.inputMethod || 'pinyin';
-		const map = charToInputIndex[charIndex];
-		
-		// Punctuation - hidden during typing, visible after completion
-		if (map === null) {
-			if (!isComplete) {
-				return { char, className: 'verse-punctuation hidden' };
-			}
-			return { char, className: 'verse-punctuation' };
-		}
-		
-		if (!isComplete) {
-			// During typing - show asterisks for typed characters
-			if (map < userInput.length) {
-				return { char: '*', className: 'verse-hidden' };
-			} else {
-				return { char, className: 'verse-character hidden' };
-			}
-		} else {
-			// After completion - show actual characters with color coding
-			const typedChar = inputMethod === 'pinyin' 
-				? userInput[map].toLowerCase() 
-				: userInput[map];
-			const expectedChar = inputMethod === 'pinyin' 
-				? verseInitials[map].toLowerCase() 
-				: verseInitials[map];
-			const isCorrect = typedChar === expectedChar;
-			
-			return { 
-				char, 
-				className: 'verse-character' + (isCorrect ? ' correct' : ' incorrect') 
-			};
-		}
 	}
 	
 	function handlePhysicalKeyboard(e) {
@@ -220,14 +286,35 @@
 		{t('blind_challenge_instructions')}
 	</div>
 	
-	<div class="verse-display">
-		{#key userInput}{#key isComplete}
-			{#each verse.verseText.split('') as char, idx}
-				{@const rendered = renderCharacter(char, idx)}
-				<span class={rendered.className}>{rendered.char}</span>
-			{/each}
-		{/key}{/key}
-	</div>
+	{#if !isComplete}
+		<!-- During typing: show asterisks -->
+		<div class="input-display">
+			<div class="input-text">{'*'.repeat(userInput.length) || ' '}</div>
+		</div>
+	{:else}
+		<!-- After submission: show interlinear alignment (verse char, user input below it) -->
+		<div class="alignment-display">
+			{#if alignmentData}
+				<div class="interlinear-container">
+					{#each alignmentData.alignment as item}
+						<div class="char-pair">
+							{#if item.type === 'insertion'}
+								<span class="verse-char gap">_</span>
+							{:else}
+								<span class="verse-char {item.type}">{item.verseChar}</span>
+							{/if}
+							
+							{#if item.type === 'deletion'}
+								<span class="input-char gap">_</span>
+							{:else}
+								<span class="input-char {item.type}">{item.userOriginal}</span>
+							{/if}
+						</div>
+					{/each}
+				</div>
+			{/if}
+		</div>
+	{/if}
 	
 	{#if showResult}
 		<div class="result-panel">
@@ -309,7 +396,7 @@
 		padding: 0.5rem;
 	}
 	
-	.verse-display {
+	.input-display {
 		min-height: 150px;
 		max-height: 300px;
 		font-size: 1.5em;
@@ -319,49 +406,104 @@
 		border-radius: 8px;
 		overflow-y: auto;
 		display: flex;
-		flex-wrap: wrap;
-		align-items: flex-start;
+		align-items: center;
 		justify-content: center;
 	}
 	
-	.verse-display :global(.verse-character) {
+	.input-text {
+		font-family: monospace;
+		letter-spacing: 0.1em;
+		color: var(--text-color);
+		min-height: 1.5em;
+		word-wrap: break-word;
+		word-break: break-all;
+		white-space: normal;
+		max-width: 100%;
+	}
+	
+	.alignment-display {
+		min-height: 150px;
+		max-height: 400px;
+		padding: 1.5rem;
+		background: var(--panel-background);
+		border-radius: 8px;
+		overflow-y: auto;
+	}
+	
+	.interlinear-container {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+		justify-content: flex-start;
+		align-items: flex-start;
+		padding: 0.5rem;
+	}
+	
+	.char-pair {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.25rem;
+		min-width: 2em;
+	}
+	
+	.alignment-row {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.2rem;
+		font-size: 1.5em;
+		line-height: 2;
+		justify-content: center;
+	}
+	
+	.verse-row {
+		border-bottom: 2px solid var(--subtitle-color);
+		padding-bottom: 0.5rem;
+	}
+	
+	.input-row {
+		padding-top: 0.5rem;
+	}
+	
+	.verse-char,
+	.input-char {
 		display: inline-block;
 		min-width: 1.2em;
 		text-align: center;
-		transition: color 0.3s;
+		font-weight: 500;
+		font-size: 1.3em;
+		line-height: 1.5;
 	}
 	
-	.verse-display :global(.verse-character.hidden) {
-		opacity: 0;
-		pointer-events: none;
-	}
-	
-	.verse-display :global(.verse-character.correct) {
+	.verse-char.match,
+	.input-char.match {
 		color: #4CAF50;
 	}
 	
-	.verse-display :global(.verse-character.incorrect) {
+	.verse-char.mismatch,
+	.input-char.mismatch {
 		color: #f44336;
+		font-weight: 700;
 	}
 	
-	.verse-display :global(.verse-hidden) {
+	.verse-char.deletion {
+		color: #f44336;
+		font-weight: 700;
+		background: rgba(244, 67, 54, 0.1);
+	}
+	
+	.input-char.insertion {
+		color: #f44336;
+		font-weight: 700;
+		background: rgba(244, 67, 54, 0.1);
+	}
+	
+	.gap {
 		display: inline-block;
 		min-width: 1.2em;
 		text-align: center;
 		color: var(--subtitle-color);
-		font-size: 0.8em;
-	}
-	
-	.verse-display :global(.verse-punctuation) {
-		display: inline-block;
-		min-width: 0.5em;
-		text-align: center;
-		color: var(--text-color);
-	}
-	
-	.verse-display :global(.verse-punctuation.hidden) {
-		opacity: 0;
-		pointer-events: none;
+		opacity: 0.3;
 	}
 	
 	.result-panel {
@@ -421,8 +563,12 @@
 			padding: 0.5rem;
 		}
 		
-		.verse-display {
+		.input-display,
+		.alignment-display {
 			padding: 1rem;
+		}
+		
+		.alignment-row {
 			font-size: 1.3em;
 		}
 	}

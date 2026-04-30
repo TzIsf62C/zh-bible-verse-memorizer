@@ -18,7 +18,7 @@
 	let fullText = '';
 	let fullInitials = '';
 	let charToInputIndex = [];
-	let revealedCount = 1; // Start with last character visible
+	let revealedCount = 0; // Start with all blanks
 	
 	// Keyboard feedback
 	let keyboardLayout = keyboardLayouts.pinyinCompact;
@@ -26,9 +26,18 @@
 	let pressedKey = null;
 	let correctKey = null;
 	let lastCorrectKey = null;
+	let phaseCompleteGlow = false; // For arrow glow effect
+	
+	// Accuracy tracking
+	let totalInputs = 0;
+	let correctInputs = 0;
 	
 	// Completion modal
 	let showCompletionModal = false;
+	
+	// Viewport scrolling for keyboard positioning
+	let viewportAnchor;
+	let scrollTrigger = 0;
 	
 	// Verse reference formatter
 	$: formatVerseRef = createVerseReferenceFormatter($verses);
@@ -85,6 +94,72 @@
 		charToInputIndex = charMap;
 	}
 	
+	// Check if current phase is complete (for glow effect)
+	$: {
+		if (userInput.length === revealedCount && revealedCount < fullInitials.length) {
+			// Phase complete - glow the left arrow
+			phaseCompleteGlow = true;
+			// Remove glow after 2 seconds
+			setTimeout(() => {
+				phaseCompleteGlow = false;
+			}, 2000);
+		} else {
+			phaseCompleteGlow = false;
+		}
+	}
+	
+	// Scroll viewport to position navigation controls above keyboard
+	$: {
+		if (viewportAnchor && verse && !showCompletionModal) {
+			const _ = scrollTrigger;
+			
+			setTimeout(() => {
+				const anchorRect = viewportAnchor.getBoundingClientRect();
+				const keyboard = viewportAnchor.nextElementSibling;
+				
+				if (keyboard) {
+					const keyboardRect = keyboard.getBoundingClientRect();
+					const scrollTarget = window.scrollY + (anchorRect.top - keyboardRect.top);
+					
+					window.scrollTo({ 
+						top: scrollTarget, 
+						behavior: 'smooth' 
+					});
+				}
+			}, 300);
+		}
+	}
+	
+	function advancePhase() {
+		if (revealedCount < fullInitials.length) {
+			revealedCount++;
+			userInput = '';
+			pressedKey = null;
+			correctKey = null;
+			lastCorrectKey = null;
+		} else if (revealedCount === fullInitials.length && userInput.length === revealedCount) {
+			// All phases complete - show completion modal
+			completeChallenge();
+		}
+	}
+	
+	function previousPhase() {
+		if (revealedCount > 1) {
+			revealedCount--;
+			userInput = '';
+			pressedKey = null;
+			correctKey = null;
+			lastCorrectKey = null;
+		}
+	}
+	
+	function retryPhase() {
+		userInput = '';
+		pressedKey = null;
+		correctKey = null;
+		lastCorrectKey = null;
+	}
+	
 	function handleKeyInput(event) {
 		const key = event.detail;
 		
@@ -108,17 +183,8 @@
 			// Correct
 			lastCorrectKey = key;
 			userInput += key;
-			
-			// Check if current section is complete
-			if (userInput.length === revealedCount) {
-				// Section complete - reveal next character after short pause
-				setTimeout(() => {
-					if (revealedCount < fullInitials.length) {
-						revealedCount++;
-						userInput = '';
-					}
-				}, 300);
-			}
+			totalInputs++;
+			correctInputs++;
 		} else {
 			// Incorrect
 			pressedKey = key;
@@ -127,22 +193,7 @@
 			
 			// Still add to input
 			userInput += key;
-			
-			// Check if current section is complete
-			if (userInput.length === revealedCount) {
-				// Section complete - reveal next character after short pause
-				setTimeout(() => {
-					if (revealedCount < fullInitials.length) {
-						revealedCount++;
-						userInput = '';
-					}
-				}, 300);
-			}
-		}
-		
-		// Check if complete (all characters revealed and typed)
-		if (revealedCount === fullInitials.length && userInput.length === revealedCount) {
-			completeChallenge();
+			totalInputs++;
 		}
 	}
 	
@@ -153,10 +204,12 @@
 	function tryAgain() {
 		showCompletionModal = false;
 		userInput = '';
-		revealedCount = 1;
+		revealedCount = 0;
 		pressedKey = null;
 		correctKey = null;
 		lastCorrectKey = null;
+		totalInputs = 0;
+		correctInputs = 0;
 	}
 	
 	function done() {
@@ -294,30 +347,17 @@
 			if (normalizedKey === normalizedExpected) {
 				// Correct input - show success feedback
 				lastCorrectKey = key; // Use the physical key for highlighting
+				totalInputs++;
+				correctInputs++;
 			} else {
 				// Incorrect input
 				pressedKey = key; // Use the physical key for highlighting
 				correctKey = nextExpectedChar;
 				triggerErrorFeedback($settings);
+				totalInputs++;
 			}
 			
 			userInput += mappedValue;
-			
-			// Check if current section is complete
-			if (userInput.length === revealedCount) {
-				// Section complete - reveal next character after short pause
-				setTimeout(() => {
-					if (revealedCount < fullInitials.length) {
-						revealedCount++;
-						userInput = '';
-					}
-				}, 300);
-			}
-			
-			// Check if complete (all characters revealed and typed)
-			if (revealedCount === fullInitials.length && userInput.length === revealedCount) {
-				completeChallenge();
-			}
 		}
 	}
 </script>
@@ -350,6 +390,21 @@
 		{/key}{/key}
 	</div>
 	
+	<div class="navigation-controls">
+		<button class="nav-button next-button {phaseCompleteGlow ? 'glow' : ''}" on:click={advancePhase}>
+			←
+		</button>
+		<button class="nav-button retry-button" on:click={retryPhase}>
+			↺
+		</button>
+		<button class="nav-button prev-button" on:click={previousPhase} disabled={revealedCount <= 0}>
+			→
+		</button>
+	</div>
+	
+	<!-- Invisible viewport anchor for keyboard positioning -->
+	<div bind:this={viewportAnchor} class="viewport-anchor" aria-hidden="true"></div>
+	
 	<div class="keyboard-space">
 		<Keyboard 
 			layout={keyboardLayout}
@@ -369,6 +424,14 @@
 		<div class="modal-content" on:click|stopPropagation on:keydown|stopPropagation role="dialog" aria-modal="true" tabindex="-1">
 			<h3>{t('reverse')} {t('finish')}</h3>
 			<p>{t('congratulations_practice')}</p>
+			
+			{#if totalInputs > 0}
+				<div class="accuracy-display">
+					<div class="accuracy-label">{t('accuracy')}</div>
+					<div class="accuracy-value">{Math.round((correctInputs / totalInputs) * 100)}%</div>
+					<div class="accuracy-detail">{correctInputs} / {totalInputs} {t('correct')}</div>
+				</div>
+			{/if}
 			
 			<div class="button-group">
 				<button class="secondary-button" on:click={tryAgain}>
@@ -483,6 +546,60 @@
 		pointer-events: none;
 	}
 	
+	.navigation-controls {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 2rem;
+		padding: 1rem;
+	}
+	
+	.nav-button {
+		padding: 0.75rem 1.5rem;
+		border: 2px solid var(--accent-color);
+		border-radius: 8px;
+		font-size: 1.5em;
+		cursor: pointer;
+		background: var(--panel-background);
+		color: var(--text-color);
+		transition: all 0.3s ease;
+		min-width: 60px;
+	}
+	
+	.nav-button:hover:not(:disabled) {
+		background: var(--accent-color);
+		color: white;
+		transform: scale(1.05);
+	}
+	
+	.nav-button:disabled {
+		opacity: 0.3;
+		cursor: not-allowed;
+	}
+	
+	.nav-button.glow {
+		background: var(--accent-color);
+		color: white;
+		box-shadow: 0 0 20px var(--accent-color);
+		animation: pulse 1s ease-in-out infinite;
+	}
+	
+	@keyframes pulse {
+		0%, 100% {
+			box-shadow: 0 0 20px var(--accent-color);
+			transform: scale(1);
+		}
+		50% {
+			box-shadow: 0 0 30px var(--accent-color);
+			transform: scale(1.05);
+		}
+	}
+	
+	.retry-button {
+		font-size: 1.8em;
+		padding: 0.6rem 1.2rem;
+	}
+	
 	.keyboard-space {
 		margin-top: auto;
 	}
@@ -553,6 +670,32 @@
 		transform: scale(0.98);
 	}
 	
+	.accuracy-display {
+		margin: 1.5rem 0;
+		padding: 1.5rem;
+		background: var(--panel-background);
+		border-radius: 8px;
+		text-align: center;
+	}
+	
+	.accuracy-label {
+		font-size: 0.9em;
+		color: var(--subtitle-color);
+		margin-bottom: 0.5rem;
+	}
+	
+	.accuracy-value {
+		font-size: 2.5em;
+		font-weight: bold;
+		color: var(--accent-color);
+		margin-bottom: 0.25rem;
+	}
+	
+	.accuracy-detail {
+		font-size: 0.9em;
+		color: var(--subtitle-color);
+	}
+	
 	@media (max-width: 767px) {
 		.reverse-container {
 			padding: 0.5rem;
@@ -562,5 +705,25 @@
 			padding: 1rem;
 			font-size: 1.3em;
 		}
+		
+		.navigation-controls {
+			gap: 1rem;
+			padding: 0.5rem;
+		}
+		
+		.nav-button {
+			padding: 0.6rem 1.2rem;
+			font-size: 1.3em;
+			min-width: 50px;
+		}
+	}
+	
+	.viewport-anchor {
+		height: 1px;
+		width: 100%;
+		visibility: hidden;
+		pointer-events: none;
+		margin: 0;
+		padding: 0;
 	}
 </style>
