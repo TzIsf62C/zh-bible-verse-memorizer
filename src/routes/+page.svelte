@@ -26,8 +26,8 @@
 	let showMenu = false;
 	let showShare = false;
 	let showOnboarding = false;
-	let selectedPracticeVerseId = null; // For \"Practice Now\" from Stats
-
+	let selectedPracticeVerseId = null; // For "Practice Now" from Stats
+	let statsKey = null; // For forcing Stats to show heat maps view
 	let keyboardInput = '';
 	let keyboardLayout = keyboardLayouts.pinyin;
 	let removeListener = () => {};
@@ -129,6 +129,15 @@
 		if (panelId === 'share') {
 			showShare = true;
 			showMenu = false;
+			return;
+		}
+		
+		// Map heat-maps to stats panel with heat maps view
+		if (panelId === 'heat-maps') {
+			currentPanel = 'stats';
+			showMenu = false;
+			// Use key to force re-render Stats with heat maps view
+			statsKey = Date.now();
 			return;
 		}
 		
@@ -258,12 +267,14 @@
 			<ExportImport on:imported={() => refreshReviewBadgeCount()} />
 		{/key}
 	{:else if currentPanel === 'stats'}
-		{#key $settings.languagePreference}
+		{#key statsKey || $settings.languagePreference}
 			<Stats 
-				on:exit={() => currentPanel = 'learn'}
+				initialView={statsKey ? 'list' : 'mastery'}
+				on:exit={() => { currentPanel = 'learn'; statsKey = null; }}
 				on:practice={(e) => {
 					selectedPracticeVerseId = e.detail?.verseId || null;
 					currentPanel = 'practice';
+					statsKey = null;
 				}}
 			/>
 		{/key}

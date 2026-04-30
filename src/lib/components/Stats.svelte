@@ -7,10 +7,15 @@
 
 	const dispatch = createEventDispatcher();
 
-	let currentView = 'mastery'; // 'mastery', 'list', 'detail'
+	export let initialView = 'mastery'; // Allow parent to set initial view
+
+	let currentView = initialView; // 'mastery', 'list', 'detail'
 	let selectedVerse = null;
 	let sortMode = 'biblical'; // 'biblical' or 'score'
 	let sortDirection = 'asc'; // 'asc' or 'desc'
+	let editMode = false; // Heat map edit mode
+	let editingCharIndex = null; // Index of character being edited
+	let tooltipPosition = { x: 0, y: 0 }; // Tooltip position
 
 	// Calculate mastery categories
 	$: masteryData = calculateMasteryData($verses);
@@ -125,6 +130,55 @@
 		dispatch('practice', { verseId });
 	}
 
+	function toggleEditMode() {
+		editMode = !editMode;
+		if (!editMode) {
+			closeTooltip();
+		}
+	}
+
+	function handleCharClick(event, index) {
+		if (!editMode) return;
+		
+		const rect = event.target.getBoundingClientRect();
+		tooltipPosition = {
+			x: rect.left + rect.width / 2 - 40, // Center tooltip (80px wide)
+			y: rect.top - 90 // Position above character
+		};
+		editingCharIndex = index;
+	}
+
+	function closeTooltip() {
+		editingCharIndex = null;
+	}
+
+	function adjustHeat(index, delta) {
+		if (!selectedVerse || !selectedVerse.heatArray) return;
+		
+		const newValue = Math.max(0, Math.min(99, selectedVerse.heatArray[index] + delta));
+		
+		// Update the verse in the store
+		verses.update(allVerses => {
+			return allVerses.map(v => {
+				if (v.id === selectedVerse.id) {
+					const updatedVerse = { ...v };
+					updatedVerse.heatArray = [...v.heatArray];
+					updatedVerse.heatArray[index] = newValue;
+					// Save to localStorage
+					localStorage.setItem('verses', JSON.stringify(allVerses.map(verse => 
+						verse.id === v.id ? updatedVerse : verse
+					)));
+					return updatedVerse;
+				}
+				return v;
+			});
+		});
+		
+		// Update local selectedVerse
+		selectedVerse = { ...selectedVerse };
+		selectedVerse.heatArray[index] = newValue;
+	}
+
 	function exitStats() {
 		dispatch('exit');
 	}
@@ -233,8 +287,20 @@
 				</div>
 			</div>
 
-			<button type="button" class="heat-maps-button" on:click={showHeatMaps}>
-				{t('heat_maps')}
+			<button type="button" class="heat-maps-button" on:click={showHeatMaps} aria-label={t('heat_maps')}>
+				<svg
+					class="flame-icon"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+				>
+					<path d="M12 3c-1.5 3-3 4.5-3 7.5 0 2.5 1.5 4.5 3 4.5s3-2 3-4.5c0-3-1.5-4.5-3-7.5z"/>
+					<path d="M12 15c-.75 1.5-1.5 2.25-1.5 3.75 0 1.25.75 2.25 1.5 2.25s1.5-1 1.5-2.25c0-1.5-.75-2.25-1.5-3.75z"/>
+				</svg>
+				<span class="heat-maps-label">{t('heat_maps')}</span>
 			</button>
 		{/if}
 	</div>
@@ -243,8 +309,18 @@
 	<!-- View B: Verse List -->
 	<div class="stats-container">
 		<div class="stats-header">
-			<button type="button" class="back-btn" on:click={backToMastery}>
-				← {t('back')}
+			<button type="button" class="back-btn" on:click={backToMastery} aria-label={t('back')}>
+				<svg
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					aria-hidden="true"
+				>
+					<path d="M19 12H5M12 19l-7-7 7-7"/>
+				</svg>
 			</button>
 			<h2 class="stats-title">{t('heat_maps')}</h2>
 			<button type="button" class="exit-btn" on:click={exitStats} aria-label={t('close')}>×</button>
@@ -289,8 +365,18 @@
 	<!-- View C: Heat Map Detail -->
 	<div class="stats-container">
 		<div class="stats-header">
-			<button type="button" class="back-btn" on:click={backToList}>
-				← {t('back')}
+			<button type="button" class="back-btn" on:click={backToList} aria-label={t('back')}>
+				<svg
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					aria-hidden="true"
+				>
+					<path d="M19 12H5M12 19l-7-7 7-7"/>
+				</svg>
 			</button>
 			<h2 class="stats-title">{t('heat_map')}</h2>
 			<button type="button" class="exit-btn" on:click={exitStats} aria-label={t('close')}>×</button>
@@ -298,15 +384,19 @@
 
 		<div class="heat-map">
 			<div class="heat-map-text">
-				{#each getHeatMapChars(selectedVerse) as charData}
+				{#each getHeatMapChars(selectedVerse) as charData, i}
 					{#if charData.char === '\n'}
 						<br />
 					{:else}
 						<span 
-							class="heat-char" 
+							class="heat-char {editMode && !charData.isPunctuation ? 'editable' : ''}" 
 							class:punctuation={charData.isPunctuation}
 							style="background-color: {charData.color}"
 							title={charData.score !== null ? `Score: ${charData.score}` : ''}
+							on:click={(e) => handleCharClick(e, i)}
+							on:keydown={(e) => e.key === 'Enter' && handleCharClick(e, i)}
+							role={editMode && !charData.isPunctuation ? 'button' : ''}
+							tabindex={editMode && !charData.isPunctuation ? 0 : -1}
 						>
 							{charData.char}
 						</span>
@@ -314,13 +404,44 @@
 				{/each}
 			</div>
 
-			<button 
-				type="button" 
-				class="practice-button" 
-				on:click={() => practiceVerse(selectedVerse.id)}
-			>
-				{t('practice_now')}
-			</button>
+			<!-- Edit tooltip -->
+			{#if editMode && editingCharIndex !== null}
+				<div 
+					class="edit-tooltip" 
+					style="left: {tooltipPosition.x}px; top: {tooltipPosition.y}px;"
+					on:click|stopPropagation
+					on:keydown={(e) => e.key === 'Escape' && closeTooltip()}
+					role="dialog"
+					aria-label="Edit heat score"
+					tabindex="-1"
+				>
+					<button type="button" class="tooltip-btn" on:click={() => adjustHeat(editingCharIndex, 1)} aria-label="Increase">
+						▲
+					</button>
+					<div class="tooltip-value">{selectedVerse.heatArray[editingCharIndex]}</div>
+					<button type="button" class="tooltip-btn" on:click={() => adjustHeat(editingCharIndex, -5)} aria-label="Decrease">
+						▼
+					</button>
+				</div>
+			{/if}
+
+			<div class="practice-buttons">
+				<button 
+					type="button" 
+					class="practice-button" 
+					on:click={() => practiceVerse(selectedVerse.id)}
+				>
+					{t('practice_now')}
+				</button>
+				
+				<button 
+					type="button" 
+					class="edit-button {editMode ? 'active' : ''}" 
+					on:click={toggleEditMode}
+				>
+					{editMode ? t('done') : t('edit')}
+				</button>
+			</div>
 		</div>
 	</div>
 {/if}
@@ -346,23 +467,32 @@
 		color: var(--text-color);
 		margin: 0;
 		flex: 1;
-		text-align: left;
+		text-align: center;
 	}
 
 	.back-btn {
 		align-self: flex-start;
-		padding: 0.5rem 1rem;
-		border: 1px solid var(--file-border);
-		background: var(--file-bg);
+		padding: 0.5rem;
+		width: 2.5rem;
+		height: 2.5rem;
+		border: none;
+		background: transparent;
 		color: var(--text-color);
-		border-radius: 4px;
 		cursor: pointer;
-		font-size: 0.9em;
-		transition: all 0.3s;
+		transition: all 0.2s ease;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.back-btn svg {
+		width: 24px;
+		height: 24px;
 	}
 
 	.back-btn:hover {
 		background: var(--nav-button-bg);
+		border-radius: 50%;
 	}
 
 	.exit-btn {
@@ -455,6 +585,10 @@
 	}
 
 	.heat-maps-button {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.5rem;
 		width: 100%;
 		padding: 1rem;
 		background: var(--accent-color);
@@ -602,5 +736,95 @@
 			font-size: 1.25em;
 			padding: 1rem;
 		}
+	}
+
+	/* Heat Maps button elements */
+	.flame-icon {
+		width: 24px;
+		height: 24px;
+	}
+
+	.heat-maps-label {
+		font-size: 1em;
+	}
+
+	/* Edit Mode */
+	.heat-char.editable {
+		cursor: pointer;
+	}
+
+	.heat-char.editable:hover {
+		opacity: 0.8;
+		transform: scale(1.1);
+	}
+
+	.practice-buttons {
+		display: flex;
+		gap: 1rem;
+		margin-top: 1.5rem;
+	}
+
+	.edit-button {
+		flex: 1;
+		padding: 0.875rem;
+		background: var(--nav-button-bg);
+		color: var(--text-color);
+		border: none;
+		border-radius: 12px;
+		font-size: 1em;
+		font-weight: 600;
+		cursor: pointer;
+		transition: all 0.2s ease;
+	}
+
+	.edit-button.active {
+		background: var(--accent-color);
+		color: #ffffff;
+	}
+
+	.edit-button:hover {
+		opacity: 0.9;
+		transform: translateY(-2px);
+	}
+
+	.edit-tooltip {
+		position: fixed;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.75rem;
+		background: var(--panel-background);
+		border: 2px solid var(--accent-color);
+		border-radius: 8px;
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+		z-index: 1000;
+	}
+
+	.tooltip-btn {
+		width: 36px;
+		height: 36px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: var(--accent-color);
+		color: #ffffff;
+		border: none;
+		border-radius: 6px;
+		font-size: 1.2em;
+		cursor: pointer;
+		transition: all 0.2s ease;
+	}
+
+	.tooltip-btn:hover {
+		transform: scale(1.1);
+	}
+
+	.tooltip-value {
+		font-size: 1.5em;
+		font-weight: 700;
+		color: var(--text-color);
+		min-width: 40px;
+		text-align: center;
 	}
 </style>

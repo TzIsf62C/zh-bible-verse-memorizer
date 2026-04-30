@@ -25,9 +25,23 @@
 	let state = 'initial';
 	let practiceType = null; // 'collection' | 'verse'
 	let selectedCollection = null;
+	let selectedCollectionFilter = null; // 'learned' | 'all'
 	let selectedVerse = null;
 	let selectedActivity = null;
 	let processedPreselection = false; // Prevent reactive loop with preselection
+	
+	// Get verses for selected collection (reactive based on stores and selected collection/filter)
+	$: baseVerses = selectedCollection 
+		? $verses.filter(v => selectedCollection.verseIds.includes(v.id))
+		: [];
+	
+	$: filteredVerses = selectedCollectionFilter === 'learned' && baseVerses
+		? baseVerses.filter(v => v.lastReviewed && v.lastReviewed !== null)
+		: baseVerses;
+		
+	$: collectionVerses = filteredVerses
+		? sortVersesByBibleOrder(filteredVerses, $settings.bookNameCharset || 'simplified')
+		: [];
 	
 	// Modal state
 	let showModal = false;
@@ -86,6 +100,11 @@
 	
 	function selectCollection(collection) {
 		selectedCollection = collection;
+		selectedCollectionFilter = null;
+	}
+	
+	function selectCollectionFilter(filter) {
+		selectedCollectionFilter = filter;
 	}
 	
 	function selectVerse(verse) {
@@ -95,6 +114,11 @@
 	function proceedToActivitySelection() {
 		if (practiceType === 'collection' && !selectedCollection) {
 			modalMessage = t('select_collection_to_review');
+			showModal = true;
+			return;
+		}
+		if (practiceType === 'collection' && !selectedCollectionFilter) {
+			modalMessage = t('select_learned_or_all');
 			showModal = true;
 			return;
 		}
@@ -142,6 +166,7 @@
 		state = 'initial';
 		practiceType = null;
 		selectedCollection = null;
+		selectedCollectionFilter = null;
 		selectedVerse = null;
 		selectedActivity = null;
 		processedPreselection = false; // Reset preselection flag
@@ -151,14 +176,6 @@
 		reset();
 		dispatch('exit');
 	}
-	
-	// Get verses for selected collection
-	$: collectionVerses = selectedCollection 
-		? sortVersesByBibleOrder(
-			$verses.filter(v => selectedCollection.verseIds.includes(v.id)),
-			$settings.bookNameCharset || 'simplified'
-		)
-		: [];
 	
 	// Handle preselected verse (from Stats "Practice Now")
 	$: if (preselectedVerseId && $verses.length > 0 && state === 'initial' && !processedPreselection) {
@@ -207,17 +224,37 @@
 		
 		<div class="collection-list">
 			{#each $collections as collection}
-				<button 
-					class="collection-item" 
-					class:selected={selectedCollection?.id === collection.id}
-					on:click={() => selectCollection(collection)}
-				>
-					<span class="collection-title">{collection.title}</span>
-					<span class="verse-count">{collection.verseIds.length} {t('verses')}</span>
+				<div class="collection-item-container">
+					<button 
+						class="collection-item" 
+						class:selected={selectedCollection?.id === collection.id}
+						on:click={() => selectCollection(collection)}
+					>
+						<span class="collection-title">{collection.title}</span>
+						<span class="verse-count">{collection.verseIds.length} {t('verses')}</span>
+						{#if selectedCollection?.id === collection.id}
+							<span class="check-icon">✓</span>
+						{/if}
+					</button>
 					{#if selectedCollection?.id === collection.id}
-						<span class="check-icon">✓</span>
+						<div class="filter-buttons">
+							<button 
+								class="filter-button" 
+								class:active={selectedCollectionFilter === 'learned'}
+								on:click={() => selectCollectionFilter('learned')}
+							>
+								{t('learned')}
+							</button>
+							<button 
+								class="filter-button" 
+								class:active={selectedCollectionFilter === 'all'}
+								on:click={() => selectCollectionFilter('all')}
+							>
+								{t('all')}
+							</button>
+						</div>
 					{/if}
-				</button>
+				</div>
 			{/each}
 		</div>
 		
@@ -465,6 +502,12 @@
 		margin-bottom: 5rem;
 	}
 	
+	.collection-item-container {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+	
 	.collection-item,
 	.verse-item {
 		padding: 1rem;
@@ -505,6 +548,35 @@
 		font-weight: bold;
 	}
 	
+	.filter-buttons {
+		display: flex;
+		gap: 0.5rem;
+		padding: 0 0.5rem;
+	}
+	
+	.filter-button {
+		flex: 1;
+		padding: 0.75rem;
+		background: var(--panel-background);
+		border: 2px solid var(--border-color);
+		border-radius: 6px;
+		cursor: pointer;
+		color: var(--text-color);
+		font-size: 0.95em;
+		font-weight: 600;
+		transition: all 0.2s;
+	}
+	
+	.filter-button:hover {
+		border-color: var(--accent-color);
+	}
+	
+	.filter-button.active {
+		background: var(--accent-color);
+		color: white;
+		border-color: var(--accent-color);
+	}
+	
 	.fixed-bottom-button {
 		position: fixed;
 		bottom: 0;
@@ -513,6 +585,12 @@
 		padding: 1rem;
 		background: var(--app-background);
 		border-top: 1px solid var(--border-color);
+		display: flex;
+		justify-content: center;
+	}
+	
+	.fixed-bottom-button .primary-button {
+		max-width: 400px;
 	}
 	
 	.selected-target {
@@ -584,7 +662,7 @@
 			margin-bottom: 1rem;
 		}
 		
-		h2 {
+		.h2 {
 			font-size: 1.2em;
 		}
 		
@@ -595,6 +673,11 @@
 		.primary-button {
 			padding: 1.25rem;
 			font-size: 1em;
+		}
+		
+		.fixed-bottom-button .primary-button {
+			max-width: 100%;
+			width: 100%;
 		}
 		
 		.activity-grid {
