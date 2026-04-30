@@ -3,7 +3,7 @@
   "short_name": "聖經背誦",
   "version": "0.9.6",
   "description": "Memorize Chinese Bible verses using spaced repetition. Supports Pinyin, Zhuyin, and Cangjie input methods.",
-  "start_url": "/",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#1a1a1a",
   "theme_color": "#2d72d9",
