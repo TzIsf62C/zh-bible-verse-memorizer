@@ -1,0 +1,48 @@
+name: Deploy Refactor Preview
+
+on:
+  push:
+    branches:
+      - Refactor
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    concurrency: ci-${{ github.ref }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build SvelteKit preview
+        env:
+          BASE_PATH: /${{ github.event.repository.name }}/preview/Refactor
+        run: npm run build
+
+      - name: Prepare deploy folder
+        run: |
+          mkdir -p preview/Refactor
+          cp -r build/* preview/Refactor/
+          touch preview/Refactor/.nojekyll
+
+      - name: Deploy to gh-pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: preview
+          branch: gh-pages
+          target-folder: preview
+          clean: false
+          clean-exclude: |
+            !preview/**
