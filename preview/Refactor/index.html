@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="theme-color" content="#1a1a1a" />
+		<link rel="manifest" href="./manifest.json" />
+		<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192x192.png" />
+		<link rel="apple-touch-icon" href="./icons/icon-192x192.png" />
+		
+		<link rel="modulepreload" href="./_app/immutable/entry/start.CEECQsuc.js">
+		<link rel="modulepreload" href="./_app/immutable/chunks/CpiT6Kju.js">
+		<link rel="modulepreload" href="./_app/immutable/chunks/r05gyD-9.js">
+		<link rel="modulepreload" href="./_app/immutable/chunks/BPAcFiEX.js">
+		<link rel="modulepreload" href="./_app/immutable/entry/app.AoquV6V-.js">
+		<link rel="modulepreload" href="./_app/immutable/chunks/Cvw1SUqq.js">
+		<link rel="modulepreload" href="./_app/immutable/chunks/UBdpHWbb.js">
+		<link rel="modulepreload" href="./_app/immutable/chunks/ANIr2l-k.js">
+		<link rel="modulepreload" href="./_app/immutable/chunks/BTV4ASTp.js">
+	</head>
+	<body data-sveltekit-preload-data="hover">
+		<div style="display: contents">
+			<script>
+				{
+					__sveltekit_18lfa1f = {
+						base: new URL(".", location).pathname.slice(0, -1),
+						assets: "/zh-bible-verse-memorizer/preview/Refactor"
+					};
+
+					const element = document.currentScript.parentElement;
+
+					Promise.all([
+						import("./_app/immutable/entry/start.CEECQsuc.js"),
+						import("./_app/immutable/entry/app.AoquV6V-.js")
+					]).then(([kit, app]) => {
+						kit.start(app, element);
+					});
+				}
+			</script>
+		</div>
+		<script>
+			// Register service worker
+			if ('serviceWorker' in navigator) {
+				window.addEventListener('load', () => {
+					navigator.serviceWorker.register('./sw.js')
+						.then((registration) => {
+							console.log('SW registered:', registration.scope);
+							
+							// Check for updates
+							registration.addEventListener('updatefound', () => {
+								const newWorker = registration.installing;
+								console.log('SW update found');
+								
+								newWorker.addEventListener('statechange', () => {
+									if (newWorker.state === 'installed') {
+										if (navigator.serviceWorker.controller) {
+											console.log('New SW available - reload to update');
+											// Optionally notify user about update
+										}
+									}
+								});
+							});
+						})
+						.catch((error) => {
+							console.error('SW registration failed:', error);
+						});
+				});
+			}
+		</script>
+	</body>
+</html>
