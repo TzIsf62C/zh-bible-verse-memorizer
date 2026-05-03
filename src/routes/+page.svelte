@@ -15,6 +15,7 @@
 	import Collections from '$lib/components/Collections.svelte';
 	import ExportImport from '$lib/components/ExportImport.svelte';
 	import Stats from '$lib/components/Stats.svelte';
+	import HeatMaps from '$lib/components/HeatMaps.svelte';
 	import Practice from '$lib/components/Practice.svelte';
 	import IconNav from '$lib/components/IconNav.svelte';
 	import MenuOverlay from '$lib/components/MenuOverlay.svelte';
@@ -26,8 +27,7 @@
 	let showMenu = false;
 	let showShare = false;
 	let showOnboarding = false;
-	let selectedPracticeVerseId = null; // For "Practice Now" from Stats
-	let statsKey = null; // For forcing Stats to show heat maps view
+	let selectedPracticeVerseId = null; // For "Practice Now" from Stats or Heat Maps
 	let keyboardInput = '';
 	let keyboardLayout = keyboardLayouts.pinyin;
 	let removeListener = () => {};
@@ -129,15 +129,6 @@
 		if (panelId === 'share') {
 			showShare = true;
 			showMenu = false;
-			return;
-		}
-		
-		// Map heat-maps to stats panel with heat maps view
-		if (panelId === 'heat-maps') {
-			currentPanel = 'stats';
-			showMenu = false;
-			// Use key to force re-render Stats with heat maps view
-			statsKey = Date.now();
 			return;
 		}
 		
@@ -267,14 +258,19 @@
 			<ExportImport on:imported={() => refreshReviewBadgeCount()} />
 		{/key}
 	{:else if currentPanel === 'stats'}
-		{#key statsKey || $settings.languagePreference}
+		{#key $settings.languagePreference}
 			<Stats 
-				initialView={statsKey ? 'list' : 'mastery'}
-				on:exit={() => { currentPanel = 'learn'; statsKey = null; }}
+				on:exit={() => { currentPanel = 'learn'; }}
+				on:navigate-heat-maps={() => { currentPanel = 'heat-maps'; }}
+			/>
+		{/key}
+	{:else if currentPanel === 'heat-maps'}
+		{#key $settings.languagePreference}
+			<HeatMaps 
+				on:exit={() => { currentPanel = 'learn'; }}
 				on:practice={(e) => {
 					selectedPracticeVerseId = e.detail?.verseId || null;
 					currentPanel = 'practice';
-					statsKey = null;
 				}}
 			/>
 		{/key}

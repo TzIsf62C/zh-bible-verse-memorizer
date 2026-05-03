@@ -140,6 +140,13 @@ button {
 	cursor: pointer;
 	font-size: inherit;
 	font-family: inherit;
+	touch-action: manipulation;
+}
+
+input[type='button'],
+input[type='submit'],
+[role='button'] {
+	touch-action: manipulation;
 }
 
 input[type='file'] {

@@ -57,11 +57,11 @@ export function updateHeatArray(heatArray, correctnessMap) {
 		const isCorrect = correctnessMap[index];
 		
 		if (isCorrect === true) {
-			// Correct character: add 1 (max 99)
-			return Math.min(score + 1, 99);
+			// Correct character: add 3 (max 99)
+			return Math.min(score + 3, 99);
 		} else if (isCorrect === false) {
-			// Incorrect character: subtract 5 (min 0)
-			return Math.max(score - 5, 0);
+			// Incorrect character: subtract 10 (min 0)
+			return Math.max(score - 10, 0);
 		} else {
 			// null/undefined: no change (character not attempted)
 			return score;
@@ -70,18 +70,30 @@ export function updateHeatArray(heatArray, correctnessMap) {
 }
 
 /**
- * Calculate average score from heat array
+ * Calculate score from heat array using weakest quartile average.
+ * 
+ * This focuses the verse score on the weakest 25% of tracked characters
+ * instead of a simple full-array average.
  * 
  * @param {number[]} heatArray - Heat array to calculate score from
- * @returns {number} Average score (0-99), or 99 if array is empty/undefined
+ * @returns {number} Weakest quartile average (0-99), or 99 if array is empty/undefined
  */
 export function calculateHeatScore(heatArray) {
 	if (!heatArray || heatArray.length === 0) {
 		return 99; // Perfect score for untracked verses
 	}
-	
-	const sum = heatArray.reduce((acc, val) => acc + val, 0);
-	return sum / heatArray.length;
+
+	const numericScores = heatArray.filter(score => Number.isFinite(score));
+	if (numericScores.length === 0) {
+		return 99;
+	}
+
+	const sortedScores = [...numericScores].sort((a, b) => a - b);
+	const weakestQuartileSize = Math.max(1, Math.ceil(sortedScores.length * 0.25));
+	const weakestQuartile = sortedScores.slice(0, weakestQuartileSize);
+	const weakestSum = weakestQuartile.reduce((acc, val) => acc + val, 0);
+
+	return weakestSum / weakestQuartile.length;
 }
 
 /**
@@ -171,8 +183,8 @@ export function buildCorrectnessMap(
  * 
  * Gradient: Cyan (high scores) to Vivid Coral (low scores)
  * - Score 99: Cyan rgb(0, 255, 255)
- * - Score 70 and below: Vivid Coral rgb(255, 99, 71)
- * - Scores 71-98: Linear interpolation between cyan and coral
+ * - Score 60 and below: Vivid Coral rgb(255, 99, 71)
+ * - Scores 61-98: Linear interpolation between cyan and coral
  * 
  * @param {number} score - Heat score (0-99)
  * @returns {string} CSS rgb color string
@@ -181,14 +193,14 @@ export function getHeatColor(score) {
 	if (score >= 99) {
 		// Perfect: cyan
 		return 'rgb(0, 255, 255)';
-	} else if (score <= 70) {
+	} else if (score <= 60) {
 		// Low score: vivid coral
 		return 'rgb(255, 99, 71)';
 	} else {
-		// 71-98: linear interpolation from coral to cyan
-		// At score 71: nearly coral
+		// 61-98: linear interpolation from coral to cyan
+		// At score 61: nearly coral
 		// At score 98: nearly cyan
-		const t = (score - 71) / 27; // 0 at score 71, 1 at score 98
+		const t = (score - 61) / 37; // 0 at score 61, 1 at score 98
 		
 		// Interpolate between coral (255, 99, 71) and cyan (0, 255, 255)
 		const r = Math.round(255 * (1 - t) + 0 * t);

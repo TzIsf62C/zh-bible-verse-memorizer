@@ -57,7 +57,7 @@
 	$: activityChoices = practiceType === 'collection' ? [
 		{ id: 'speed-challenge', label: t('speed_challenge'), icon: 'lightning' },
 		{ id: 'reference-quiz', label: t('reference_quiz'), icon: 'question' },
-		{ id: 'reverse-by-verse', label: t('reverse_by_verse'), icon: 'layers' },
+		{ id: 'reverse-by-verse', label: t('reverse_by_verse'), icon: 'arrows-reverse' },
 		{ id: 'first-and-last', label: t('first_and_last'), icon: 'brackets' }
 	] : [
 		{ id: 'classic', label: t('classic'), icon: 'book-open' },
@@ -103,8 +103,9 @@
 		selectedCollectionFilter = null;
 	}
 	
-	function selectCollectionFilter(filter) {
+	function startCollectionPractice(filter) {
 		selectedCollectionFilter = filter;
+		proceedToActivitySelection();
 	}
 	
 	function selectVerse(verse) {
@@ -224,6 +225,9 @@
 		
 		<div class="collection-list">
 			{#each $collections as collection}
+				{@const collectionBaseVerses = $verses.filter(v => collection.verseIds.includes(v.id))}
+				{@const learnedCount = collectionBaseVerses.filter(v => v.lastReviewed && v.lastReviewed !== null).length}
+				{@const allCount = collectionBaseVerses.length}
 				<div class="collection-item-container">
 					<button 
 						class="collection-item" 
@@ -237,35 +241,23 @@
 						{/if}
 					</button>
 					{#if selectedCollection?.id === collection.id}
-						<div class="filter-buttons">
-							<button 
-								class="filter-button" 
-								class:active={selectedCollectionFilter === 'learned'}
-								on:click={() => selectCollectionFilter('learned')}
-							>
-								{t('learned')}
-							</button>
-							<button 
-								class="filter-button" 
-								class:active={selectedCollectionFilter === 'all'}
-								on:click={() => selectCollectionFilter('all')}
-							>
-								{t('all')}
-							</button>
+						<div class="collection-practice-actions">
+							{#if learnedCount !== allCount}
+								<button class="primary-button split-action" on:click={() => startCollectionPractice('learned')}>
+									{t('practice')} {t('learned')}
+								</button>
+								<button class="primary-button split-action" on:click={() => startCollectionPractice('all')}>
+									{t('practice')} {t('all')}
+								</button>
+							{:else}
+								<button class="primary-button" on:click={() => startCollectionPractice('all')}>
+									{t('next')}
+								</button>
+							{/if}
 						</div>
 					{/if}
 				</div>
 			{/each}
-		</div>
-		
-		<div class="fixed-bottom-button">
-			<button 
-				class="primary-button"
-				disabled={!selectedCollection}
-				on:click={proceedToActivitySelection}
-			>
-				{t('select_activity')}
-			</button>
 		</div>
 	</div>
 
@@ -548,33 +540,16 @@
 		font-weight: bold;
 	}
 	
-	.filter-buttons {
+	.collection-practice-actions {
 		display: flex;
 		gap: 0.5rem;
-		padding: 0 0.5rem;
+		flex-wrap: nowrap;
+		padding: 0 0.25rem 0.5rem;
 	}
-	
-	.filter-button {
+
+	.split-action {
 		flex: 1;
-		padding: 0.75rem;
-		background: var(--panel-background);
-		border: 2px solid var(--border-color);
-		border-radius: 6px;
-		cursor: pointer;
-		color: var(--text-color);
-		font-size: 0.95em;
-		font-weight: 600;
-		transition: all 0.2s;
-	}
-	
-	.filter-button:hover {
-		border-color: var(--accent-color);
-	}
-	
-	.filter-button.active {
-		background: var(--accent-color);
-		color: white;
-		border-color: var(--accent-color);
+		padding: 0.9rem;
 	}
 	
 	.fixed-bottom-button {
@@ -662,7 +637,7 @@
 			margin-bottom: 1rem;
 		}
 		
-		.h2 {
+		h2 {
 			font-size: 1.2em;
 		}
 		
@@ -695,6 +670,10 @@
 		
 		.activity-label {
 			font-size: 0.95em;
+		}
+
+		.collection-practice-actions {
+			flex-direction: row;
 		}
 	}
 </style>

@@ -412,11 +412,14 @@
 		{/if}
 
 	{:else if state === 'selectCollection'}
-		<div class="header-with-back">
-			<button class="back-btn" on:click={backToInitial}>
-				← {t('back')}
+		<div class="panel-header">
+			<button class="back-button" on:click={backToInitial} aria-label={t('back')}>
+				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+					<path d="M19 12H5M5 12l7 7M5 12l7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+				</svg>
 			</button>
 			<h2>{t('review_collection_learned')}</h2>
+			<div class="spacer"></div>
 		</div>
 
 		<div class="collections-list">
@@ -519,11 +522,14 @@
 		{/if}
 
 	{:else if state === 'selectVerses'}
-		<div class="header-with-back">
-			<button class="back-btn" on:click={backToInitial}>
-				← {t('back')}
+		<div class="panel-header">
+			<button class="back-button" on:click={backToInitial} aria-label={t('back')}>
+				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+					<path d="M19 12H5M5 12l7 7M5 12l7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+				</svg>
 			</button>
 			<h2>{t('or_select_individual')}</h2>
+			<div class="spacer"></div>
 		</div>
 
 		<div class="sort-controls">
@@ -600,11 +606,14 @@
 		{/if}
 
 	{:else if state === 'editInterval'}
-		<div class="header-with-back">
-			<button class="back-btn" on:click={backToInitial}>
-				← {t('back')}
+		<div class="panel-header">
+			<button class="back-button" on:click={backToInitial} aria-label={t('back')}>
+				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+					<path d="M19 12H5M5 12l7 7M5 12l7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+				</svg>
 			</button>
 			<h2>{t('edit_review_interval')}</h2>
+			<div class="spacer"></div>
 		</div>
 
 		<div class="sort-controls">
@@ -836,26 +845,36 @@
 	}
 
 	/* Header with back button */
-	.header-with-back {
+	.panel-header {
 		display: flex;
-		flex-direction: column;
-		gap: 0.5rem;
+		align-items: center;
+		gap: 1rem;
+		margin-bottom: 1rem;
 	}
 
-	.back-btn {
-		align-self: flex-start;
-		padding: 0.5rem 1rem;
-		border: 1px solid var(--file-border);
-		background: var(--file-bg);
+	.panel-header h2 {
+		margin: 0;
+		flex: 1;
+		text-align: center;
+	}
+
+	.back-button {
+		padding: 0.5rem;
+		background: none;
+		border: none;
 		color: var(--text-color);
-		border-radius: 4px;
 		cursor: pointer;
-		font-size: 0.9em;
-		transition: all 0.3s;
+		display: flex;
+		align-items: center;
+		justify-content: center;
 	}
 
-	.back-btn:hover {
-		background: var(--nav-button-bg);
+	.back-button:hover {
+		opacity: 0.85;
+	}
+
+	.spacer {
+		width: 40px;
 	}
 
 	/* Sort controls */
