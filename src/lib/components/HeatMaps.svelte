@@ -504,6 +504,7 @@
 	
 	.heat-char.punctuation {
 		background-color: transparent !important;
+		color: var(--text-color);
 	}
 
 	.heat-char.selected-char {

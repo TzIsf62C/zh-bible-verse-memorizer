@@ -27,6 +27,7 @@
 	let successCount = 0;
 	let feedbackText = '';
 	let feedbackClass = '';
+	let isTransitioningToFeedback = false;
 
 	// Keyboard state variables
 	let keyboardLayout = keyboardLayouts.pinyinCompact;
@@ -149,12 +150,12 @@
 								passageRect,
 								passageBottom,
 								keyboardTop: keyboardRect.top,
-								needsScroll: passageBottom > keyboardRect.top - 50
+								needsScroll: passageBottom > keyboardRect.top - 140
 							});
 							
 							// If passage bottom + feedback is too close to keyboard, scroll up
-							if (passageBottom > keyboardRect.top - 50) {
-								const scrollAdjustment = passageBottom - keyboardRect.top + 100; // Add 100px buffer
+							if (passageBottom > keyboardRect.top - 140) {
+								const scrollAdjustment = passageBottom - keyboardRect.top + 190;
 								console.log('[SingleTextReview] Feedback scroll adjustment:', scrollAdjustment);
 								window.scrollTo({
 									top: window.scrollY + scrollAdjustment,
@@ -538,11 +539,18 @@
 		}
 	}
 
-	// Check if all verses are from same book/chapter
-	$: allSameBookChapter = verses.every(v => 
-		v.bookName === verses[0]?.bookName && 
-		v.chapterNumber === verses[0]?.chapterNumber
+	// Check if all verses are from same book
+	$: allSameBook = verses.every(v => 
+		v.bookName === verses[0]?.bookName
 	);
+
+	function getDisplayReference(verse) {
+		if (!verse) return '';
+		if (allSameBook) {
+			return `${verse.chapterNumber}:${verse.verseNumber}`;
+		}
+		return formatVerseRef(verse);
+	}
 
 	// Store completed verses with their final rendering for display
 	let completedVerses = [];
@@ -563,8 +571,31 @@
 		}
 
 		const accuracy = reviewFullInitials.length > 0 ? (correct / reviewFullInitials.length) * 100 : 0;
-		feedbackText = `${t('accuracy')}: ${accuracy.toFixed(1)}%`;
-		feedbackClass = accuracy >= 90 ? 'success' : 'error';
+		const nextFeedbackText = `${t('accuracy')}: ${accuracy.toFixed(1)}%`;
+		const nextFeedbackClass = accuracy >= 90 ? 'success' : 'error';
+
+		// Ensure content is scrolled above keyboard before showing accuracy feedback.
+		const passageDisplay = document.querySelector('.passage-display');
+		const keyboardElement = document.querySelector('.keyboard-space .keyboard');
+		if (passageDisplay && keyboardElement) {
+			const passageRect = passageDisplay.getBoundingClientRect();
+			const keyboardRect = keyboardElement.getBoundingClientRect();
+			const bufferSpace = 120;
+			if (passageRect.bottom > keyboardRect.top - bufferSpace) {
+				const scrollAdjustment = passageRect.bottom - keyboardRect.top + bufferSpace;
+				window.scrollTo({
+					top: window.scrollY + scrollAdjustment,
+					behavior: 'smooth'
+				});
+			}
+		}
+
+			isTransitioningToFeedback = true;
+
+		setTimeout(() => {
+			feedbackText = nextFeedbackText;
+			feedbackClass = nextFeedbackClass;
+			}, 180);
 
 		// Build correctness map for heat tracking (verse text only)
 		const correctnessMap = buildCorrectnessMap(
@@ -641,6 +672,7 @@
 			// This ensures the reactive initializeVerse statement can run properly
 			feedbackText = '';
 			feedbackClass = '';
+			isTransitioningToFeedback = false;
 			userInput = '';
 			
 			currentIndex++;
@@ -653,6 +685,7 @@
 	}
 
 	function showCompletionModal() {
+		isTransitioningToFeedback = false;
 		const msg = successCount > 0
 			? t('congratulations_reviewed_count', { count: successCount })
 			: t('congratulations_reviewed');
@@ -687,11 +720,7 @@
 		<!-- Completed verses with preserved styling -->
 		{#each completedVerses as {verse, renderedChars}, i (verse.id)}
 			<div class="completed-verse">
-				{#if i === 0 || !allSameBookChapter}
-					<span class="reference-inline">{formatVerseRef(verse)}</span>
-				{:else}
-					<span class="reference-inline">{verse.verseNumber}</span>
-				{/if}
+				<span class="reference-inline">{getDisplayReference(verse)}</span>
 				<!-- Render with preserved correct/incorrect styling -->
 				{#each renderedChars as rendered, charIndex (charIndex)}
 					<span class="{rendered.className}">{rendered.char}</span>
@@ -700,15 +729,11 @@
 		{/each}
 
 		<!-- Current verse being typed (hidden during feedback to prevent duplication) -->
-		{#if currentVerse && !feedbackText}
+		{#if currentVerse && !feedbackText && !isTransitioningToFeedback}
 			{#key currentVerse.id}
 			<div class="current-verse">
 				<!-- Show reference first (always visible) -->
-				{#if currentIndex === 0 || !allSameBookChapter}
-					<span class="reference-inline">{formatVerseRef(currentVerse)}</span>
-				{:else}
-					<span class="reference-inline">{currentVerse.verseNumber}</span>
-				{/if}
+				<span class="reference-inline">{getDisplayReference(currentVerse)}</span>
 				<!-- Then verse text with hidden characters -->
 			{#each renderedChars as rendered, charIndex (charIndex)}
 				<span class="{rendered.className}">{rendered.char}</span>

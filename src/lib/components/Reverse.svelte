@@ -18,7 +18,7 @@
 	let fullText = '';
 	let fullInitials = '';
 	let charToInputIndex = [];
-	let revealedCount = 0; // Start with all blanks
+	let revealedCount = 1; // First phase always includes the final input character
 	
 	// Keyboard feedback
 	let keyboardLayout = keyboardLayouts.pinyinCompact;
@@ -28,16 +28,14 @@
 	let lastCorrectKey = null;
 	let phaseCompleteGlow = false; // For arrow glow effect
 	
-	// Accuracy tracking
-	let totalInputs = 0;
-	let correctInputs = 0;
+	// Accuracy tracking (current phase + final snapshot)
+	let phaseInputs = 0;
+	let phaseCorrectInputs = 0;
+	let finalPhaseInputs = 0;
+	let finalPhaseCorrectInputs = 0;
 	
 	// Completion modal
 	let showCompletionModal = false;
-	
-	// Viewport scrolling for keyboard positioning
-	let viewportAnchor;
-	let scrollTrigger = 0;
 	
 	// Verse reference formatter
 	$: formatVerseRef = createVerseReferenceFormatter($verses);
@@ -108,28 +106,6 @@
 		}
 	}
 	
-	// Scroll viewport to position navigation controls above keyboard
-	$: {
-		if (viewportAnchor && verse && !showCompletionModal) {
-			const _ = scrollTrigger;
-			
-			setTimeout(() => {
-				const anchorRect = viewportAnchor.getBoundingClientRect();
-				const keyboard = viewportAnchor.nextElementSibling;
-				
-				if (keyboard) {
-					const keyboardRect = keyboard.getBoundingClientRect();
-					const scrollTarget = window.scrollY + (anchorRect.top - keyboardRect.top);
-					
-					window.scrollTo({ 
-						top: scrollTarget, 
-						behavior: 'smooth' 
-					});
-				}
-			}, 300);
-		}
-	}
-	
 	function advancePhase() {
 		if (revealedCount < fullInitials.length) {
 			revealedCount++;
@@ -137,9 +113,8 @@
 			pressedKey = null;
 			correctKey = null;
 			lastCorrectKey = null;
-		} else if (revealedCount === fullInitials.length && userInput.length === revealedCount) {
-			// All phases complete - show completion modal
-			completeChallenge();
+			phaseInputs = 0;
+			phaseCorrectInputs = 0;
 		}
 	}
 	
@@ -150,6 +125,8 @@
 			pressedKey = null;
 			correctKey = null;
 			lastCorrectKey = null;
+			phaseInputs = 0;
+			phaseCorrectInputs = 0;
 		}
 	}
 	
@@ -158,6 +135,8 @@
 		pressedKey = null;
 		correctKey = null;
 		lastCorrectKey = null;
+		phaseInputs = 0;
+		phaseCorrectInputs = 0;
 	}
 	
 	function handleKeyInput(event) {
@@ -183,8 +162,8 @@
 			// Correct
 			lastCorrectKey = key;
 			userInput += key;
-			totalInputs++;
-			correctInputs++;
+			phaseInputs++;
+			phaseCorrectInputs++;
 		} else {
 			// Incorrect
 			pressedKey = key;
@@ -193,23 +172,31 @@
 			
 			// Still add to input
 			userInput += key;
-			totalInputs++;
+			phaseInputs++;
+		}
+
+		if (revealedCount === fullInitials.length && userInput.length === revealedCount) {
+			completeChallenge();
 		}
 	}
 	
 	function completeChallenge() {
+		finalPhaseInputs = phaseInputs;
+		finalPhaseCorrectInputs = phaseCorrectInputs;
 		showCompletionModal = true;
 	}
 	
 	function tryAgain() {
 		showCompletionModal = false;
 		userInput = '';
-		revealedCount = 0;
+		revealedCount = 1;
 		pressedKey = null;
 		correctKey = null;
 		lastCorrectKey = null;
-		totalInputs = 0;
-		correctInputs = 0;
+		phaseInputs = 0;
+		phaseCorrectInputs = 0;
+		finalPhaseInputs = 0;
+		finalPhaseCorrectInputs = 0;
 	}
 	
 	function done() {
@@ -267,7 +254,7 @@
 				};
 			} else {
 				// Previously revealed but not yet typed - show as blank
-				return { char: '___', className: 'verse-blank', hidden: false };
+				return { char: '＿', className: 'verse-blank', hidden: false };
 			}
 		} else {
 			// Punctuation - reveal based on the character BEFORE it (to the left in original order)
@@ -291,14 +278,16 @@
 				return { char, className: 'verse-punctuation hidden', hidden: true };
 			}
 			
-			// Punctuation is revealed - check if previous character has been typed
+			// Punctuation is revealed when its previous character is currently revealed.
 			const relativeInputIndex = prevCharInputIndex - currentSectionStartIndex;
 			const hasBeenTyped = relativeInputIndex < userInput.length;
+			const isNewestRevealedChar = relativeInputIndex === 0;
+			const shouldShowNow = hasBeenTyped || isNewestRevealedChar;
 			
 			return {
 				char,
-				className: 'verse-punctuation' + (hasBeenTyped ? '' : ' hidden'),
-				hidden: !hasBeenTyped
+				className: 'verse-punctuation' + (shouldShowNow ? '' : ' hidden'),
+				hidden: !shouldShowNow
 			};
 		}
 	}
@@ -347,17 +336,21 @@
 			if (normalizedKey === normalizedExpected) {
 				// Correct input - show success feedback
 				lastCorrectKey = key; // Use the physical key for highlighting
-				totalInputs++;
-				correctInputs++;
+				phaseInputs++;
+				phaseCorrectInputs++;
 			} else {
 				// Incorrect input
 				pressedKey = key; // Use the physical key for highlighting
 				correctKey = nextExpectedChar;
 				triggerErrorFeedback($settings);
-				totalInputs++;
+				phaseInputs++;
 			}
 			
 			userInput += mappedValue;
+
+			if (revealedCount === fullInitials.length && userInput.length === revealedCount) {
+				completeChallenge();
+			}
 		}
 	}
 </script>
@@ -397,26 +390,25 @@
 		<button class="nav-button retry-button" on:click={retryPhase}>
 			↺
 		</button>
-		<button class="nav-button prev-button" on:click={previousPhase} disabled={revealedCount <= 0}>
+		<button class="nav-button prev-button" on:click={previousPhase} disabled={revealedCount <= 1}>
 			→
 		</button>
 	</div>
 	
-	<!-- Invisible viewport anchor for keyboard positioning -->
-	<div bind:this={viewportAnchor} class="viewport-anchor" aria-hidden="true"></div>
-	
-	<div class="keyboard-space">
-		<Keyboard 
-			layout={keyboardLayout}
-			on:key={handleKeyInput}
-			showBackspace={false}
-			showEnter={false}
-			isNumeric={isNumericKeyboard}
-			pressedKey={pressedKey}
-			correctKey={correctKey}
-			lastCorrectKey={lastCorrectKey}
-		/>
-	</div>
+	{#if !showCompletionModal}
+		<div class="keyboard-space">
+			<Keyboard 
+				layout={keyboardLayout}
+				on:key={handleKeyInput}
+				showBackspace={false}
+				showEnter={false}
+				isNumeric={isNumericKeyboard}
+				pressedKey={pressedKey}
+				correctKey={correctKey}
+				lastCorrectKey={lastCorrectKey}
+			/>
+		</div>
+	{/if}
 </div>
 
 {#if showCompletionModal}
@@ -425,11 +417,10 @@
 			<h3>{t('reverse')} {t('finish')}</h3>
 			<p>{t('congratulations_practice')}</p>
 			
-			{#if totalInputs > 0}
+			{#if finalPhaseInputs > 0}
 				<div class="accuracy-display">
 					<div class="accuracy-label">{t('accuracy')}</div>
-					<div class="accuracy-value">{Math.round((correctInputs / totalInputs) * 100)}%</div>
-					<div class="accuracy-detail">{correctInputs} / {totalInputs} {t('correct')}</div>
+					<div class="accuracy-value">{Math.round((finalPhaseCorrectInputs / finalPhaseInputs) * 100)}%</div>
 				</div>
 			{/if}
 			
@@ -451,6 +442,7 @@
 		flex-direction: column;
 		height: 100vh;
 		padding: 1rem;
+		padding-bottom: 0.5rem;
 		gap: 1rem;
 	}
 	
@@ -552,6 +544,8 @@
 		justify-content: center;
 		gap: 2rem;
 		padding: 1rem;
+		position: relative;
+		z-index: 1002;
 	}
 	
 	.nav-button {
@@ -602,6 +596,8 @@
 	
 	.keyboard-space {
 		margin-top: auto;
+		height: 250px;
+		flex-shrink: 0;
 	}
 	
 	.modal-overlay {
@@ -691,14 +687,10 @@
 		margin-bottom: 0.25rem;
 	}
 	
-	.accuracy-detail {
-		font-size: 0.9em;
-		color: var(--subtitle-color);
-	}
-	
 	@media (max-width: 767px) {
 		.reverse-container {
 			padding: 0.5rem;
+			padding-bottom: 0.5rem;
 		}
 		
 		.verse-display {
@@ -710,6 +702,10 @@
 			gap: 1rem;
 			padding: 0.5rem;
 		}
+
+		.keyboard-space {
+			height: 240px;
+		}
 		
 		.nav-button {
 			padding: 0.6rem 1.2rem;
@@ -718,12 +714,4 @@
 		}
 	}
 	
-	.viewport-anchor {
-		height: 1px;
-		width: 100%;
-		visibility: hidden;
-		pointer-events: none;
-		margin: 0;
-		padding: 0;
-	}
 </style>

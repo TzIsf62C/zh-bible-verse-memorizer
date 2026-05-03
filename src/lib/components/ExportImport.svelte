@@ -4,7 +4,7 @@
 	import { collections } from '$lib/stores/collections';
 	import { practice } from '$lib/stores/practice';
 	import { t } from '$lib/i18n';
-	import { parseImportPayload, mergeVerses, mergeCollections, buildExportPayload, applyConflictResolutions } from '$lib/utils/importExport';
+	import { parseImportPayload, mergeVerses, mergeCollections, buildExportPayload, applyConflictResolutions, mergePracticeData } from '$lib/utils/importExport';
 	import Modal from './Modal.svelte';
 
 	const dispatch = createEventDispatcher();
@@ -241,9 +241,10 @@
 			collections.set(mergedCollections);
 		}
 
-		// Import practice data (speed challenge times) if available
+		// Import practice data (speed challenge times) if available.
 		if (importIncludeUserData && importedPracticeData) {
-			practice.set(importedPracticeData);
+			const mergedPractice = mergePracticeData($practice, importedPracticeData);
+			practice.set(mergedPractice);
 		}
 
 		modalMessage = t('import_successful');

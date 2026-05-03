@@ -134,7 +134,9 @@ export function buildExportPayload(verses, collections, options = {}) {
 		return entry;
 	});
 
-	if (!includeCollections) {
+	const shouldIncludePracticeData = includeReview && practiceData;
+
+	if (!includeCollections && !shouldIncludePracticeData) {
 		return cleaned;
 	}
 
@@ -143,18 +145,20 @@ export function buildExportPayload(verses, collections, options = {}) {
 		: collections;
 
 	const idToVerse = new Map(verses.map((verse) => [verse.id, verse]));
-	const collectionsExport = includeCols.map((collection) => {
-		const verseRefs = (collection.verseIds || [])
-			.map((id) => idToVerse.get(id))
-			.filter(Boolean)
-			.map((verse) => ({
-				bookName: verse.bookName,
-				chapterNumber: verse.chapterNumber,
-				verseNumber: verse.verseNumber
-			}));
+	const collectionsExport = includeCollections
+		? includeCols.map((collection) => {
+			const verseRefs = (collection.verseIds || [])
+				.map((id) => idToVerse.get(id))
+				.filter(Boolean)
+				.map((verse) => ({
+					bookName: verse.bookName,
+					chapterNumber: verse.chapterNumber,
+					verseNumber: verse.verseNumber
+				}));
 
-		return { title: collection.title, verseRefs };
-	});
+			return { title: collection.title, verseRefs };
+		})
+		: [];
 
 	const payload = {
 		type: 'cbm-export',
@@ -165,11 +169,43 @@ export function buildExportPayload(verses, collections, options = {}) {
 	};
 
 	// Include practice data (speed challenge times) if review data is included
-	if (includeReview && practiceData) {
+	if (shouldIncludePracticeData) {
 		payload.practiceData = practiceData;
 	}
 
 	return payload;
+}
+
+export function mergePracticeData(currentPractice, importedPractice) {
+	const current = {
+		bestTimes: currentPractice?.bestTimes || {},
+		bestVerseTimes: currentPractice?.bestVerseTimes || {}
+	};
+	const incoming = {
+		bestTimes: importedPractice?.bestTimes || {},
+		bestVerseTimes: importedPractice?.bestVerseTimes || {}
+	};
+
+	const mergedBestTimes = { ...current.bestTimes };
+	Object.entries(incoming.bestTimes).forEach(([collectionId, incomingTime]) => {
+		const existing = mergedBestTimes[collectionId];
+		if (!existing || incomingTime.officialTime < existing.officialTime) {
+			mergedBestTimes[collectionId] = incomingTime;
+		}
+	});
+
+	const mergedBestVerseTimes = { ...current.bestVerseTimes };
+	Object.entries(incoming.bestVerseTimes).forEach(([verseId, incomingTime]) => {
+		const existing = mergedBestVerseTimes[verseId];
+		if (!existing || incomingTime.officialTime < existing.officialTime) {
+			mergedBestVerseTimes[verseId] = incomingTime;
+		}
+	});
+
+	return {
+		bestTimes: mergedBestTimes,
+		bestVerseTimes: mergedBestVerseTimes
+	};
 }
 
 /**

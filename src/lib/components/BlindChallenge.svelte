@@ -1,5 +1,5 @@
 <script>
-	import { createEventDispatcher } from 'svelte';
+	import { createEventDispatcher, onMount } from 'svelte';
 	import { settings } from '$lib/stores/settings';
 	import { verses } from '$lib/stores/verses';
 	import { t } from '$lib/i18n';
@@ -64,6 +64,42 @@
 			};
 			keyboardLayout = layoutMap[inputMethod] || keyboardLayouts.pinyinCompact;
 			isNumericKeyboard = false;
+		}
+	}
+
+	function keepTypingAreaVisible(behavior = 'smooth') {
+		if (showResult || isComplete) return;
+
+		const keyboard = document.querySelector('.blind-challenge-container .keyboard-space .keyboard');
+		const submitButton = document.querySelector('.blind-challenge-container .submit-button');
+		const inputDisplay = document.querySelector('.blind-challenge-container .input-display');
+		if (!keyboard || !submitButton || !inputDisplay) return;
+
+		const keyboardRect = keyboard.getBoundingClientRect();
+		const submitRect = submitButton.getBoundingClientRect();
+		const inputRect = inputDisplay.getBoundingClientRect();
+		const buffer = 16;
+		const targetBottom = Math.max(submitRect.bottom, inputRect.bottom);
+
+		if (targetBottom > keyboardRect.top - buffer) {
+			const scrollDelta = targetBottom - (keyboardRect.top - buffer);
+			window.scrollTo({
+				top: window.scrollY + scrollDelta,
+				behavior
+			});
+		}
+
+		inputDisplay.scrollTop = inputDisplay.scrollHeight;
+	}
+
+	onMount(() => {
+		setTimeout(() => keepTypingAreaVisible('auto'), 250);
+	});
+
+	$: {
+		const _ = userInput.length;
+		if (!showResult && !isComplete) {
+			setTimeout(() => keepTypingAreaVisible('smooth'), 0);
 		}
 	}
 	
@@ -174,10 +210,11 @@
 			}
 		}
 		
-		// Calculate accuracy
+		// Calculate accuracy (penalize extra inserted inputs)
 		const matches = alignment.filter(a => a.type === 'match').length;
-		const totalExpected = expected.length;
-		const accuracy = Math.round((matches / totalExpected) * 100);
+		const insertions = alignment.filter(a => a.type === 'insertion').length;
+		const denominator = expected.length + insertions;
+		const accuracy = denominator > 0 ? Math.round((matches / denominator) * 100) : 0;
 		
 		return {
 			alignment,
@@ -194,6 +231,13 @@
 		if (isComplete) return;
 		
 		const key = event.detail;
+		if (key === 'Backspace') {
+			if (userInput.length > 0) {
+				userInput = userInput.slice(0, -1);
+			}
+			lastCorrectKey = null;
+			return;
+		}
 		
 		// Always show as "correct" during typing (user gets no feedback)
 		lastCorrectKey = key;
@@ -225,6 +269,7 @@
 		lastCorrectKey = null;
 		accuracyScore = 0;
 		alignmentData = null;
+		setTimeout(() => keepTypingAreaVisible('auto'), 150);
 	}
 	
 	function done() {
@@ -239,9 +284,12 @@
 		if (!verse) return;
 		if (isComplete) return;
 
-		// Backspace is disabled
 		if (e.key === 'Backspace' || e.key === 'Delete') {
 			e.preventDefault();
+			if (userInput.length > 0) {
+				userInput = userInput.slice(0, -1);
+			}
+			lastCorrectKey = null;
 			return;
 		}
 
@@ -287,9 +335,9 @@
 	</div>
 	
 	{#if !isComplete}
-		<!-- During typing: show asterisks -->
+		<!-- During typing: password-style display (last character visible) -->
 		<div class="input-display">
-			<div class="input-text">{'*'.repeat(userInput.length) || ' '}</div>
+			<div class="input-text">{userInput.length > 1 ? `${'*'.repeat(userInput.length - 1)}${userInput[userInput.length - 1]}` : (userInput || ' ')}</div>
 		</div>
 	{:else}
 		<!-- After submission: show interlinear alignment (verse char, user input below it) -->
@@ -336,7 +384,7 @@
 			<Keyboard 
 				layout={keyboardLayout}
 				on:key={handleKeyInput}
-				showBackspace={false}
+				showBackspace={true}
 				showEnter={false}
 				isNumeric={isNumericKeyboard}
 				pressedKey={null}
@@ -405,9 +453,12 @@
 		background: var(--panel-background);
 		border-radius: 8px;
 		overflow-y: auto;
+		overflow-x: hidden;
 		display: flex;
-		align-items: center;
-		justify-content: center;
+		align-items: flex-start;
+		justify-content: flex-start;
+		position: relative;
+		z-index: 1002;
 	}
 	
 	.input-text {
@@ -415,9 +466,10 @@
 		letter-spacing: 0.1em;
 		color: var(--text-color);
 		min-height: 1.5em;
-		word-wrap: break-word;
-		word-break: break-all;
-		white-space: normal;
+		width: 100%;
+		overflow-wrap: anywhere;
+		word-break: break-word;
+		white-space: pre-wrap;
 		max-width: 100%;
 	}
 	
@@ -551,6 +603,8 @@
 		background: var(--accent-color);
 		color: white;
 		transition: opacity 0.2s;
+		position: relative;
+		z-index: 1002;
 	}
 	
 	.submit-button:disabled {

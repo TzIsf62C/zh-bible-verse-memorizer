@@ -7,8 +7,8 @@
 	const dispatch = createEventDispatcher();
 
 	// Quiz state
-	let shuffledVerses = [];
-	let currentIndex = 0;
+	let quizQueue = [];
+	let correctCount = 0;
 	let revealed = false;
 	
 	// Completion modal
@@ -22,8 +22,11 @@
 	}
 	
 	function initializeQuiz() {
-		// Shuffle verses
-		shuffledVerses = shuffleArray([...verses]);
+		// Shuffle verses and reset state
+		quizQueue = shuffleArray([...verses]);
+		correctCount = 0;
+		revealed = false;
+		showCompletionModal = false;
 	}
 	
 	function shuffleArray(array) {
@@ -40,30 +43,25 @@
 	}
 	
 	function markCorrect() {
-		// Move to next verse (marks as practiced)
-		if (currentIndex < shuffledVerses.length - 1) {
-			currentIndex++;
-			revealed = false;
-		} else {
-			// Quiz complete
+		if (quizQueue.length === 0) return;
+
+		correctCount++;
+		quizQueue = quizQueue.slice(1);
+		revealed = false;
+
+		if (quizQueue.length === 0) {
 			showCompletionModal = true;
 		}
 	}
 	
 	function markIncorrect() {
-		// Shuffle verse back into the array (add to end)
-		const currentVerse = shuffledVerses[currentIndex];
-		shuffledVerses = [...shuffledVerses, currentVerse];
-		
-		// Move to next verse
-		if (currentIndex < shuffledVerses.length - 1) {
-			currentIndex++;
-			revealed = false;
-		} else {
-			// All verses shown, but added one back so continue
-			currentIndex++;
-			revealed = false;
+		if (quizQueue.length === 0) return;
+
+		if (quizQueue.length > 1) {
+			const [currentVerse, ...remaining] = quizQueue;
+			quizQueue = [...remaining, currentVerse];
 		}
+		revealed = false;
 	}
 	
 	function done() {
@@ -74,8 +72,8 @@
 		dispatch('exit');
 	}
 	
-	$: currentVerse = shuffledVerses[currentIndex];
-	$: progress = `${currentIndex + 1} / ${shuffledVerses.length}`;
+	$: currentVerse = quizQueue[0];
+	$: progress = `${correctCount} / ${verses.length}`;
 </script>
 
 <div class="reference-quiz-container">

@@ -38,6 +38,8 @@
 	// Completion modal
 	let showCompletionModal = false;
 	let isNewBest = false;
+	let previousBestTime = null;
+	let improvementMs = 0;
 	
 	// Verse reference header opacity (fade out as user types)
 	let verseSelectorOpacity = 1;
@@ -167,7 +169,9 @@
 		
 		// Check if new best
 		const currentBest = $practice.bestVerseTimes[verse.id];
+		previousBestTime = currentBest || null;
 		isNewBest = !currentBest || officialTime < currentBest.officialTime;
+		improvementMs = isNewBest && currentBest ? currentBest.officialTime - officialTime : 0;
 		
 		// Save if new best
 		if (isNewBest || !currentBest) {
@@ -189,6 +193,8 @@
 		correctKey = null;
 		lastCorrectKey = null;
 		isNewBest = false;
+		previousBestTime = null;
+		improvementMs = 0;
 		verseSelectorOpacity = 1;
 		if (timerInterval) {
 			clearInterval(timerInterval);
@@ -408,6 +414,17 @@
 					<span class="label">{t('official_time')}:</span>
 					<span class="value">{formatTime(rawTime + (penalties * 1000))}</span>
 				</div>
+
+				{#if isNewBest && previousBestTime}
+					<div class="time-stat best">
+						<span class="label">{t('previous_best')}:</span>
+						<span class="value">{formatTime(previousBestTime.officialTime)}</span>
+					</div>
+					<div class="time-stat improvement">
+						<span class="label">{t('improved_by')}:</span>
+						<span class="value">-{formatTime(improvementMs)}</span>
+					</div>
+				{/if}
 				
 				{#if $practice.bestVerseTimes[verse.id] && !isNewBest}
 					{@const currentBestTime = $practice.bestVerseTimes[verse.id]}
@@ -623,6 +640,15 @@
 	.time-stat.best .label,
 	.time-stat.best .value {
 		color: #2196f3;
+	}
+
+	.time-stat.improvement {
+		background: rgba(76, 175, 80, 0.12);
+	}
+
+	.time-stat.improvement .label,
+	.time-stat.improvement .value {
+		color: #2e7d32;
 	}
 	
 	.modal-buttons {
