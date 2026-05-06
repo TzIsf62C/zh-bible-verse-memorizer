@@ -76,9 +76,17 @@
 		align-items: stretch;
 		gap: 0.25rem;
 		padding: 0.5rem;
+		padding-top: calc(0.5rem + env(safe-area-inset-top, 0px));
 		background: var(--panel-background);
-		border-radius: 16px;
-		box-shadow: var(--panel-shadow);
+		border-radius: 0;
+		box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+		border-bottom: 1px solid var(--file-border);
+		/* Fixed positioning with iPhone safe area */
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		z-index: 900;
 	}
 	
 	.icon-nav-item {
@@ -143,6 +151,7 @@
 		.icon-nav {
 			gap: 0.125rem;
 			padding: 0.375rem;
+			padding-top: calc(0.375rem + env(safe-area-inset-top, 0px));
 		}
 		
 		.icon-nav-item {

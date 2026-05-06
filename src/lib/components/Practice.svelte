@@ -359,12 +359,14 @@
 			collection={selectedCollection}
 			verses={collectionVerses}
 			on:complete={handleActivityComplete}
+			on:back={handleActivityComplete}
 			on:exit={handleActivityExit}
 		/>
 	{:else if selectedActivity === 'speed-challenge' && practiceType === 'verse'}
 		<SpeedChallengeVerse 
 			verse={selectedVerse}
 			on:complete={handleActivityComplete}
+			on:back={handleActivityComplete}
 			on:exit={handleActivityExit}
 		/>
 	{:else if selectedActivity === 'reference-quiz'}

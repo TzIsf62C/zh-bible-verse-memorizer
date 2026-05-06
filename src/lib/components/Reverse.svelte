@@ -1,5 +1,6 @@
 <script>
 	import { createEventDispatcher } from 'svelte';
+	import { onMount } from 'svelte';
 	import { settings } from '$lib/stores/settings';
 	import { verses } from '$lib/stores/verses';
 	import { t } from '$lib/i18n';
@@ -206,6 +207,22 @@
 	function exit() {
 		dispatch('exit');
 	}
+
+	// Autoscroll on mount to position nav controls above keyboard
+	let navControlsEl;
+	onMount(() => {
+		setTimeout(() => {
+			const keyboardEl = document.querySelector('.keyboard');
+			if (keyboardEl && navControlsEl) {
+				const keyTop = keyboardEl.getBoundingClientRect().top;
+				const navBottom = navControlsEl.getBoundingClientRect().bottom;
+				if (navBottom > keyTop - 8) {
+					const scrollAmt = navBottom - keyTop + 16;
+					window.scrollTo({ top: window.scrollY + scrollAmt, behavior: 'smooth' });
+				}
+			}
+		}, 300);
+	});
 	
 	function renderCharacter(char, charIndex) {
 		const map = charToInputIndex[charIndex];
@@ -383,7 +400,7 @@
 		{/key}{/key}
 	</div>
 	
-	<div class="navigation-controls">
+	<div class="navigation-controls" bind:this={navControlsEl}>
 		<button class="nav-button next-button {phaseCompleteGlow ? 'glow' : ''}" on:click={advancePhase}>
 			←
 		</button>
@@ -440,7 +457,7 @@
 	.reverse-container {
 		display: flex;
 		flex-direction: column;
-		height: 100vh;
+		min-height: 100vh;
 		padding: 1rem;
 		padding-bottom: 0.5rem;
 		gap: 1rem;
@@ -545,7 +562,7 @@
 		gap: 2rem;
 		padding: 1rem;
 		position: relative;
-		z-index: 1002;
+		z-index: 1;
 	}
 	
 	.nav-button {
@@ -595,7 +612,6 @@
 	}
 	
 	.keyboard-space {
-		margin-top: auto;
 		height: 250px;
 		flex-shrink: 0;
 	}
@@ -610,7 +626,7 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		z-index: 1000;
+		z-index: 1002;
 	}
 	
 	.modal-content {

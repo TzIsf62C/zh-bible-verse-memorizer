@@ -248,6 +248,14 @@
 		}
 		dispatch('exit');
 	}
+
+	function back() {
+		if (timerInterval) {
+			clearInterval(timerInterval);
+			timerInterval = null;
+		}
+		dispatch('back');
+	}
 	
 	function renderCharacter(char, charIndex) {
 		const map = charToInputIndex[charIndex];
@@ -371,18 +379,21 @@
 
 <div class="speed-challenge-container">
 	<div class="header">
-		<button class="exit-button" on:click={exit}>✕</button>
+		<button class="back-button" on:click={back} aria-label={t('back')}>
+			<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+				<path d="M19 12H5M5 12l7 7M5 12l7-7"/>
+			</svg>
+		</button>
 		<h2>{t('speed_challenge')}</h2>
-		<div class="timer">
-			{#if timerStarted}
-				⏱ {formatTime(currentTime)}
-			{:else}
-				⏱ 0.0s
-			{/if}
-		</div>
+		<button class="exit-button" on:click={exit}>✕</button>
 	</div>
 	
 	<div class="stats-bar">
+		<span class="stat timer-stat">
+			<span class="stat-value timer-value">
+				{#if timerStarted}⏱ {formatTime(currentTime)}{:else}⏱ 0.0s{/if}
+			</span>
+		</span>
 		<span class="stat">
 			<span class="stat-label">{t('penalties')}:</span>
 			<span class="stat-value">{penalties}</span>
@@ -403,6 +414,10 @@
 			{/each}
 		{/key}
 	</div>
+
+	<button class="retry-fab" on:click={tryAgain} aria-label={t('try_again')}>
+		↺ {t('retry')}
+	</button>
 	
 	<div class="keyboard-space">
 		<Keyboard 
@@ -493,6 +508,16 @@
 		margin-bottom: 1rem;
 	}
 	
+	.back-button {
+		padding: 0.5rem;
+		background: none;
+		border: none;
+		cursor: pointer;
+		color: var(--text-color);
+		display: flex;
+		align-items: center;
+	}
+
 	.exit-button {
 		padding: 0.5rem;
 		background: none;
@@ -508,13 +533,35 @@
 		flex: 1;
 		text-align: center;
 	}
-	
-	.timer {
-		font-weight: 600;
-		font-size: 1.1em;
+
+	.timer-stat {
+		border-right: 1px solid var(--border-color);
+		padding-right: 1rem;
+		margin-right: 0.5rem;
+	}
+
+	.timer-value {
+		font-weight: 700;
 		color: var(--accent-color);
-		min-width: 60px;
-		text-align: right;
+	}
+
+	.retry-fab {
+		position: fixed;
+		align-self:center;
+		bottom: calc(2rem + env(safe-area-inset-bottom, 0px));
+		z-index: 1002;
+		background: var(--panel-background);
+		border: 1px solid var(--border-color);
+		border-radius: 999px;
+		padding: 0.45rem 0.95rem;
+		font-size: 0.9em;
+		cursor: pointer;
+		color: var(--text-color);
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+	}
+
+	.retry-fab:hover {
+		background: var(--app-background);
 	}
 	
 	.stats-bar {

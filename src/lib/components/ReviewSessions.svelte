@@ -362,7 +362,8 @@
 						
 						return {
 							...v,
-							interval: currentInterval,
+							interval: days,
+							repetitions: currentInterval - 1,
 							dueDate: newDueDate.toISOString()
 						};
 					}

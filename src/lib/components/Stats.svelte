@@ -68,7 +68,6 @@
 <div class="stats-container">
 	<div class="stats-header">
 		<h2 class="stats-title">{t('stats')}</h2>
-		<button type="button" class="exit-btn" on:click={exitStats} aria-label={t('close')}>×</button>
 	</div>
 
 	{#if masteryData.total === 0}

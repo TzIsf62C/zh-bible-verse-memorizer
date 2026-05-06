@@ -1,5 +1,5 @@
 <script>
-	import { createEventDispatcher } from 'svelte';
+	import { createEventDispatcher, tick } from 'svelte';
 	import { verses as versesStore } from '$lib/stores/verses';
 	import { settings } from '$lib/stores/settings';
 	import { t } from '$lib/i18n';
@@ -39,144 +39,72 @@
 	// Error tracking and scrolling
 	let lastErrorIndex = null;
 	let lastErrorChar = null;
-	let scrollTrigger = 0;
-	let viewportAnchor;
 	let showInputMismatchWarning = false;
 
-	// Scroll viewport to position content above keyboard after each input
-	$: {
-		console.log('[SingleTextReview] Scroll reactive block triggered', {
-			hasViewportAnchor: !!viewportAnchor,
-			hasCurrentVerse: !!currentVerse,
-			userInputLength: userInput.length,
-			scrollTrigger: scrollTrigger
-		});
-		
-		if (viewportAnchor && currentVerse) {
-			// Include userInput and scrollTrigger in reactive dependencies
-			const _ = userInput.length;
-			const __ = scrollTrigger;
-			
-			console.log('[SingleTextReview] Scroll conditions met, scheduling scroll');
-			
-			setTimeout(() => {
-				console.log('[SingleTextReview] Executing scroll logic');
-				
-				// Find the actual keyboard element (not just the wrapper div)
-				const keyboardSpace = viewportAnchor.nextElementSibling;
-				if (keyboardSpace) {
-					const keyboardElement = keyboardSpace.querySelector('.keyboard');
-					if (keyboardElement) {
-						const keyboardRect = keyboardElement.getBoundingClientRect();
-						console.log('[SingleTextReview] Keyboard rect:', keyboardRect);
-						
-						// Get the passage display to scroll it above keyboard
-						const passageDisplay = document.querySelector('.passage-display');
-						if (passageDisplay) {
-							const passageRect = passageDisplay.getBoundingClientRect();
-							console.log('[SingleTextReview] Passage rect:', passageRect);
-							
-							// Calculate how much to scroll to position passage bottom above keyboard top
-							// Add buffer of 20px between passage and keyboard
-							const bufferSpace = 20;
-							const passageBottom = passageRect.bottom;
-							const keyboardTop = keyboardRect.top;
-							
-							if (passageBottom > keyboardTop - bufferSpace) {
-								const scrollAdjustment = passageBottom - keyboardTop + bufferSpace;
-								const scrollTarget = window.scrollY + scrollAdjustment;
-								
-								console.log('[SingleTextReview] Scroll calculation:', {
-									currentScrollY: window.scrollY,
-									passageBottom: passageBottom,
-									keyboardTop: keyboardTop,
-									scrollAdjustment: scrollAdjustment,
-									scrollTarget: scrollTarget
-								});
-								
-								window.scrollTo({ 
-									top: scrollTarget, 
-									behavior: 'smooth' 
-								});
-								console.log('[SingleTextReview] Scroll executed to:', scrollTarget);
-							} else {
-								console.log('[SingleTextReview] No scroll needed, passage above keyboard');
-							}
-						} else {
-							console.warn('[SingleTextReview] Passage display not found');
-						}
-					} else {
-						console.warn('[SingleTextReview] Keyboard element not found inside keyboard-space');
-					}
-				} else {
-					console.warn('[SingleTextReview] Keyboard space element not found');
-				}
-			}, 150);
-		} else {
-			console.log('[SingleTextReview] Scroll conditions NOT met');
+	function scrollFeedbackIntoViewIfNeeded() {
+		const feedbackElement = document.querySelector('.feedback');
+		const keyboardElement = document.querySelector('.keyboard-space .keyboard');
+
+		if (!feedbackElement || !keyboardElement) {
+			return;
+		}
+
+		const feedbackRect = feedbackElement.getBoundingClientRect();
+		const keyboardRect = keyboardElement.getBoundingClientRect();
+		const minGap = 12;
+		const overlap = feedbackRect.bottom + minGap - keyboardRect.top;
+
+		// Only scroll when feedback is actually covered or too close to the keyboard.
+		if (overlap > 0) {
+			window.scrollTo({
+				top: window.scrollY + overlap,
+				behavior: 'smooth'
+			});
 		}
 	}
 
-	// Scroll when feedback message appears to ensure it's visible above keyboard
-	$: {
-		console.log('[SingleTextReview] Feedback scroll reactive block triggered', {
-			hasFeedbackText: !!feedbackText,
-			hasViewportAnchor: !!viewportAnchor
-		});
-		
-		if (feedbackText && viewportAnchor) {
-			console.log('[SingleTextReview] Feedback scroll conditions met, scheduling scroll');
-			
-			setTimeout(() => {
-				console.log('[SingleTextReview] Executing feedback scroll');
-				const keyboardSpace = viewportAnchor.nextElementSibling;
-				if (keyboardSpace) {
-					const keyboardElement = keyboardSpace.querySelector('.keyboard');
-					if (keyboardElement) {
-						const keyboardRect = keyboardElement.getBoundingClientRect();
-						const viewportHeight = window.innerHeight;
-						console.log('[SingleTextReview] Feedback scroll context:', {
-							keyboardRect,
-							viewportHeight
-						});
-						
-						// Scroll to ensure there's comfortable space above keyboard
-						// Use passage-display as reference point
-						const passageDisplay = document.querySelector('.passage-display');
-						if (passageDisplay) {
-							const passageRect = passageDisplay.getBoundingClientRect();
-							const passageBottom = passageRect.bottom;
-							console.log('[SingleTextReview] Passage display:', {
-								passageRect,
-								passageBottom,
-								keyboardTop: keyboardRect.top,
-								needsScroll: passageBottom > keyboardRect.top - 140
-							});
-							
-							// If passage bottom + feedback is too close to keyboard, scroll up
-							if (passageBottom > keyboardRect.top - 140) {
-								const scrollAdjustment = passageBottom - keyboardRect.top + 190;
-								console.log('[SingleTextReview] Feedback scroll adjustment:', scrollAdjustment);
-								window.scrollTo({
-									top: window.scrollY + scrollAdjustment,
-									behavior: 'smooth'
-								});
-								console.log('[SingleTextReview] Feedback scroll executed');
-							} else {
-								console.log('[SingleTextReview] No feedback scroll needed (enough space)');
-							}
-						} else {
-							console.warn('[SingleTextReview] Passage display element not found');
-						}
-					} else {
-						console.warn('[SingleTextReview] Keyboard element not found for feedback scroll');
-					}
-				} else {
-					console.warn('[SingleTextReview] Keyboard space not found for feedback scroll');
-				}
-			}, 150);
-		} else {
-			console.log('[SingleTextReview] Feedback scroll conditions NOT met');
+	async function scrollNextHiddenCharacterIntoViewIfNeeded() {
+		if (!currentVerse || feedbackText || userInput.length >= reviewFullInitials.length) {
+			return;
+		}
+
+		await tick();
+
+		const keyboardElement = document.querySelector('.keyboard-space .keyboard');
+		if (!keyboardElement) {
+			return;
+		}
+
+		const nextInputIndex = userInput.length;
+		const nextCharIndex = inputIndexToCharIndex[nextInputIndex];
+		if (nextCharIndex === undefined || nextCharIndex === null) {
+			return;
+		}
+
+		const nextCharElement = document.querySelector(`.current-verse [data-char-index="${nextCharIndex}"]`);
+		if (!nextCharElement) {
+			return;
+		}
+
+		const keyboardRect = keyboardElement.getBoundingClientRect();
+		const charRect = nextCharElement.getBoundingClientRect();
+		const visibleTop = 12;
+		const visibleBottom = keyboardRect.top - 12;
+
+		const isVisible = charRect.top >= visibleTop && charRect.bottom <= visibleBottom;
+		if (isVisible) {
+			return;
+		}
+
+		const targetCenter = (visibleTop + visibleBottom) / 2;
+		const charCenter = charRect.top + charRect.height / 2;
+		const scrollDelta = charCenter - targetCenter;
+
+		if (Math.abs(scrollDelta) > 2) {
+			window.scrollTo({
+				top: window.scrollY + scrollDelta,
+				behavior: 'smooth'
+			});
 		}
 	}
 
@@ -442,6 +370,7 @@
 		console.log('[SingleTextReview] Updated userInput:', userInput);
 		console.log('[SingleTextReview] Feedback variables after update:', { pressedKey, correctKey, lastCorrectKey });
 		updateErrorFeedback();
+		scrollNextHiddenCharacterIntoViewIfNeeded();
 
 		// Auto-submit when complete
 		if (userInput.length === reviewFullInitials.length) {
@@ -502,6 +431,7 @@
 			
 			userInput += mappedValue;
 			updateErrorFeedback();
+			scrollNextHiddenCharacterIntoViewIfNeeded();
 			
 			if (userInput.length === reviewFullInitials.length) {
 				checkAnswer();
@@ -534,7 +464,6 @@
 				lastErrorIndex = latestErrorIndex;
 				lastErrorChar = latestErrorChar;
 				triggerErrorFeedback($settings);
-				scrollTrigger++;
 			}
 		}
 	}
@@ -544,8 +473,11 @@
 		v.bookName === verses[0]?.bookName
 	);
 
-	function getDisplayReference(verse) {
+	function getDisplayReference(verse, isFirst = false) {
 		if (!verse) return '';
+		if (isFirst) {
+			return `${verse.bookName} ${verse.chapterNumber}:${verse.verseNumber}`;
+		}
 		if (allSameBook) {
 			return `${verse.chapterNumber}:${verse.verseNumber}`;
 		}
@@ -574,27 +506,12 @@
 		const nextFeedbackText = `${t('accuracy')}: ${accuracy.toFixed(1)}%`;
 		const nextFeedbackClass = accuracy >= 90 ? 'success' : 'error';
 
-		// Ensure content is scrolled above keyboard before showing accuracy feedback.
-		const passageDisplay = document.querySelector('.passage-display');
-		const keyboardElement = document.querySelector('.keyboard-space .keyboard');
-		if (passageDisplay && keyboardElement) {
-			const passageRect = passageDisplay.getBoundingClientRect();
-			const keyboardRect = keyboardElement.getBoundingClientRect();
-			const bufferSpace = 120;
-			if (passageRect.bottom > keyboardRect.top - bufferSpace) {
-				const scrollAdjustment = passageRect.bottom - keyboardRect.top + bufferSpace;
-				window.scrollTo({
-					top: window.scrollY + scrollAdjustment,
-					behavior: 'smooth'
-				});
-			}
-		}
-
 			isTransitioningToFeedback = true;
 
 		setTimeout(() => {
 			feedbackText = nextFeedbackText;
 			feedbackClass = nextFeedbackClass;
+			setTimeout(scrollFeedbackIntoViewIfNeeded, 50);
 			}, 180);
 
 		// Build correctness map for heat tracking (verse text only)
@@ -720,7 +637,7 @@
 		<!-- Completed verses with preserved styling -->
 		{#each completedVerses as {verse, renderedChars}, i (verse.id)}
 			<div class="completed-verse">
-				<span class="reference-inline">{getDisplayReference(verse)}</span>
+				<span class="reference-inline">{getDisplayReference(verse, i === 0)}</span>
 				<!-- Render with preserved correct/incorrect styling -->
 				{#each renderedChars as rendered, charIndex (charIndex)}
 					<span class="{rendered.className}">{rendered.char}</span>
@@ -733,10 +650,10 @@
 			{#key currentVerse.id}
 			<div class="current-verse">
 				<!-- Show reference first (always visible) -->
-				<span class="reference-inline">{getDisplayReference(currentVerse)}</span>
+				<span class="reference-inline">{getDisplayReference(currentVerse, currentIndex === 0)}</span>
 				<!-- Then verse text with hidden characters -->
 			{#each renderedChars as rendered, charIndex (charIndex)}
-				<span class="{rendered.className}">{rendered.char}</span>
+				<span class="{rendered.className}" data-char-index={charIndex}>{rendered.char}</span>
 				{/each}
 			</div>
 			{/key}
@@ -747,6 +664,8 @@
 		<div class="feedback {feedbackClass}">
 			{feedbackText}
 		</div>
+	{:else}
+		<div class="feedback feedback-placeholder" aria-hidden="true"></div>
 	{/if}
 
 	{#if currentVerse}
@@ -783,9 +702,6 @@
 				{t('input_method_mismatch_warning')}
 			</div>
 		{/if}
-
-		<!-- Invisible viewport anchor for keyboard positioning -->
-		<div bind:this={viewportAnchor} class="viewport-anchor" aria-hidden="true"></div>
 
 		<!-- Onscreen keyboard - always visible, but disabled during feedback -->
 		<div class="keyboard-space" class:keyboard-disabled={feedbackText}>
@@ -824,6 +740,7 @@
 		min-width: 0;
 		padding: 2rem 1rem;
 		padding-top: 0px;
+		padding-bottom: calc(20rem + env(safe-area-inset-bottom, 0px));
 
 	}
 
@@ -928,7 +845,15 @@
 	.feedback {
 		text-align: center;
 		font-size: 1em;
-		margin-bottom: 1rem;
+		margin-bottom: 1.25rem;
+		min-height: 2em;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.feedback-placeholder {
+		/* Reserve height even when no feedback text */
 	}
 
 	.feedback.success {
@@ -974,15 +899,9 @@
 		border-color: #ffb74d;
 	}
 
-	.viewport-anchor {
-		height: 0;
-		width: 0;
-		overflow: hidden;
-		visibility: hidden;
-	}
-
 	.keyboard-space {
 		margin-top: 1.5rem;
+		padding-bottom: env(safe-area-inset-bottom, 0px);
 	}
 
 	/* Keyboard disabled state during feedback */
@@ -1036,6 +955,7 @@
 		.single-text-review {
 			padding: 1rem 0.5rem;
 			padding-top: 0px;
+			padding-bottom: calc(18rem + env(safe-area-inset-bottom, 0px));
 
 		}
 
