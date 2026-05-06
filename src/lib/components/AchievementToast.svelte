@@ -5,21 +5,29 @@
 
 	let currentPopup = null;
 	let hideTimer = null;
+	let isAdvancing = false;
 
-	const unsubscribe = achievementPopupQueue.subscribe(() => {
-		if (!currentPopup) {
+	const unsubscribe = achievementPopupQueue.subscribe((items) => {
+		if (!currentPopup && !isAdvancing && items.length > 0) {
 			showNext();
 		}
 	});
 
 	function showNext() {
+		if (isAdvancing) {
+			return;
+		}
+
+		isAdvancing = true;
 		const next = dequeueAchievementPopup();
 		if (!next) {
 			currentPopup = null;
+			isAdvancing = false;
 			return;
 		}
 
 		currentPopup = next;
+		isAdvancing = false;
 		if (hideTimer) {
 			clearTimeout(hideTimer);
 		}

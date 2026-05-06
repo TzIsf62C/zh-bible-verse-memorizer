@@ -193,12 +193,13 @@ export function initializeAchievementsTracking() {
 }
 
 export function dequeueAchievementPopup() {
-	let firstItem = null;
-	popupQueueStore.update((queue) => {
-		if (queue.length === 0) return queue;
-		firstItem = queue[0];
-		return queue.slice(1);
-	});
+	const queue = get(popupQueueStore);
+	if (!queue || queue.length === 0) {
+		return null;
+	}
+
+	const [firstItem, ...rest] = queue;
+	popupQueueStore.set(rest);
 	return firstItem;
 }
 
