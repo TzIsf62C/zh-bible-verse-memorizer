@@ -581,7 +581,12 @@
 		newHeatArray = updateHeatArray(newHeatArray, correctnessMap);
 
 		verses.update((list) =>
-			list.map((v) => (v.id === verse.id ? { ...updatedVerse, lastReviewed: today.toISOString(), heatArray: newHeatArray } : v))
+			list.map((v) => (v.id === verse.id ? {
+				...updatedVerse,
+				isLearned: true,
+				lastReviewed: today.toISOString(),
+				heatArray: newHeatArray
+			} : v))
 		);
 	}
 

@@ -566,6 +566,7 @@
 				
 				return {
 					...v,
+					isLearned: v.isLearned || Boolean(v.lastReviewed),
 					interval: updated.interval,
 					repetitions: updated.repetitions,
 					// dueDate from spacedRepetitionBinary is a Date object
@@ -852,10 +853,6 @@
 		justify-content: center;
 	}
 
-	.feedback-placeholder {
-		/* Reserve height even when no feedback text */
-	}
-
 	.feedback.success {
 		color: #4caf50;
 	}
@@ -864,11 +861,11 @@
 		color: #f44336;
 	}
 
-	[data-theme='dark'] .feedback.success {
+	:global([data-theme='dark']) .feedback.success {
 		color: #81c784;
 	}
 
-	[data-theme='dark'] .feedback.error {
+	:global([data-theme='dark']) .feedback.error {
 		color: #ef5350;
 	}
 
@@ -893,7 +890,7 @@
 		border: 1px solid #ff9800;
 	}
 
-	[data-theme='dark'] .warning-message {
+	:global([data-theme='dark']) .warning-message {
 		background: #e65100;
 		color: #ffb74d;
 		border-color: #ffb74d;

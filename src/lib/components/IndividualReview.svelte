@@ -460,6 +460,7 @@
 				
 				return {
 					...v,
+					isLearned: v.isLearned || Boolean(v.lastReviewed),
 					interval: updated.interval,
 					repetitions: updated.repetitions,
 					dueDate: updated.dueDate,

@@ -3,8 +3,17 @@
 	import { verses } from '$lib/stores/verses';
 	import { collections } from '$lib/stores/collections';
 	import { practice } from '$lib/stores/practice';
+	import { achievementState } from '$lib/stores/achievements';
 	import { t } from '$lib/i18n';
-	import { parseImportPayload, mergeVerses, mergeCollections, buildExportPayload, applyConflictResolutions, mergePracticeData } from '$lib/utils/importExport';
+	import {
+		parseImportPayload,
+		mergeVerses,
+		mergeCollections,
+		buildExportPayload,
+		applyConflictResolutions,
+		mergePracticeData,
+		mergeAchievementsData
+	} from '$lib/utils/importExport';
 	import Modal from './Modal.svelte';
 
 	const dispatch = createEventDispatcher();
@@ -163,7 +172,8 @@
 			includeReview: includeUserData,
 			includeCollections,
 			collectionIds: collectionIdsToExport,
-			practiceData: includeUserData ? $practice : null
+			practiceData: includeUserData ? $practice : null,
+			achievementsData: includeUserData ? $achievementState : null
 		});
 
 		const dataStr = JSON.stringify(payload, null, 2);
@@ -199,7 +209,12 @@
 		const reader = new FileReader();
 		reader.onload = (e) => {
 			try {
-				const { verses: importedVerses, collections: importedCollections, practiceData: importedPracticeData } = parseImportPayload(
+				const {
+					verses: importedVerses,
+					collections: importedCollections,
+					practiceData: importedPracticeData,
+					achievementsData: importedAchievementsData
+				} = parseImportPayload(
 					e.target.result
 				);
 
@@ -214,7 +229,8 @@
 					pendingImportData = {
 						mergedVerses: mergeResult.merged,
 						importedCollections,
-						importedPracticeData
+						importedPracticeData,
+						importedAchievementsData
 					};
 					conflicts = mergeResult.conflicts;
 					conflictResolutions = new Array(conflicts.length).fill(null);
@@ -222,7 +238,7 @@
 					showConflictModal = true;
 				} else {
 					// No conflicts - proceed with import
-					finishImport(mergeResult.merged, importedCollections, importedPracticeData);
+					finishImport(mergeResult.merged, importedCollections, importedPracticeData, importedAchievementsData);
 				}
 			} catch (error) {
 				modalMessage = t('error_importing') + ': ' + error.message;
@@ -233,7 +249,7 @@
 		reader.readAsText(file);
 	}
 
-	function finishImport(mergedVerses, importedCollections, importedPracticeData) {
+	function finishImport(mergedVerses, importedCollections, importedPracticeData, importedAchievementsData) {
 		verses.set(mergedVerses);
 
 		if (importIncludeCollections && importedCollections?.length) {
@@ -245,6 +261,11 @@
 		if (importIncludeUserData && importedPracticeData) {
 			const mergedPractice = mergePracticeData($practice, importedPracticeData);
 			practice.set(mergedPractice);
+		}
+
+		if (importIncludeUserData && importedAchievementsData) {
+			const mergedAchievements = mergeAchievementsData($achievementState, importedAchievementsData);
+			achievementState.set(mergedAchievements);
 		}
 
 		modalMessage = t('import_successful');
@@ -276,7 +297,12 @@
 				conflictResolutions
 			);
 			showConflictModal = false;
-			finishImport(finalVerses, pendingImportData.importedCollections, pendingImportData.importedPracticeData);
+			finishImport(
+				finalVerses,
+				pendingImportData.importedCollections,
+				pendingImportData.importedPracticeData,
+				pendingImportData.importedAchievementsData
+			);
 			
 			// Reset conflict state
 			conflicts = [];

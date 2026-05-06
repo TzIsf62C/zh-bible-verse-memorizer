@@ -362,6 +362,7 @@
 						
 						return {
 							...v,
+							isLearned: v.isLearned || Boolean(v.lastReviewed),
 							interval: days,
 							repetitions: currentInterval - 1,
 							dueDate: newDueDate.toISOString()

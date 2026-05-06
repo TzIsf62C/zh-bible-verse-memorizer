@@ -2,8 +2,10 @@
 	import { createEventDispatcher } from 'svelte';
 	import { verses } from '$lib/stores/verses';
 	import { t } from '$lib/i18n';
+	import AchievementsModal from '$lib/components/AchievementsModal.svelte';
 
 	const dispatch = createEventDispatcher();
+	let showAchievementsModal = false;
 
 	// Calculate mastery categories
 	$: masteryData = calculateMasteryData($verses);
@@ -57,6 +59,10 @@
 
 	function showHeatMaps() {
 		dispatch('navigate-heat-maps');
+	}
+
+	function showAchievements() {
+		showAchievementsModal = true;
 	}
 
 	function exitStats() {
@@ -129,23 +135,31 @@
 			</div>
 		</div>
 
-		<button type="button" class="heat-maps-button" on:click={showHeatMaps} aria-label={t('heat_maps')}>
-			<svg
-				class="flame-icon"
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="2"
-				stroke-linecap="round"
-				stroke-linejoin="round"
-			>
-				<path d="M12 2c-2 3.5-4 6-4 9 0 3 2 5 4 5s4-2 4-5c0-3-2-5.5-4-9z"/>
-				<path d="M12 7c-1 2-2 3-2 5 0 1.5 1 2.5 2 2.5s2-1 2-2.5c0-2-1-3-2-5z"/>
-			</svg>
-			<span class="heat-maps-label">{t('heat_maps')}</span>
-		</button>
+		<div class="stats-actions">
+			<button type="button" class="heat-maps-button" on:click={showHeatMaps} aria-label={t('heat_maps')}>
+				<svg
+					class="flame-icon"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+				>
+					<path d="M12 2c-2 3.5-4 6-4 9 0 3 2 5 4 5s4-2 4-5c0-3-2-5.5-4-9z"/>
+					<path d="M12 7c-1 2-2 3-2 5 0 1.5 1 2.5 2 2.5s2-1 2-2.5c0-2-1-3-2-5z"/>
+				</svg>
+				<span class="heat-maps-label">{t('heat_maps')}</span>
+			</button>
+
+			<button type="button" class="achievements-button" on:click={showAchievements} aria-label={t('achievements')}>
+				<span>{t('achievements')}</span>
+			</button>
+		</div>
 	{/if}
 </div>
+
+<AchievementsModal show={showAchievementsModal} on:close={() => (showAchievementsModal = false)} />
 
 <style>
 	.stats-container {
@@ -169,29 +183,6 @@
 		margin: 0;
 		flex: 1;
 		text-align: center;
-	}
-
-	.exit-btn {
-		padding: 0.5rem;
-		width: 2.5rem;
-		height: 2.5rem;
-		border: none;
-		background: transparent;
-		color: #000;
-		cursor: pointer;
-		font-size: 1.5em;
-		font-weight: 300;
-		line-height: 1;
-		transition: opacity 0.2s;
-		opacity: 0.6;
-	}
-
-	.exit-btn:hover {
-		opacity: 1;
-	}
-
-	:global([data-theme='dark']) .exit-btn {
-		color: #fff;
 	}
 
 	.empty-state {
@@ -260,6 +251,12 @@
 		background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
 	}
 
+	.stats-actions {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 0.75rem;
+	}
+
 	.heat-maps-button {
 		display: flex;
 		align-items: center;
@@ -289,6 +286,27 @@
 
 	.heat-maps-label {
 		font-size: 1em;
+	}
+
+	.achievements-button {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 100%;
+		padding: 1rem;
+		background: var(--panel-background);
+		color: var(--text-color);
+		border: 1px solid var(--file-border);
+		border-radius: 12px;
+		font-size: 1.1em;
+		font-weight: 600;
+		cursor: pointer;
+		transition: all 0.2s ease;
+	}
+
+	.achievements-button:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 	}
 
 	@media (max-width: 767px) {

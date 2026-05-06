@@ -12,6 +12,7 @@ export function parseImportPayload(payload) {
 		verses: parsed?.verses ?? [],
 		collections: parsed?.collections ?? [],
 		practiceData: parsed?.practiceData ?? null,
+		achievementsData: parsed?.achievementsData ?? null,
 		raw: parsed
 	};
 }
@@ -120,7 +121,7 @@ export function mergeCollections(currentCollections, importedCollections, verses
 }
 
 export function buildExportPayload(verses, collections, options = {}) {
-	const { includeReview = true, includeCollections = false, collectionIds = [], practiceData = null } = options;
+	const { includeReview = true, includeCollections = false, collectionIds = [], practiceData = null, achievementsData = null } = options;
 
 	const cleaned = verses.map((verse) => {
 		const entry = { ...verse };
@@ -135,8 +136,9 @@ export function buildExportPayload(verses, collections, options = {}) {
 	});
 
 	const shouldIncludePracticeData = includeReview && practiceData;
+	const shouldIncludeAchievementsData = includeReview && achievementsData;
 
-	if (!includeCollections && !shouldIncludePracticeData) {
+	if (!includeCollections && !shouldIncludePracticeData && !shouldIncludeAchievementsData) {
 		return cleaned;
 	}
 
@@ -173,6 +175,10 @@ export function buildExportPayload(verses, collections, options = {}) {
 		payload.practiceData = practiceData;
 	}
 
+	if (shouldIncludeAchievementsData) {
+		payload.achievementsData = achievementsData;
+	}
+
 	return payload;
 }
 
@@ -205,6 +211,40 @@ export function mergePracticeData(currentPractice, importedPractice) {
 	return {
 		bestTimes: mergedBestTimes,
 		bestVerseTimes: mergedBestVerseTimes
+	};
+}
+
+export function mergeAchievementsData(currentAchievements, importedAchievements) {
+	const currentUnlocked = currentAchievements?.unlocked || {};
+	const importedUnlocked = importedAchievements?.unlocked || {};
+	const mergedUnlocked = { ...currentUnlocked };
+
+	Object.entries(importedUnlocked).forEach(([achievementId, importedDate]) => {
+		const existingDate = mergedUnlocked[achievementId];
+		if (!existingDate) {
+			mergedUnlocked[achievementId] = importedDate;
+			return;
+		}
+
+		if (new Date(importedDate) < new Date(existingDate)) {
+			mergedUnlocked[achievementId] = importedDate;
+		}
+	});
+
+	const ordered = [
+		...(currentAchievements?.order || []),
+		...(importedAchievements?.order || [])
+	].filter((value, index, arr) => arr.indexOf(value) === index);
+
+	Object.keys(mergedUnlocked).forEach((id) => {
+		if (!ordered.includes(id)) {
+			ordered.push(id);
+		}
+	});
+
+	return {
+		unlocked: mergedUnlocked,
+		order: ordered
 	};
 }
 
