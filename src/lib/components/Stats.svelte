@@ -1,61 +1,38 @@
 <script>
 	import { createEventDispatcher } from 'svelte';
-	import { verses } from '$lib/stores/verses';
+	import { progressTrackingState } from '$lib/stores/progressHistory.js';
+	import {
+		createEmptyProgress,
+		getProgressMax,
+		getProgressTotal
+	} from '$lib/utils/masteryProgress.js';
 	import { t } from '$lib/i18n';
 	import AchievementsModal from '$lib/components/AchievementsModal.svelte';
 
+	const GRAPH_WIDTH = 920;
+	const GRAPH_HEIGHT = 320;
+	const GRAPH_PADDING = 30;
+
+	const CATEGORY_META = [
+		{ key: 'newLearning', labelKey: 'new_learning', className: 'bar-new', fill: '#f5576c' },
+		{ key: 'developing', labelKey: 'developing', className: 'bar-developing', fill: '#00b5ff' },
+		{ key: 'solid', labelKey: 'solid', className: 'bar-solid', fill: '#29cc97' },
+		{ key: 'mastered', labelKey: 'mastered', className: 'bar-mastered', fill: '#f8ae2f' }
+	];
+
 	const dispatch = createEventDispatcher();
 	let showAchievementsModal = false;
+	let viewMode = 'totals';
 
-	// Calculate mastery categories
-	$: masteryData = calculateMasteryData($verses);
-
-	function calculateMasteryData(allVerses) {
-		// Only count verses that have been reviewed (have lastReviewed date)
-		const reviewedVerses = allVerses.filter(v => v.lastReviewed);
-		const total = reviewedVerses.length;
-
-		if (total === 0) {
-			return {
-				newLearning: 0,
-				developing: 0,
-				solid: 0,
-				mastered: 0,
-				total: 0,
-				max: 0
-			};
-		}
-
-		let newLearning = 0;
-		let developing = 0;
-		let solid = 0;
-		let mastered = 0;
-
-		reviewedVerses.forEach(v => {
-			const interval = v.interval || 0;
-			if (interval < 7) {
-				newLearning++;
-			} else if (interval >= 7 && interval <= 24) {
-				developing++;
-			} else if (interval >= 25 && interval <= 48) {
-				solid++;
-			} else {
-				mastered++;
-			}
-		});
-
-		// Calculate max for bar width calculation
-		const max = Math.max(newLearning, developing, solid, mastered);
-
-		return {
-			newLearning,
-			developing,
-			solid,
-			mastered,
-			total,
-			max
-		};
-	}
+	$: trackingState = $progressTrackingState || {};
+	$: currentProgress = trackingState.currentProgress || createEmptyProgress();
+	$: progressHistory = Array.isArray(trackingState.progressHistory) ? trackingState.progressHistory : [];
+	$: masteryData = {
+		...currentProgress,
+		total: getProgressTotal(currentProgress),
+		max: getProgressMax(currentProgress)
+	};
+	$: graphData = buildGraphData(progressHistory);
 
 	function showHeatMaps() {
 		dispatch('navigate-heat-maps');
@@ -65,98 +42,223 @@
 		showAchievementsModal = true;
 	}
 
+	function showTotalsView() {
+		viewMode = 'totals';
+	}
+
+	function showTimelineView() {
+		viewMode = 'timeline';
+	}
+
 	function exitStats() {
 		dispatch('exit');
 	}
+
+	function parseDate(dateString) {
+		if (!dateString) return null;
+		const parsed = new Date(dateString);
+		return Number.isNaN(parsed.getTime()) ? null : parsed;
+	}
+
+	function toPointTime(entry) {
+		if (entry.kind === 'week' && entry.weekEnd) {
+			const weekEnd = parseDate(`${entry.weekEnd}T00:00:00`);
+			if (weekEnd) return weekEnd.getTime();
+		}
+		const date = parseDate(`${entry.date}T00:00:00`);
+		if (date) return date.getTime();
+		const updated = parseDate(entry.updatedAt);
+		return updated ? updated.getTime() : 0;
+	}
+
+	function formatTimelineLabel(entry) {
+		if (entry.kind === 'week' && entry.weekStart && entry.weekEnd) {
+			return `${entry.weekStart} - ${entry.weekEnd}`;
+		}
+		return entry.date;
+	}
+
+	function buildGraphData(history) {
+		if (!Array.isArray(history) || history.length === 0) {
+			return {
+				points: [],
+				maxTotal: 1,
+				areas: {},
+				firstLabel: '',
+				lastLabel: ''
+			};
+		}
+
+		const sorted = [...history].sort((a, b) => toPointTime(a) - toPointTime(b));
+		const maxTotal = Math.max(
+			...sorted.map((entry) =>
+				Number(entry.newLearning || 0) +
+				Number(entry.developing || 0) +
+				Number(entry.solid || 0) +
+				Number(entry.mastered || 0)
+			),
+			1
+		);
+
+		const chartWidth = GRAPH_WIDTH - GRAPH_PADDING * 2;
+		const chartHeight = GRAPH_HEIGHT - GRAPH_PADDING * 2;
+		const step = sorted.length > 1 ? chartWidth / (sorted.length - 1) : 0;
+
+		const points = sorted.map((entry, index) => {
+			const newLearning = Number(entry.newLearning || 0);
+			const developing = Number(entry.developing || 0);
+			const solid = Number(entry.solid || 0);
+			const mastered = Number(entry.mastered || 0);
+			return {
+				x: sorted.length > 1 ? GRAPH_PADDING + index * step : GRAPH_PADDING + chartWidth / 2,
+				baseline: 0,
+				newLearning,
+				developing,
+				solid,
+				mastered,
+				newLearningTop: newLearning,
+				developingTop: newLearning + developing,
+				solidTop: newLearning + developing + solid,
+				masteredTop: newLearning + developing + solid + mastered
+			};
+		});
+
+		const toY = (value) => GRAPH_HEIGHT - GRAPH_PADDING - (Number(value) / maxTotal) * chartHeight;
+
+		const buildAreaPath = (upperKey, lowerKey) => {
+			if (points.length === 0) return '';
+
+			const upperPath = points.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${toY(point[upperKey])}`);
+			const lowerPath = [...points]
+				.reverse()
+				.map((point) => `L ${point.x} ${toY(point[lowerKey])}`);
+
+			return `${upperPath.join(' ')} ${lowerPath.join(' ')} Z`;
+		};
+
+		return {
+			points,
+			maxTotal,
+			areas: {
+				newLearning: buildAreaPath('newLearningTop', 'baseline'),
+				developing: buildAreaPath('developingTop', 'newLearningTop'),
+				solid: buildAreaPath('solidTop', 'developingTop'),
+				mastered: buildAreaPath('masteredTop', 'solidTop')
+			},
+			firstLabel: formatTimelineLabel(sorted[0]),
+			lastLabel: formatTimelineLabel(sorted[sorted.length - 1])
+		};
+	}
 </script>
 
-<!-- Mastery Bars View -->
 <div class="stats-container">
 	<div class="stats-header">
 		<h2 class="stats-title">{t('stats')}</h2>
+	</div>
+
+	<div class="view-toggle" role="tablist" aria-label={t('stats_progress_view')}>
+		<button
+			type="button"
+			class="toggle-btn"
+			class:active={viewMode === 'totals'}
+			on:click={showTotalsView}
+			role="tab"
+			aria-selected={viewMode === 'totals'}
+		>
+			{t('stats_current_totals')}
+		</button>
+		<button
+			type="button"
+			class="toggle-btn"
+			class:active={viewMode === 'timeline'}
+			on:click={showTimelineView}
+			role="tab"
+			aria-selected={viewMode === 'timeline'}
+		>
+			{t('stats_progress_timeline')}
+		</button>
 	</div>
 
 	{#if masteryData.total === 0}
 		<div class="empty-state">
 			<p>{t('no_reviewed_verses')}</p>
 		</div>
-	{:else}
+	{:else if viewMode === 'totals'}
 		<div class="mastery-bars">
-			<!-- New/Learning -->
-			<div class="mastery-category">
-				<div class="category-label">{t('new_learning')}</div>
-				<div class="bar-container">
-					<div 
-						class="bar bar-new" 
-						style="width: {masteryData.max > 0 ? (masteryData.newLearning / masteryData.max) * 100 : 0}%"
-					>
-						<span class="bar-count">{masteryData.newLearning}</span>
+			{#each CATEGORY_META as category}
+				<div class="mastery-category">
+					<div class="category-label">{t(category.labelKey)}</div>
+					<div class="bar-container">
+						<div
+							class={`bar ${category.className}`}
+							style="width: {masteryData.max > 0 ? (masteryData[category.key] / masteryData.max) * 100 : 0}%"
+						>
+							<span class="bar-count">{masteryData[category.key]}</span>
+						</div>
 					</div>
 				</div>
-			</div>
-
-			<!-- Developing -->
-			<div class="mastery-category">
-				<div class="category-label">{t('developing')}</div>
-				<div class="bar-container">
-					<div 
-						class="bar bar-developing" 
-						style="width: {masteryData.max > 0 ? (masteryData.developing / masteryData.max) * 100 : 0}%"
-					>
-						<span class="bar-count">{masteryData.developing}</span>
-					</div>
-				</div>
-			</div>
-
-			<!-- Solid -->
-			<div class="mastery-category">
-				<div class="category-label">{t('solid')}</div>
-				<div class="bar-container">
-					<div 
-						class="bar bar-solid" 
-						style="width: {masteryData.max > 0 ? (masteryData.solid / masteryData.max) * 100 : 0}%"
-					>
-						<span class="bar-count">{masteryData.solid}</span>
-					</div>
-				</div>
-			</div>
-
-			<!-- Mastered -->
-			<div class="mastery-category">
-				<div class="category-label">{t('mastered')}</div>
-				<div class="bar-container">
-					<div 
-						class="bar bar-mastered" 
-						style="width: {masteryData.max > 0 ? (masteryData.mastered / masteryData.max) * 100 : 0}%"
-					>
-						<span class="bar-count">{masteryData.mastered}</span>
-					</div>
-				</div>
-			</div>
+			{/each}
 		</div>
+	{:else}
+		<div class="timeline-panel">
+			{#if graphData.points.length === 0}
+				<div class="empty-state">
+					<p>{t('stats_progress_empty')}</p>
+				</div>
+			{:else}
+				<div class="timeline-legend">
+					{#each CATEGORY_META as category}
+						<div class="legend-item">
+							<span class="legend-dot" style="background: {category.fill};"></span>
+							<span>{t(category.labelKey)}</span>
+						</div>
+					{/each}
+				</div>
 
-		<div class="stats-actions">
-			<button type="button" class="heat-maps-button" on:click={showHeatMaps} aria-label={t('heat_maps')}>
-				<svg
-					class="flame-icon"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-				>
-					<path d="M12 2c-2 3.5-4 6-4 9 0 3 2 5 4 5s4-2 4-5c0-3-2-5.5-4-9z"/>
-					<path d="M12 7c-1 2-2 3-2 5 0 1.5 1 2.5 2 2.5s2-1 2-2.5c0-2-1-3-2-5z"/>
-				</svg>
-				<span class="heat-maps-label">{t('heat_maps')}</span>
-			</button>
+				<div class="timeline-chart-wrap">
+					<svg
+						class="timeline-chart"
+						viewBox={`0 0 ${GRAPH_WIDTH} ${GRAPH_HEIGHT}`}
+						role="img"
+						aria-label={t('stats_progress_timeline')}
+					>
+						<rect x={GRAPH_PADDING} y={GRAPH_PADDING} width={GRAPH_WIDTH - GRAPH_PADDING * 2} height={GRAPH_HEIGHT - GRAPH_PADDING * 2} class="chart-bg"></rect>
+						<path d={graphData.areas.newLearning} class="area-new"></path>
+						<path d={graphData.areas.developing} class="area-developing"></path>
+						<path d={graphData.areas.solid} class="area-solid"></path>
+						<path d={graphData.areas.mastered} class="area-mastered"></path>
+					</svg>
+				</div>
 
-			<button type="button" class="achievements-button" on:click={showAchievements} aria-label={t('achievements')}>
-				<span>{t('achievements')}</span>
-			</button>
+				<div class="timeline-labels">
+					<span>{graphData.firstLabel}</span>
+					<span>{graphData.lastLabel}</span>
+				</div>
+			{/if}
 		</div>
 	{/if}
+
+	<div class="stats-actions">
+		<button type="button" class="heat-maps-button" on:click={showHeatMaps} aria-label={t('heat_maps')}>
+			<svg
+				class="flame-icon"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+			>
+				<path d="M12 2c-2 3.5-4 6-4 9 0 3 2 5 4 5s4-2 4-5c0-3-2-5.5-4-9z"></path>
+				<path d="M12 7c-1 2-2 3-2 5 0 1.5 1 2.5 2 2.5s2-1 2-2.5c0-2-1-3-2-5z"></path>
+			</svg>
+			<span class="heat-maps-label">{t('heat_maps')}</span>
+		</button>
+
+		<button type="button" class="achievements-button" on:click={showAchievements} aria-label={t('achievements')}>
+			<span>{t('achievements')}</span>
+		</button>
+	</div>
 </div>
 
 <AchievementsModal show={showAchievementsModal} on:close={() => (showAchievementsModal = false)} />
@@ -191,7 +293,30 @@
 		color: var(--text-muted);
 	}
 
-	/* Mastery Bars View */
+	.view-toggle {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 0.5rem;
+		margin-bottom: 1.25rem;
+	}
+
+	.toggle-btn {
+		background: var(--panel-background);
+		color: var(--text-color);
+		border: 1px solid var(--file-border);
+		border-radius: 10px;
+		padding: 0.65rem 0.8rem;
+		font-size: 0.95em;
+		font-weight: 600;
+		cursor: pointer;
+	}
+
+	.toggle-btn.active {
+		background: var(--accent-color);
+		color: #ffffff;
+		border-color: var(--accent-color);
+	}
+
 	.mastery-bars {
 		display: flex;
 		flex-direction: column;
@@ -249,6 +374,82 @@
 
 	.bar-mastered {
 		background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+	}
+
+	.timeline-panel {
+		background: var(--panel-background);
+		border: 1px solid var(--file-border);
+		border-radius: 12px;
+		padding: 0.75rem;
+		margin-bottom: 1.5rem;
+	}
+
+	.timeline-legend {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.6rem 0.8rem;
+		margin-bottom: 0.6rem;
+	}
+
+	.legend-item {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+		font-size: 0.82em;
+		color: var(--text-color);
+	}
+
+	.legend-dot {
+		width: 0.6rem;
+		height: 0.6rem;
+		border-radius: 999px;
+		flex-shrink: 0;
+	}
+
+	.timeline-chart-wrap {
+		width: 100%;
+		overflow-x: auto;
+	}
+
+	.timeline-chart {
+		width: 100%;
+		height: auto;
+		display: block;
+		border-radius: 10px;
+	}
+
+	.chart-bg {
+		fill: color-mix(in srgb, var(--app-background) 70%, transparent);
+		stroke: color-mix(in srgb, var(--text-color) 20%, transparent);
+		stroke-width: 1;
+	}
+
+	.area-new {
+		fill: #f5576c;
+		opacity: 0.72;
+	}
+
+	.area-developing {
+		fill: #00b5ff;
+		opacity: 0.72;
+	}
+
+	.area-solid {
+		fill: #29cc97;
+		opacity: 0.72;
+	}
+
+	.area-mastered {
+		fill: #f8ae2f;
+		opacity: 0.72;
+	}
+
+	.timeline-labels {
+		display: flex;
+		justify-content: space-between;
+		font-size: 0.75em;
+		color: var(--subtitle-color);
+		margin-top: 0.45rem;
 	}
 
 	.stats-actions {

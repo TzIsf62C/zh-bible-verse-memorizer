@@ -1,3 +1,5 @@
+import { applyHybridRetention } from '$lib/utils/progressTracking.js';
+
 function normalizeVerseNumbers(value) {
 	return String(value ?? '').trim();
 }
@@ -5,7 +7,7 @@ function normalizeVerseNumbers(value) {
 export function parseImportPayload(payload) {
 	const parsed = typeof payload === 'string' ? JSON.parse(payload) : payload;
 	if (Array.isArray(parsed)) {
-		return { verses: parsed, collections: [], practiceData: null, raw: parsed };
+		return { verses: parsed, collections: [], practiceData: null, achievementsData: null, progressHistoryData: null, raw: parsed };
 	}
 
 	return {
@@ -13,6 +15,7 @@ export function parseImportPayload(payload) {
 		collections: parsed?.collections ?? [],
 		practiceData: parsed?.practiceData ?? null,
 		achievementsData: parsed?.achievementsData ?? null,
+		progressHistoryData: parsed?.progressHistoryData ?? null,
 		raw: parsed
 	};
 }
@@ -121,7 +124,14 @@ export function mergeCollections(currentCollections, importedCollections, verses
 }
 
 export function buildExportPayload(verses, collections, options = {}) {
-	const { includeReview = true, includeCollections = false, collectionIds = [], practiceData = null, achievementsData = null } = options;
+	const {
+		includeReview = true,
+		includeCollections = false,
+		collectionIds = [],
+		practiceData = null,
+		achievementsData = null,
+		progressHistoryData = null
+	} = options;
 
 	const cleaned = verses.map((verse) => {
 		const entry = { ...verse };
@@ -137,8 +147,9 @@ export function buildExportPayload(verses, collections, options = {}) {
 
 	const shouldIncludePracticeData = includeReview && practiceData;
 	const shouldIncludeAchievementsData = includeReview && achievementsData;
+	const shouldIncludeProgressHistoryData = includeReview && progressHistoryData;
 
-	if (!includeCollections && !shouldIncludePracticeData && !shouldIncludeAchievementsData) {
+	if (!includeCollections && !shouldIncludePracticeData && !shouldIncludeAchievementsData && !shouldIncludeProgressHistoryData) {
 		return cleaned;
 	}
 
@@ -164,7 +175,7 @@ export function buildExportPayload(verses, collections, options = {}) {
 
 	const payload = {
 		type: 'cbm-export',
-		version: 2,
+		version: 3,
 		generatedAt: new Date().toISOString(),
 		verses: cleaned,
 		collections: collectionsExport
@@ -177,6 +188,10 @@ export function buildExportPayload(verses, collections, options = {}) {
 
 	if (shouldIncludeAchievementsData) {
 		payload.achievementsData = achievementsData;
+	}
+
+	if (shouldIncludeProgressHistoryData) {
+		payload.progressHistoryData = progressHistoryData;
 	}
 
 	return payload;
@@ -245,6 +260,63 @@ export function mergeAchievementsData(currentAchievements, importedAchievements)
 	return {
 		unlocked: mergedUnlocked,
 		order: ordered
+	};
+}
+
+export function mergeProgressHistoryData(currentProgressTracking, importedProgressTracking) {
+	const currentHistory = Array.isArray(currentProgressTracking?.progressHistory)
+		? currentProgressTracking.progressHistory
+		: [];
+	const importedHistory = Array.isArray(importedProgressTracking?.progressHistory)
+		? importedProgressTracking.progressHistory
+		: [];
+
+	const currentProgress = currentProgressTracking?.currentProgress || {
+		newLearning: 0,
+		developing: 0,
+		solid: 0,
+		mastered: 0
+	};
+
+	const importedProgress = importedProgressTracking?.currentProgress || currentProgress;
+	const mergedCurrentProgress =
+		Object.values(importedProgress).reduce((sum, value) => sum + Number(value || 0), 0) >=
+		Object.values(currentProgress).reduce((sum, value) => sum + Number(value || 0), 0)
+			? importedProgress
+			: currentProgress;
+
+	const mergeKey = (entry) => {
+		const kind = entry?.kind === 'week' ? 'week' : 'day';
+		if (kind === 'week') {
+			return `week:${entry?.weekKey || entry?.weekStart || entry?.date || ''}`;
+		}
+		return `day:${entry?.date || ''}`;
+	};
+
+	const byKey = new Map();
+	[...currentHistory, ...importedHistory].forEach((entry) => {
+		if (!entry) return;
+		const key = mergeKey(entry);
+		if (!key || key.endsWith(':')) return;
+
+		const existing = byKey.get(key);
+		if (!existing || new Date(entry.updatedAt || 0) > new Date(existing.updatedAt || 0)) {
+			byKey.set(key, entry);
+		}
+	});
+
+	const mergedHistory = applyHybridRetention(Array.from(byKey.values()));
+
+	const currentUpdatedAt = currentProgressTracking?.lastUpdatedAt || null;
+	const importedUpdatedAt = importedProgressTracking?.lastUpdatedAt || null;
+
+	return {
+		currentProgress: mergedCurrentProgress,
+		progressHistory: mergedHistory,
+		lastUpdatedAt:
+			new Date(importedUpdatedAt || 0) > new Date(currentUpdatedAt || 0)
+				? importedUpdatedAt
+				: currentUpdatedAt
 	};
 }
 
