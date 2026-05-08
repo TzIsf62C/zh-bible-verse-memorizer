@@ -46,7 +46,7 @@
 {#if currentPopup}
 	<div class="achievement-toast" role="status" aria-live="polite">
 		<div class="title">{t('achievement_unlocked')}</div>
-		<div class="name">{t(currentPopup.titleKey)}</div>
+		<div class="name">{t(currentPopup.titleKey, currentPopup.titleVars || {})}</div>
 	</div>
 {/if}
 

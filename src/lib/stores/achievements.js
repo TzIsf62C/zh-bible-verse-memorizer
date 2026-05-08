@@ -2,15 +2,17 @@ import { browser } from '$app/environment';
 import { derived, get, writable } from 'svelte/store';
 import { createLocalStorageStore } from '$lib/stores/localStorage.js';
 import { verses } from '$lib/stores/verses.js';
+import { streakData } from '$lib/stores/streak.js';
 import {
 	getAllBooksWithTotals,
-	getBookChapterCount,
 	getChapterKey,
 	getChapterVerseCount,
-	getRangeChapterKeys,
-	PREDEFINED_RANGES
+	getPassageReferenceKeys,
+	getVerseReferenceKey,
+	normalizeBookName,
+	SPECIAL_PASSAGES
 } from '$lib/utils/bibleMetadata.js';
-import { achievementDefinitions } from '$lib/utils/achievementDefinitions.js';
+import { COUNT_SERIES } from '$lib/utils/achievementDefinitions.js';
 
 const MASTERED_INTERVAL_THRESHOLD = 48;
 
@@ -34,135 +36,246 @@ function isVerseMastered(verse) {
 	return isVerseLearned(verse) && Number(verse.interval || 0) > MASTERED_INTERVAL_THRESHOLD;
 }
 
-function summarizeChapterProgress(progressMap) {
-	const chapterKeys = Object.keys(progressMap);
-	const learnedChapterCount = chapterKeys.filter((key) => {
-		const [bookName, chapterRaw] = splitChapterKey(key);
-		const total = getChapterVerseCount(bookName, Number(chapterRaw));
-		return total > 0 && progressMap[key].learnedCount >= total;
-	}).length;
-
-	const masteredChapterCount = chapterKeys.filter((key) => {
-		const [bookName, chapterRaw] = splitChapterKey(key);
-		const total = getChapterVerseCount(bookName, Number(chapterRaw));
-		return total > 0 && progressMap[key].masteredCount >= total;
-	}).length;
-
-	let learnedVerseCount = 0;
-	let masteredVerseCount = 0;
-	chapterKeys.forEach((key) => {
-		learnedVerseCount += progressMap[key].learnedCount || 0;
-		masteredVerseCount += progressMap[key].masteredCount || 0;
-	});
-
-	const books = getAllBooksWithTotals();
-	const learnedBookCount = books.filter((book) => isBookComplete(progressMap, book.bookName, 'learnedCount')).length;
-	const masteredBookCount = books.filter((book) => isBookComplete(progressMap, book.bookName, 'masteredCount')).length;
-
-	const ranges = Object.fromEntries(
-		Object.entries(PREDEFINED_RANGES).map(([rangeId, rangeDef]) => {
-			const keys = getRangeChapterKeys(rangeDef);
-			const learned = keys.every((key) => hasCompleteChapter(progressMap, key, 'learnedCount'));
-			const mastered = keys.every((key) => hasCompleteChapter(progressMap, key, 'masteredCount'));
-			return [rangeId, { learned, mastered }];
-		})
-	);
-
-	return {
-		learnedVerseCount,
-		masteredVerseCount,
-		learnedChapterCount,
-		masteredChapterCount,
-		learnedBookCount,
-		masteredBookCount,
-		ranges
-	};
-}
-
 function splitChapterKey(key) {
 	const lastDash = key.lastIndexOf('-');
 	if (lastDash === -1) return [key, '0'];
 	return [key.slice(0, lastDash), key.slice(lastDash + 1)];
 }
 
-function hasCompleteChapter(progressMap, chapterKey, countField) {
-	const [bookName, chapterRaw] = splitChapterKey(chapterKey);
-	const total = getChapterVerseCount(bookName, Number(chapterRaw));
-	if (total <= 0) return false;
-	return (progressMap[chapterKey]?.[countField] || 0) >= total;
-}
-
-function isBookComplete(progressMap, bookName, countField) {
-	const chapterCount = getBookChapterCount(bookName);
-	if (chapterCount <= 0) return false;
-
-	for (let chapter = 1; chapter <= chapterCount; chapter++) {
-		const chapterKey = getChapterKey(bookName, chapter);
-		if (!hasCompleteChapter(progressMap, chapterKey, countField)) {
-			return false;
-		}
-	}
-
-	return true;
-}
-
-function buildChapterProgress(allVerses) {
+function buildVerseReferenceMap(allVerses) {
 	const map = {};
-
 	allVerses.forEach((verse) => {
-		const chapterKey = getChapterKey(verse.bookName, verse.chapterNumber);
-		if (!map[chapterKey]) {
-			map[chapterKey] = {
-				learnedCount: 0,
-				masteredCount: 0
-			};
+		const refKey = getVerseReferenceKey(verse.bookName, verse.chapterNumber, verse.verseNumber);
+		if (!map[refKey]) {
+			map[refKey] = { learned: false, mastered: false };
 		}
 
 		if (isVerseLearned(verse)) {
-			map[chapterKey].learnedCount += 1;
+			map[refKey].learned = true;
 		}
 
 		if (isVerseMastered(verse)) {
+			map[refKey].mastered = true;
+		}
+	});
+	return map;
+}
+
+function buildChapterProgressFromReferences(referenceMap) {
+	const map = {};
+
+	Object.entries(referenceMap).forEach(([refKey, status]) => {
+		const parts = refKey.split('-');
+		const chapter = Number(parts[parts.length - 2]);
+		const bookName = parts.slice(0, parts.length - 2).join('-');
+		const chapterKey = getChapterKey(bookName, chapter);
+
+		if (!map[chapterKey]) {
+			map[chapterKey] = { learnedCount: 0, masteredCount: 0 };
+		}
+
+		if (status.learned) {
+			map[chapterKey].learnedCount += 1;
+		}
+		if (status.mastered) {
 			map[chapterKey].masteredCount += 1;
+		}
+	});
+
+	Object.keys(map).forEach((chapterKey) => {
+		const [bookName, chapterRaw] = splitChapterKey(chapterKey);
+		const total = getChapterVerseCount(bookName, Number(chapterRaw));
+		if (total > 0) {
+			map[chapterKey].learnedCount = Math.min(map[chapterKey].learnedCount, total);
+			map[chapterKey].masteredCount = Math.min(map[chapterKey].masteredCount, total);
 		}
 	});
 
 	return map;
 }
 
-function enqueueUnlockPopups(newlyUnlockedIds) {
-	if (!newlyUnlockedIds.length || !browser) return;
+function summarizeChapterProgress(progressMap, referenceMap) {
+	const chapterKeys = Object.keys(progressMap);
+	const learnedChapterCount = chapterKeys.filter((key) => {
+		const [bookName, chapterRaw] = splitChapterKey(key);
+		const total = getChapterVerseCount(bookName, Number(chapterRaw));
+		return total > 0 && (progressMap[key].learnedCount || 0) >= total;
+	}).length;
 
-	const definitionsById = Object.fromEntries(achievementDefinitions.map((def) => [def.id, def]));
-	popupQueueStore.update((queue) => [
-		...queue,
-		...newlyUnlockedIds
-			.map((id) => definitionsById[id])
-			.filter(Boolean)
-			.map((def) => ({
-				id: def.id,
-				titleKey: def.titleKey,
-				descriptionKey: def.descriptionKey
-			}))
-	]);
+	const masteredChapterCount = chapterKeys.filter((key) => {
+		const [bookName, chapterRaw] = splitChapterKey(key);
+		const total = getChapterVerseCount(bookName, Number(chapterRaw));
+		return total > 0 && (progressMap[key].masteredCount || 0) >= total;
+	}).length;
+
+	const books = getAllBooksWithTotals();
+	const bookProgress = {};
+	books.forEach((book) => {
+		bookProgress[book.bookName] = {
+			bookName: book.bookName,
+			totalVerses: book.verseTotal,
+			learnedCount: 0,
+			masteredCount: 0
+		};
+	});
+
+	let learnedVerseCount = 0;
+	let masteredVerseCount = 0;
+	Object.entries(referenceMap).forEach(([refKey, status]) => {
+		const parts = refKey.split('-');
+		const bookName = normalizeBookName(parts.slice(0, parts.length - 2).join('-'));
+		if (status.learned) {
+			learnedVerseCount += 1;
+			if (bookProgress[bookName]) bookProgress[bookName].learnedCount += 1;
+		}
+		if (status.mastered) {
+			masteredVerseCount += 1;
+			if (bookProgress[bookName]) bookProgress[bookName].masteredCount += 1;
+		}
+	});
+
+	const psalmsBook = normalizeBookName('诗篇');
+	const learnedPsalmsCount = chapterKeys.filter((key) => {
+		const [bookName, chapterRaw] = splitChapterKey(key);
+		if (normalizeBookName(bookName) !== psalmsBook) return false;
+		const total = getChapterVerseCount(bookName, Number(chapterRaw));
+		return total > 0 && (progressMap[key].learnedCount || 0) >= total;
+	}).length;
+
+	const masteredPsalmsCount = chapterKeys.filter((key) => {
+		const [bookName, chapterRaw] = splitChapterKey(key);
+		if (normalizeBookName(bookName) !== psalmsBook) return false;
+		const total = getChapterVerseCount(bookName, Number(chapterRaw));
+		return total > 0 && (progressMap[key].masteredCount || 0) >= total;
+	}).length;
+
+	const passages = {};
+	Object.values(SPECIAL_PASSAGES).forEach((passageDef) => {
+		const refKeys = getPassageReferenceKeys(passageDef);
+		let learnedCount = 0;
+		let masteredCount = 0;
+		refKeys.forEach((key) => {
+			if (referenceMap[key]?.learned) learnedCount += 1;
+			if (referenceMap[key]?.mastered) masteredCount += 1;
+		});
+		passages[passageDef.id] = {
+			total: refKeys.length,
+			learnedCount,
+			masteredCount,
+			started: learnedCount > 0
+		};
+	});
+
+	return {
+		learnedVerseCount,
+		masteredVerseCount,
+		learnedChapterCount,
+		masteredChapterCount,
+		learnedPsalmsCount,
+		masteredPsalmsCount,
+		bookProgress,
+		passages,
+		streakDays: Number(get(streakData)?.current || 0)
+	};
 }
 
-function evaluateUnlocks(summary) {
+function getMetricValue(summary, metric) {
+	return Number(summary[metric] || 0);
+}
+
+function buildSeriesFromSummary(summary) {
+	const series = [];
+
+	Object.values(COUNT_SERIES).forEach((seriesDef) => {
+		const currentMetricValue = getMetricValue(summary, seriesDef.metric);
+		series.push({
+			id: seriesDef.id,
+			category: seriesDef.category,
+			surprise: false,
+			started: true,
+			levels: seriesDef.levels.map((level, index) => ({
+				achievementId: `${seriesDef.id}_${level.id}`,
+				tier: index + 1,
+				titleKey: level.titleKey,
+				current: currentMetricValue,
+				target: level.threshold
+			}))
+		});
+	});
+
+	Object.values(summary.bookProgress).forEach((book) => {
+		series.push({
+			id: `book_${book.bookName}`,
+			category: 'book',
+			surprise: true,
+			started: book.learnedCount > 0,
+			titleVars: { book: book.bookName },
+			levels: [
+				{
+					achievementId: `book_${book.bookName}_learned`,
+					tier: 1,
+					titleKey: 'achievement_book_learned_template',
+					titleVars: { book: book.bookName },
+					current: book.learnedCount,
+					target: book.totalVerses
+				},
+				{
+					achievementId: `book_${book.bookName}_mastered`,
+					tier: 2,
+					titleKey: 'achievement_book_mastered_template',
+					titleVars: { book: book.bookName },
+					current: book.masteredCount,
+					target: book.totalVerses
+				}
+			]
+		});
+	});
+
+	Object.values(SPECIAL_PASSAGES).forEach((passageDef) => {
+		const progress = summary.passages[passageDef.id] || { total: 0, learnedCount: 0, masteredCount: 0, started: false };
+		series.push({
+			id: `passage_${passageDef.id}`,
+			category: 'passage',
+			surprise: true,
+			started: progress.started,
+			levels: [
+				{
+					achievementId: `passage_${passageDef.id}_learned`,
+					tier: 1,
+					titleKey: passageDef.nameKeyLearned,
+					current: progress.learnedCount,
+					target: progress.total
+				},
+				{
+					achievementId: `passage_${passageDef.id}_mastered`,
+					tier: 2,
+					titleKey: passageDef.nameKeyMastered,
+					current: progress.masteredCount,
+					target: progress.total
+				}
+			]
+		});
+	});
+
+	return series;
+}
+
+function evaluateUnlocksFromSeries(seriesList) {
 	const currentState = get(achievementState) || { unlocked: {}, order: [] };
 	const unlocked = { ...(currentState.unlocked || {}) };
 	const order = [...(currentState.order || [])];
 	const nowIso = new Date().toISOString();
 	const newlyUnlocked = [];
 
-	achievementDefinitions.forEach((definition) => {
-		if (unlocked[definition.id]) {
-			return;
-		}
-		if (definition.condition(summary)) {
-			unlocked[definition.id] = nowIso;
-			order.push(definition.id);
-			newlyUnlocked.push(definition.id);
-		}
+	seriesList.forEach((series) => {
+		series.levels.forEach((level) => {
+			if (unlocked[level.achievementId]) return;
+			if (level.target > 0 && level.current >= level.target) {
+				unlocked[level.achievementId] = nowIso;
+				order.push(level.achievementId);
+				newlyUnlocked.push(level);
+			}
+		});
 	});
 
 	if (newlyUnlocked.length > 0) {
@@ -173,11 +286,26 @@ function evaluateUnlocks(summary) {
 	}
 }
 
+function enqueueUnlockPopups(newlyUnlockedLevels) {
+	if (!browser || newlyUnlockedLevels.length === 0) return;
+
+	popupQueueStore.update((queue) => [
+		...queue,
+		...newlyUnlockedLevels.map((level) => ({
+			id: level.achievementId,
+			titleKey: level.titleKey,
+			titleVars: level.titleVars || null
+		}))
+	]);
+}
+
 function syncFromVerses(allVerses) {
-	const progress = buildChapterProgress(allVerses);
+	const referenceMap = buildVerseReferenceMap(allVerses);
+	const progress = buildChapterProgressFromReferences(referenceMap);
 	chapterProgress.set(progress);
-	const summary = summarizeChapterProgress(progress);
-	evaluateUnlocks(summary);
+	const summary = summarizeChapterProgress(progress, referenceMap);
+	const series = buildSeriesFromSummary(summary);
+	evaluateUnlocksFromSeries(series);
 }
 
 export function initializeAchievementsTracking() {
@@ -189,6 +317,10 @@ export function initializeAchievementsTracking() {
 
 	verses.subscribe((allVerses) => {
 		syncFromVerses(allVerses || []);
+	});
+
+	streakData.subscribe(() => {
+		syncFromVerses(get(verses) || []);
 	});
 }
 
@@ -203,11 +335,50 @@ export function dequeueAchievementPopup() {
 	return firstItem;
 }
 
-export const achievementList = derived(achievementState, ($achievementState) => {
+function buildPanelSeries(seriesList, unlockedMap) {
+	return seriesList
+		.filter((series) => !series.surprise || series.started)
+		.map((series) => {
+			const levels = series.levels.map((level) => ({
+				...level,
+				isUnlocked: Boolean(unlockedMap[level.achievementId]),
+				unlockedAt: unlockedMap[level.achievementId] || null
+			}));
+
+			let highestUnlockedIndex = -1;
+			levels.forEach((level, index) => {
+				if (level.isUnlocked) highestUnlockedIndex = index;
+			});
+
+			const currentLevel = highestUnlockedIndex >= 0 ? levels[highestUnlockedIndex] : levels[0];
+			const nextLevel = highestUnlockedIndex >= 0 ? levels[highestUnlockedIndex + 1] || null : levels[0];
+
+			return {
+				id: series.id,
+				category: series.category,
+				currentLevel,
+				nextLevel,
+				isSeriesComplete: highestUnlockedIndex === levels.length - 1
+			};
+		});
+}
+
+export const achievementPanelSeries = derived([verses, achievementState, streakData], ([$verses, $achievementState]) => {
+	const referenceMap = buildVerseReferenceMap($verses || []);
+	const progress = buildChapterProgressFromReferences(referenceMap);
+	const summary = summarizeChapterProgress(progress, referenceMap);
+	const series = buildSeriesFromSummary(summary);
 	const unlockedMap = $achievementState?.unlocked || {};
-	return achievementDefinitions.map((definition) => ({
-		...definition,
-		isUnlocked: Boolean(unlockedMap[definition.id]),
-		unlockedAt: unlockedMap[definition.id] || null
-	}));
+	return buildPanelSeries(series, unlockedMap);
 });
+
+export const achievementList = derived([achievementPanelSeries], ([$achievementPanelSeries]) =>
+	$achievementPanelSeries.map((series) => ({
+		id: series.id,
+		titleKey: series.currentLevel.titleKey,
+		titleVars: series.currentLevel.titleVars || null,
+		isUnlocked: series.currentLevel.isUnlocked,
+		unlockedAt: series.currentLevel.unlockedAt,
+		nextLevel: series.nextLevel
+	}))
+);

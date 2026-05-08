@@ -1,6 +1,6 @@
 <script>
 	import { createEventDispatcher } from 'svelte';
-	import { achievementList } from '$lib/stores/achievements';
+	import { achievementPanelSeries } from '$lib/stores/achievements';
 	import { t } from '$lib/i18n';
 
 	export let show = false;
@@ -15,25 +15,49 @@
 		const date = new Date(isoDate);
 		return date.toLocaleDateString();
 	}
+
+	function getSeriesTitle(series) {
+		if (series.category === 'book') return t('achievement_series_book');
+		if (series.category === 'passage') return t('achievement_series_passage');
+		return t(`achievement_series_${series.id}`);
+	}
+
+	function getProgressPercent(nextLevel) {
+		if (!nextLevel || nextLevel.target <= 0) return 0;
+		return Math.min(100, Math.round((nextLevel.current / nextLevel.target) * 100));
+	}
 </script>
 
 {#if show}
 	<div class="modal-overlay" on:click={close} on:keydown={(e) => e.key === 'Escape' && close()} role="dialog" aria-modal="true" tabindex="0">
-		<div class="modal-content" on:click|stopPropagation on:keydown|stopPropagation>
+		<div class="modal-content" on:click|stopPropagation>
 			<div class="header-row">
 				<h3>{t('achievements')}</h3>
 				<button class="close-btn" on:click={close} aria-label={t('close')}>×</button>
 			</div>
 
 			<div class="list">
-				{#each $achievementList as achievement}
-					<div class="achievement-item" class:unlocked={achievement.isUnlocked}>
-						<div class="title">{t(achievement.titleKey)}</div>
-						<div class="desc">{t(achievement.descriptionKey)}</div>
-						{#if achievement.isUnlocked}
-							<div class="meta">{t('unlocked_on')}: {formatDate(achievement.unlockedAt)}</div>
+				{#each $achievementPanelSeries as series}
+					<div class="achievement-item" class:unlocked={series.currentLevel.isUnlocked}>
+						<div class="series">{getSeriesTitle(series)}</div>
+						<div class="title">{t(series.currentLevel.titleKey, series.currentLevel.titleVars || {})}</div>
+						{#if series.currentLevel.isUnlocked}
+							<div class="meta">{t('unlocked_on')}: {formatDate(series.currentLevel.unlockedAt)}</div>
 						{:else}
 							<div class="meta locked">{t('locked')}</div>
+						{/if}
+
+						{#if series.nextLevel}
+							<div class="progress-wrap">
+								<div class="progress-label">
+									{t('achievement_progress_to_next')}: {series.nextLevel.current}/{series.nextLevel.target}
+								</div>
+								<div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow={getProgressPercent(series.nextLevel)}>
+									<div class="progress-fill" style={`width: ${getProgressPercent(series.nextLevel)}%`}></div>
+								</div>
+							</div>
+						{:else}
+							<div class="meta">{t('achievement_progress_complete')}</div>
 						{/if}
 					</div>
 				{/each}
@@ -107,10 +131,12 @@
 		font-size: 0.95em;
 	}
 
-	.desc {
-		font-size: 0.85em;
-		margin-top: 0.2rem;
+	.series {
+		font-size: 0.78em;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
 		color: var(--subtitle-color);
+		margin-bottom: 0.2rem;
 	}
 
 	.meta {
@@ -121,5 +147,27 @@
 
 	.meta.locked {
 		font-style: italic;
+	}
+
+	.progress-wrap {
+		margin-top: 0.4rem;
+	}
+
+	.progress-label {
+		font-size: 0.78em;
+		color: var(--subtitle-color);
+		margin-bottom: 0.2rem;
+	}
+
+	.progress-track {
+		height: 0.35rem;
+		border-radius: 999px;
+		background: color-mix(in srgb, var(--subtitle-color) 25%, transparent);
+		overflow: hidden;
+	}
+
+	.progress-fill {
+		height: 100%;
+		background: var(--accent-color);
 	}
 </style>
