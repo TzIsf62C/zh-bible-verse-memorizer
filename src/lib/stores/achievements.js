@@ -188,11 +188,23 @@ function buildSeriesFromSummary(summary) {
 
 	Object.values(COUNT_SERIES).forEach((seriesDef) => {
 		const currentMetricValue = getMetricValue(summary, seriesDef.metric);
+		
+		// Determine if series should be hidden (surprise achievements)
+		let isSurprise = false;
+		let isStarted = true;
+		if (seriesDef.id === 'psalms_learned') {
+			isSurprise = true;
+			isStarted = summary.learnedPsalmsCount > 0;
+		} else if (seriesDef.id === 'psalms_mastered') {
+			isSurprise = true;
+			isStarted = summary.masteredPsalmsCount > 0;
+		}
+		
 		series.push({
 			id: seriesDef.id,
 			category: seriesDef.category,
-			surprise: false,
-			started: true,
+			surprise: isSurprise,
+			started: isStarted,
 			levels: seriesDef.levels.map((level, index) => ({
 				achievementId: `${seriesDef.id}_${level.id}`,
 				tier: index + 1,

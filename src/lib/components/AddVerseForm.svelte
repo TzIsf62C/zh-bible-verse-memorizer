@@ -875,6 +875,8 @@
 						type="number"
 						id="chapterNumber"
 						bind:value={chapterNumber}
+						readonly
+						inputmode="none"
 						min="1"
 						on:keydown={handleNumberFieldKeydown}
 						on:focus={(e) => {
@@ -903,6 +905,8 @@
 						type="number"
 						id="verseNumber"
 						bind:value={verseNumber}
+						readonly
+						inputmode="none"
 						min="1"
 						on:keydown={handleNumberFieldKeydown}
 						on:focus={(e) => {

@@ -159,7 +159,7 @@
 	<div class="view-toggle" role="tablist" aria-label={t('stats_progress_view')}>
 		<button
 			type="button"
-			class="toggle-btn"
+			class="toggle-option"
 			class:active={viewMode === 'totals'}
 			on:click={showTotalsView}
 			role="tab"
@@ -169,7 +169,7 @@
 		</button>
 		<button
 			type="button"
-			class="toggle-btn"
+			class="toggle-option"
 			class:active={viewMode === 'timeline'}
 			on:click={showTimelineView}
 			role="tab"
@@ -256,7 +256,22 @@
 		</button>
 
 		<button type="button" class="achievements-button" on:click={showAchievements} aria-label={t('achievements')}>
-			<span>{t('achievements')}</span>
+			<svg
+				class="trophy-icon"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+			>
+				<path d="M6 9 L6 5 L18 5 L18 9"></path>
+				<path d="M9 2 L15 2 M12 2 L12 5"></path>
+				<path d="M6 9 Q 4 10, 4 12 Q 4 14, 6 15"></path>
+				<path d="M18 9 Q 20 10, 20 12 Q 20 14, 18 15"></path>
+				<path d="M9 15 C 9 17, 10 19, 12 19 C 14 19, 15 17, 15 15"></path>
+				<path d="M12 19 L12 21 M 9 21 L 15 21"></path>
+			</svg>
 		</button>
 	</div>
 </div>
@@ -294,27 +309,29 @@
 	}
 
 	.view-toggle {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 0.5rem;
+		display: inline-flex;
+		background: var(--panel-background);
+		border: 2px solid var(--file-border);
+		border-radius: 12px;
+		padding: 0.25rem;
 		margin-bottom: 1.25rem;
 	}
 
-	.toggle-btn {
-		background: var(--panel-background);
+	.toggle-option {
+		background: transparent;
 		color: var(--text-color);
-		border: 1px solid var(--file-border);
-		border-radius: 10px;
-		padding: 0.65rem 0.8rem;
-		font-size: 0.95em;
+		border: none;
+		border-radius: 8px;
+		padding: 0.5rem 1rem;
+		font-size: 0.9em;
 		font-weight: 600;
 		cursor: pointer;
+		transition: all 0.2s ease;
 	}
 
-	.toggle-btn.active {
+	.toggle-option.active {
 		background: var(--accent-color);
 		color: #ffffff;
-		border-color: var(--accent-color);
 	}
 
 	.mastery-bars {
@@ -508,8 +525,11 @@
 	.achievements-button:hover {
 		transform: translateY(-2px);
 		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+	}	
+	.trophy-icon {
+		width: 28px;
+		height: 28px;
 	}
-
 	@media (max-width: 767px) {
 		.stats-container {
 			padding: 0.5rem;
