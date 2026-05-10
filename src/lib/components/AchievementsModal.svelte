@@ -81,31 +81,31 @@
 		// Return SVG icon based on series type
 		if (series.id === 'verses_learned') {
 			// Fruit tree
-			return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 L12 22 M8 6 Q 6 10, 8 14 M16 6 Q 18 10, 16 14"/><circle cx="8" cy="8" r="2" fill="currentColor"/><circle cx="16" cy="8" r="2" fill="currentColor"/><circle cx="10" cy="12" r="1.5" fill="currentColor"/><circle cx="14" cy="12" r="1.5" fill="currentColor"/></svg>`;
+			return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.122192 8.0814591 11.921519 12.706038"></path><path d="M10.046377 9.7021313 11.880271 13.418405 V 21.902804"></path><path d="M11.79842 2.0971956 C 21.677472 2.0971956, 18.609055 15.470697, 11.902992 15.470697"></path><path d="M12.222434 2.0971956 C 2.5023151 2.0971956, 5.2502071 15.470697, 11.81899 15.470697"></path></svg>`;
 		} else if (series.id === 'verses_mastered') {
 			// Evergreen tree
-			return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 L12 22 M12 2 L 7 7 L 17 7 Z M12 6 L 6 11 L 18 11 Z M12 10 L 5 15 L 19 15 Z"/></svg>`;
+			return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15.099931 V 22 M12 1.9999313 C 10.929335 4.4440111, 7 6.9999313, 7 6.9999313 H 17 C 17 6.9999313, 13.199301 4.4440111, 12 1.9999313 Z M12 6.9995263 6 11.000335 H 18 Z M12 10.999526 5 15.000336 H 19 Z"></path></svg>`;
 		} else if (series.id === 'chapters_learned') {
 			// Wave
 			return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12 Q 5 8, 8 12 T 14 12 T 20 12 T 26 12"/><path d="M2 16 Q 5 12, 8 16 T 14 16 T 20 16 T 26 16" opacity="0.6"/></svg>`;
 		} else if (series.id === 'chapters_mastered') {
 			// Raindrop
-			return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 Q 8 8, 8 14 Q 8 18, 12 18 Q 16 18, 16 14 Q 16 8, 12 2 Z"/></svg>`;
+			return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.525283 3.6019285 C 9.4052535 7.8520101, 7.7498738 9.6276887, 7.812403 12.001929 C 7.882609 14.667672, 9.0457363 16.801929, 11.712403 16.801929 C 14.37907 16.801929, 15.812403 14.668596, 15.812403 12.001929 C 15.812403 10.112229, 13.239823 7.2557672, 12.525283 3.6019285 Z"></path><path d="M5.312403 16.501929 C 1.1142196 16.501929, 1.4048196 20.397929, 12.010613 20.397929 C 22.81759 20.397929, 22.841533 16.63041, 18.512403 16.501929"></path></svg>`;
 		} else if (series.id === 'psalms_learned') {
 			// Mountain peak
 			return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20 L 8 10 L 12 14 L 16 4 L 22 20 Z"/></svg>`;
 		} else if (series.id === 'psalms_mastered') {
 			// Harp
-			return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18 C 4 10, 8 6, 12 5 C 16 6, 20 10, 20 18"/><line x1="8" y1="18" x2="8" y2="10"/><line x1="12" y1="18" x2="12" y2="8"/><line x1="16" y1="18" x2="16" y2="10"/></svg>`;
+			return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.837193 5.3561504 C 6.0496017 3.8274516, 7.7408613 5.6726306, 7.0903625 7.1225894 C 4.5807516 12.716501, 6.7867809 20.036726, 11.982742 19.917 C 17.300511 19.794467, 19.221644 12.717211, 16.87512 7.0207713 C 15.898912 4.6509198, 18.313136 4.3669223, 19.162807 5.3561504"></path><path d="M7.466193 7.0437431 H 16.621193"></path><path d="M11.944743 6.9307987 V 19.124391"></path><path d="M8.982193 6.9309893 V 18.724783"></path><path d="M14.907293 6.9309893 V 18.56561"></path><path d="M7.466193 7.0437431 H 16.621193"></path></svg>`;
 		} else if (series.id === 'streak_days') {
 			// Up-right arrow
 			return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19 L 19 5 M 19 5 L 19 15 M 19 5 L 9 5"/></svg>`;
 		} else if (series.category === 'book') {
 			// Closed book
-			return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4 L 4 20 L 20 20 L 20 4 Z M 12 4 L 12 20"/></svg>`;
+			return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m 5.268617,6.5705 v 13.4 h 10.7 v -13.4 z"/><path d="m 8.799617,4.0295 h 9.931766 v 11.972"/><path d="m 5.293617,6.5555 3.409,-2.467"/><path d="M 16.060648,19.8669 18.73107,16.019253"/></svg>`;
 		} else if (series.category === 'passage') {
 			// Quill pen
-			return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M 3 20 L 8 15 M 8 15 Q 10 13, 14 8 L 20 3 L 21 4 L 16 10 Q 11 14, 9 16 Z"/></svg>`;
+			return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M 14.752689,7.3197302 C 9.8283185,11.944961 4.1963518,18.24966 4.1963518,18.24966 4.3146961,17.656104 7.444816,15.138044 7.5267014,14.074827 7.6085874,13.01161 8.7860181,5.500673 10.214143,7.95748 c 0,0 1.985193,-4.131779 2.695268,-2.4058511 1.614149,-2.2256582 7.036134,-2.3295867 7.160614,-2.1380441 0,0 -1.393809,0.7464947 -1.442225,1.9109853 1.177849,0.5978052 1.483666,2.7046343 -0.831229,3.3308466 0.327686,0.3838686 -2.0909,2.4958083 -3.512965,3.0537403 0.382757,1.4861 -2.674765,3.866807 -4.163501,2.396338" id="path1" style="stroke-linecap:butt;stroke-linejoin:miter" /></svg>`;
 		}
 		return '';
 	}
