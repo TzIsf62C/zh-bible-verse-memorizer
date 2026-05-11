@@ -8,6 +8,7 @@
 	import { getDaysUntilDue, countDueVerses } from '$lib/utils/spacedRepetition';
 	import IndividualReview from './IndividualReview.svelte';
 	import SingleTextReview from './SingleTextReview.svelte';
+	import { registerStreakActivity } from '$lib/stores/streak.js';
 	import Modal from './Modal.svelte';
 
 	const dispatch = createEventDispatcher();
@@ -119,6 +120,7 @@
 
 	function handleReviewedVerse() {
 		dispatch('reviewupdated');
+		registerStreakActivity('review');
 	}
 
 	function proceedFromCollectionSelection() {

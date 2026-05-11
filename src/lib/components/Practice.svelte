@@ -15,6 +15,7 @@
 	import BlindChallenge from './BlindChallenge.svelte';
 	import ReverseByVerse from './ReverseByVerse.svelte';
 	import FirstAndLast from './FirstAndLast.svelte';
+	import { registerStreakActivity } from '$lib/stores/streak.js';
 	
 	const dispatch = createEventDispatcher();
 	
@@ -137,9 +138,19 @@
 	}
 	
 	function handleActivityComplete() {
+		registerStreakActivity('practice');
 		// Return to activity selection
 		selectedActivity = null;
 		state = 'selectActivity';
+	}
+
+	function handleActivityBack() {
+		selectedActivity = null;
+		state = 'selectActivity';
+	}
+
+	function handleClassicAdvancedComplete() {
+		registerStreakActivity('practice');
 	}
 	
 	function handleActivityExit() {
@@ -359,14 +370,14 @@
 			collection={selectedCollection}
 			verses={collectionVerses}
 			on:complete={handleActivityComplete}
-			on:back={handleActivityComplete}
+			on:back={handleActivityBack}
 			on:exit={handleActivityExit}
 		/>
 	{:else if selectedActivity === 'speed-challenge' && practiceType === 'verse'}
 		<SpeedChallengeVerse 
 			verse={selectedVerse}
 			on:complete={handleActivityComplete}
-			on:back={handleActivityComplete}
+			on:back={handleActivityBack}
 			on:exit={handleActivityExit}
 		/>
 	{:else if selectedActivity === 'reference-quiz'}
@@ -380,6 +391,7 @@
 		<PracticeClassic 
 			verse={selectedVerse}
 			on:complete={handleActivityComplete}
+			on:advancedcomplete={handleClassicAdvancedComplete}
 			on:exit={handleActivityExit}
 		/>
 	{:else if selectedActivity === 'reverse'}

@@ -235,8 +235,12 @@
 					{@const displayLevel = getDisplayLevel(series, carouselIndex)}
 					{#if isNumericSeries(series)}
 						{@const unlockedLevels = getUnlockedLevels(series)}
-						{@const isMostRecentUnlocked = carouselIndex === unlockedLevels.length - 1}
-						{@const progressLevel = isMostRecentUnlocked ? series.nextLevel : null}
+						{@const hasUnlockedLevels = unlockedLevels.length > 0}
+						{@const isMostRecentUnlocked = hasUnlockedLevels && carouselIndex === unlockedLevels.length - 1}
+						{@const isActiveProgressCard = hasUnlockedLevels ? isMostRecentUnlocked : true}
+						{@const progressLevel = hasUnlockedLevels
+							? (isMostRecentUnlocked ? series.nextLevel : null)
+							: series.currentLevel}
 						<div class="carousel-row">
 							<button
 								type="button"
@@ -272,7 +276,7 @@
 											<div class="progress-fill" style={`width: ${getProgressPercent(progressLevel)}%`}></div>
 										</div>
 									</div>
-								{:else if isMostRecentUnlocked}
+								{:else if isActiveProgressCard}
 									<div class="meta">{t('achievement_progress_complete')}</div>
 								{/if}
 							</div>

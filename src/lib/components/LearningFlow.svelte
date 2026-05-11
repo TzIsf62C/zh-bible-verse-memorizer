@@ -9,6 +9,7 @@
 	import { triggerErrorFeedback } from '$lib/utils/feedback';
 	import { createVerseReferenceFormatter } from '$lib/utils/bibleBooks';
 	import { initializeHeatArray, updateHeatArray, buildCorrectnessMap } from '$lib/utils/heatTracking';
+	import { registerStreakActivity } from '$lib/stores/streak.js';
 
 	let currentVerseIdx = 0;
 	let currentStage = 'basic'; // basic, intermediate, advanced - user can choose any
@@ -510,6 +511,7 @@
 				console.log('[Learn] Completed advanced stage - verse learned');
 				// Mark verse as learned and update heat tracking
 				updateVerseProgress(getCurrentVerse(), userInput);
+				registerStreakActivity('learning');
 				// Show modal for completion
 				modalMessage = `${t('congratulations_mastered')} (${accuracy}%)`;
 				showModal = true;

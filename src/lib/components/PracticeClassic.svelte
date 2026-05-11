@@ -387,6 +387,10 @@
 		
 		accuracy = Math.round((correct / fullInitials.length) * 100);
 		showResult = true;
+
+		if (currentStage === 'advanced' && accuracy >= 90) {
+			dispatch('advancedcomplete');
+		}
 	}
 	
 	function retry() {
