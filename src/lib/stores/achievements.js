@@ -186,7 +186,13 @@ function getMetricValue(summary, metric) {
 function buildSeriesFromSummary(summary) {
 	const series = [];
 
-	Object.values(COUNT_SERIES).forEach((seriesDef) => {
+	const orderedCountSeries = Object.values(COUNT_SERIES).sort((a, b) => {
+		if (a.id === 'streak_days') return -1;
+		if (b.id === 'streak_days') return 1;
+		return 0;
+	});
+
+	orderedCountSeries.forEach((seriesDef) => {
 		const currentMetricValue = getMetricValue(summary, seriesDef.metric);
 		
 		// Determine if series should be hidden (surprise achievements)
@@ -368,6 +374,7 @@ function buildPanelSeries(seriesList, unlockedMap) {
 			return {
 				id: series.id,
 				category: series.category,
+				levels,
 				currentLevel,
 				nextLevel,
 				isSeriesComplete: highestUnlockedIndex === levels.length - 1

@@ -153,6 +153,69 @@ export const SPECIAL_PASSAGES = {
 		bookName: '罗马书',
 		startChapter: 6,
 		endChapter: 8
+	},
+	shortest_verse: {
+		id: 'shortest_verse',
+		type: 'refs',
+		nameKeyLearned: 'achievement_passage_shortest_verse_learned',
+		nameKeyMastered: 'achievement_passage_acquainted_with_grief_mastered',
+		refs: [{ bookName: '约翰福音', chapter: 11, verse: 35 }]
+	},
+	shortest_chapter: {
+		id: 'shortest_chapter',
+		type: 'range',
+		nameKeyLearned: 'achievement_passage_shortest_chapter_learned',
+		nameKeyMastered: 'achievement_passage_praise_him_mastered',
+		bookName: '诗篇',
+		startChapter: 117,
+		endChapter: 117
+	},
+	shortest_book: {
+		id: 'shortest_book',
+		type: 'range',
+		nameKeyLearned: 'achievement_passage_shortest_book_learned',
+		nameKeyMastered: 'achievement_passage_walking_in_truth_mastered',
+		bookName: '约翰二书',
+		startChapter: 1,
+		endChapter: 1
+	},
+	in_the_beginning: {
+		id: 'in_the_beginning',
+		type: 'refs',
+		nameKeyLearned: 'achievement_passage_in_the_beginning_learned',
+		nameKeyMastered: 'achievement_passage_the_alpha_mastered',
+		refs: [{ bookName: '创世记', chapter: 1, verse: 1 }]
+	},
+	amen: {
+		id: 'amen',
+		type: 'refs',
+		nameKeyLearned: 'achievement_passage_amen_learned',
+		nameKeyMastered: 'achievement_passage_the_omega_mastered',
+		refs: [{ bookName: '启示录', chapter: 22, verse: 21 }]
+	},
+	a_man_of_sorrows: {
+		id: 'a_man_of_sorrows',
+		type: 'range',
+		nameKeyLearned: 'achievement_passage_a_man_of_sorrows_learned',
+		nameKeyMastered: 'achievement_passage_he_carried_their_sins_mastered',
+		bookName: '以赛亚书',
+		startChapter: 53,
+		endChapter: 53
+	},
+	he_made_himself_nothing: {
+		id: 'he_made_himself_nothing',
+		type: 'refs',
+		nameKeyLearned: 'achievement_passage_he_made_himself_nothing_learned',
+		nameKeyMastered: 'achievement_passage_name_above_all_names_mastered',
+		refs: [
+			{ bookName: '腓立比书', chapter: 2, verse: 5 },
+			{ bookName: '腓立比书', chapter: 2, verse: 6 },
+			{ bookName: '腓立比书', chapter: 2, verse: 7 },
+			{ bookName: '腓立比书', chapter: 2, verse: 8 },
+			{ bookName: '腓立比书', chapter: 2, verse: 9 },
+			{ bookName: '腓立比书', chapter: 2, verse: 10 },
+			{ bookName: '腓立比书', chapter: 2, verse: 11 }
+		]
 	}
 };
 

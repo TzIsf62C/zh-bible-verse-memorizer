@@ -1,13 +1,22 @@
 <script>
 	import { createEventDispatcher } from 'svelte';
 	import { achievementPanelSeries } from '$lib/stores/achievements';
+	import { achievementState } from '$lib/stores/achievements';
 	import { t } from '$lib/i18n';
 
 	export let show = false;
 	const dispatch = createEventDispatcher();
+	let carouselIndexBySeries = {};
+	let carouselInitialized = false;
 
 	function close() {
 		dispatch('close');
+	}
+
+	function handleOverlayClick(event) {
+		if (event.target === event.currentTarget) {
+			close();
+		}
 	}
 
 	function formatDate(isoDate) {
@@ -20,9 +29,45 @@
 		if (!nextLevel || nextLevel.target <= 0) return 0;
 		return Math.min(100, Math.round((nextLevel.current / nextLevel.target) * 100));
 	}
+
+	$: unlockedCount = Object.keys($achievementState?.unlocked || {}).length;
+
+	$: if (!show) {
+		carouselInitialized = false;
+		carouselIndexBySeries = {};
+	}
+
+	$: if (show && $achievementPanelSeries?.length && !carouselInitialized) {
+		const next = {};
+		$achievementPanelSeries.forEach((series) => {
+			if (!isNumericSeries(series)) return;
+			next[series.id] = getInitialCarouselIndex(series);
+		});
+		carouselIndexBySeries = next;
+		carouselInitialized = true;
+	}
+
+	$: if (show && carouselInitialized && $achievementPanelSeries?.length) {
+		const next = { ...carouselIndexBySeries };
+		let changed = false;
+		$achievementPanelSeries.forEach((series) => {
+			if (!isNumericSeries(series)) return;
+			const unlockedLevels = getUnlockedLevels(series);
+			const maxIndex = Math.max(0, unlockedLevels.length - 1);
+			const currentIndex = next[series.id] ?? maxIndex;
+			const clampedIndex = Math.min(maxIndex, Math.max(0, currentIndex));
+			if (currentIndex !== clampedIndex) {
+				next[series.id] = clampedIndex;
+				changed = true;
+			}
+		});
+		if (changed) {
+			carouselIndexBySeries = next;
+		}
+	}
 	
-	function getDescription(series) {
-		const level = series.currentLevel;
+	function getDescription(series, levelOverride = null) {
+		const level = levelOverride || series.currentLevel;
 		const isLocked = !level.isUnlocked;
 		
 		// For count-based achievements (verses, chapters, psalms, streaks)
@@ -109,47 +154,169 @@
 		}
 		return '';
 	}
+
+	function isNumericSeries(series) {
+		return series.category === 'count' || series.category === 'streak';
+	}
+
+	function getInitialCarouselIndex(series) {
+		const unlockedLevels = getUnlockedLevels(series);
+		if (!unlockedLevels.length) return 0;
+		return unlockedLevels.length - 1;
+	}
+
+	function getUnlockedLevels(series) {
+		return (series?.levels || []).filter((level) => level.isUnlocked);
+	}
+
+	function getCarouselIndex(series) {
+		const fallback = getInitialCarouselIndex(series);
+		return carouselIndexBySeries[series.id] ?? fallback;
+	}
+
+	function getDisplayLevel(series, indexOverride = null) {
+		if (!isNumericSeries(series) || !series?.levels?.length) {
+			return series.currentLevel;
+		}
+		const unlockedLevels = getUnlockedLevels(series);
+		if (!unlockedLevels.length) {
+			return series.currentLevel;
+		}
+		const idx = indexOverride ?? getCarouselIndex(series);
+		return unlockedLevels[idx] || series.currentLevel;
+	}
+
+	function previousCarouselLevel(series) {
+		const idx = getCarouselIndex(series);
+		if (idx <= 0) return;
+		carouselIndexBySeries = {
+			...carouselIndexBySeries,
+			[series.id]: idx - 1
+		};
+	}
+
+	function nextCarouselLevel(series) {
+		const idx = getCarouselIndex(series);
+		const unlockedLevels = getUnlockedLevels(series);
+		const maxIndex = Math.max(0, (unlockedLevels.length || 1) - 1);
+		if (idx >= maxIndex) return;
+		carouselIndexBySeries = {
+			...carouselIndexBySeries,
+			[series.id]: idx + 1
+		};
+	}
+
+	function hasPreviousLevel(series, indexOverride = null) {
+		if (!isNumericSeries(series)) return false;
+		const idx = indexOverride ?? getCarouselIndex(series);
+		return idx > 0;
+	}
+
+	function hasNextLevel(series, indexOverride = null) {
+		if (!isNumericSeries(series)) return false;
+		const unlockedLevels = getUnlockedLevels(series);
+		if (!unlockedLevels.length) return false;
+		const idx = indexOverride ?? getCarouselIndex(series);
+		return idx < unlockedLevels.length - 1;
+	}
 </script>
 
 {#if show}
-	<div class="modal-overlay" on:click={close} on:keydown={(e) => e.key === 'Escape' && close()} role="dialog" aria-modal="true" tabindex="0">
-		<div class="modal-content" on:click|stopPropagation>
+	<div class="modal-overlay" on:click={handleOverlayClick} on:keydown={(e) => e.key === 'Escape' && close()} role="dialog" aria-modal="true" tabindex="0">
+		<div class="modal-content" role="document" tabindex="-1">
 			<div class="header-row">
-				<h3>{t('achievements')}</h3>
+				<h3>{t('achievements')} {unlockedCount}/?</h3>
 				<button class="close-btn" on:click={close} aria-label={t('close')}>×</button>
 			</div>
 
 			<div class="list">
 				{#each $achievementPanelSeries as series}
-					<div class="achievement-item" class:unlocked={series.currentLevel.isUnlocked}>
-						<div class="achievement-header">
-							<div class="icon-container" class:unlocked={series.currentLevel.isUnlocked}>
-								{@html getSeriesIcon(series)}
-							</div>
-							<div class="achievement-content">
-								<div class="title">{t(series.currentLevel.titleKey, series.currentLevel.titleVars || {})}</div>
-								<div class="description">{getDescription(series)}</div>
-							</div>
-						</div>
-						{#if series.currentLevel.isUnlocked}
-							<div class="meta">{t('unlocked_on')}: {formatDate(series.currentLevel.unlockedAt)}</div>
-						{:else}
-							<div class="meta locked">{t('locked')}</div>
-						{/if}
+					{@const carouselIndex = carouselIndexBySeries[series.id] ?? getInitialCarouselIndex(series)}
+					{@const displayLevel = getDisplayLevel(series, carouselIndex)}
+					{#if isNumericSeries(series)}
+						{@const unlockedLevels = getUnlockedLevels(series)}
+						{@const isMostRecentUnlocked = carouselIndex === unlockedLevels.length - 1}
+						{@const progressLevel = isMostRecentUnlocked ? series.nextLevel : null}
+						<div class="carousel-row">
+							<button
+								type="button"
+								class="carousel-button outside"
+								on:click={() => previousCarouselLevel(series)}
+								disabled={!hasPreviousLevel(series, carouselIndex)}
+								aria-label="Previous unlocked achievement"
+							>
+								←
+							</button>
+							<div class="achievement-item" class:unlocked={displayLevel.isUnlocked}>
+								<div class="achievement-header">
+									<div class="icon-container" class:unlocked={displayLevel.isUnlocked}>
+										{@html getSeriesIcon(series)}
+									</div>
+									<div class="achievement-content">
+										<div class="title">{t(displayLevel.titleKey, displayLevel.titleVars || {})}</div>
+										<div class="description">{getDescription(series, displayLevel)}</div>
+									</div>
+								</div>
+								{#if displayLevel.isUnlocked}
+									<div class="meta">{t('unlocked_on')}: {formatDate(displayLevel.unlockedAt)}</div>
+								{:else}
+									<div class="meta locked">{t('locked')}</div>
+								{/if}
 
-						{#if series.nextLevel}
-							<div class="progress-wrap">
-								<div class="progress-label">
-									{t('achievement_progress_to_next')}: {series.nextLevel.current}/{series.nextLevel.target}
+								{#if progressLevel}
+									<div class="progress-wrap">
+										<div class="progress-label">
+											{t('achievement_progress_to_next')}: {progressLevel.current}/{progressLevel.target}
+										</div>
+										<div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow={getProgressPercent(progressLevel)}>
+											<div class="progress-fill" style={`width: ${getProgressPercent(progressLevel)}%`}></div>
+										</div>
+									</div>
+								{:else if isMostRecentUnlocked}
+									<div class="meta">{t('achievement_progress_complete')}</div>
+								{/if}
+							</div>
+							<button
+								type="button"
+								class="carousel-button outside"
+								on:click={() => nextCarouselLevel(series)}
+								disabled={!hasNextLevel(series, carouselIndex)}
+								aria-label="Next unlocked achievement"
+							>
+								→
+							</button>
+						</div>
+					{:else}
+						<div class="achievement-item" class:unlocked={displayLevel.isUnlocked}>
+							<div class="achievement-header">
+								<div class="icon-container" class:unlocked={displayLevel.isUnlocked}>
+									{@html getSeriesIcon(series)}
 								</div>
-								<div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow={getProgressPercent(series.nextLevel)}>
-									<div class="progress-fill" style={`width: ${getProgressPercent(series.nextLevel)}%`}></div>
+								<div class="achievement-content">
+									<div class="title">{t(displayLevel.titleKey, displayLevel.titleVars || {})}</div>
+									<div class="description">{getDescription(series, displayLevel)}</div>
 								</div>
 							</div>
-						{:else}
-							<div class="meta">{t('achievement_progress_complete')}</div>
-						{/if}
-					</div>
+							{#if displayLevel.isUnlocked}
+								<div class="meta">{t('unlocked_on')}: {formatDate(displayLevel.unlockedAt)}</div>
+							{:else}
+								<div class="meta locked">{t('locked')}</div>
+							{/if}
+
+							{#if displayLevel.target > 0}
+								<div class="progress-wrap">
+									<div class="progress-label">
+										{t('achievement_progress_to_next')}: {displayLevel.current}/{displayLevel.target}
+									</div>
+									<div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow={getProgressPercent(displayLevel)}>
+										<div class="progress-fill" style={`width: ${getProgressPercent(displayLevel)}%`}></div>
+									</div>
+								</div>
+							{:else}
+								<div class="meta">{t('achievement_progress_complete')}</div>
+							{/if}
+						</div>
+					{/if}
 				{/each}
 			</div>
 		</div>
@@ -209,6 +376,8 @@
 		border: 1px solid var(--file-border);
 		background: var(--file-bg);
 		opacity: 0.65;
+		width: 100%;
+		box-sizing: border-box;
 	}
 
 	.achievement-item.unlocked {
@@ -262,6 +431,40 @@
 		font-size: 0.8em;
 		color: var(--subtitle-color);
 		line-height: 1.3;
+	}
+
+	.carousel-row {
+		display: flex;
+		align-items: center;
+		gap: 0.6rem;
+		width: 100%;
+	}
+
+	.carousel-row .achievement-item {
+		flex: 1 1 auto;
+		min-width: 0;
+	}
+
+	.carousel-button {
+		border: 1px solid var(--file-border);
+		background: var(--panel-background);
+		color: var(--text-color);
+		border-radius: 6px;
+		font-size: 0.85em;
+		line-height: 1;
+		padding: 0.2rem 0.45rem;
+		cursor: pointer;
+	}
+
+	.carousel-button.outside {
+		align-self: stretch;
+		min-width: 2rem;
+		font-size: 1em;
+	}
+
+	.carousel-button:disabled {
+		opacity: 0.4;
+		cursor: not-allowed;
 	}
 
 	.meta {
