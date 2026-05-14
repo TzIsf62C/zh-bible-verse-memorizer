@@ -595,7 +595,7 @@
 		font-size: 1.5em;
 		line-height: 2;
 		margin-bottom: 1rem;
-		padding: 1rem;
+		padding: 1rem 1rem 12rem;
 		background: var(--panel-background);
 		border-radius: 8px;
 		overflow-y: auto;

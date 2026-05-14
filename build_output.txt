@@ -1,0 +1,700 @@
+
+> zh-bible-sveltekit@0.0.1 build
+> vite build
+
+vite v7.3.1 building ssr environment for production...
+transforming...
+5:25:56 AM [vite-plugin-svelte] src/lib/components/LearningFlow.svelte:1036:1 `<div>` with a click or keydown handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+1034: <!-- Modal for Stage Completion -->
+1035: {#if showModal}
+1036:   <div class="modal-overlay" on:click={closeModal} on:keydown={(e) => e.key === 'Escape' && closeModal()}>
+              ^
+1037:     <div class="modal-content" on:click|stopPropagation>
+1038:       <div class="modal-message">{modalMessage}</div>
+5:25:56 AM [vite-plugin-svelte] src/lib/components/LearningFlow.svelte:1037:2 Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+1035: {#if showModal}
+1036:   <div class="modal-overlay" on:click={closeModal} on:keydown={(e) => e.key === 'Escape' && closeModal()}>
+1037:     <div class="modal-content" on:click|stopPropagation>
+                ^
+1038:       <div class="modal-message">{modalMessage}</div>
+1039:       {#if currentStage === 'intermediate' && modalMessage.includes(t('nice_try'))}
+5:25:56 AM [vite-plugin-svelte] src/lib/components/LearningFlow.svelte:1037:2 `<div>` with a click handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+1035: {#if showModal}
+1036:   <div class="modal-overlay" on:click={closeModal} on:keydown={(e) => e.key === 'Escape' && closeModal()}>
+1037:     <div class="modal-content" on:click|stopPropagation>
+                ^
+1038:       <div class="modal-message">{modalMessage}</div>
+1039:       {#if currentStage === 'intermediate' && modalMessage.includes(t('nice_try'))}
+5:25:56 AM [vite-plugin-svelte] src/lib/components/LearningFlow.svelte:1223:1 Unused CSS selector "[data-theme='dark'] .feedback.success"
+https://svelte.dev/e/css_unused_selector
+1221:   }
+1222: 
+1223:   [data-theme='dark'] .feedback.success {
+                                             ^
+1224:     background: #1b5e20;
+1225:     color: #81c784;
+5:25:56 AM [vite-plugin-svelte] src/lib/components/LearningFlow.svelte:1228:1 Unused CSS selector "[data-theme='dark'] .feedback.error"
+https://svelte.dev/e/css_unused_selector
+1226:   }
+1227: 
+1228:   [data-theme='dark'] .feedback.error {
+                                           ^
+1229:     background: #b71c1c;
+1230:     color: #ef5350;
+5:25:56 AM [vite-plugin-svelte] src/lib/components/LearningFlow.svelte:1233:1 Unused CSS selector "[data-theme='dark'] .feedback.warning"
+https://svelte.dev/e/css_unused_selector
+1231:   }
+1232: 
+1233:   [data-theme='dark'] .feedback.warning {
+                                             ^
+1234:     background: #e65100;
+1235:     color: #ffb74d;
+5:25:57 AM [vite-plugin-svelte] src/lib/components/ReviewSessions.svelte:729:2 Elements with the 'dialog' interactive role must have a tabindex value
+https://svelte.dev/e/a11y_interactive_supports_focus
+727:   {:else if state === 'reviewMode'}
+728:     <!-- Review Mode Modal -->
+729:     <div class="modal-overlay" on:click={cancelReview} on:keydown={(e) => e.key === 'Escape' && cancelReview()} role="dialog" aria-modal="true">
+               ^
+730:       <div class="modal-content" on:click|stopPropagation role="document">
+731:         <h3>{t('choose_review_mode')}</h3>
+5:25:57 AM [vite-plugin-svelte] src/lib/components/ReviewSessions.svelte:730:3 Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+728:     <!-- Review Mode Modal -->
+729:     <div class="modal-overlay" on:click={cancelReview} on:keydown={(e) => e.key === 'Escape' && cancelReview()} role="dialog" aria-modal="true">
+730:       <div class="modal-content" on:click|stopPropagation role="document">
+                 ^
+731:         <h3>{t('choose_review_mode')}</h3>
+732:         <div class="modal-buttons">
+5:25:57 AM [vite-plugin-svelte] src/lib/components/ReviewSessions.svelte:730:3 Non-interactive element `<div>` should not be assigned mouse or keyboard event listeners
+https://svelte.dev/e/a11y_no_noninteractive_element_interactions
+728:     <!-- Review Mode Modal -->
+729:     <div class="modal-overlay" on:click={cancelReview} on:keydown={(e) => e.key === 'Escape' && cancelReview()} role="dialog" aria-modal="true">
+730:       <div class="modal-content" on:click|stopPropagation role="document">
+                 ^
+731:         <h3>{t('choose_review_mode')}</h3>
+732:         <div class="modal-buttons">
+5:25:57 AM [vite-plugin-svelte] src/lib/components/ReviewSessions.svelte:746:2 Elements with the 'dialog' interactive role must have a tabindex value
+https://svelte.dev/e/a11y_interactive_supports_focus
+744:   {:else if state === 'reviewOrder'}
+745:     <!-- Review Order Modal -->
+746:     <div class="modal-overlay" on:click={cancelReview} on:keydown={(e) => e.key === 'Escape' && cancelReview()} role="dialog" aria-modal="true">
+               ^
+747:       <div class="modal-content" on:click|stopPropagation role="document">
+748:         <h3>{t('choose_review_order')}</h3>
+5:25:57 AM [vite-plugin-svelte] src/lib/components/ReviewSessions.svelte:747:3 Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+745:     <!-- Review Order Modal -->
+746:     <div class="modal-overlay" on:click={cancelReview} on:keydown={(e) => e.key === 'Escape' && cancelReview()} role="dialog" aria-modal="true">
+747:       <div class="modal-content" on:click|stopPropagation role="document">
+                 ^
+748:         <h3>{t('choose_review_order')}</h3>
+749:         <div class="modal-buttons">
+5:25:57 AM [vite-plugin-svelte] src/lib/components/ReviewSessions.svelte:747:3 Non-interactive element `<div>` should not be assigned mouse or keyboard event listeners
+https://svelte.dev/e/a11y_no_noninteractive_element_interactions
+745:     <!-- Review Order Modal -->
+746:     <div class="modal-overlay" on:click={cancelReview} on:keydown={(e) => e.key === 'Escape' && cancelReview()} role="dialog" aria-modal="true">
+747:       <div class="modal-content" on:click|stopPropagation role="document">
+                 ^
+748:         <h3>{t('choose_review_order')}</h3>
+749:         <div class="modal-buttons">
+5:25:57 AM [vite-plugin-svelte] src/lib/components/ReviewSessions.svelte:790:1 Elements with the 'dialog' interactive role must have a tabindex value
+https://svelte.dev/e/a11y_interactive_supports_focus
+788: <!-- Change Interval Modal -->
+789: {#if showIntervalModal}
+790:   <div class="modal-overlay" on:click={closeIntervalModal} on:keydown={(e) => e.key === 'Escape' && closeIntervalModal()} role="dialog" aria-modal="true">
+             ^
+791:     <div class="modal-content interval-modal" on:click|stopPropagation role="document">
+792:       <h3>{t('change_interval_title')}</h3>
+5:25:57 AM [vite-plugin-svelte] src/lib/components/ReviewSessions.svelte:791:2 Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+789: {#if showIntervalModal}
+790:   <div class="modal-overlay" on:click={closeIntervalModal} on:keydown={(e) => e.key === 'Escape' && closeIntervalModal()} role="dialog" aria-modal="true">
+791:     <div class="modal-content interval-modal" on:click|stopPropagation role="document">
+               ^
+792:       <h3>{t('change_interval_title')}</h3>
+793:       
+5:25:57 AM [vite-plugin-svelte] src/lib/components/ReviewSessions.svelte:791:2 Non-interactive element `<div>` should not be assigned mouse or keyboard event listeners
+https://svelte.dev/e/a11y_no_noninteractive_element_interactions
+789: {#if showIntervalModal}
+790:   <div class="modal-overlay" on:click={closeIntervalModal} on:keydown={(e) => e.key === 'Escape' && closeIntervalModal()} role="dialog" aria-modal="true">
+791:     <div class="modal-content interval-modal" on:click|stopPropagation role="document">
+               ^
+792:       <h3>{t('change_interval_title')}</h3>
+793:       
+5:25:57 AM [vite-plugin-svelte] src/lib/components/Settings.svelte:146:3 A form label must be associated with a control
+https://svelte.dev/e/a11y_label_has_associated_control
+144:     
+145:     <div class="setting-group">
+146:       <label>{t('theme')}</label>
+                                      ^
+147:       <div class="radio-group">
+148:         <label class="radio-option">
+5:25:57 AM [vite-plugin-svelte] src/lib/components/Settings.svelte:182:3 A form label must be associated with a control
+https://svelte.dev/e/a11y_label_has_associated_control
+180:     
+181:     <div class="setting-group">
+182:       <label>{t('text_size')}</label>
+                                          ^
+183:       <div class="radio-group">
+184:         <label class="radio-option">
+5:25:57 AM [vite-plugin-svelte] src/lib/components/Settings.svelte:221:3 A form label must be associated with a control
+https://svelte.dev/e/a11y_label_has_associated_control
+219:     
+220:     <div class="setting-group">
+221:       <label>{t('language')}</label>
+                                         ^
+222:       <div class="radio-group">
+223:         <label class="radio-option">
+5:25:57 AM [vite-plugin-svelte] src/lib/components/Settings.svelte:257:3 A form label must be associated with a control
+https://svelte.dev/e/a11y_label_has_associated_control
+255:     
+256:     <div class="setting-group">
+257:       <label>{t('input_method')}</label>
+                                             ^
+258:       <div class="radio-group">
+259:         <label class="radio-option">
+5:25:57 AM [vite-plugin-svelte] src/lib/components/Settings.svelte:293:3 A form label must be associated with a control
+https://svelte.dev/e/a11y_label_has_associated_control
+291:     
+292:     <div class="setting-group">
+293:       <label>{t('book_name_charset')}</label>
+                                                  ^
+294:       <div class="radio-group">
+295:         <label class="radio-option">
+5:25:57 AM [vite-plugin-svelte] src/lib/components/Settings.svelte:381:3 A form label must be associated with a control
+https://svelte.dev/e/a11y_label_has_associated_control
+379:     
+380:     <div class="setting-group">
+381:       <label>{t('view_tutorial')}</label>
+                                              ^
+382:       <p class="help-text">{t('view_tutorial_description')}</p>
+383:       <button class="secondary-btn" on:click={showTutorial}>
+5:25:57 AM [vite-plugin-svelte] src/lib/components/Settings.svelte:392:3 A form label must be associated with a control
+https://svelte.dev/e/a11y_label_has_associated_control
+390:     
+391:     <div class="setting-group">
+392:       <label>{t('check_for_updates')}</label>
+                                                  ^
+393:       <p class="help-text">{t('update_description')}</p>
+394:       <button 
+5:25:57 AM [vite-plugin-svelte] src/lib/components/Settings.svelte:415:3 A form label must be associated with a control
+https://svelte.dev/e/a11y_label_has_associated_control
+413:     
+414:     <div class="setting-group danger-zone">
+415:       <label>{t('clear_all_data')}</label>
+                                               ^
+416:       <p class="help-text">{t('clear_data_warning')}</p>
+417:       <button class="danger-btn" on:click={clearAllData}>
+5:25:57 AM [vite-plugin-svelte] src/lib/components/Settings.svelte:452:1 Unused CSS selector "h3"
+https://svelte.dev/e/css_unused_selector
+450:   }
+451:   
+452:   h3 {
+         ^
+453:     margin: 0 0 1rem 0;
+454:     font-size: 1.1em;
+5:25:58 AM [vite-plugin-svelte] src/lib/components/Modal.svelte:46:1 Elements with the 'dialog' interactive role must have a tabindex value
+https://svelte.dev/e/a11y_interactive_supports_focus
+44: 
+45: {#if show}
+46:   <div 
+           ^
+47:     class="modal-overlay" 
+48:     on:click={handleOverlayClick} 
+5:25:58 AM [vite-plugin-svelte] src/lib/components/Modal.svelte:53:2 Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+51:     aria-modal="true"
+52:   >
+53:     <div class="modal-content" on:click|stopPropagation role="document">
+              ^
+54:       {#if title}
+55:         <h3 class="modal-title">{title}</h3>
+5:25:58 AM [vite-plugin-svelte] src/lib/components/Modal.svelte:53:2 Non-interactive element `<div>` should not be assigned mouse or keyboard event listeners
+https://svelte.dev/e/a11y_no_noninteractive_element_interactions
+51:     aria-modal="true"
+52:   >
+53:     <div class="modal-content" on:click|stopPropagation role="document">
+              ^
+54:       {#if title}
+55:         <h3 class="modal-title">{title}</h3>
+5:25:58 AM [vite-plugin-svelte] src/lib/components/IndividualReview.svelte:638:1 `<div>` with a click or keydown handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+636: <!-- Result Modal -->
+637: {#if showResult}
+638:   <div class="modal-overlay" on:click={nextVerse} on:keydown={(e) => e.key === 'Escape' && nextVerse()}>
+             ^
+639:     <div class="modal-content" on:click|stopPropagation>
+640:       <div class="modal-message">
+5:25:58 AM [vite-plugin-svelte] src/lib/components/IndividualReview.svelte:639:2 Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+637: {#if showResult}
+638:   <div class="modal-overlay" on:click={nextVerse} on:keydown={(e) => e.key === 'Escape' && nextVerse()}>
+639:     <div class="modal-content" on:click|stopPropagation>
+               ^
+640:       <div class="modal-message">
+641:         <div class="accuracy-text">
+5:25:58 AM [vite-plugin-svelte] src/lib/components/IndividualReview.svelte:639:2 `<div>` with a click handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+637: {#if showResult}
+638:   <div class="modal-overlay" on:click={nextVerse} on:keydown={(e) => e.key === 'Escape' && nextVerse()}>
+639:     <div class="modal-content" on:click|stopPropagation>
+               ^
+640:       <div class="modal-message">
+641:         <div class="accuracy-text">
+5:25:58 AM [vite-plugin-svelte] src/lib/components/IndividualReview.svelte:791:1 Unused CSS selector ".input-display .placeholder"
+https://svelte.dev/e/css_unused_selector
+789:   }
+790: 
+791:   .input-display .placeholder {
+                                  ^
+792:     color: var(--subtitle-color);
+793:     font-weight: normal;
+5:25:58 AM [vite-plugin-svelte] src/lib/components/IndividualReview.svelte:816:1 Unused CSS selector "[data-theme='dark'] .result-display.success"
+https://svelte.dev/e/css_unused_selector
+814:   }
+815: 
+816:   [data-theme='dark'] .result-display.success {
+                                                  ^
+817:     background: #1b5e20;
+818:     color: #81c784;
+5:25:58 AM [vite-plugin-svelte] src/lib/components/IndividualReview.svelte:821:1 Unused CSS selector "[data-theme='dark'] .result-display.error"
+https://svelte.dev/e/css_unused_selector
+819:   }
+820: 
+821:   [data-theme='dark'] .result-display.error {
+                                                ^
+822:     background: #b71c1c;
+823:     color: #ef5350;
+5:25:58 AM [vite-plugin-svelte] src/lib/components/IndividualReview.svelte:968:1 Unused CSS selector "[data-theme='dark'] .feedback.error"
+https://svelte.dev/e/css_unused_selector
+966:   }
+967: 
+968:   [data-theme='dark'] .feedback.error {
+                                          ^
+969:     background: #b71c1c;
+970:     color: #ef5350;
+5:25:58 AM [vite-plugin-svelte] src/lib/components/IndividualReview.svelte:973:1 Unused CSS selector "[data-theme='dark'] .feedback.warning"
+https://svelte.dev/e/css_unused_selector
+971:   }
+972: 
+973:   [data-theme='dark'] .feedback.warning {
+                                            ^
+974:     background: #e65100;
+975:     color: #ffb74d;
+5:25:58 AM [vite-plugin-svelte] src/lib/components/IndividualReview.svelte:978:1 Unused CSS selector "[data-theme='dark'] .feedback.success"
+https://svelte.dev/e/css_unused_selector
+976:   }
+977: 
+978:   [data-theme='dark'] .feedback.success {
+                                            ^
+979:     background: #1b5e20;
+980:     color: #81c784;
+5:25:58 AM [vite-plugin-svelte] src/lib/components/ReferenceQuiz.svelte:262:1 Unused CSS selector ".completion-content"
+https://svelte.dev/e/css_unused_selector
+260:   }
+261:   
+262:   .completion-content {
+                          ^
+263:     text-align: center;
+264:     padding: 1rem;
+5:25:58 AM [vite-plugin-svelte] src/lib/components/ReferenceQuiz.svelte:267:1 Unused CSS selector ".completion-content h3"
+https://svelte.dev/e/css_unused_selector
+265:   }
+266:   
+267:   .completion-content h3 {
+                             ^
+268:     margin-bottom: 1rem;
+269:   }
+5:25:58 AM [vite-plugin-svelte] src/lib/components/ReferenceQuiz.svelte:271:1 Unused CSS selector ".completion-content p"
+https://svelte.dev/e/css_unused_selector
+269:   }
+270:   
+271:   .completion-content p {
+                            ^
+272:     margin-bottom: 1.5rem;
+273:   }
+5:25:58 AM [vite-plugin-svelte] src/lib/components/ReferenceQuiz.svelte:275:1 Unused CSS selector ".completion-content .primary-button"
+https://svelte.dev/e/css_unused_selector
+273:   }
+274:   
+275:   .completion-content .primary-button {
+                                          ^
+276:     width: 100%;
+277:   }
+✓ 272 modules transformed.
+rendering chunks...
+vite v7.3.1 building client environment for production...
+transforming...
+5:26:00 AM [vite-plugin-svelte] src/lib/components/LearningFlow.svelte:1036:1 `<div>` with a click or keydown handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+1034: <!-- Modal for Stage Completion -->
+1035: {#if showModal}
+1036:   <div class="modal-overlay" on:click={closeModal} on:keydown={(e) => e.key === 'Escape' && closeModal()}>
+              ^
+1037:     <div class="modal-content" on:click|stopPropagation>
+1038:       <div class="modal-message">{modalMessage}</div>
+5:26:00 AM [vite-plugin-svelte] src/lib/components/LearningFlow.svelte:1037:2 Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+1035: {#if showModal}
+1036:   <div class="modal-overlay" on:click={closeModal} on:keydown={(e) => e.key === 'Escape' && closeModal()}>
+1037:     <div class="modal-content" on:click|stopPropagation>
+                ^
+1038:       <div class="modal-message">{modalMessage}</div>
+1039:       {#if currentStage === 'intermediate' && modalMessage.includes(t('nice_try'))}
+5:26:00 AM [vite-plugin-svelte] src/lib/components/LearningFlow.svelte:1037:2 `<div>` with a click handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+1035: {#if showModal}
+1036:   <div class="modal-overlay" on:click={closeModal} on:keydown={(e) => e.key === 'Escape' && closeModal()}>
+1037:     <div class="modal-content" on:click|stopPropagation>
+                ^
+1038:       <div class="modal-message">{modalMessage}</div>
+1039:       {#if currentStage === 'intermediate' && modalMessage.includes(t('nice_try'))}
+5:26:00 AM [vite-plugin-svelte] src/lib/components/LearningFlow.svelte:1223:1 Unused CSS selector "[data-theme='dark'] .feedback.success"
+https://svelte.dev/e/css_unused_selector
+1221:   }
+1222: 
+1223:   [data-theme='dark'] .feedback.success {
+                                             ^
+1224:     background: #1b5e20;
+1225:     color: #81c784;
+5:26:00 AM [vite-plugin-svelte] src/lib/components/LearningFlow.svelte:1228:1 Unused CSS selector "[data-theme='dark'] .feedback.error"
+https://svelte.dev/e/css_unused_selector
+1226:   }
+1227: 
+1228:   [data-theme='dark'] .feedback.error {
+                                           ^
+1229:     background: #b71c1c;
+1230:     color: #ef5350;
+5:26:00 AM [vite-plugin-svelte] src/lib/components/LearningFlow.svelte:1233:1 Unused CSS selector "[data-theme='dark'] .feedback.warning"
+https://svelte.dev/e/css_unused_selector
+1231:   }
+1232: 
+1233:   [data-theme='dark'] .feedback.warning {
+                                             ^
+1234:     background: #e65100;
+1235:     color: #ffb74d;
+5:26:00 AM [vite-plugin-svelte] src/lib/components/ReviewSessions.svelte:729:2 Elements with the 'dialog' interactive role must have a tabindex value
+https://svelte.dev/e/a11y_interactive_supports_focus
+727:   {:else if state === 'reviewMode'}
+728:     <!-- Review Mode Modal -->
+729:     <div class="modal-overlay" on:click={cancelReview} on:keydown={(e) => e.key === 'Escape' && cancelReview()} role="dialog" aria-modal="true">
+               ^
+730:       <div class="modal-content" on:click|stopPropagation role="document">
+731:         <h3>{t('choose_review_mode')}</h3>
+5:26:00 AM [vite-plugin-svelte] src/lib/components/ReviewSessions.svelte:730:3 Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+728:     <!-- Review Mode Modal -->
+729:     <div class="modal-overlay" on:click={cancelReview} on:keydown={(e) => e.key === 'Escape' && cancelReview()} role="dialog" aria-modal="true">
+730:       <div class="modal-content" on:click|stopPropagation role="document">
+                 ^
+731:         <h3>{t('choose_review_mode')}</h3>
+732:         <div class="modal-buttons">
+5:26:00 AM [vite-plugin-svelte] src/lib/components/ReviewSessions.svelte:730:3 Non-interactive element `<div>` should not be assigned mouse or keyboard event listeners
+https://svelte.dev/e/a11y_no_noninteractive_element_interactions
+728:     <!-- Review Mode Modal -->
+729:     <div class="modal-overlay" on:click={cancelReview} on:keydown={(e) => e.key === 'Escape' && cancelReview()} role="dialog" aria-modal="true">
+730:       <div class="modal-content" on:click|stopPropagation role="document">
+                 ^
+731:         <h3>{t('choose_review_mode')}</h3>
+732:         <div class="modal-buttons">
+5:26:00 AM [vite-plugin-svelte] src/lib/components/ReviewSessions.svelte:746:2 Elements with the 'dialog' interactive role must have a tabindex value
+https://svelte.dev/e/a11y_interactive_supports_focus
+744:   {:else if state === 'reviewOrder'}
+745:     <!-- Review Order Modal -->
+746:     <div class="modal-overlay" on:click={cancelReview} on:keydown={(e) => e.key === 'Escape' && cancelReview()} role="dialog" aria-modal="true">
+               ^
+747:       <div class="modal-content" on:click|stopPropagation role="document">
+748:         <h3>{t('choose_review_order')}</h3>
+5:26:00 AM [vite-plugin-svelte] src/lib/components/ReviewSessions.svelte:747:3 Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+745:     <!-- Review Order Modal -->
+746:     <div class="modal-overlay" on:click={cancelReview} on:keydown={(e) => e.key === 'Escape' && cancelReview()} role="dialog" aria-modal="true">
+747:       <div class="modal-content" on:click|stopPropagation role="document">
+                 ^
+748:         <h3>{t('choose_review_order')}</h3>
+749:         <div class="modal-buttons">
+5:26:00 AM [vite-plugin-svelte] src/lib/components/ReviewSessions.svelte:747:3 Non-interactive element `<div>` should not be assigned mouse or keyboard event listeners
+https://svelte.dev/e/a11y_no_noninteractive_element_interactions
+745:     <!-- Review Order Modal -->
+746:     <div class="modal-overlay" on:click={cancelReview} on:keydown={(e) => e.key === 'Escape' && cancelReview()} role="dialog" aria-modal="true">
+747:       <div class="modal-content" on:click|stopPropagation role="document">
+                 ^
+748:         <h3>{t('choose_review_order')}</h3>
+749:         <div class="modal-buttons">
+5:26:00 AM [vite-plugin-svelte] src/lib/components/ReviewSessions.svelte:790:1 Elements with the 'dialog' interactive role must have a tabindex value
+https://svelte.dev/e/a11y_interactive_supports_focus
+788: <!-- Change Interval Modal -->
+789: {#if showIntervalModal}
+790:   <div class="modal-overlay" on:click={closeIntervalModal} on:keydown={(e) => e.key === 'Escape' && closeIntervalModal()} role="dialog" aria-modal="true">
+             ^
+791:     <div class="modal-content interval-modal" on:click|stopPropagation role="document">
+792:       <h3>{t('change_interval_title')}</h3>
+5:26:00 AM [vite-plugin-svelte] src/lib/components/ReviewSessions.svelte:791:2 Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+789: {#if showIntervalModal}
+790:   <div class="modal-overlay" on:click={closeIntervalModal} on:keydown={(e) => e.key === 'Escape' && closeIntervalModal()} role="dialog" aria-modal="true">
+791:     <div class="modal-content interval-modal" on:click|stopPropagation role="document">
+               ^
+792:       <h3>{t('change_interval_title')}</h3>
+793:       
+5:26:00 AM [vite-plugin-svelte] src/lib/components/ReviewSessions.svelte:791:2 Non-interactive element `<div>` should not be assigned mouse or keyboard event listeners
+https://svelte.dev/e/a11y_no_noninteractive_element_interactions
+789: {#if showIntervalModal}
+790:   <div class="modal-overlay" on:click={closeIntervalModal} on:keydown={(e) => e.key === 'Escape' && closeIntervalModal()} role="dialog" aria-modal="true">
+791:     <div class="modal-content interval-modal" on:click|stopPropagation role="document">
+               ^
+792:       <h3>{t('change_interval_title')}</h3>
+793:       
+5:26:00 AM [vite-plugin-svelte] src/lib/components/Settings.svelte:146:3 A form label must be associated with a control
+https://svelte.dev/e/a11y_label_has_associated_control
+144:     
+145:     <div class="setting-group">
+146:       <label>{t('theme')}</label>
+                                      ^
+147:       <div class="radio-group">
+148:         <label class="radio-option">
+5:26:00 AM [vite-plugin-svelte] src/lib/components/Settings.svelte:182:3 A form label must be associated with a control
+https://svelte.dev/e/a11y_label_has_associated_control
+180:     
+181:     <div class="setting-group">
+182:       <label>{t('text_size')}</label>
+                                          ^
+183:       <div class="radio-group">
+184:         <label class="radio-option">
+5:26:00 AM [vite-plugin-svelte] src/lib/components/Settings.svelte:221:3 A form label must be associated with a control
+https://svelte.dev/e/a11y_label_has_associated_control
+219:     
+220:     <div class="setting-group">
+221:       <label>{t('language')}</label>
+                                         ^
+222:       <div class="radio-group">
+223:         <label class="radio-option">
+5:26:00 AM [vite-plugin-svelte] src/lib/components/Settings.svelte:257:3 A form label must be associated with a control
+https://svelte.dev/e/a11y_label_has_associated_control
+255:     
+256:     <div class="setting-group">
+257:       <label>{t('input_method')}</label>
+                                             ^
+258:       <div class="radio-group">
+259:         <label class="radio-option">
+5:26:00 AM [vite-plugin-svelte] src/lib/components/Settings.svelte:293:3 A form label must be associated with a control
+https://svelte.dev/e/a11y_label_has_associated_control
+291:     
+292:     <div class="setting-group">
+293:       <label>{t('book_name_charset')}</label>
+                                                  ^
+294:       <div class="radio-group">
+295:         <label class="radio-option">
+5:26:00 AM [vite-plugin-svelte] src/lib/components/Settings.svelte:381:3 A form label must be associated with a control
+https://svelte.dev/e/a11y_label_has_associated_control
+379:     
+380:     <div class="setting-group">
+381:       <label>{t('view_tutorial')}</label>
+                                              ^
+382:       <p class="help-text">{t('view_tutorial_description')}</p>
+383:       <button class="secondary-btn" on:click={showTutorial}>
+5:26:00 AM [vite-plugin-svelte] src/lib/components/Settings.svelte:392:3 A form label must be associated with a control
+https://svelte.dev/e/a11y_label_has_associated_control
+390:     
+391:     <div class="setting-group">
+392:       <label>{t('check_for_updates')}</label>
+                                                  ^
+393:       <p class="help-text">{t('update_description')}</p>
+394:       <button 
+5:26:00 AM [vite-plugin-svelte] src/lib/components/Settings.svelte:415:3 A form label must be associated with a control
+https://svelte.dev/e/a11y_label_has_associated_control
+413:     
+414:     <div class="setting-group danger-zone">
+415:       <label>{t('clear_all_data')}</label>
+                                               ^
+416:       <p class="help-text">{t('clear_data_warning')}</p>
+417:       <button class="danger-btn" on:click={clearAllData}>
+5:26:00 AM [vite-plugin-svelte] src/lib/components/Settings.svelte:452:1 Unused CSS selector "h3"
+https://svelte.dev/e/css_unused_selector
+450:   }
+451:   
+452:   h3 {
+         ^
+453:     margin: 0 0 1rem 0;
+454:     font-size: 1.1em;
+5:26:01 AM [vite-plugin-svelte] src/lib/components/Modal.svelte:46:1 Elements with the 'dialog' interactive role must have a tabindex value
+https://svelte.dev/e/a11y_interactive_supports_focus
+44: 
+45: {#if show}
+46:   <div 
+           ^
+47:     class="modal-overlay" 
+48:     on:click={handleOverlayClick} 
+5:26:01 AM [vite-plugin-svelte] src/lib/components/Modal.svelte:53:2 Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+51:     aria-modal="true"
+52:   >
+53:     <div class="modal-content" on:click|stopPropagation role="document">
+              ^
+54:       {#if title}
+55:         <h3 class="modal-title">{title}</h3>
+5:26:01 AM [vite-plugin-svelte] src/lib/components/Modal.svelte:53:2 Non-interactive element `<div>` should not be assigned mouse or keyboard event listeners
+https://svelte.dev/e/a11y_no_noninteractive_element_interactions
+51:     aria-modal="true"
+52:   >
+53:     <div class="modal-content" on:click|stopPropagation role="document">
+              ^
+54:       {#if title}
+55:         <h3 class="modal-title">{title}</h3>
+5:26:01 AM [vite-plugin-svelte] src/lib/components/IndividualReview.svelte:638:1 `<div>` with a click or keydown handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+636: <!-- Result Modal -->
+637: {#if showResult}
+638:   <div class="modal-overlay" on:click={nextVerse} on:keydown={(e) => e.key === 'Escape' && nextVerse()}>
+             ^
+639:     <div class="modal-content" on:click|stopPropagation>
+640:       <div class="modal-message">
+5:26:01 AM [vite-plugin-svelte] src/lib/components/IndividualReview.svelte:639:2 Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events
+637: {#if showResult}
+638:   <div class="modal-overlay" on:click={nextVerse} on:keydown={(e) => e.key === 'Escape' && nextVerse()}>
+639:     <div class="modal-content" on:click|stopPropagation>
+               ^
+640:       <div class="modal-message">
+641:         <div class="accuracy-text">
+5:26:01 AM [vite-plugin-svelte] src/lib/components/IndividualReview.svelte:639:2 `<div>` with a click handler must have an ARIA role
+https://svelte.dev/e/a11y_no_static_element_interactions
+637: {#if showResult}
+638:   <div class="modal-overlay" on:click={nextVerse} on:keydown={(e) => e.key === 'Escape' && nextVerse()}>
+639:     <div class="modal-content" on:click|stopPropagation>
+               ^
+640:       <div class="modal-message">
+641:         <div class="accuracy-text">
+5:26:01 AM [vite-plugin-svelte] src/lib/components/IndividualReview.svelte:791:1 Unused CSS selector ".input-display .placeholder"
+https://svelte.dev/e/css_unused_selector
+789:   }
+790: 
+791:   .input-display .placeholder {
+                                  ^
+792:     color: var(--subtitle-color);
+793:     font-weight: normal;
+5:26:01 AM [vite-plugin-svelte] src/lib/components/IndividualReview.svelte:816:1 Unused CSS selector "[data-theme='dark'] .result-display.success"
+https://svelte.dev/e/css_unused_selector
+814:   }
+815: 
+816:   [data-theme='dark'] .result-display.success {
+                                                  ^
+817:     background: #1b5e20;
+818:     color: #81c784;
+5:26:01 AM [vite-plugin-svelte] src/lib/components/IndividualReview.svelte:821:1 Unused CSS selector "[data-theme='dark'] .result-display.error"
+https://svelte.dev/e/css_unused_selector
+819:   }
+820: 
+821:   [data-theme='dark'] .result-display.error {
+                                                ^
+822:     background: #b71c1c;
+823:     color: #ef5350;
+5:26:01 AM [vite-plugin-svelte] src/lib/components/IndividualReview.svelte:968:1 Unused CSS selector "[data-theme='dark'] .feedback.error"
+https://svelte.dev/e/css_unused_selector
+966:   }
+967: 
+968:   [data-theme='dark'] .feedback.error {
+                                          ^
+969:     background: #b71c1c;
+970:     color: #ef5350;
+5:26:01 AM [vite-plugin-svelte] src/lib/components/IndividualReview.svelte:973:1 Unused CSS selector "[data-theme='dark'] .feedback.warning"
+https://svelte.dev/e/css_unused_selector
+971:   }
+972: 
+973:   [data-theme='dark'] .feedback.warning {
+                                            ^
+974:     background: #e65100;
+975:     color: #ffb74d;
+5:26:01 AM [vite-plugin-svelte] src/lib/components/IndividualReview.svelte:978:1 Unused CSS selector "[data-theme='dark'] .feedback.success"
+https://svelte.dev/e/css_unused_selector
+976:   }
+977: 
+978:   [data-theme='dark'] .feedback.success {
+                                            ^
+979:     background: #1b5e20;
+980:     color: #81c784;
+5:26:01 AM [vite-plugin-svelte] src/lib/components/ReferenceQuiz.svelte:262:1 Unused CSS selector ".completion-content"
+https://svelte.dev/e/css_unused_selector
+260:   }
+261:   
+262:   .completion-content {
+                          ^
+263:     text-align: center;
+264:     padding: 1rem;
+5:26:01 AM [vite-plugin-svelte] src/lib/components/ReferenceQuiz.svelte:267:1 Unused CSS selector ".completion-content h3"
+https://svelte.dev/e/css_unused_selector
+265:   }
+266:   
+267:   .completion-content h3 {
+                             ^
+268:     margin-bottom: 1rem;
+269:   }
+5:26:01 AM [vite-plugin-svelte] src/lib/components/ReferenceQuiz.svelte:271:1 Unused CSS selector ".completion-content p"
+https://svelte.dev/e/css_unused_selector
+269:   }
+270:   
+271:   .completion-content p {
+                            ^
+272:     margin-bottom: 1.5rem;
+273:   }
+5:26:01 AM [vite-plugin-svelte] src/lib/components/ReferenceQuiz.svelte:275:1 Unused CSS selector ".completion-content .primary-button"
+https://svelte.dev/e/css_unused_selector
+273:   }
+274:   
+275:   .completion-content .primary-button {
+                                          ^
+276:     width: 100%;
+277:   }
+✓ 233 modules transformed.
+rendering chunks...
+computing gzip size...
+.svelte-kit/output/client/_app/version.json                         0.03 kB │ gzip:   0.05 kB
+.svelte-kit/output/client/.vite/manifest.json                       3.41 kB │ gzip:   0.65 kB
+.svelte-kit/output/client/_app/immutable/assets/0.Jgh05bnL.css      7.56 kB │ gzip:   2.05 kB
+.svelte-kit/output/client/_app/immutable/assets/2.B4xGauBE.css     98.44 kB │ gzip:  13.66 kB
+.svelte-kit/output/client/_app/immutable/entry/start.BgNrBHmC.js    0.08 kB │ gzip:   0.09 kB
+.svelte-kit/output/client/_app/immutable/chunks/CW949NGH.js         0.11 kB │ gzip:   0.10 kB
+.svelte-kit/output/client/_app/immutable/chunks/Dws4dBcq.js         0.53 kB │ gzip:   0.34 kB
+.svelte-kit/output/client/_app/immutable/nodes/1.C4h7mWgZ.js        0.55 kB │ gzip:   0.35 kB
+.svelte-kit/output/client/_app/immutable/chunks/tE1LcGZl.js         1.40 kB │ gzip:   0.74 kB
+.svelte-kit/output/client/_app/immutable/chunks/DTQFp8Pm.js         1.49 kB │ gzip:   0.66 kB
+.svelte-kit/output/client/_app/immutable/nodes/0.BBCkZ2mJ.js        1.54 kB │ gzip:   0.80 kB
+.svelte-kit/output/client/_app/immutable/chunks/9XOviD7o.js         2.08 kB │ gzip:   1.10 kB
+.svelte-kit/output/client/_app/immutable/chunks/BSx0ivQ4.js         3.06 kB │ gzip:   1.31 kB
+.svelte-kit/output/client/_app/immutable/entry/app.UoiKJIzT.js      5.47 kB │ gzip:   2.57 kB
+.svelte-kit/output/client/_app/immutable/chunks/Hbpk0Wa0.js         6.07 kB │ gzip:   2.71 kB
+.svelte-kit/output/client/_app/immutable/chunks/CfLjtNXw.js        24.77 kB │ gzip:   9.84 kB
+.svelte-kit/output/client/_app/immutable/chunks/Dom5XK33.js        25.58 kB │ gzip:  10.08 kB
+.svelte-kit/output/client/_app/immutable/nodes/2.CT_j2IaC.js      399.29 kB │ gzip: 114.65 kB
+✓ built in 3.94s
+.svelte-kit/output/server/.vite/manifest.json                           3.43 kB
+.svelte-kit/output/server/_app/immutable/assets/_layout.Jgh05bnL.css    7.56 kB
+.svelte-kit/output/server/_app/immutable/assets/_page.CCaL7Vrw.css     33.91 kB
+.svelte-kit/output/server/chunks/false.js                               0.05 kB
+.svelte-kit/output/server/entries/pages/_page.js                        0.07 kB
+.svelte-kit/output/server/chunks/index-server.js                        0.18 kB
+.svelte-kit/output/server/chunks/environment.js                         0.19 kB
+.svelte-kit/output/server/internal.js                                   0.38 kB
+.svelte-kit/output/server/chunks/server.js                              0.45 kB
+.svelte-kit/output/server/entries/pages/_layout.svelte.js               0.79 kB
+.svelte-kit/output/server/chunks/utils.js                               1.15 kB
+.svelte-kit/output/server/entries/fallbacks/error.svelte.js             1.36 kB
+.svelte-kit/output/server/chunks/index.js                               2.77 kB
+.svelte-kit/output/server/chunks/exports.js                             5.59 kB
+.svelte-kit/output/server/remote-entry.js                              19.04 kB
+.svelte-kit/output/server/chunks/shared.js                             25.96 kB
+.svelte-kit/output/server/chunks/index2.js                             29.14 kB
+.svelte-kit/output/server/chunks/internal.js                           30.28 kB
+.svelte-kit/output/server/chunks/context.js                            54.78 kB
+.svelte-kit/output/server/index.js                                    120.35 kB
+.svelte-kit/output/server/entries/pages/_page.svelte.js               181.67 kB
+✓ built in 7.94s
+
+Run npm run preview to preview your production build locally.
+
+> Using @sveltejs/adapter-static
+  Wrote site to "build"
+  ✔ done

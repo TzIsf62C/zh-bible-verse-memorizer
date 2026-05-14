@@ -14,6 +14,8 @@
 	let editMode = false; // Heat map edit mode
 	let editingCharIndex = null; // Index of character being edited
 	let tooltipPosition = { x: 0, y: 0 }; // Tooltip position
+	const HEAT_LEGEND_STOPS = [99, 80, 60, 40, 20, 0];
+	$: heatLegendGradient = `linear-gradient(to right, ${HEAT_LEGEND_STOPS.map((score, index) => `${getHeatColor(score)} ${(index / (HEAT_LEGEND_STOPS.length - 1)) * 100}%`).join(', ')})`;
 
 	// Get verses with heat arrays for Heat Maps view
 	$: versesWithHeat = $verses.filter(v => v.heatArray && v.heatArray.length > 0);
@@ -234,6 +236,19 @@
 
 		<div class="heat-map">
 			<div class="heat-map-text">
+				<div class="heat-legend" aria-hidden="true">
+					<div class="legend-label-row">
+						<span>99</span>
+						<span>0</span>
+					</div>
+					<div class="legend-gradient" style={`background: ${heatLegendGradient};`}></div>
+					<div class="legend-tick-row">
+						<span>80</span>
+						<span>60</span>
+						<span>40</span>
+						<span>20</span>
+					</div>
+				</div>
 				{#each getHeatMapChars(selectedVerse) as charData, i}
 					{#if charData.char === '\n'}
 						<br />
@@ -470,6 +485,32 @@
 	
 	.heat-map {
 		position: relative;
+	}
+
+	.heat-legend {
+		margin-bottom: 0.9rem;
+	}
+
+	.legend-label-row {
+		display: flex;
+		justify-content: space-between;
+		font-size: 0.78em;
+		color: var(--subtitle-color);
+		margin-bottom: 0.25rem;
+	}
+
+	.legend-gradient {
+		height: 0.7rem;
+		border-radius: 999px;
+		border: 1px solid color-mix(in srgb, var(--text-color) 18%, transparent);
+	}
+
+	.legend-tick-row {
+		display: flex;
+		justify-content: space-around;
+		font-size: 0.75em;
+		color: var(--subtitle-color);
+		margin-top: 0.2rem;
 	}
 	
 	.heat-map-text {

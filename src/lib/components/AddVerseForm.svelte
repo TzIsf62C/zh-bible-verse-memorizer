@@ -58,6 +58,10 @@
 
 	// Keyboard state
 	let keyboardInput = '';
+	let verseInitialsInputEl = null;
+	let bookInitialsInputEl = null;
+	let verseCursorPos = 0;
+	let bookCursorPos = 0;
 
 	// Track original values for edit mode change detection
 	let originalFormState = null;
@@ -185,14 +189,63 @@
 
 	function handleVerseInitialsClick(event) {
 		activeInput = event?.currentTarget || null;
+		verseCursorPos = activeInput?.selectionStart ?? verseInitials.length;
 		keyboardInput = verseInitials;
 		showKeyboard = showKeyboard === 'verse' ? null : 'verse';
+		scrollFieldAboveKeyboard(activeInput);
 	}
 
 	function handleBookInitialsClick(event) {
 		activeInput = event?.currentTarget || null;
+		bookCursorPos = activeInput?.selectionStart ?? bookInitials.length;
 		keyboardInput = bookInitials;
 		showKeyboard = showKeyboard === 'book' ? null : 'book';
+	}
+
+	function scrollFieldAboveKeyboard(inputEl) {
+		if (!inputEl) return;
+		setTimeout(() => {
+			const keyboardEl = inputEl.closest('.field')?.querySelector('.keyboard') || document.querySelector('.keyboard');
+			if (!keyboardEl) return;
+
+			const inputRect = inputEl.getBoundingClientRect();
+			const keyboardRect = keyboardEl.getBoundingClientRect();
+			const desiredTop = keyboardRect.top - inputRect.height - 12;
+			const adjustment = inputRect.top - desiredTop;
+			if (Math.abs(adjustment) > 2) {
+				window.scrollTo({ top: window.scrollY + adjustment, behavior: 'smooth' });
+			}
+		}, 280);
+	}
+
+	function setCursorPosition(inputEl, cursorPos, keepEndVisible = false) {
+		if (!inputEl) return;
+		setTimeout(() => {
+			inputEl.focus();
+			inputEl.setSelectionRange(cursorPos, cursorPos);
+			if (keepEndVisible) {
+				inputEl.scrollLeft = inputEl.scrollWidth;
+			}
+		}, 0);
+	}
+
+	function insertAt(value, insertValue, cursorPos) {
+		const safePos = Math.max(0, Math.min(cursorPos, value.length));
+		return {
+			nextValue: value.slice(0, safePos) + insertValue + value.slice(safePos),
+			nextCursor: safePos + insertValue.length
+		};
+	}
+
+	function backspaceAt(value, cursorPos) {
+		if (value.length === 0 || cursorPos <= 0) {
+			return { nextValue: value, nextCursor: Math.max(0, cursorPos) };
+		}
+		const safePos = Math.max(0, Math.min(cursorPos, value.length));
+		return {
+			nextValue: value.slice(0, safePos - 1) + value.slice(safePos),
+			nextCursor: safePos - 1
+		};
 	}
 
 	function handleKeyboardKey(event) {
@@ -221,12 +274,18 @@
 		}
 
 		if (activeInput.id.includes('verseInitials')) {
-			verseInitials += mappedValue;
+			const { nextValue, nextCursor } = insertAt(verseInitials, mappedValue, verseCursorPos);
+			verseInitials = nextValue;
+			verseCursorPos = nextCursor;
 			keyboardInput = verseInitials;
+			setCursorPosition(verseInitialsInputEl, verseCursorPos, true);
 		} else if (activeInput.id.includes('bookInitials')) {
 			bookInitialsAuto = false;
-			bookInitials += mappedValue;
+			const { nextValue, nextCursor } = insertAt(bookInitials, mappedValue, bookCursorPos);
+			bookInitials = nextValue;
+			bookCursorPos = nextCursor;
 			keyboardInput = bookInitials;
+			setCursorPosition(bookInitialsInputEl, bookCursorPos, false);
 		} else if (activeInput.id === 'chapterNumber') {
 			// Only accept numeric keys
 			if (/^[0-9]$/.test(key)) {
@@ -242,12 +301,18 @@
 
 	function handleBackspace() {
 		if (activeInput.id.includes('verseInitials')) {
-			verseInitials = verseInitials.slice(0, -1);
+			const { nextValue, nextCursor } = backspaceAt(verseInitials, verseCursorPos);
+			verseInitials = nextValue;
+			verseCursorPos = nextCursor;
 			keyboardInput = verseInitials;
+			setCursorPosition(verseInitialsInputEl, verseCursorPos, true);
 		} else if (activeInput.id.includes('bookInitials')) {
 			bookInitialsAuto = false;
-			bookInitials = bookInitials.slice(0, -1);
+			const { nextValue, nextCursor } = backspaceAt(bookInitials, bookCursorPos);
+			bookInitials = nextValue;
+			bookCursorPos = nextCursor;
 			keyboardInput = bookInitials;
+			setCursorPosition(bookInitialsInputEl, bookCursorPos, false);
 		} else if (activeInput.id === 'chapterNumber') {
 			chapterNumber = chapterNumber.slice(0, -1);
 		} else if (activeInput.id === 'verseNumber') {
@@ -283,8 +348,17 @@
 			return;
 		}
 
-		// Don't interfere with number fields - let browser handle them normally
-		if (activeInput.type === 'number') return;
+		if (activeInput.id === 'chapterNumber' || activeInput.id === 'verseNumber') {
+			if (/^[0-9]$/.test(key)) {
+				event.preventDefault();
+				if (activeInput.id === 'chapterNumber') {
+					chapterNumber += key;
+				} else {
+					verseNumber += key;
+				}
+			}
+			return;
+		}
 
 		// Map physical key to input symbol based on input method
 		let mappedValue = null;
@@ -302,12 +376,18 @@
 		if (mappedValue) {
 			event.preventDefault();
 			if (activeInput.id.includes('verseInitials')) {
-				verseInitials += mappedValue;
+				const { nextValue, nextCursor } = insertAt(verseInitials, mappedValue, verseCursorPos);
+				verseInitials = nextValue;
+				verseCursorPos = nextCursor;
 				keyboardInput = verseInitials;
+				setCursorPosition(verseInitialsInputEl, verseCursorPos, true);
 			} else if (activeInput.id.includes('bookInitials')) {
 				bookInitialsAuto = false;
-				bookInitials += mappedValue;
+				const { nextValue, nextCursor } = insertAt(bookInitials, mappedValue, bookCursorPos);
+				bookInitials = nextValue;
+				bookCursorPos = nextCursor;
 				keyboardInput = bookInitials;
+				setCursorPosition(bookInitialsInputEl, bookCursorPos, false);
 			}
 		}
 	}
@@ -690,6 +770,8 @@
 		originalFormState = null;
 		showKeyboard = null;
 		keyboardInput = '';
+		verseCursorPos = 0;
+		bookCursorPos = 0;
 		bookInitialsAuto = true;
 	}
 
@@ -945,8 +1027,12 @@
 					<input
 						id="verseInitials"
 						type="text"
+						class="initials-input"
 						bind:value={verseInitials}
+						bind:this={verseInitialsInputEl}
 						readonly
+						on:mouseup={(e) => verseCursorPos = e.currentTarget.selectionStart ?? verseInitials.length}
+						on:keyup={(e) => verseCursorPos = e.currentTarget.selectionStart ?? verseInitials.length}
 						on:click={handleVerseInitialsClick}
 					/>
 					{#if showKeyboard === 'verse'}
@@ -960,8 +1046,12 @@
 					<input
 						id="verseInitialsZhuyin"
 						type="text"
+						class="initials-input"
 						bind:value={verseInitials}
+						bind:this={verseInitialsInputEl}
 						readonly
+						on:mouseup={(e) => verseCursorPos = e.currentTarget.selectionStart ?? verseInitials.length}
+						on:keyup={(e) => verseCursorPos = e.currentTarget.selectionStart ?? verseInitials.length}
 						on:click={handleVerseInitialsClick}
 					/>
 					{#if showKeyboard === 'verse'}
@@ -975,8 +1065,12 @@
 					<input
 						id="verseInitialsCangjie"
 						type="text"
+						class="initials-input"
 						bind:value={verseInitials}
+						bind:this={verseInitialsInputEl}
 						readonly
+						on:mouseup={(e) => verseCursorPos = e.currentTarget.selectionStart ?? verseInitials.length}
+						on:keyup={(e) => verseCursorPos = e.currentTarget.selectionStart ?? verseInitials.length}
 						on:click={handleVerseInitialsClick}
 					/>
 					{#if showKeyboard === 'verse'}
@@ -992,8 +1086,12 @@
 					<input
 						id="bookInitials"
 						type="text"
+						class="initials-input"
 						bind:value={bookInitials}
+						bind:this={bookInitialsInputEl}
 						readonly
+						on:mouseup={(e) => bookCursorPos = e.currentTarget.selectionStart ?? bookInitials.length}
+						on:keyup={(e) => bookCursorPos = e.currentTarget.selectionStart ?? bookInitials.length}
 						on:click={handleBookInitialsClick}
 					/>
 					{#if showKeyboard === 'book'}
@@ -1006,8 +1104,12 @@
 					<input
 						id="bookInitialsZhuyin"
 						type="text"
+						class="initials-input"
 						bind:value={bookInitials}
+						bind:this={bookInitialsInputEl}
 						readonly
+						on:mouseup={(e) => bookCursorPos = e.currentTarget.selectionStart ?? bookInitials.length}
+						on:keyup={(e) => bookCursorPos = e.currentTarget.selectionStart ?? bookInitials.length}
 						on:click={handleBookInitialsClick}
 					/>
 					{#if showKeyboard === 'book'}
@@ -1020,8 +1122,12 @@
 					<input
 						id="bookInitialsCangjie"
 						type="text"
+						class="initials-input"
 						bind:value={bookInitials}
+						bind:this={bookInitialsInputEl}
 						readonly
+						on:mouseup={(e) => bookCursorPos = e.currentTarget.selectionStart ?? bookInitials.length}
+						on:keyup={(e) => bookCursorPos = e.currentTarget.selectionStart ?? bookInitials.length}
 						on:click={handleBookInitialsClick}
 					/>
 					{#if showKeyboard === 'book'}
@@ -1385,6 +1491,13 @@
 		box-sizing: border-box;
 		width: 100%;
 		max-width: 100%;
+	}
+
+	.initials-input {
+		overflow-x: auto;
+		white-space: nowrap;
+		text-overflow: clip;
+		cursor: text;
 	}
 
 	.field input:focus,

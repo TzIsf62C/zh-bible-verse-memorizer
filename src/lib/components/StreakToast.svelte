@@ -87,7 +87,7 @@
 		top: calc(4.5rem + env(safe-area-inset-top, 0px));
 		left: 50%;
 		transform: translateX(-50%);
-		z-index: 960;
+		z-index: 2100;
 		background: var(--accent-color);
 		color: #fff;
 		padding: 0.6rem 0.9rem;

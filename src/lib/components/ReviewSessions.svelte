@@ -66,6 +66,35 @@
 		return arr;
 	}
 
+	function sortByCollectionOrder(inputVerses) {
+		if (selectedCollectionIds.length === 0) return [...inputVerses];
+
+		const verseById = new Map(inputVerses.map(v => [v.id, v]));
+		const ordered = [];
+		const seen = new Set();
+
+		for (const collectionId of selectedCollectionIds) {
+			const collection = $collections.find(c => c.id === collectionId);
+			if (!collection) continue;
+			for (const verseId of collection.verseIds) {
+				if (seen.has(verseId)) continue;
+				const verse = verseById.get(verseId);
+				if (verse) {
+					seen.add(verseId);
+					ordered.push(verse);
+				}
+			}
+		}
+
+		for (const verse of inputVerses) {
+			if (!seen.has(verse.id)) {
+				ordered.push(verse);
+			}
+		}
+
+		return ordered;
+	}
+
 	// Button handlers for initial state
 	function showDueVersesFlow() {
 		if (dueVerses.length === 0) {
@@ -278,6 +307,8 @@
 	function chooseOrder(order) {
 		if (order === 'biblical') {
 			sortedVerses = sortVersesByBibleOrder(selectedVerses, $settings.bookNameCharset || 'simplified');
+		} else if (order === 'collection') {
+			sortedVerses = sortByCollectionOrder(selectedVerses);
 		} else if (order === 'reverseBiblical') {
 			sortedVerses = sortVersesByBibleOrder(selectedVerses, $settings.bookNameCharset || 'simplified').reverse();
 		} else if (order === 'dueDate') {
@@ -716,6 +747,11 @@
 			<div class="modal-content" on:click|stopPropagation role="document">
 				<h3>{t('choose_review_order')}</h3>
 				<div class="modal-buttons">
+					{#if selectedCollectionIds.length > 0}
+						<button class="modal-option" on:click={() => chooseOrder('collection')}>
+							<div class="option-title">{t('order_collection')}</div>
+						</button>
+					{/if}
 					<button class="modal-option" on:click={() => chooseOrder('biblical')}>
 						<div class="option-title">{t('order_biblical')}</div>
 					</button>

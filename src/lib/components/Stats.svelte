@@ -10,8 +10,8 @@
 	import AchievementsModal from '$lib/components/AchievementsModal.svelte';
 
 	const GRAPH_WIDTH = 920;
-	const GRAPH_HEIGHT = 320;
-	const GRAPH_PADDING = 30;
+	const GRAPH_HEIGHT = 640;
+	const GRAPH_PADDING = 52;
 
 	const CATEGORY_META = [
 		{ key: 'newLearning', labelKey: 'new_learning', className: 'bar-new', fill: '#f5576c' },
@@ -23,6 +23,7 @@
 	const dispatch = createEventDispatcher();
 	let showAchievementsModal = false;
 	let viewMode = 'totals';
+	let timelineRange = 'all'; // 'all' | '30' | '7'
 
 	$: trackingState = $progressTrackingState || {};
 	$: currentProgress = trackingState.currentProgress || createEmptyProgress();
@@ -32,7 +33,7 @@
 		total: getProgressTotal(currentProgress),
 		max: getProgressMax(currentProgress)
 	};
-	$: graphData = buildGraphData(progressHistory);
+	$: graphData = buildGraphData(progressHistory, timelineRange);
 
 	function showHeatMaps() {
 		dispatch('navigate-heat-maps');
@@ -48,6 +49,10 @@
 
 	function showTimelineView() {
 		viewMode = 'timeline';
+	}
+
+	function setTimelineRange(range) {
+		timelineRange = range;
 	}
 
 	function exitStats() {
@@ -78,18 +83,55 @@
 		return entry.date;
 	}
 
-	function buildGraphData(history) {
+	function formatDateLabel(date) {
+		const year = date.getFullYear();
+		const month = String(date.getMonth() + 1).padStart(2, '0');
+		const day = String(date.getDate()).padStart(2, '0');
+		return `${year}-${month}-${day}`;
+	}
+
+	function buildGraphData(history, range = 'all') {
 		if (!Array.isArray(history) || history.length === 0) {
 			return {
 				points: [],
 				maxTotal: 1,
 				areas: {},
 				firstLabel: '',
-				lastLabel: ''
+				lastLabel: t('today_short'),
+				yTicks: []
 			};
 		}
 
-		const sorted = [...history].sort((a, b) => toPointTime(a) - toPointTime(b));
+		const now = new Date();
+		now.setHours(0, 0, 0, 0);
+		let rangeStart = null;
+		if (range === '30') {
+			rangeStart = new Date(now);
+			rangeStart.setDate(now.getDate() - 29);
+		} else if (range === '7') {
+			rangeStart = new Date(now);
+			rangeStart.setDate(now.getDate() - 6);
+		}
+
+		const sorted = [...history]
+			.filter((entry) => {
+				if (!rangeStart) return true;
+				const entryTime = toPointTime(entry);
+				return entryTime >= rangeStart.getTime();
+			})
+			.sort((a, b) => toPointTime(a) - toPointTime(b));
+
+		if (sorted.length === 0) {
+			return {
+				points: [],
+				maxTotal: 1,
+				areas: {},
+				firstLabel: '',
+				lastLabel: t('today_short'),
+				yTicks: []
+			};
+		}
+
 		const maxTotal = Math.max(
 			...sorted.map((entry) =>
 				Number(entry.newLearning || 0) +
@@ -103,6 +145,9 @@
 		const chartWidth = GRAPH_WIDTH - GRAPH_PADDING * 2;
 		const chartHeight = GRAPH_HEIGHT - GRAPH_PADDING * 2;
 		const step = sorted.length > 1 ? chartWidth / (sorted.length - 1) : 0;
+		const minTime = toPointTime(sorted[0]);
+		const maxTime = toPointTime(sorted[sorted.length - 1]);
+		const timeSpan = Math.max(maxTime - minTime, 1);
 
 		const points = sorted.map((entry, index) => {
 			const newLearning = Number(entry.newLearning || 0);
@@ -110,7 +155,11 @@
 			const solid = Number(entry.solid || 0);
 			const mastered = Number(entry.mastered || 0);
 			return {
-				x: sorted.length > 1 ? GRAPH_PADDING + index * step : GRAPH_PADDING + chartWidth / 2,
+				x: sorted.length > 1
+					? (range === 'all'
+						? GRAPH_PADDING + ((toPointTime(entry) - minTime) / timeSpan) * chartWidth
+						: GRAPH_PADDING + index * step)
+					: GRAPH_PADDING + chartWidth / 2,
 				baseline: 0,
 				newLearning,
 				developing,
@@ -124,6 +173,14 @@
 		});
 
 		const toY = (value) => GRAPH_HEIGHT - GRAPH_PADDING - (Number(value) / maxTotal) * chartHeight;
+		const yTicks = Array.from({ length: 5 }, (_, index) => {
+			const ratio = index / 4;
+			const value = Math.round((1 - ratio) * maxTotal);
+			return {
+				value,
+				y: GRAPH_PADDING + ratio * chartHeight
+			};
+		});
 
 		const buildAreaPath = (upperKey, lowerKey) => {
 			if (points.length === 0) return '';
@@ -139,14 +196,15 @@
 		return {
 			points,
 			maxTotal,
+			yTicks,
 			areas: {
 				newLearning: buildAreaPath('newLearningTop', 'baseline'),
 				developing: buildAreaPath('developingTop', 'newLearningTop'),
 				solid: buildAreaPath('solidTop', 'developingTop'),
 				mastered: buildAreaPath('masteredTop', 'solidTop')
 			},
-			firstLabel: formatTimelineLabel(sorted[0]),
-			lastLabel: formatTimelineLabel(sorted[sorted.length - 1])
+			firstLabel: range === 'all' ? formatTimelineLabel(sorted[0]) : formatDateLabel(rangeStart || now),
+			lastLabel: t('today_short')
 		};
 	}
 </script>
@@ -206,6 +264,12 @@
 					<p>{t('stats_progress_empty')}</p>
 				</div>
 			{:else}
+				<div class="timeline-range-controls" role="tablist" aria-label={t('stats_timeline_range')}>
+					<button class="range-btn" class:active={timelineRange === 'all'} on:click={() => setTimelineRange('all')}>{t('stats_all_time')}</button>
+					<button class="range-btn" class:active={timelineRange === '30'} on:click={() => setTimelineRange('30')}>{t('stats_last_30_days')}</button>
+					<button class="range-btn" class:active={timelineRange === '7'} on:click={() => setTimelineRange('7')}>{t('stats_last_7_days')}</button>
+				</div>
+
 				<div class="timeline-legend">
 					{#each CATEGORY_META as category}
 						<div class="legend-item">
@@ -223,6 +287,10 @@
 						aria-label={t('stats_progress_timeline')}
 					>
 						<rect x={GRAPH_PADDING} y={GRAPH_PADDING} width={GRAPH_WIDTH - GRAPH_PADDING * 2} height={GRAPH_HEIGHT - GRAPH_PADDING * 2} class="chart-bg"></rect>
+						{#each graphData.yTicks as tick}
+							<line x1={GRAPH_PADDING} y1={tick.y} x2={GRAPH_WIDTH - GRAPH_PADDING} y2={tick.y} class="chart-grid-line"></line>
+							<text x={GRAPH_PADDING - 10} y={tick.y + 4} text-anchor="end" class="chart-y-label">{tick.value}</text>
+						{/each}
 						<path d={graphData.areas.newLearning} class="area-new"></path>
 						<path d={graphData.areas.developing} class="area-developing"></path>
 						<path d={graphData.areas.solid} class="area-solid"></path>
@@ -407,6 +475,32 @@
 		margin-bottom: 0.6rem;
 	}
 
+	.timeline-range-controls {
+		display: inline-flex;
+		gap: 0.4rem;
+		background: color-mix(in srgb, var(--app-background) 82%, transparent);
+		border: 1px solid var(--file-border);
+		border-radius: 10px;
+		padding: 0.25rem;
+		margin-bottom: 0.8rem;
+	}
+
+	.range-btn {
+		border: none;
+		background: transparent;
+		color: var(--text-color);
+		font-size: 0.82em;
+		font-weight: 600;
+		padding: 0.35rem 0.65rem;
+		border-radius: 8px;
+		cursor: pointer;
+	}
+
+	.range-btn.active {
+		background: var(--accent-color);
+		color: #fff;
+	}
+
 	.legend-item {
 		display: flex;
 		align-items: center;
@@ -438,6 +532,16 @@
 		fill: color-mix(in srgb, var(--app-background) 70%, transparent);
 		stroke: color-mix(in srgb, var(--text-color) 20%, transparent);
 		stroke-width: 1;
+	}
+
+	.chart-grid-line {
+		stroke: color-mix(in srgb, var(--text-color) 18%, transparent);
+		stroke-width: 1;
+	}
+
+	.chart-y-label {
+		fill: var(--subtitle-color);
+		font-size: 0.72em;
 	}
 
 	.area-new {

@@ -231,6 +231,9 @@
 		feedbackMessage = '';
 		showNextButton = false;
 		showRetryButton = false;
+		pressedKey = null;
+		correctKey = null;
+		lastCorrectKey = null;
 		console.log('[Learn] Stage changed to', stage);
 	}
 	
@@ -651,6 +654,18 @@
 		}
 	}
 
+	function retryFromModal() {
+		showModal = false;
+		userInput = '';
+		feedbackMessage = '';
+		showNextButton = false;
+		showRetryButton = false;
+		pressedKey = null;
+		correctKey = null;
+		lastCorrectKey = null;
+		accuracy = 0;
+	}
+
 	function handleNext() {
 		if (currentVerseIdx < versesToLearn.length - 1) {
 			selectVerse(currentVerseIdx + 1);
@@ -1024,6 +1039,12 @@
 			{#if currentStage === 'intermediate' && modalMessage.includes(t('nice_try'))}
 				<!-- Intermediate failure: show Retry button -->
 				<button class="modal-btn" on:click={closeModal}>{t('retry')}</button>
+			{:else if currentStage === 'basic' || (currentStage === 'intermediate' && modalMessage.includes(t('great_job_intermediate')))}
+				<!-- Basic/intermediate success: allow retry same stage or continue -->
+				<div class="modal-btn-row">
+					<button class="modal-btn secondary" on:click={retryFromModal}>{t('retry')}</button>
+					<button class="modal-btn" on:click={closeModal}>{t('continue')}</button>
+				</div>
 			{:else}
 				<!-- Success modals: show Continue button -->
 				<button class="modal-btn" on:click={closeModal}>{t('continue')}</button>
@@ -1310,5 +1331,17 @@
 	
 	.modal-btn:hover {
 		opacity: 0.9;
+	}
+
+	.modal-btn-row {
+		display: flex;
+		gap: 0.6rem;
+		justify-content: center;
+	}
+
+	.modal-btn.secondary {
+		background: transparent;
+		border: 1px solid var(--file-border);
+		color: var(--text-color);
 	}
 </style>

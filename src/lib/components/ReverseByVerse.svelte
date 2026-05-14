@@ -33,6 +33,8 @@
 	// Accuracy tracking
 	let totalInputs = 0;
 	let correctInputs = 0;
+	let finalPhaseTotalInputs = 0;
+	let finalPhaseCorrectInputs = 0;
 	
 	// Completion modal
 	let showCompletionModal = false;
@@ -96,17 +98,20 @@
 			const __ = userInput.length;
 			
 			setTimeout(() => {
+				if (isSubsetComplete) return;
 				const anchorRect = viewportAnchor.getBoundingClientRect();
-				const keyboard = viewportAnchor.nextElementSibling;
+				const keyboard = document.querySelector('.reverse-by-verse-container .keyboard-space');
 				
 				if (keyboard) {
 					const keyboardRect = keyboard.getBoundingClientRect();
-					const scrollTarget = window.scrollY + (anchorRect.top - keyboardRect.top);
-					
-					window.scrollTo({ 
-						top: scrollTarget, 
-						behavior: 'smooth' 
-					});
+					const targetTop = keyboardRect.top - 24;
+					if (anchorRect.top > targetTop) {
+						const scrollDelta = anchorRect.top - targetTop;
+						window.scrollTo({
+							top: window.scrollY + scrollDelta,
+							behavior: 'smooth'
+						});
+					}
 				}
 			}, 300);
 		}
@@ -192,6 +197,10 @@
 			userInput += key;
 			totalInputs++;
 			correctInputs++;
+			if (isLastSubset) {
+				finalPhaseTotalInputs++;
+				finalPhaseCorrectInputs++;
+			}
 		} else {
 			// Incorrect
 			pressedKey = key;
@@ -201,6 +210,9 @@
 			// Still add to input
 			userInput += key;
 			totalInputs++;
+			if (isLastSubset) {
+				finalPhaseTotalInputs++;
+			}
 		}
 		
 		// Trigger scroll
@@ -254,12 +266,19 @@
 				lastCorrectKey = key;
 				totalInputs++;
 				correctInputs++;
+				if (isLastSubset) {
+					finalPhaseTotalInputs++;
+					finalPhaseCorrectInputs++;
+				}
 			} else {
 				// Incorrect
 				pressedKey = key;
 				correctKey = nextExpectedChar;
 				triggerErrorFeedback($settings);
 				totalInputs++;
+				if (isLastSubset) {
+					finalPhaseTotalInputs++;
+				}
 			}
 			
 			userInput += mappedValue;
@@ -274,6 +293,11 @@
 	
 	function advancePhase() {
 		if (currentSubsetSize < verses.length) {
+			const nextSubsetSize = currentSubsetSize + 1;
+			if (nextSubsetSize === verses.length) {
+				finalPhaseTotalInputs = 0;
+				finalPhaseCorrectInputs = 0;
+			}
 			currentSubsetSize++;
 			userInput = '';
 			pressedKey = null;
@@ -302,6 +326,10 @@
 		pressedKey = null;
 		correctKey = null;
 		lastCorrectKey = null;
+		if (isLastSubset) {
+			finalPhaseTotalInputs = 0;
+			finalPhaseCorrectInputs = 0;
+		}
 	}
 	
 	function completeChallenge() {
@@ -314,6 +342,8 @@
 		userInput = '';
 		totalInputs = 0;
 		correctInputs = 0;
+		finalPhaseTotalInputs = 0;
+		finalPhaseCorrectInputs = 0;
 		pressedKey = null;
 		correctKey = null;
 		lastCorrectKey = null;
@@ -416,6 +446,8 @@
 			→
 		</button>
 	</div>
+
+	<div class="nav-bottom-spacer" aria-hidden="true"></div>
 	
 	<!-- Invisible viewport anchor for keyboard positioning -->
 	<div bind:this={viewportAnchor} class="viewport-anchor" aria-hidden="true"></div>
@@ -442,11 +474,11 @@
 			<h3>{t('reverse_by_verse')} {t('finish')}</h3>
 			<p>{t('congratulations_practice')}</p>
 			
-			{#if totalInputs > 0}
+			{#if finalPhaseTotalInputs > 0}
 				<div class="accuracy-display">
 					<div class="accuracy-label">{t('accuracy')}</div>
-					<div class="accuracy-value">{Math.round((correctInputs / totalInputs) * 100)}%</div>
-					<div class="accuracy-detail">{correctInputs} / {totalInputs} {t('correct')}</div>
+					<div class="accuracy-value">{Math.round((finalPhaseCorrectInputs / finalPhaseTotalInputs) * 100)}%</div>
+					<div class="accuracy-detail">{finalPhaseCorrectInputs} / {finalPhaseTotalInputs} {t('correct')}</div>
 				</div>
 			{/if}
 			
@@ -611,6 +643,10 @@
 	
 	.keyboard-space {
 		margin-top: auto;
+	}
+
+	.nav-bottom-spacer {
+		height: 200px;
 	}
 	
 	.viewport-anchor {

@@ -30,6 +30,7 @@
 	let selectedVerse = null;
 	let selectedActivity = null;
 	let processedPreselection = false; // Prevent reactive loop with preselection
+	let expandedVerseGroups = new Set();
 	
 	// Get verses for selected collection (reactive based on stores and selected collection/filter)
 	$: baseVerses = selectedCollection 
@@ -53,6 +54,31 @@
 	
 	// Sort verses by biblical order for verse selection
 	$: sortedVerses = sortVersesByBibleOrder($verses, $settings.bookNameCharset || 'simplified');
+
+	// Group verses by book/chapter for expandable verse selection list
+	$: groupedVerses = (() => {
+		const groups = [];
+		let currentKey = null;
+		for (const verse of sortedVerses) {
+			const key = `${verse.bookName}-${verse.chapterNumber}`;
+			if (key !== currentKey) {
+				groups.push({
+					key,
+					bookName: verse.bookName,
+					chapterNumber: verse.chapterNumber,
+					verses: [verse]
+				});
+				currentKey = key;
+			} else {
+				groups[groups.length - 1].verses.push(verse);
+			}
+		}
+		return groups;
+	})();
+
+	$: if (state === 'selectVerse' && groupedVerses.length > 0 && expandedVerseGroups.size === 0) {
+		expandedVerseGroups = new Set([groupedVerses[0].key]);
+	}
 	
 	// Activity choices based on practice type
 	$: activityChoices = practiceType === 'collection' ? [
@@ -96,6 +122,7 @@
 			return;
 		}
 		practiceType = 'verse';
+		expandedVerseGroups = new Set();
 		state = 'selectVerse';
 	}
 	
@@ -111,6 +138,17 @@
 	
 	function selectVerse(verse) {
 		selectedVerse = verse;
+		expandedVerseGroups.add(`${verse.bookName}-${verse.chapterNumber}`);
+		expandedVerseGroups = new Set(expandedVerseGroups);
+	}
+
+	function toggleVerseGroup(groupKey) {
+		if (expandedVerseGroups.has(groupKey)) {
+			expandedVerseGroups.delete(groupKey);
+		} else {
+			expandedVerseGroups.add(groupKey);
+		}
+		expandedVerseGroups = new Set(expandedVerseGroups);
 	}
 	
 	function proceedToActivitySelection() {
@@ -285,18 +323,31 @@
 		</div>
 		
 		<div class="verse-list">
-			{#each sortedVerses as verse}
-				<button 
-					class="verse-item" 
-					class:selected={selectedVerse?.id === verse.id}
-					on:click={() => selectVerse(verse)}
-				>
-					<span class="verse-ref">{formatVerseRef(verse)}</span>
-					<span class="verse-preview">{verse.verseText.substring(0, 20)}...</span>
-					{#if selectedVerse?.id === verse.id}
-						<span class="check-icon">✓</span>
+			{#each groupedVerses as group}
+				<div class="verse-group" class:expanded={expandedVerseGroups.has(group.key)}>
+					<button class="verse-group-header" on:click={() => toggleVerseGroup(group.key)}>
+						<span>{group.bookName} {group.chapterNumber}</span>
+						<span class="group-meta">{group.verses.length} {t('verses')}</span>
+						<span class="expand-icon">{expandedVerseGroups.has(group.key) ? '▾' : '▸'}</span>
+					</button>
+					{#if expandedVerseGroups.has(group.key)}
+						<div class="verse-group-items">
+							{#each group.verses as verse}
+								<button
+									class="verse-item"
+									class:selected={selectedVerse?.id === verse.id}
+									on:click={() => selectVerse(verse)}
+								>
+									<span class="verse-ref">{formatVerseRef(verse)}</span>
+									<span class="verse-preview">{verse.verseText.substring(0, 20)}...</span>
+									{#if selectedVerse?.id === verse.id}
+										<span class="check-icon">✓</span>
+									{/if}
+								</button>
+							{/each}
+						</div>
 					{/if}
-				</button>
+				</div>
 			{/each}
 		</div>
 		
@@ -512,6 +563,47 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.5rem;
+	}
+
+	.verse-group {
+		border: 1px solid var(--border-color);
+		border-radius: 8px;
+		overflow: hidden;
+		background: var(--panel-background);
+	}
+
+	.verse-group-header {
+		width: 100%;
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.85rem 1rem;
+		border: none;
+		background: transparent;
+		color: var(--text-color);
+		font-weight: 600;
+		cursor: pointer;
+		text-align: left;
+	}
+
+	.verse-group-items {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+		padding: 0.5rem;
+		border-top: 1px solid var(--border-color);
+	}
+
+	.group-meta {
+		margin-left: auto;
+		font-size: 0.9em;
+		color: var(--subtitle-color);
+	}
+
+	.expand-icon {
+		min-width: 1.2em;
+		text-align: center;
+		color: var(--subtitle-color);
 	}
 	
 	.collection-item,
