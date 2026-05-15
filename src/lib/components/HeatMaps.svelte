@@ -523,8 +523,8 @@
 	}
 	
 	.heat-char {
-		padding: 2px 4px;
-		border-radius: 3px;
+		padding: 0px 8px;
+		border-radius: 30px;
 		border: 2px solid transparent;
 		transition: all 0.2s ease;
 		color: #1b1b1f;

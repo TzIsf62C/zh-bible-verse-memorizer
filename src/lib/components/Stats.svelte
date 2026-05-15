@@ -264,12 +264,6 @@
 					<p>{t('stats_progress_empty')}</p>
 				</div>
 			{:else}
-				<div class="timeline-range-controls" role="tablist" aria-label={t('stats_timeline_range')}>
-					<button class="range-btn" class:active={timelineRange === 'all'} on:click={() => setTimelineRange('all')}>{t('stats_all_time')}</button>
-					<button class="range-btn" class:active={timelineRange === '30'} on:click={() => setTimelineRange('30')}>{t('stats_last_30_days')}</button>
-					<button class="range-btn" class:active={timelineRange === '7'} on:click={() => setTimelineRange('7')}>{t('stats_last_7_days')}</button>
-				</div>
-
 				<div class="timeline-legend">
 					{#each CATEGORY_META as category}
 						<div class="legend-item">
@@ -301,6 +295,11 @@
 				<div class="timeline-labels">
 					<span>{graphData.firstLabel}</span>
 					<span>{graphData.lastLabel}</span>
+				</div>
+								<div class="timeline-range-controls" role="tablist" aria-label={t('stats_timeline_range')}>
+					<button class="range-btn" class:active={timelineRange === 'all'} on:click={() => setTimelineRange('all')}>{t('stats_all_time')}</button>
+					<button class="range-btn" class:active={timelineRange === '30'} on:click={() => setTimelineRange('30')}>{t('stats_last_30_days')}</button>
+					<button class="range-btn" class:active={timelineRange === '7'} on:click={() => setTimelineRange('7')}>{t('stats_last_7_days')}</button>
 				</div>
 			{/if}
 		</div>
@@ -476,13 +475,15 @@
 	}
 
 	.timeline-range-controls {
-		display: inline-flex;
+		display: grid;
+		grid-template-columns: 1fr 1fr 1fr;
+		align-self: center;
 		gap: 0.4rem;
 		background: color-mix(in srgb, var(--app-background) 82%, transparent);
 		border: 1px solid var(--file-border);
 		border-radius: 10px;
 		padding: 0.25rem;
-		margin-bottom: 0.8rem;
+		margin-top: 0.8rem;
 	}
 
 	.range-btn {
@@ -541,27 +542,23 @@
 
 	.chart-y-label {
 		fill: var(--subtitle-color);
-		font-size: 0.72em;
+		font-size: 1.5em;
 	}
 
 	.area-new {
 		fill: #f5576c;
-		opacity: 0.72;
 	}
 
 	.area-developing {
 		fill: #00b5ff;
-		opacity: 0.72;
 	}
 
 	.area-solid {
 		fill: #29cc97;
-		opacity: 0.72;
 	}
 
 	.area-mastered {
 		fill: #f8ae2f;
-		opacity: 0.72;
 	}
 
 	.timeline-labels {
@@ -582,12 +579,11 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		gap: 0.5rem;
 		width: 100%;
 		padding: 1rem;
-		background: var(--accent-color);
-		color: #ffffff;
-		border: none;
+		background: var(--panel-background);
+		color: var(--text-color);
+		border: 1px solid var(--file-border);
 		border-radius: 12px;
 		font-size: 1.1em;
 		font-weight: 600;
@@ -597,12 +593,12 @@
 
 	.heat-maps-button:hover {
 		transform: translateY(-2px);
-		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 	}
 
 	.flame-icon {
-		width: 24px;
-		height: 24px;
+		width: 32px;
+		height: 32px;
 	}
 
 	.heat-maps-label {
@@ -630,8 +626,8 @@
 		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 	}	
 	.trophy-icon {
-		width: 28px;
-		height: 28px;
+		width: 32px;
+		height: 32px;
 	}
 	@media (max-width: 767px) {
 		.stats-container {

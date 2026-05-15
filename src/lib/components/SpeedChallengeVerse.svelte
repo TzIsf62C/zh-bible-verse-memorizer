@@ -516,7 +516,7 @@
 
 	.retry-fab {
 		position: fixed;
-		align-self:center;
+		right: 1rem;
 		bottom: calc(2rem + env(safe-area-inset-bottom, 0px));
 		z-index: 1002;
 		background: var(--panel-background);
