@@ -14,8 +14,19 @@
 	let editMode = false; // Heat map edit mode
 	let editingCharIndex = null; // Index of character being edited
 	let tooltipPosition = { x: 0, y: 0 }; // Tooltip position
-	const HEAT_LEGEND_STOPS = [99, 80, 60, 40, 20, 0];
-	$: heatLegendGradient = `linear-gradient(to right, ${HEAT_LEGEND_STOPS.map((score, index) => `${getHeatColor(score)} ${(index / (HEAT_LEGEND_STOPS.length - 1)) * 100}%`).join(', ')})`;
+	const HEAT_LEGEND_STOPS = [99, 80, 60, 40];
+	const HEAT_LEGEND_MAX = HEAT_LEGEND_STOPS[0];
+	const HEAT_LEGEND_MIN = HEAT_LEGEND_STOPS[HEAT_LEGEND_STOPS.length - 1];
+	function getHeatLegendPercent(score) {
+		if (HEAT_LEGEND_MAX === HEAT_LEGEND_MIN) return 0;
+		return ((HEAT_LEGEND_MAX - score) / (HEAT_LEGEND_MAX - HEAT_LEGEND_MIN)) * 100;
+	}
+	$: heatLegendPoints = HEAT_LEGEND_STOPS.map((score, index) => ({
+		score,
+		percent: getHeatLegendPercent(score),
+		anchorClass: index === 0 ? 'start' : index === HEAT_LEGEND_STOPS.length - 1 ? 'end' : 'middle'
+	}));
+	$: heatLegendGradient = `linear-gradient(to right, ${heatLegendPoints.map((point) => `${getHeatColor(point.score)} ${point.percent}%`).join(', ')})`;
 
 	// Get verses with heat arrays for Heat Maps view
 	$: versesWithHeat = $verses.filter(v => v.heatArray && v.heatArray.length > 0);
@@ -237,16 +248,13 @@
 		<div class="heat-map">
 			<div class="heat-map-text">
 				<div class="heat-legend" aria-hidden="true">
-					<div class="legend-label-row">
-						<span>99</span>
-						<span>0</span>
-					</div>
 					<div class="legend-gradient" style={`background: ${heatLegendGradient};`}></div>
-					<div class="legend-tick-row">
-						<span>80</span>
-						<span>60</span>
-						<span>40</span>
-						<span>20</span>
+					<div class="legend-scale-row">
+						{#each heatLegendPoints as point}
+							<span class={`legend-scale-label ${point.anchorClass}`} style={`left: ${point.percent}%`}>
+								{point.score}
+							</span>
+						{/each}
 					</div>
 				</div>
 				{#each getHeatMapChars(selectedVerse) as charData, i}
@@ -491,26 +499,33 @@
 		margin-bottom: 0.9rem;
 	}
 
-	.legend-label-row {
-		display: flex;
-		justify-content: space-between;
-		font-size: 0.78em;
-		color: var(--subtitle-color);
-		margin-bottom: 0.25rem;
-	}
-
 	.legend-gradient {
 		height: 0.7rem;
 		border-radius: 999px;
 		border: 1px solid color-mix(in srgb, var(--text-color) 18%, transparent);
 	}
 
-	.legend-tick-row {
-		display: flex;
-		justify-content: space-around;
+	.legend-scale-row {
+		position: relative;
+		height: 1em;
 		font-size: 0.75em;
 		color: var(--subtitle-color);
 		margin-top: 0.2rem;
+	}
+
+	.legend-scale-label {
+		position: absolute;
+		top: 0;
+		transform: translateX(-50%);
+		white-space: nowrap;
+	}
+
+	.legend-scale-label.start {
+		transform: translateX(0);
+	}
+
+	.legend-scale-label.end {
+		transform: translateX(-100%);
 	}
 	
 	.heat-map-text {

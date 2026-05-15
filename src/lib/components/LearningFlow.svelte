@@ -655,6 +655,9 @@
 	}
 
 	function retryFromModal() {
+		if (currentStage === 'intermediate' && modalMessage.includes(t('great_job_intermediate'))) {
+			intermediateVariant = intermediateVariant === 'odd' ? 'even' : 'odd';
+		}
 		showModal = false;
 		userInput = '';
 		feedbackMessage = '';

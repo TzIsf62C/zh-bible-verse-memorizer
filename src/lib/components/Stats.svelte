@@ -83,6 +83,13 @@
 		return entry.date;
 	}
 
+	function formatAllTimeStartLabel(entry) {
+		if (entry.kind === 'week' && entry.weekEnd) {
+			return entry.weekEnd;
+		}
+		return formatTimelineLabel(entry);
+	}
+
 	function formatDateLabel(date) {
 		const year = date.getFullYear();
 		const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -178,6 +185,8 @@
 			const value = Math.round((1 - ratio) * maxTotal);
 			return {
 				value,
+				axisRatio: (GRAPH_PADDING + ratio * chartHeight) / GRAPH_HEIGHT,
+				anchorClass: index === 0 ? 'top' : index === 4 ? 'bottom' : 'middle',
 				y: GRAPH_PADDING + ratio * chartHeight
 			};
 		});
@@ -203,7 +212,7 @@
 				solid: buildAreaPath('solidTop', 'developingTop'),
 				mastered: buildAreaPath('masteredTop', 'solidTop')
 			},
-			firstLabel: range === 'all' ? formatTimelineLabel(sorted[0]) : formatDateLabel(rangeStart || now),
+			firstLabel: range === 'all' ? formatAllTimeStartLabel(sorted[0]) : formatDateLabel(rangeStart || now),
 			lastLabel: t('today_short')
 		};
 	}
@@ -273,30 +282,37 @@
 					{/each}
 				</div>
 
-				<div class="timeline-chart-wrap">
-					<svg
-						class="timeline-chart"
-						viewBox={`0 0 ${GRAPH_WIDTH} ${GRAPH_HEIGHT}`}
-						role="img"
-						aria-label={t('stats_progress_timeline')}
-					>
-						<rect x={GRAPH_PADDING} y={GRAPH_PADDING} width={GRAPH_WIDTH - GRAPH_PADDING * 2} height={GRAPH_HEIGHT - GRAPH_PADDING * 2} class="chart-bg"></rect>
+				<div class="timeline-chart-area">
+					<div class="timeline-y-axis" aria-hidden="true">
 						{#each graphData.yTicks as tick}
-							<line x1={GRAPH_PADDING} y1={tick.y} x2={GRAPH_WIDTH - GRAPH_PADDING} y2={tick.y} class="chart-grid-line"></line>
-							<text x={GRAPH_PADDING - 10} y={tick.y + 4} text-anchor="end" class="chart-y-label">{tick.value}</text>
+							<span class={`timeline-y-axis-label ${tick.anchorClass}`} style={`top: ${tick.axisRatio * 100}%`}>{tick.value}</span>
 						{/each}
-						<path d={graphData.areas.newLearning} class="area-new"></path>
-						<path d={graphData.areas.developing} class="area-developing"></path>
-						<path d={graphData.areas.solid} class="area-solid"></path>
-						<path d={graphData.areas.mastered} class="area-mastered"></path>
-					</svg>
+					</div>
+
+					<div class="timeline-chart-wrap">
+						<svg
+							class="timeline-chart"
+							viewBox={`0 0 ${GRAPH_WIDTH} ${GRAPH_HEIGHT}`}
+							role="img"
+							aria-label={t('stats_progress_timeline')}
+						>
+							<rect x={GRAPH_PADDING} y={GRAPH_PADDING} width={GRAPH_WIDTH - GRAPH_PADDING * 2} height={GRAPH_HEIGHT - GRAPH_PADDING * 2} class="chart-bg"></rect>
+							{#each graphData.yTicks as tick}
+								<line x1={GRAPH_PADDING} y1={tick.y} x2={GRAPH_WIDTH - GRAPH_PADDING} y2={tick.y} class="chart-grid-line"></line>
+							{/each}
+							<path d={graphData.areas.newLearning} class="area-new"></path>
+							<path d={graphData.areas.developing} class="area-developing"></path>
+							<path d={graphData.areas.solid} class="area-solid"></path>
+							<path d={graphData.areas.mastered} class="area-mastered"></path>
+						</svg>
+					</div>
 				</div>
 
 				<div class="timeline-labels">
 					<span>{graphData.firstLabel}</span>
 					<span>{graphData.lastLabel}</span>
 				</div>
-								<div class="timeline-range-controls" role="tablist" aria-label={t('stats_timeline_range')}>
+					<div class="timeline-range-controls" role="tablist" aria-label={t('stats_timeline_range')}>
 					<button class="range-btn" class:active={timelineRange === 'all'} on:click={() => setTimelineRange('all')}>{t('stats_all_time')}</button>
 					<button class="range-btn" class:active={timelineRange === '30'} on:click={() => setTimelineRange('30')}>{t('stats_last_30_days')}</button>
 					<button class="range-btn" class:active={timelineRange === '7'} on:click={() => setTimelineRange('7')}>{t('stats_last_7_days')}</button>
@@ -522,6 +538,38 @@
 		overflow-x: auto;
 	}
 
+	.timeline-chart-area {
+		display: grid;
+		grid-template-columns: auto 1fr;
+		gap: 0.5rem;
+		align-items: stretch;
+	}
+
+	.timeline-y-axis {
+		position: relative;
+		width: 2.2rem;
+	}
+
+	.timeline-y-axis-label {
+		position: absolute;
+		right: 0;
+		font-size: 0.75em;
+		line-height: 1;
+		color: var(--subtitle-color);
+	}
+
+	.timeline-y-axis-label.top {
+		transform: translateY(0);
+	}
+
+	.timeline-y-axis-label.middle {
+		transform: translateY(-50%);
+	}
+
+	.timeline-y-axis-label.bottom {
+		transform: translateY(-100%);
+	}
+
 	.timeline-chart {
 		width: 100%;
 		height: auto;
@@ -538,11 +586,6 @@
 	.chart-grid-line {
 		stroke: color-mix(in srgb, var(--text-color) 18%, transparent);
 		stroke-width: 1;
-	}
-
-	.chart-y-label {
-		fill: var(--subtitle-color);
-		font-size: 1.5em;
 	}
 
 	.area-new {

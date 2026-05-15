@@ -29,6 +29,8 @@
 	let fullText = '';
 	let fullInitials = '';
 	let charToInputIndex = [];
+	let passageDisplayEl;
+	let scrollTrigger = 0;
 	
 	// Keyboard feedback
 	let keyboardLayout = keyboardLayouts.pinyinCompact;
@@ -72,6 +74,48 @@
 			keyboardLayout = layoutMap[inputMethod] || keyboardLayouts.pinyinCompact;
 			isNumericKeyboard = false;
 		}
+	}
+
+	$: {
+		const _ = scrollTrigger;
+		const __ = userInput.length;
+		if (passageDisplayEl && !showCompletionModal) {
+			setTimeout(() => {
+				scrollNextHiddenCharacterIntoView();
+			}, 120);
+		}
+	}
+
+	function scrollNextHiddenCharacterIntoView() {
+		if (!passageDisplayEl) return;
+		const keyboard = document.querySelector('.speed-challenge-container .keyboard-space .keyboard');
+		if (!keyboard) return;
+
+		const nextInputIndex = userInput.length;
+		const charIndex = charToInputIndex.findIndex((value) => value === nextInputIndex);
+		if (charIndex === -1) return;
+
+		const targetChar = passageDisplayEl.querySelector(`span:nth-child(${charIndex + 1})`);
+		if (!targetChar) return;
+
+		const containerRect = passageDisplayEl.getBoundingClientRect();
+		const keyboardRect = keyboard.getBoundingClientRect();
+		const charRect = targetChar.getBoundingClientRect();
+		const visibleTop = containerRect.top + 12;
+		const visibleBottom = Math.min(containerRect.bottom, window.innerHeight, keyboardRect.top) - 12;
+		const overlapsTop = charRect.top < visibleTop;
+		const overlapsBottom = charRect.bottom > visibleBottom;
+
+		if (!overlapsTop && !overlapsBottom) return;
+
+		const visibleCenter = (visibleTop + visibleBottom) / 2;
+		const charCenter = charRect.top + (charRect.height / 2);
+		const scrollDelta = charCenter - visibleCenter;
+
+		passageDisplayEl.scrollTo({
+			top: passageDisplayEl.scrollTop + scrollDelta,
+			behavior: 'smooth'
+		});
 	}
 	
 	function buildFullText() {
@@ -173,6 +217,8 @@
 			// Still add to input (allow continuing despite errors)
 			userInput += key;
 		}
+
+		scrollTrigger++;
 		
 		// Check if complete
 		if (userInput.length === fullInitials.length) {
@@ -367,6 +413,7 @@
 			}
 			
 			userInput += mappedValue;
+			scrollTrigger++;
 			
 			if (userInput.length === fullInitials.length) {
 				completeChallenge();
@@ -406,7 +453,7 @@
 		{/if}
 	</div>
 	
-	<div class="passage-display">
+	<div class="passage-display" bind:this={passageDisplayEl}>
 		{#key userInput}
 			{#each fullText.split('') as char, idx}
 				{@const rendered = renderCharacter(char, idx)}

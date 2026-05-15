@@ -98,22 +98,86 @@
 			const __ = userInput.length;
 			
 			setTimeout(() => {
-				if (isSubsetComplete) return;
-				const anchorRect = viewportAnchor.getBoundingClientRect();
-				const keyboard = document.querySelector('.reverse-by-verse-container .keyboard-space');
-				
-				if (keyboard) {
-					const keyboardRect = keyboard.getBoundingClientRect();
-					const targetTop = keyboardRect.top - 24;
-					if (anchorRect.top > targetTop) {
-						const scrollDelta = anchorRect.top - targetTop;
-						window.scrollTo({
-							top: window.scrollY + scrollDelta,
-							behavior: 'smooth'
-						});
-					}
-				}
-			}, 300);
+				if (isSubsetComplete || showCompletionModal) return;
+				console.log('[ReverseByVerse] scroll trigger', {
+					scrollTrigger,
+					userInputLength: userInput.length,
+					fullInitialsLength: fullInitials.length,
+					currentSubsetSize,
+					isSubsetComplete,
+					isNumericKeyboard
+				});
+				scrollNextHiddenCharacterIntoView();
+			}, 120);
+		}
+	}
+
+	function scrollNextHiddenCharacterIntoView() {
+		const keyboard = document.querySelector('.reverse-by-verse-container .keyboard-space .keyboard');
+		if (!keyboard) {
+			console.log('[ReverseByVerse] no keyboard element found');
+			return;
+		}
+
+		const verseDisplay = document.querySelector('.reverse-by-verse-container .verse-display');
+		if (!verseDisplay) {
+			console.log('[ReverseByVerse] no verse display found');
+			return;
+		}
+
+		const nextInputIndex = userInput.length;
+		const charIndex = charToInputIndex.findIndex((value) => value === nextInputIndex);
+		if (charIndex === -1) {
+			console.log('[ReverseByVerse] no char index for next input', { nextInputIndex, charToInputIndexLength: charToInputIndex.length });
+			return;
+		}
+
+		const nextHiddenChar = verseDisplay.querySelector(`span:nth-child(${charIndex + 1})`);
+		if (!nextHiddenChar) {
+			console.log('[ReverseByVerse] target char element not found', { charIndex });
+			return;
+		}
+
+		const keyboardRect = keyboard.getBoundingClientRect();
+		const charRect = nextHiddenChar.getBoundingClientRect();
+		const visibleTop = 0;
+		const visibleBottom = Math.min(window.innerHeight, keyboardRect.top) - 12;
+
+		const overlapsTop = charRect.top < visibleTop;
+		const overlapsBottom = charRect.bottom > visibleBottom;
+		console.log('[ReverseByVerse] scroll candidate', {
+			nextInputIndex,
+			charIndex,
+			charText: nextHiddenChar.textContent,
+			keyboardTop: keyboardRect.top,
+			charTop: charRect.top,
+			charBottom: charRect.bottom,
+			visibleTop,
+			visibleBottom,
+			overlapsTop,
+			overlapsBottom,
+			windowScrollY: window.scrollY
+		});
+		if (!overlapsTop && !overlapsBottom) {
+			console.log('[ReverseByVerse] no scroll needed');
+			return;
+		}
+
+		const visibleCenter = (visibleTop + visibleBottom) / 2;
+		const charCenter = charRect.top + (charRect.height / 2);
+		const scrollDelta = charCenter - visibleCenter;
+		console.log('[ReverseByVerse] scrolling', {
+			visibleCenter,
+			charCenter,
+			scrollDelta,
+			targetScrollY: window.scrollY + scrollDelta
+		});
+
+		if (Math.abs(scrollDelta) > 2) {
+			window.scrollTo({
+				top: window.scrollY + scrollDelta,
+				behavior: 'smooth'
+			});
 		}
 	}
 	
@@ -500,7 +564,7 @@
 		flex-direction: column;
 		min-height: 100vh;
 		padding: 1rem;
-		padding-bottom: 8rem;
+		padding-bottom: 12rem;
 		gap: 1rem;
 	}
 	
@@ -646,7 +710,7 @@
 	}
 
 	.nav-bottom-spacer {
-		height: 200px;
+		height: 360px;
 	}
 	
 	.viewport-anchor {
@@ -753,7 +817,7 @@
 	@media (max-width: 767px) {
 		.reverse-by-verse-container {
 			padding: 0.5rem;
-			padding-bottom: 8rem;
+			padding-bottom: 10rem;
 		}
 		
 		.verse-display {

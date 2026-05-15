@@ -62,6 +62,8 @@
 	let bookInitialsInputEl = null;
 	let verseCursorPos = 0;
 	let bookCursorPos = 0;
+	let verseCaretVisible = false;
+	let verseCaretOffset = 0;
 
 	// Track original values for edit mode change detection
 	let originalFormState = null;
@@ -132,7 +134,7 @@
 
 	// Viewport scrolling for focused input fields
 	$: {
-		if (activeInput && showKeyboard) {
+		if (activeInput && showKeyboard && !(activeInput.id && activeInput.id.includes('verseInitials'))) {
 			console.log('=== ADD VERSE VIEWPORT SCROLL ===');
 			console.log('Active input:', activeInput.id);
 			console.log('Keyboard shown:', showKeyboard);
@@ -191,7 +193,9 @@
 		activeInput = event?.currentTarget || null;
 		verseCursorPos = activeInput?.selectionStart ?? verseInitials.length;
 		keyboardInput = verseInitials;
-		showKeyboard = showKeyboard === 'verse' ? null : 'verse';
+		showKeyboard = 'verse';
+		setCursorPosition(verseInitialsInputEl, verseCursorPos, true);
+		updateVerseCaret();
 		scrollFieldAboveKeyboard(activeInput);
 	}
 
@@ -215,7 +219,7 @@
 			if (Math.abs(adjustment) > 2) {
 				window.scrollTo({ top: window.scrollY + adjustment, behavior: 'smooth' });
 			}
-		}, 280);
+		}, 340);
 	}
 
 	function setCursorPosition(inputEl, cursorPos, keepEndVisible = false) {
@@ -226,7 +230,39 @@
 			if (keepEndVisible) {
 				inputEl.scrollLeft = inputEl.scrollWidth;
 			}
+			if (inputEl === verseInitialsInputEl) {
+				updateVerseCaret();
+			}
 		}, 0);
+	}
+
+	function updateVerseCaret() {
+		if (!verseInitialsInputEl || showKeyboard !== 'verse') {
+			verseCaretVisible = false;
+			return;
+		}
+
+		const safePos = Math.max(0, Math.min(verseCursorPos, verseInitials.length));
+		const beforeCursor = verseInitials.slice(0, safePos);
+		const styles = window.getComputedStyle(verseInitialsInputEl);
+		const canvas = document.createElement('canvas');
+		const ctx = canvas.getContext('2d');
+		if (!ctx) {
+			verseCaretVisible = false;
+			return;
+		}
+
+		ctx.font = `${styles.fontStyle} ${styles.fontWeight} ${styles.fontSize} ${styles.fontFamily}`;
+		verseCaretOffset = ctx.measureText(beforeCursor).width - verseInitialsInputEl.scrollLeft;
+		verseCaretVisible = activeInput?.id?.includes('verseInitials') ?? false;
+	}
+
+	$: if (showKeyboard === 'verse' && verseInitialsInputEl) {
+		verseInitials;
+		verseCursorPos;
+		setTimeout(() => updateVerseCaret(), 0);
+	} else {
+		verseCaretVisible = false;
 	}
 
 	function insertAt(value, insertValue, cursorPos) {
@@ -1024,17 +1060,29 @@
 				<div class="field">
 					<label for="verseInitials">{t('pinyin_initials_verse')}</label>
 					<p class="helper-text">{t('pinyin_helper')}</p>
-					<input
-						id="verseInitials"
-						type="text"
-						class="initials-input"
-						bind:value={verseInitials}
-						bind:this={verseInitialsInputEl}
-						readonly
-						on:mouseup={(e) => verseCursorPos = e.currentTarget.selectionStart ?? verseInitials.length}
-						on:keyup={(e) => verseCursorPos = e.currentTarget.selectionStart ?? verseInitials.length}
-						on:click={handleVerseInitialsClick}
-					/>
+					<div class="initials-input-shell" class:caret-active={verseCaretVisible}>
+						<input
+							id="verseInitials"
+							type="text"
+							class="initials-input"
+							bind:value={verseInitials}
+							bind:this={verseInitialsInputEl}
+							readonly
+							on:mouseup={(e) => {
+								verseCursorPos = e.currentTarget.selectionStart ?? verseInitials.length;
+								updateVerseCaret();
+							}}
+							on:keyup={(e) => {
+								verseCursorPos = e.currentTarget.selectionStart ?? verseInitials.length;
+								updateVerseCaret();
+							}}
+							on:scroll={updateVerseCaret}
+							on:click={handleVerseInitialsClick}
+						/>
+						{#if verseCaretVisible}
+							<span class="simulated-caret" aria-hidden="true" style={`left: calc(0.75rem + ${Math.max(0, verseCaretOffset)}px);`}></span>
+						{/if}
+					</div>
 					{#if showKeyboard === 'verse'}
 						<Keyboard layout={keyboardLayout} on:key={handleKeyboardKey} showEnter={true} />
 					{/if}
@@ -1043,17 +1091,29 @@
 				<div class="field">
 					<label for="verseInitialsZhuyin">{t('zhuyin_initials_verse')}</label>
 					<p class="helper-text">{t('zhuyin_helper')}</p>
-					<input
-						id="verseInitialsZhuyin"
-						type="text"
-						class="initials-input"
-						bind:value={verseInitials}
-						bind:this={verseInitialsInputEl}
-						readonly
-						on:mouseup={(e) => verseCursorPos = e.currentTarget.selectionStart ?? verseInitials.length}
-						on:keyup={(e) => verseCursorPos = e.currentTarget.selectionStart ?? verseInitials.length}
-						on:click={handleVerseInitialsClick}
-					/>
+					<div class="initials-input-shell" class:caret-active={verseCaretVisible}>
+						<input
+							id="verseInitialsZhuyin"
+							type="text"
+							class="initials-input"
+							bind:value={verseInitials}
+							bind:this={verseInitialsInputEl}
+							readonly
+							on:mouseup={(e) => {
+								verseCursorPos = e.currentTarget.selectionStart ?? verseInitials.length;
+								updateVerseCaret();
+							}}
+							on:keyup={(e) => {
+								verseCursorPos = e.currentTarget.selectionStart ?? verseInitials.length;
+								updateVerseCaret();
+							}}
+							on:scroll={updateVerseCaret}
+							on:click={handleVerseInitialsClick}
+						/>
+						{#if verseCaretVisible}
+							<span class="simulated-caret" aria-hidden="true" style={`left: calc(0.75rem + ${Math.max(0, verseCaretOffset)}px);`}></span>
+						{/if}
+					</div>
 					{#if showKeyboard === 'verse'}
 						<Keyboard layout={keyboardLayout} on:key={handleKeyboardKey} showEnter={true} />
 					{/if}
@@ -1062,17 +1122,29 @@
 				<div class="field">
 					<label for="verseInitialsCangjie">{t('cangjie_initials_verse')}</label>
 					<p class="helper-text">{t('cangjie_helper')}</p>
-					<input
-						id="verseInitialsCangjie"
-						type="text"
-						class="initials-input"
-						bind:value={verseInitials}
-						bind:this={verseInitialsInputEl}
-						readonly
-						on:mouseup={(e) => verseCursorPos = e.currentTarget.selectionStart ?? verseInitials.length}
-						on:keyup={(e) => verseCursorPos = e.currentTarget.selectionStart ?? verseInitials.length}
-						on:click={handleVerseInitialsClick}
-					/>
+					<div class="initials-input-shell" class:caret-active={verseCaretVisible}>
+						<input
+							id="verseInitialsCangjie"
+							type="text"
+							class="initials-input"
+							bind:value={verseInitials}
+							bind:this={verseInitialsInputEl}
+							readonly
+							on:mouseup={(e) => {
+								verseCursorPos = e.currentTarget.selectionStart ?? verseInitials.length;
+								updateVerseCaret();
+							}}
+							on:keyup={(e) => {
+								verseCursorPos = e.currentTarget.selectionStart ?? verseInitials.length;
+								updateVerseCaret();
+							}}
+							on:scroll={updateVerseCaret}
+							on:click={handleVerseInitialsClick}
+						/>
+						{#if verseCaretVisible}
+							<span class="simulated-caret" aria-hidden="true" style={`left: calc(0.75rem + ${Math.max(0, verseCaretOffset)}px);`}></span>
+						{/if}
+					</div>
 					{#if showKeyboard === 'verse'}
 						<Keyboard layout={keyboardLayout} on:key={handleKeyboardKey} showEnter={true} />
 					{/if}
@@ -1498,6 +1570,30 @@
 		white-space: nowrap;
 		text-overflow: clip;
 		cursor: text;
+		caret-color: transparent;
+	}
+
+	.initials-input-shell {
+		position: relative;
+	}
+
+	.simulated-caret {
+		position: absolute;
+		top: 0.6rem;
+		bottom: 0.6rem;
+		width: 2px;
+		background: var(--text-color);
+		pointer-events: none;
+		animation: caret-blink 1s step-end infinite;
+	}
+
+	@keyframes caret-blink {
+		0%, 45% {
+			opacity: 1;
+		}
+		46%, 100% {
+			opacity: 0;
+		}
 	}
 
 	.field input:focus,
