@@ -219,6 +219,24 @@
 		const idx = indexOverride ?? getCarouselIndex(series);
 		return idx < unlockedLevels.length - 1;
 	}
+
+	function getSeriesProgressLevel(series, displayLevel) {
+		if (!series || !displayLevel) return null;
+
+		if (isNumericSeries(series)) {
+			return series.nextLevel;
+		}
+
+		if ((series.category === 'book' || series.category === 'passage') && displayLevel.isUnlocked && !series.isSeriesComplete) {
+			return series.nextLevel;
+		}
+
+		if (!displayLevel.isUnlocked && displayLevel.target > 0) {
+			return displayLevel;
+		}
+
+		return null;
+	}
 </script>
 
 {#if show}
@@ -291,6 +309,7 @@
 							</button>
 						</div>
 					{:else}
+						{@const progressLevel = getSeriesProgressLevel(series, displayLevel)}
 						<div class="achievement-item" class:unlocked={displayLevel.isUnlocked}>
 							<div class="achievement-header">
 								<div class="icon-container" class:unlocked={displayLevel.isUnlocked}>
@@ -307,13 +326,13 @@
 								<div class="meta locked">{t('locked')}</div>
 							{/if}
 
-							{#if displayLevel.target > 0}
+							{#if progressLevel}
 								<div class="progress-wrap">
 									<div class="progress-label">
-										{t('achievement_progress_to_next')}: {displayLevel.current}/{displayLevel.target}
+										{t('achievement_progress_to_next')}: {progressLevel.current}/{progressLevel.target}
 									</div>
-									<div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow={getProgressPercent(displayLevel)}>
-										<div class="progress-fill" style={`width: ${getProgressPercent(displayLevel)}%`}></div>
+									<div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow={getProgressPercent(progressLevel)}>
+										<div class="progress-fill" style={`width: ${getProgressPercent(progressLevel)}%`}></div>
 									</div>
 								</div>
 							{:else}

@@ -1,7 +1,7 @@
 import { get } from 'svelte/store';
 import { createLocalStorageStore } from './localStorage.js';
 import { verses } from '$lib/stores/verses.js';
-import { enqueueStreakToast } from '$lib/stores/streakToast.js';
+import { enqueueToast } from '$lib/stores/toastQueue.js';
 
 const DEFAULT_STREAK_STATE = {
 	current: 0,
@@ -118,7 +118,7 @@ export function registerStreakActivity(activityType) {
 	});
 
 	if (extended) {
-		enqueueStreakToast();
+		enqueueToast({ type: 'streak' });
 	}
 
 	return extended;

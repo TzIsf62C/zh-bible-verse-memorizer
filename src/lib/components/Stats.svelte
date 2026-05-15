@@ -1,8 +1,11 @@
 <script>
 	import { createEventDispatcher } from 'svelte';
+	import { verses } from '$lib/stores/verses';
 	import { progressTrackingState } from '$lib/stores/progressHistory.js';
 	import {
 		createEmptyProgress,
+		getEffectiveInterval,
+		getMasteryCategory,
 		getProgressMax,
 		getProgressTotal
 	} from '$lib/utils/masteryProgress.js';
@@ -24,6 +27,8 @@
 	let showAchievementsModal = false;
 	let viewMode = 'totals';
 	let timelineRange = 'all'; // 'all' | '30' | '7'
+	let showCategoryModal = false;
+	let selectedCategory = null;
 
 	$: trackingState = $progressTrackingState || {};
 	$: currentProgress = trackingState.currentProgress || createEmptyProgress();
@@ -34,6 +39,8 @@
 		max: getProgressMax(currentProgress)
 	};
 	$: graphData = buildGraphData(progressHistory, timelineRange);
+	$: selectedCategoryMeta = CATEGORY_META.find((category) => category.key === selectedCategory) || null;
+	$: selectedCategoryVerses = getCategoryVerses(selectedCategory);
 
 	function showHeatMaps() {
 		dispatch('navigate-heat-maps');
@@ -57,6 +64,58 @@
 
 	function exitStats() {
 		dispatch('exit');
+	}
+
+	function openCategoryModal(categoryKey) {
+		selectedCategory = categoryKey;
+		showCategoryModal = true;
+	}
+
+	function closeCategoryModal() {
+		showCategoryModal = false;
+		selectedCategory = null;
+	}
+
+	function getCategoryVerses(categoryKey) {
+		if (!categoryKey) return [];
+		const verseList = Array.isArray($verses) ? $verses : [];
+		return verseList
+			.filter((verse) => Boolean(verse?.lastReviewed))
+			.filter((verse) => {
+				const effectiveInterval = getEffectiveInterval(verse.interval, verse.dueDate, new Date());
+				return getMasteryCategory(effectiveInterval) === categoryKey;
+			})
+			.sort((a, b) => {
+				const bookCmp = String(a.bookName || '').localeCompare(String(b.bookName || ''), 'zh');
+				if (bookCmp !== 0) return bookCmp;
+				const chapterCmp = Number(a.chapterNumber || 0) - Number(b.chapterNumber || 0);
+				if (chapterCmp !== 0) return chapterCmp;
+				return Number(a.verseNumber || 0) - Number(b.verseNumber || 0);
+			});
+	}
+
+	function formatVerseReference(verse) {
+		if (!verse) return '';
+		return `${verse.bookName} ${verse.chapterNumber}:${verse.verseNumber}`;
+	}
+
+	function getPleasantStep(maxValue) {
+		const pleasantBases = [1, 2, 5, 10, 20, 25, 50];
+		const rawStep = Math.max(1, Number(maxValue || 0) / 4);
+		if (rawStep <= 1) return 1;
+
+		const exponent = Math.floor(Math.log10(rawStep));
+		for (let exp = exponent - 1; exp <= exponent + 6; exp += 1) {
+			const power = 10 ** exp;
+			for (const base of pleasantBases) {
+				const candidate = base * power;
+				if (candidate >= rawStep) {
+					return candidate;
+				}
+			}
+		}
+
+		return rawStep;
 	}
 
 	function parseDate(dateString) {
@@ -148,6 +207,8 @@
 			),
 			1
 		);
+		const yStep = getPleasantStep(maxTotal);
+		const maxAxis = yStep * 4;
 
 		const chartWidth = GRAPH_WIDTH - GRAPH_PADDING * 2;
 		const chartHeight = GRAPH_HEIGHT - GRAPH_PADDING * 2;
@@ -179,10 +240,10 @@
 			};
 		});
 
-		const toY = (value) => GRAPH_HEIGHT - GRAPH_PADDING - (Number(value) / maxTotal) * chartHeight;
+		const toY = (value) => GRAPH_HEIGHT - GRAPH_PADDING - (Number(value) / maxAxis) * chartHeight;
 		const yTicks = Array.from({ length: 5 }, (_, index) => {
 			const ratio = index / 4;
-			const value = Math.round((1 - ratio) * maxTotal);
+			const value = Math.round(maxAxis * (1 - ratio));
 			return {
 				value,
 				axisRatio: (GRAPH_PADDING + ratio * chartHeight) / GRAPH_HEIGHT,
@@ -205,6 +266,8 @@
 		return {
 			points,
 			maxTotal,
+			maxAxis,
+			yStep,
 			yTicks,
 			areas: {
 				newLearning: buildAreaPath('newLearningTop', 'baseline'),
@@ -256,12 +319,15 @@
 				<div class="mastery-category">
 					<div class="category-label">{t(category.labelKey)}</div>
 					<div class="bar-container">
-						<div
+						<button
+							type="button"
 							class={`bar ${category.className}`}
 							style="width: {masteryData.max > 0 ? (masteryData[category.key] / masteryData.max) * 100 : 0}%"
+							on:click={() => openCategoryModal(category.key)}
+							aria-label={`${t(category.labelKey)} ${masteryData[category.key]}`}
 						>
 							<span class="bar-count">{masteryData[category.key]}</span>
-						</div>
+						</button>
 					</div>
 				</div>
 			{/each}
@@ -358,6 +424,32 @@
 	</div>
 </div>
 
+{#if showCategoryModal}
+	<div class="modal-overlay" on:click={(event) => event.target === event.currentTarget && closeCategoryModal()} on:keydown={(event) => event.key === 'Escape' && closeCategoryModal()} role="dialog" aria-modal="true" tabindex="0">
+		<div class="stats-category-modal" role="document">
+			<button type="button" class="stats-modal-close" on:click={closeCategoryModal} aria-label={t('close')}>
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+					<path d="M6 6 L18 18"></path>
+					<path d="M18 6 L6 18"></path>
+				</svg>
+			</button>
+			<h3>{selectedCategoryMeta ? t(selectedCategoryMeta.labelKey) : ''}</h3>
+			{#if selectedCategoryVerses.length === 0}
+				<p class="stats-modal-empty">{t('no_reviewed_verses')}</p>
+			{:else}
+				<div class="stats-modal-list" role="list">
+					{#each selectedCategoryVerses as verse (verse.id)}
+						<div class="stats-modal-item" role="listitem">
+							<span class="stats-modal-ref">{formatVerseReference(verse)}</span>
+							<span class="stats-modal-interval">{t('interval_label')} {Math.max(1, Number(verse.interval || 1))}</span>
+						</div>
+					{/each}
+				</div>
+			{/if}
+		</div>
+	</div>
+{/if}
+
 <AchievementsModal show={showAchievementsModal} on:close={() => (showAchievementsModal = false)} />
 
 <style>
@@ -451,6 +543,13 @@
 		justify-content: center;
 		transition: width 0.3s ease;
 		min-width: 3rem;
+		border: none;
+		cursor: pointer;
+		padding: 0;
+	}
+
+	.bar:hover {
+		filter: brightness(1.06);
 	}
 
 	.bar-count {
@@ -610,6 +709,93 @@
 		font-size: 0.75em;
 		color: var(--subtitle-color);
 		margin-top: 0.45rem;
+	}
+
+	.modal-overlay {
+		position: fixed;
+		inset: 0;
+		z-index: 2200;
+		background: rgba(0, 0, 0, 0.55);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 1rem;
+	}
+
+	.stats-category-modal {
+		position: relative;
+		background: var(--panel-background);
+		color: var(--text-color);
+		width: min(92vw, 560px);
+		max-height: min(80vh, 640px);
+		border-radius: 12px;
+		padding: 1rem;
+		overflow: hidden;
+		box-shadow: 0 10px 28px rgba(0, 0, 0, 0.24);
+	}
+
+	.stats-category-modal h3 {
+		margin: 0 2rem 0.8rem 0;
+		font-size: 1.1em;
+	}
+
+	.stats-modal-close {
+		position: absolute;
+		top: 0.6rem;
+		right: 0.6rem;
+		width: 2rem;
+		height: 2rem;
+		border: none;
+		background: transparent;
+		color: var(--text-color);
+		border-radius: 999px;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.stats-modal-close:hover {
+		background: color-mix(in srgb, var(--text-color) 15%, transparent);
+	}
+
+	.stats-modal-close svg {
+		width: 1.2rem;
+		height: 1.2rem;
+		stroke: var(--text-color);
+		stroke-width: 2.2;
+	}
+
+	.stats-modal-list {
+		max-height: min(68vh, 520px);
+		overflow-y: auto;
+		display: grid;
+		gap: 0.5rem;
+		padding-right: 0.3rem;
+	}
+
+	.stats-modal-item {
+		display: flex;
+		justify-content: space-between;
+		gap: 0.8rem;
+		padding: 0.5rem 0.6rem;
+		border-radius: 8px;
+		background: color-mix(in srgb, var(--app-background) 82%, transparent);
+		border: 1px solid var(--file-border);
+	}
+
+	.stats-modal-ref {
+		font-weight: 600;
+	}
+
+	.stats-modal-interval {
+		color: var(--subtitle-color);
+		white-space: nowrap;
+	}
+
+	.stats-modal-empty {
+		color: var(--subtitle-color);
+		margin: 0.5rem 0 0;
 	}
 
 	.stats-actions {

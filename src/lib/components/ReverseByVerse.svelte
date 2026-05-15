@@ -99,14 +99,6 @@
 			
 			setTimeout(() => {
 				if (isSubsetComplete || showCompletionModal) return;
-				console.log('[ReverseByVerse] scroll trigger', {
-					scrollTrigger,
-					userInputLength: userInput.length,
-					fullInitialsLength: fullInitials.length,
-					currentSubsetSize,
-					isSubsetComplete,
-					isNumericKeyboard
-				});
 				scrollNextHiddenCharacterIntoView();
 			}, 120);
 		}
@@ -114,29 +106,17 @@
 
 	function scrollNextHiddenCharacterIntoView() {
 		const keyboard = document.querySelector('.reverse-by-verse-container .keyboard-space .keyboard');
-		if (!keyboard) {
-			console.log('[ReverseByVerse] no keyboard element found');
-			return;
-		}
+		if (!keyboard) return;
 
 		const verseDisplay = document.querySelector('.reverse-by-verse-container .verse-display');
-		if (!verseDisplay) {
-			console.log('[ReverseByVerse] no verse display found');
-			return;
-		}
+		if (!verseDisplay) return;
 
 		const nextInputIndex = userInput.length;
 		const charIndex = charToInputIndex.findIndex((value) => value === nextInputIndex);
-		if (charIndex === -1) {
-			console.log('[ReverseByVerse] no char index for next input', { nextInputIndex, charToInputIndexLength: charToInputIndex.length });
-			return;
-		}
+		if (charIndex === -1) return;
 
 		const nextHiddenChar = verseDisplay.querySelector(`span:nth-child(${charIndex + 1})`);
-		if (!nextHiddenChar) {
-			console.log('[ReverseByVerse] target char element not found', { charIndex });
-			return;
-		}
+		if (!nextHiddenChar) return;
 
 		const keyboardRect = keyboard.getBoundingClientRect();
 		const charRect = nextHiddenChar.getBoundingClientRect();
@@ -145,33 +125,11 @@
 
 		const overlapsTop = charRect.top < visibleTop;
 		const overlapsBottom = charRect.bottom > visibleBottom;
-		console.log('[ReverseByVerse] scroll candidate', {
-			nextInputIndex,
-			charIndex,
-			charText: nextHiddenChar.textContent,
-			keyboardTop: keyboardRect.top,
-			charTop: charRect.top,
-			charBottom: charRect.bottom,
-			visibleTop,
-			visibleBottom,
-			overlapsTop,
-			overlapsBottom,
-			windowScrollY: window.scrollY
-		});
-		if (!overlapsTop && !overlapsBottom) {
-			console.log('[ReverseByVerse] no scroll needed');
-			return;
-		}
+		if (!overlapsTop && !overlapsBottom) return;
 
 		const visibleCenter = (visibleTop + visibleBottom) / 2;
 		const charCenter = charRect.top + (charRect.height / 2);
 		const scrollDelta = charCenter - visibleCenter;
-		console.log('[ReverseByVerse] scrolling', {
-			visibleCenter,
-			charCenter,
-			scrollDelta,
-			targetScrollY: window.scrollY + scrollDelta
-		});
 
 		if (Math.abs(scrollDelta) > 2) {
 			window.scrollTo({

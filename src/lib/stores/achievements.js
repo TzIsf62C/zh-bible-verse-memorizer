@@ -1,8 +1,9 @@
 import { browser } from '$app/environment';
-import { derived, get, writable } from 'svelte/store';
+import { derived, get } from 'svelte/store';
 import { createLocalStorageStore } from '$lib/stores/localStorage.js';
 import { verses } from '$lib/stores/verses.js';
 import { streakData } from '$lib/stores/streak.js';
+import { dequeueToast, enqueueToast, toastQueue } from '$lib/stores/toastQueue.js';
 import {
 	getAllBooksWithTotals,
 	getChapterKey,
@@ -22,8 +23,7 @@ export const achievementState = createLocalStorageStore('achievementState', {
 	order: []
 });
 
-const popupQueueStore = writable([]);
-export const achievementPopupQueue = derived(popupQueueStore, ($queue) => $queue);
+export const achievementPopupQueue = toastQueue;
 
 let trackingInitialized = false;
 let suppressQueue = true;
@@ -307,14 +307,14 @@ function evaluateUnlocksFromSeries(seriesList) {
 function enqueueUnlockPopups(newlyUnlockedLevels) {
 	if (!browser || newlyUnlockedLevels.length === 0) return;
 
-	popupQueueStore.update((queue) => [
-		...queue,
-		...newlyUnlockedLevels.map((level) => ({
+	newlyUnlockedLevels.forEach((level) => {
+		enqueueToast({
+			type: 'achievement',
 			id: level.achievementId,
 			titleKey: level.titleKey,
 			titleVars: level.titleVars || null
-		}))
-	]);
+		});
+	});
 }
 
 function syncFromVerses(allVerses) {
@@ -343,14 +343,7 @@ export function initializeAchievementsTracking() {
 }
 
 export function dequeueAchievementPopup() {
-	const queue = get(popupQueueStore);
-	if (!queue || queue.length === 0) {
-		return null;
-	}
-
-	const [firstItem, ...rest] = queue;
-	popupQueueStore.set(rest);
-	return firstItem;
+	return dequeueToast();
 }
 
 function buildPanelSeries(seriesList, unlockedMap) {

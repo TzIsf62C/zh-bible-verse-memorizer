@@ -1,6 +1,6 @@
 <script>
 	import { onDestroy } from 'svelte';
-	import { achievementPopupQueue, dequeueAchievementPopup } from '$lib/stores/achievements';
+	import { dequeueToast, toastQueue } from '$lib/stores/toastQueue.js';
 	import { t } from '$lib/i18n';
 
 	let currentPopup = null;
@@ -8,7 +8,7 @@
 	let retryTimer = null;
 	let isAdvancing = false;
 
-	const unsubscribe = achievementPopupQueue.subscribe((items) => {
+	const unsubscribe = toastQueue.subscribe((items) => {
 		if (!currentPopup && !isAdvancing && items.length > 0) {
 			showNext();
 		}
@@ -25,7 +25,7 @@
 		}
 
 		isAdvancing = true;
-		const next = dequeueAchievementPopup();
+		const next = dequeueToast();
 		if (!next) {
 			currentPopup = null;
 			isAdvancing = false;
@@ -42,6 +42,10 @@
 			showNext();
 		}, 3000);
 	}
+
+	$: isStreakToast = currentPopup?.type === 'streak';
+	$: toastTitle = isStreakToast ? t('streak_extended') : t('achievement_unlocked');
+	$: toastName = isStreakToast ? '' : t(currentPopup?.titleKey, currentPopup?.titleVars || {});
 
 	function hasOpenModal() {
 		if (typeof document === 'undefined') return false;
@@ -66,25 +70,41 @@
 {#if currentPopup}
 	<div class="achievement-toast" role="status" aria-live="polite">
 		<div class="icon-wrap" aria-hidden="true">
-			<svg
-				class="trophy-icon"
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="2"
-				stroke-linecap="round"
-				stroke-linejoin="round"
-			>
-				<path d="M 8.050513 7.7785995 V 3.7785995 H 16.050513 V 7.7785995"></path>
-    			<path d="M8 5.8 C 6.6666667 6.4666667, 4 5.466667, 4 6.8 C 4 8.133333, 10.637994 13.119525, 8.1667604 15.8"></path>
-    			<path d="M8.0778901 8.8051269 C 8.0778901 10.805127, 10 17, 12 17 C 14 17, 15.92211 10.571358, 15.92211 8.5713581"></path>
-   				<path d="M12 17 V 21 M 9 21 H15"></path>
-    			<path d="M15.898974 5.799835 C 17.232307 6.4665017, 19.898974 5.466667, 19.898974 6.8 C 19.898974 8.133333, 13.26098 13.119525, 15.732214 15.8"></path>
-			</svg>
+			{#if isStreakToast}
+				<svg
+					class="streak-icon"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+				>
+					<path d="M5 19 L 19 5 M 19 5 L 19 15 M 19 5 L 9 5"></path>
+				</svg>
+			{:else}
+				<svg
+					class="trophy-icon"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+				>
+					<path d="M 8.050513 7.7785995 V 3.7785995 H 16.050513 V 7.7785995"></path>
+	    				<path d="M8 5.8 C 6.6666667 6.4666667, 4 5.466667, 4 6.8 C 4 8.133333, 10.637994 13.119525, 8.1667604 15.8"></path>
+	    				<path d="M8.0778901 8.8051269 C 8.0778901 10.805127, 10 17, 12 17 C 14 17, 15.92211 10.571358, 15.92211 8.5713581"></path>
+	   					<path d="M12 17 V 21 M 9 21 H15"></path>
+	    				<path d="M15.898974 5.799835 C 17.232307 6.4665017, 19.898974 5.466667, 19.898974 6.8 C 19.898974 8.133333, 13.26098 13.119525, 15.732214 15.8"></path>
+				</svg>
+			{/if}
 		</div>
 		<div class="text-wrap">
-			<div class="title">{t('achievement_unlocked')}</div>
-			<div class="name">{t(currentPopup.titleKey, currentPopup.titleVars || {})}</div>
+			<div class="title">{toastTitle}</div>
+			{#if toastName}
+				<div class="name">{toastName}</div>
+			{/if}
 		</div>
 	</div>
 {/if}
@@ -119,6 +139,11 @@
 	}
 
 	.trophy-icon {
+		width: 1.5em;
+		height: 1.5em;
+	}
+
+	.streak-icon {
 		width: 1.5em;
 		height: 1.5em;
 	}

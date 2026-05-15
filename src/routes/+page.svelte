@@ -22,7 +22,6 @@
 	import ShareOverlay from '$lib/components/ShareOverlay.svelte';
 	import Onboarding from '$lib/components/Onboarding.svelte';
 	import AchievementToast from '$lib/components/AchievementToast.svelte';
-	import StreakToast from '$lib/components/StreakToast.svelte';
 	import { t } from '$lib/i18n/index.js';
 	import { initializeAchievementsTracking } from '$lib/stores/achievements';
 	import { initializeProgressTracking } from '$lib/stores/progressHistory.js';
@@ -248,7 +247,6 @@
 	/>
 
 	<AchievementToast />
-	<StreakToast />
 
 	{#if currentPanel === 'learn'}
 		<LearningFlow />

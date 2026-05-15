@@ -64,6 +64,8 @@
 	let bookCursorPos = 0;
 	let verseCaretVisible = false;
 	let verseCaretOffset = 0;
+	let bookCaretVisible = false;
+	let bookCaretOffset = 0;
 
 	// Track original values for edit mode change detection
 	let originalFormState = null;
@@ -135,19 +137,10 @@
 	// Viewport scrolling for focused input fields
 	$: {
 		if (activeInput && showKeyboard && !(activeInput.id && activeInput.id.includes('verseInitials'))) {
-			console.log('=== ADD VERSE VIEWPORT SCROLL ===');
-			console.log('Active input:', activeInput.id);
-			console.log('Keyboard shown:', showKeyboard);
-			
 			setTimeout(() => {
 				if (!activeInput) return;
 				
 				const inputRect = activeInput.getBoundingClientRect();
-				const viewportHeight = window.innerHeight;
-				
-				console.log('Input rect top:', inputRect.top);
-				console.log('Input rect bottom:', inputRect.bottom);
-				console.log('Viewport height:', viewportHeight);
 				
 				// Find keyboard element - it's rendered after the input field
 				let keyboardElement = null;
@@ -161,29 +154,12 @@
 					const keyboardRect = keyboardElement.getBoundingClientRect();
 					const visibleViewportHeight = keyboardRect.top; // Space above keyboard
 					
-					console.log('Keyboard top:', keyboardRect.top);
-					console.log('Visible viewport height (above keyboard):', visibleViewportHeight);
-					
 					// Center the input in the visible viewport (above the keyboard)
 					const targetPosition = visibleViewportHeight / 2 - (inputRect.height / 2);
 					const scrollAdjustment = inputRect.top - targetPosition;
 					const scrollTarget = window.scrollY + scrollAdjustment;
 					
-					console.log('Target position in viewport:', targetPosition);
-					console.log('Scroll adjustment needed:', scrollAdjustment);
-					console.log('Scroll target:', scrollTarget);
-					
 					window.scrollTo({ top: scrollTarget, behavior: 'smooth' });
-					
-					setTimeout(() => {
-						const newInputRect = activeInput.getBoundingClientRect();
-						console.log('=== AFTER SCROLL ===');
-						console.log('Input top from viewport:', newInputRect.top);
-						console.log('Input centered at:', newInputRect.top + (newInputRect.height / 2));
-						console.log('Target center was:', targetPosition + (inputRect.height / 2));
-					}, 500);
-				} else {
-					console.log('WARNING: Keyboard element not found');
 				}
 			}, 300);
 		}
@@ -191,19 +167,30 @@
 
 	function handleVerseInitialsClick(event) {
 		activeInput = event?.currentTarget || null;
-		verseCursorPos = activeInput?.selectionStart ?? verseInitials.length;
+		if (activeInput && typeof event?.clientX === 'number') {
+			verseCursorPos = getCursorPositionFromClick(activeInput, event.clientX, verseInitials);
+		} else {
+			verseCursorPos = activeInput?.selectionStart ?? verseInitials.length;
+		}
 		keyboardInput = verseInitials;
 		showKeyboard = 'verse';
-		setCursorPosition(verseInitialsInputEl, verseCursorPos, true);
+		setCursorPosition(verseInitialsInputEl, verseCursorPos, false);
 		updateVerseCaret();
 		scrollFieldAboveKeyboard(activeInput);
 	}
 
 	function handleBookInitialsClick(event) {
 		activeInput = event?.currentTarget || null;
-		bookCursorPos = activeInput?.selectionStart ?? bookInitials.length;
+		if (activeInput && typeof event?.clientX === 'number') {
+			bookCursorPos = getCursorPositionFromClick(activeInput, event.clientX, bookInitials);
+		} else {
+			bookCursorPos = activeInput?.selectionStart ?? bookInitials.length;
+		}
 		keyboardInput = bookInitials;
-		showKeyboard = showKeyboard === 'book' ? null : 'book';
+		showKeyboard = 'book';
+		setCursorPosition(bookInitialsInputEl, bookCursorPos, false);
+		updateBookCaret();
+		scrollFieldAboveKeyboard(activeInput);
 	}
 
 	function scrollFieldAboveKeyboard(inputEl) {
@@ -228,12 +215,67 @@
 			inputEl.focus();
 			inputEl.setSelectionRange(cursorPos, cursorPos);
 			if (keepEndVisible) {
-				inputEl.scrollLeft = inputEl.scrollWidth;
+				scrollCursorIntoView(inputEl, cursorPos);
 			}
 			if (inputEl === verseInitialsInputEl) {
 				updateVerseCaret();
 			}
+			if (inputEl === bookInitialsInputEl) {
+				updateBookCaret();
+			}
 		}, 0);
+	}
+
+	function getTextMeasureContext(inputEl) {
+		const canvas = document.createElement('canvas');
+		const ctx = canvas.getContext('2d');
+		if (!ctx) return null;
+		const styles = window.getComputedStyle(inputEl);
+		ctx.font = `${styles.fontStyle} ${styles.fontWeight} ${styles.fontSize} ${styles.fontFamily}`;
+		return ctx;
+	}
+
+	function measureTextWidth(inputEl, value) {
+		const ctx = getTextMeasureContext(inputEl);
+		if (!ctx) return 0;
+		return ctx.measureText(value).width;
+	}
+
+	function getCursorPositionFromClick(inputEl, clickClientX, value) {
+		if (!inputEl) return value.length;
+		const styles = window.getComputedStyle(inputEl);
+		const paddingLeft = parseFloat(styles.paddingLeft || '0') || 0;
+		const inputRect = inputEl.getBoundingClientRect();
+		const clickX = clickClientX - inputRect.left + inputEl.scrollLeft - paddingLeft;
+		if (clickX <= 0) return 0;
+
+		let bestIndex = value.length;
+		let bestDistance = Number.POSITIVE_INFINITY;
+		for (let index = 0; index <= value.length; index += 1) {
+			const width = measureTextWidth(inputEl, value.slice(0, index));
+			const distance = Math.abs(width - clickX);
+			if (distance < bestDistance) {
+				bestDistance = distance;
+				bestIndex = index;
+			}
+		}
+
+		return bestIndex;
+	}
+
+	function scrollCursorIntoView(inputEl, cursorPos) {
+		if (!inputEl) return;
+		const safePos = Math.max(0, Math.min(cursorPos, inputEl.value.length));
+		const cursorX = measureTextWidth(inputEl, inputEl.value.slice(0, safePos));
+		const left = inputEl.scrollLeft;
+		const right = left + inputEl.clientWidth;
+		const edgePadding = 20;
+
+		if (cursorX < left + edgePadding) {
+			inputEl.scrollLeft = Math.max(0, cursorX - edgePadding);
+		} else if (cursorX > right - edgePadding) {
+			inputEl.scrollLeft = Math.max(0, cursorX - inputEl.clientWidth + edgePadding);
+		}
 	}
 
 	function updateVerseCaret() {
@@ -257,12 +299,41 @@
 		verseCaretVisible = activeInput?.id?.includes('verseInitials') ?? false;
 	}
 
+	function updateBookCaret() {
+		if (!bookInitialsInputEl || showKeyboard !== 'book') {
+			bookCaretVisible = false;
+			return;
+		}
+
+		const safePos = Math.max(0, Math.min(bookCursorPos, bookInitials.length));
+		const beforeCursor = bookInitials.slice(0, safePos);
+		const styles = window.getComputedStyle(bookInitialsInputEl);
+		const canvas = document.createElement('canvas');
+		const ctx = canvas.getContext('2d');
+		if (!ctx) {
+			bookCaretVisible = false;
+			return;
+		}
+
+		ctx.font = `${styles.fontStyle} ${styles.fontWeight} ${styles.fontSize} ${styles.fontFamily}`;
+		bookCaretOffset = ctx.measureText(beforeCursor).width - bookInitialsInputEl.scrollLeft;
+		bookCaretVisible = activeInput?.id?.includes('bookInitials') ?? false;
+	}
+
 	$: if (showKeyboard === 'verse' && verseInitialsInputEl) {
 		verseInitials;
 		verseCursorPos;
 		setTimeout(() => updateVerseCaret(), 0);
 	} else {
 		verseCaretVisible = false;
+	}
+
+	$: if (showKeyboard === 'book' && bookInitialsInputEl) {
+		bookInitials;
+		bookCursorPos;
+		setTimeout(() => updateBookCaret(), 0);
+	} else {
+		bookCaretVisible = false;
 	}
 
 	function insertAt(value, insertValue, cursorPos) {
@@ -321,7 +392,7 @@
 			bookInitials = nextValue;
 			bookCursorPos = nextCursor;
 			keyboardInput = bookInitials;
-			setCursorPosition(bookInitialsInputEl, bookCursorPos, false);
+			setCursorPosition(bookInitialsInputEl, bookCursorPos, true);
 		} else if (activeInput.id === 'chapterNumber') {
 			// Only accept numeric keys
 			if (/^[0-9]$/.test(key)) {
@@ -348,7 +419,7 @@
 			bookInitials = nextValue;
 			bookCursorPos = nextCursor;
 			keyboardInput = bookInitials;
-			setCursorPosition(bookInitialsInputEl, bookCursorPos, false);
+			setCursorPosition(bookInitialsInputEl, bookCursorPos, true);
 		} else if (activeInput.id === 'chapterNumber') {
 			chapterNumber = chapterNumber.slice(0, -1);
 		} else if (activeInput.id === 'verseNumber') {
@@ -423,7 +494,7 @@
 				bookInitials = nextValue;
 				bookCursorPos = nextCursor;
 				keyboardInput = bookInitials;
-				setCursorPosition(bookInitialsInputEl, bookCursorPos, false);
+				setCursorPosition(bookInitialsInputEl, bookCursorPos, true);
 			}
 		}
 	}
@@ -808,6 +879,8 @@
 		keyboardInput = '';
 		verseCursorPos = 0;
 		bookCursorPos = 0;
+		bookCaretVisible = false;
+		bookCaretOffset = 0;
 		bookInitialsAuto = true;
 	}
 
@@ -903,6 +976,23 @@
 	}
 
 	function handleClickOutside(event) {
+		if (showKeyboard && activeInput) {
+			const target = event.target;
+			const isElementTarget = target instanceof Element;
+			const clickedActiveInput = target === activeInput;
+			const clickedKeyboard = isElementTarget && !!target.closest('.keyboard');
+			const clickedNumericField = isElementTarget && showKeyboard === 'numeric' &&
+				(target.id === 'chapterNumber' || target.id === 'verseNumber');
+
+			if (!clickedActiveInput && !clickedKeyboard && !clickedNumericField) {
+				activeInput.blur?.();
+				activeInput = null;
+				showKeyboard = null;
+				verseCaretVisible = false;
+				bookCaretVisible = false;
+			}
+		}
+
 		if (!showCollectionDropdown) return;
 		
 		// Don't close if clicking inside the dropdown
@@ -1155,17 +1245,29 @@
 			{#if currentInputMethod === 'pinyin'}
 				<div class="field">
 					<label for="bookInitials">{t('pinyin_initials_book')}</label>
-					<input
-						id="bookInitials"
-						type="text"
-						class="initials-input"
-						bind:value={bookInitials}
-						bind:this={bookInitialsInputEl}
-						readonly
-						on:mouseup={(e) => bookCursorPos = e.currentTarget.selectionStart ?? bookInitials.length}
-						on:keyup={(e) => bookCursorPos = e.currentTarget.selectionStart ?? bookInitials.length}
-						on:click={handleBookInitialsClick}
-					/>
+					<div class="initials-input-shell" class:caret-active={bookCaretVisible}>
+						<input
+							id="bookInitials"
+							type="text"
+							class="initials-input"
+							bind:value={bookInitials}
+							bind:this={bookInitialsInputEl}
+							readonly
+							on:mouseup={(e) => {
+								bookCursorPos = e.currentTarget.selectionStart ?? bookInitials.length;
+								updateBookCaret();
+							}}
+							on:keyup={(e) => {
+								bookCursorPos = e.currentTarget.selectionStart ?? bookInitials.length;
+								updateBookCaret();
+							}}
+							on:scroll={updateBookCaret}
+							on:click={handleBookInitialsClick}
+						/>
+						{#if bookCaretVisible}
+							<span class="simulated-caret" aria-hidden="true" style={`left: calc(0.75rem + ${Math.max(0, bookCaretOffset)}px);`}></span>
+						{/if}
+					</div>
 					{#if showKeyboard === 'book'}
 						<Keyboard layout={keyboardLayout} on:key={handleKeyboardKey} showEnter={true} />
 					{/if}
@@ -1173,17 +1275,29 @@
 			{:else if currentInputMethod === 'zhuyin'}
 				<div class="field">
 					<label for="bookInitialsZhuyin">{t('zhuyin_initials_book')}</label>
-					<input
-						id="bookInitialsZhuyin"
-						type="text"
-						class="initials-input"
-						bind:value={bookInitials}
-						bind:this={bookInitialsInputEl}
-						readonly
-						on:mouseup={(e) => bookCursorPos = e.currentTarget.selectionStart ?? bookInitials.length}
-						on:keyup={(e) => bookCursorPos = e.currentTarget.selectionStart ?? bookInitials.length}
-						on:click={handleBookInitialsClick}
-					/>
+					<div class="initials-input-shell" class:caret-active={bookCaretVisible}>
+						<input
+							id="bookInitialsZhuyin"
+							type="text"
+							class="initials-input"
+							bind:value={bookInitials}
+							bind:this={bookInitialsInputEl}
+							readonly
+							on:mouseup={(e) => {
+								bookCursorPos = e.currentTarget.selectionStart ?? bookInitials.length;
+								updateBookCaret();
+							}}
+							on:keyup={(e) => {
+								bookCursorPos = e.currentTarget.selectionStart ?? bookInitials.length;
+								updateBookCaret();
+							}}
+							on:scroll={updateBookCaret}
+							on:click={handleBookInitialsClick}
+						/>
+						{#if bookCaretVisible}
+							<span class="simulated-caret" aria-hidden="true" style={`left: calc(0.75rem + ${Math.max(0, bookCaretOffset)}px);`}></span>
+						{/if}
+					</div>
 					{#if showKeyboard === 'book'}
 						<Keyboard layout={keyboardLayout} on:key={handleKeyboardKey} showEnter={true} />
 					{/if}
@@ -1191,17 +1305,29 @@
 			{:else if currentInputMethod === 'cangjie'}
 				<div class="field">
 					<label for="bookInitialsCangjie">{t('cangjie_initials_book')}</label>
-					<input
-						id="bookInitialsCangjie"
-						type="text"
-						class="initials-input"
-						bind:value={bookInitials}
-						bind:this={bookInitialsInputEl}
-						readonly
-						on:mouseup={(e) => bookCursorPos = e.currentTarget.selectionStart ?? bookInitials.length}
-						on:keyup={(e) => bookCursorPos = e.currentTarget.selectionStart ?? bookInitials.length}
-						on:click={handleBookInitialsClick}
-					/>
+					<div class="initials-input-shell" class:caret-active={bookCaretVisible}>
+						<input
+							id="bookInitialsCangjie"
+							type="text"
+							class="initials-input"
+							bind:value={bookInitials}
+							bind:this={bookInitialsInputEl}
+							readonly
+							on:mouseup={(e) => {
+								bookCursorPos = e.currentTarget.selectionStart ?? bookInitials.length;
+								updateBookCaret();
+							}}
+							on:keyup={(e) => {
+								bookCursorPos = e.currentTarget.selectionStart ?? bookInitials.length;
+								updateBookCaret();
+							}}
+							on:scroll={updateBookCaret}
+							on:click={handleBookInitialsClick}
+						/>
+						{#if bookCaretVisible}
+							<span class="simulated-caret" aria-hidden="true" style={`left: calc(0.75rem + ${Math.max(0, bookCaretOffset)}px);`}></span>
+						{/if}
+					</div>
 					{#if showKeyboard === 'book'}
 						<Keyboard layout={keyboardLayout} on:key={handleKeyboardKey} showEnter={true} />
 					{/if}

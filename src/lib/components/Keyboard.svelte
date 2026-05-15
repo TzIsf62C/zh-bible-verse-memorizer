@@ -17,9 +17,6 @@
 	export let correctKey = null; // The key that should have been pressed (show green if pressedKey is wrong)
 	export let lastCorrectKey = null; // The last correctly pressed key (show white/grey feedback)
 
-	// Debug feedback props
-	$: console.log('[Keyboard] Feedback props:', { pressedKey, correctKey, lastCorrectKey });
-
 	const dispatch = createEventDispatcher();
 
 	function handleKeyPress(keyObj) {
