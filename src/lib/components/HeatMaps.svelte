@@ -247,16 +247,7 @@
 
 		<div class="heat-map">
 			<div class="heat-map-text">
-				<div class="heat-legend" aria-hidden="true">
-					<div class="legend-gradient" style={`background: ${heatLegendGradient};`}></div>
-					<div class="legend-scale-row">
-						{#each heatLegendPoints as point}
-							<span class={`legend-scale-label ${point.anchorClass}`} style={`left: ${point.percent}%`}>
-								{point.score}
-							</span>
-						{/each}
-					</div>
-				</div>
+				
 				{#each getHeatMapChars(selectedVerse) as charData, i}
 					{#if charData.char === '\n'}
 						<br />
@@ -282,6 +273,16 @@
 						</span>
 					{/if}
 				{/each}
+				<div class="heat-legend" aria-hidden="true">
+					<div class="legend-gradient" style={`background: ${heatLegendGradient};`}></div>
+					<div class="legend-scale-row">
+						{#each heatLegendPoints as point}
+							<span class={`legend-scale-label ${point.anchorClass}`} style={`left: ${point.percent}%`}>
+								{point.score}
+							</span>
+						{/each}
+					</div>
+				</div>
 			</div>
 
 			<!-- Edit tooltip -->
@@ -314,6 +315,7 @@
 					</div>
 				</div>
 			{/if}
+
 
 			<div class="practice-buttons">
 				<button 
@@ -503,6 +505,7 @@
 		height: 0.7rem;
 		border-radius: 999px;
 		border: 1px solid color-mix(in srgb, var(--text-color) 18%, transparent);
+		margin-top: 0.9rem;
 	}
 
 	.legend-scale-row {
@@ -534,7 +537,7 @@
 		padding: 1rem;
 		background: var(--panel-background);
 		border-radius: 8px;
-		margin-bottom: 1.5rem;
+		margin-bottom: 1.2rem;
 	}
 	
 	.heat-char {
@@ -650,11 +653,7 @@
 		
 		.heat-map-text {
 			font-size: 1.25em;
-			padding: 0.75rem;
-		}
-		
-		.practice-buttons {
-			flex-direction: column;
+			padding: 0.75rem 0.75rem 0.3rem 0.75rem;
 		}
 		
 		.practice-button,

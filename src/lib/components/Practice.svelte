@@ -526,22 +526,22 @@
 	}
 	
 	.primary-button {
+		width: 100%;
 		padding: 1.5rem;
-		background: var(--accent-color);
-		color: white;
-		border: none;
+		border: 2px solid var(--file-border);
+		background: var(--file-bg);
+		color: var(--text-color);
 		border-radius: 8px;
-		font-size: 1.1em;
 		cursor: pointer;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		gap: 0.75rem;
-		transition: opacity 0.2s;
+		font-size: 1.1em;
+		font-weight: 600;
+		transition: all 0.3s;
+		text-align: center;
 	}
 	
 	.primary-button:hover:not(:disabled) {
-		opacity: 0.9;
+		border-color: var(--accent-color);
+		background: var(--nav-button-bg);
 	}
 	
 	.primary-button:disabled {

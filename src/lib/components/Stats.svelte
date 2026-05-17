@@ -483,7 +483,8 @@
 	}
 
 	.view-toggle {
-		display: inline-flex;
+		display: grid;
+   		grid-template-columns: 1fr 1fr;
 		background: var(--panel-background);
 		border: 2px solid var(--file-border);
 		border-radius: 12px;
@@ -559,19 +560,19 @@
 	}
 
 	.bar-new {
-		background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+		background: rgb(245, 87, 108);
 	}
 
 	.bar-developing {
-		background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+		background: rgb(0, 181, 255);
 	}
 
 	.bar-solid {
-		background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+		background: rgb(41, 204, 151);
 	}
 
 	.bar-mastered {
-		background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+		background: rgb(248, 174, 47);
 	}
 
 	.timeline-panel {
@@ -753,6 +754,7 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
+		padding: .2rem .5rem;
 	}
 
 	.stats-modal-close:hover {

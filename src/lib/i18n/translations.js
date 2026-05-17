@@ -56,7 +56,7 @@ export const translations = {
 		
 		// Stats Panel
 		stats: 'Stats',
-		new_learning: 'New/Learning',
+		new_learning: 'Learning',
 		developing: 'Developing',
 		solid: 'Solid',
 		mastered: 'Mastered',
@@ -65,7 +65,7 @@ export const translations = {
 		achievements: 'Achievements',
 		stats_progress_view: 'Stats view',
 		stats_current_totals: 'Totals',
-		stats_progress_timeline: 'Learning Progress',
+		stats_progress_timeline: 'Progress',
 		stats_progress_empty: 'No progress snapshots yet.',
 		stats_timeline_range: 'Timeline range',
 		stats_all_time: 'All time',
@@ -187,7 +187,7 @@ export const translations = {
 		achievement_desc_locked_passage_learned: 'Unlock by learning all verses',
 		achievement_desc_locked_passage_mastered: 'Unlock by mastering all verses',
 		
-		practice_now: 'Practice Now',
+		practice_now: 'Practice',
 		sort_biblical: 'Sort: Biblical',
 		sort_by_score: 'Sort: Score',
 		no_reviewed_verses: 'No verses reviewed yet. Complete some reviews to see stats!',
@@ -538,7 +538,7 @@ export const translations = {
 		
 		// Stats Panel
 		stats: '统计',
-		new_learning: '新学/学习中',
+		new_learning: '新学',
 		developing: '发展中',
 		solid: '巩固',
 		mastered: '精通',
@@ -669,7 +669,7 @@ export const translations = {
 		achievement_desc_locked_passage_learned: '学会全部经文即可解锁',
 		achievement_desc_locked_passage_mastered: '精通全部经文即可解锁',
 		
-		practice_now: '现在练习',
+		practice_now: '练习',
 		sort_biblical: '排序：圣经顺序',
 		sort_by_score: '排序：得分',
 		no_reviewed_verses: '还没有复习过经文。完成一些复习后查看统计！',
@@ -1013,7 +1013,7 @@ export const translations = {
 		
 		// Stats Panel
 		stats: '統計',
-		new_learning: '新學/學習中',
+		new_learning: '新學',
 		developing: '發展中',
 		solid: '鞏固',
 		mastered: '精通',
@@ -1144,7 +1144,7 @@ export const translations = {
 		achievement_desc_locked_passage_learned: '學會全部經文即可解鎖',
 		achievement_desc_locked_passage_mastered: '精通全部經文即可解鎖',
 		
-		practice_now: '現在練習',
+		practice_now: '練習',
 		sort_biblical: '排序：聖經順序',
 		sort_by_score: '排序：得分',
 		no_reviewed_verses: '還沒有複習過經文。完成一些複習後查看統計！',
