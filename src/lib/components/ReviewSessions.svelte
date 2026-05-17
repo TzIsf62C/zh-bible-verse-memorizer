@@ -289,6 +289,9 @@
 		reviewMode = 'individual';
 		
 		if (selectedVerses.length > 1) {
+			if (typeof document !== 'undefined' && document.activeElement instanceof HTMLElement) {
+				document.activeElement.blur();
+			}
 			// Show order modal
 			state = 'reviewOrder';
 		} else {
@@ -1187,9 +1190,11 @@
 		text-align: left;
 	}
 
-	.modal-option:hover {
-		border-color: var(--accent-color);
-		background: var(--nav-button-bg);
+	@media (hover: hover) {
+		.modal-option:hover {
+			border-color: var(--accent-color);
+			background: var(--nav-button-bg);
+		}
 	}
 
 	.option-title {

@@ -22,13 +22,14 @@
 	// Export prop for preselected verse (from Stats "Practice Now" button)
 	export let preselectedVerseId = null;
 	
-	// State machine: 'initial' | 'selectCollection' | 'selectVerse' | 'selectActivity' | 'practicing'
+	// State machine: 'initial' | 'selectCollection' | 'selectVerse' | 'selectActivity' | 'selectPracticeOrder' | 'practicing'
 	let state = 'initial';
 	let practiceType = null; // 'collection' | 'verse'
 	let selectedCollection = null;
 	let selectedCollectionFilter = null; // 'learned' | 'all'
 	let selectedVerse = null;
 	let selectedActivity = null;
+	let selectedPracticeOrder = 'biblical'; // 'collection' | 'biblical' | 'reverseBiblical' | 'random'
 	let processedPreselection = false; // Prevent reactive loop with preselection
 	let expandedVerseGroups = new Set();
 	
@@ -44,6 +45,8 @@
 	$: collectionVerses = filteredVerses
 		? sortVersesByBibleOrder(filteredVerses, $settings.bookNameCharset || 'simplified')
 		: [];
+
+	$: firstAndLastVerses = getOrderedCollectionVerses(selectedPracticeOrder);
 	
 	// Modal state
 	let showModal = false;
@@ -169,10 +172,57 @@
 		}
 		state = 'selectActivity';
 	}
+
+	function getOrderedCollectionVerses(order) {
+		if (!selectedCollection || collectionVerses.length === 0) return collectionVerses;
+
+		if (order === 'collection') {
+			const idSet = new Set(collectionVerses.map((verse) => verse.id));
+			const byId = new Map(collectionVerses.map((verse) => [verse.id, verse]));
+			const ordered = [];
+			selectedCollection.verseIds.forEach((verseId) => {
+				if (idSet.has(verseId)) {
+					ordered.push(byId.get(verseId));
+				}
+			});
+			return ordered;
+		}
+
+		if (order === 'reverseBiblical') {
+			return [...collectionVerses].reverse();
+		}
+
+		if (order === 'random') {
+			const randomized = [...collectionVerses];
+			for (let i = randomized.length - 1; i > 0; i--) {
+				const j = Math.floor(Math.random() * (i + 1));
+				[randomized[i], randomized[j]] = [randomized[j], randomized[i]];
+			}
+			return randomized;
+		}
+
+		return collectionVerses;
+	}
 	
 	function chooseActivity(activityId) {
 		selectedActivity = activityId;
+		if (activityId === 'first-and-last' && practiceType === 'collection') {
+			selectedPracticeOrder = 'biblical';
+			state = 'selectPracticeOrder';
+			return;
+		}
 		state = 'practicing';
+	}
+
+	function choosePracticeOrder(order) {
+		selectedPracticeOrder = order;
+		state = 'practicing';
+	}
+
+	function handlePracticeOrderOverlayClick(event) {
+		if (event.target === event.currentTarget) {
+			goBack();
+		}
 	}
 	
 	function handleActivityComplete() {
@@ -206,6 +256,8 @@
 			state = practiceType === 'collection' ? 'selectCollection' : 'selectVerse';
 		} else if (state === 'selectCollection' || state === 'selectVerse') {
 			reset();
+		} else if (state === 'selectPracticeOrder') {
+			state = 'selectActivity';
 		} else if (state === 'practicing') {
 			selectedActivity = null;
 			state = 'selectActivity';
@@ -219,6 +271,7 @@
 		selectedCollectionFilter = null;
 		selectedVerse = null;
 		selectedActivity = null;
+		selectedPracticeOrder = 'biblical';
 		processedPreselection = false; // Reset preselection flag
 	}
 	
@@ -415,6 +468,28 @@
 		</div>
 	</div>
 
+{:else if state === 'selectPracticeOrder'}
+	<div class="modal-overlay" on:click={handlePracticeOrderOverlayClick} on:keydown={(e) => e.key === 'Escape' && goBack()} role="dialog" aria-modal="true" tabindex="0">
+		<div class="modal-content" role="document">
+			<h3>{t('choose_practice_order')}</h3>
+			<div class="modal-buttons">
+				<button class="modal-option" on:click={() => choosePracticeOrder('collection')}>
+					<div class="option-title">{t('order_collection')}</div>
+				</button>
+				<button class="modal-option" on:click={() => choosePracticeOrder('biblical')}>
+					<div class="option-title">{t('order_biblical')}</div>
+				</button>
+				<button class="modal-option" on:click={() => choosePracticeOrder('reverseBiblical')}>
+					<div class="option-title">{t('order_reverse_biblical')}</div>
+				</button>
+				<button class="modal-option" on:click={() => choosePracticeOrder('random')}>
+					<div class="option-title">{t('order_random')}</div>
+				</button>
+			</div>
+			<button class="cancel-btn" on:click={goBack}>{t('back')}</button>
+		</div>
+	</div>
+
 {:else if state === 'practicing'}
 	{#if selectedActivity === 'speed-challenge' && practiceType === 'collection'}
 		<SpeedChallengeCollection 
@@ -467,7 +542,7 @@
 	{:else if selectedActivity === 'first-and-last'}
 		<FirstAndLast 
 			collection={selectedCollection}
-			verses={collectionVerses}
+			verses={firstAndLastVerses}
 			on:complete={handleActivityComplete}
 			on:exit={handleActivityExit}
 		/>
@@ -738,6 +813,77 @@
 		font-size: 0.85em;
 		color: var(--accent-color);
 		font-weight: 600;
+	}
+
+	.modal-overlay {
+		position: fixed;
+		inset: 0;
+		background: rgba(0, 0, 0, 0.5);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		z-index: 1000;
+		padding: 1rem;
+	}
+
+	.modal-content {
+		background: var(--panel-background);
+		border-radius: 12px;
+		padding: 2rem;
+		max-width: 500px;
+		width: 100%;
+		box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+	}
+
+	.modal-content h3 {
+		margin-top: 0;
+		margin-bottom: 1.5rem;
+		text-align: center;
+	}
+
+	.modal-buttons {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+		margin-bottom: 1.5rem;
+	}
+
+	.modal-option {
+		padding: 1.5rem;
+		border: 2px solid var(--file-border);
+		background: var(--file-bg);
+		color: var(--text-color);
+		border-radius: 8px;
+		cursor: pointer;
+		transition: all 0.3s;
+		text-align: left;
+	}
+
+	.modal-option:hover {
+		border-color: var(--accent-color);
+		background: var(--nav-button-bg);
+	}
+
+	.option-title {
+		font-weight: 600;
+		font-size: 1.1em;
+		color: var(--accent-color);
+	}
+
+	.cancel-btn {
+		width: 100%;
+		padding: 0.75rem;
+		border: 1px solid var(--file-border);
+		background: var(--nav-button-bg);
+		color: var(--nav-button-color);
+		border-radius: 4px;
+		cursor: pointer;
+		font-size: 1em;
+		transition: all 0.3s;
+	}
+
+	.cancel-btn:hover {
+		background: var(--file-bg);
 	}
 	
 	@media (max-width: 767px) {

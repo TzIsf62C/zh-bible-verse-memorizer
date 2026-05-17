@@ -29,7 +29,6 @@
 	let feedbackType = '';
 	let lastErrorIndex = null;
 	let lastErrorChar = null;
-	let scrollTrigger = 0;
 	let viewportAnchor;
 	let keyboardLayout = keyboardLayouts.pinyinCompact;
 	let isNumericKeyboard = false;
@@ -120,68 +119,6 @@
 		initializeVerse(currentVerse);
 	}
 
-	// Scroll viewport to position content above keyboard
-	$: {
-		if (viewportAnchor && verses.length > 0 && !showResult && !showCompletionMsg) {
-			// Include scrollTrigger in reactive dependencies to trigger on errors
-			const _ = scrollTrigger;
-			
-			console.log('=== VIEWPORT SCROLL TRIGGER (IndividualReview) ===');
-			console.log('Anchor element:', viewportAnchor);
-			console.log('Anchor bounding rect:', viewportAnchor.getBoundingClientRect());
-			
-			setTimeout(() => {
-				console.log('=== EXECUTING SCROLL ===');
-				const anchorRect = viewportAnchor.getBoundingClientRect();
-				console.log('Before scroll - Anchor rect:', anchorRect);
-				console.log('Before scroll - Window scrollY:', window.scrollY);
-				console.log('Before scroll - Document scrollTop:', document.documentElement.scrollTop);
-				console.log('Viewport height:', window.innerHeight);
-				
-				// Find keyboard element (Svelte Keyboard component)
-				const keyboard = viewportAnchor.nextElementSibling;
-				if (keyboard) {
-					const keyboardRect = keyboard.getBoundingClientRect();
-					console.log('Keyboard element:', keyboard);
-					console.log('Keyboard rect:', keyboardRect);
-					console.log('Keyboard top position:', keyboardRect.top);
-					
-					// Calculate scroll position: we want the anchor to align with the keyboard's top edge
-					// The keyboard is fixed/sticky, so we scroll the anchor to match its viewport position
-					// scrollTarget = current scroll + (anchor position - desired position)
-					// desired position = keyboard top (where we want the anchor to be)
-					const scrollTarget = window.scrollY + (anchorRect.top - keyboardRect.top);
-					console.log('Calculated scroll target:', scrollTarget);
-					console.log('Current scrollY:', window.scrollY);
-					console.log('Anchor top from viewport:', anchorRect.top);
-					console.log('Keyboard top from viewport:', keyboardRect.top);
-					console.log('Scroll adjustment needed:', anchorRect.top - keyboardRect.top);
-					
-					window.scrollTo({ 
-						top: scrollTarget, 
-						behavior: 'smooth' 
-					});
-				} else {
-					console.log('WARNING: No keyboard element found after anchor');
-				}
-				
-				setTimeout(() => {
-					console.log('=== AFTER SCROLL (500ms) ===');
-					const newAnchorRect = viewportAnchor.getBoundingClientRect();
-					console.log('After scroll - Anchor rect:', newAnchorRect);
-					console.log('After scroll - Anchor top from viewport:', newAnchorRect.top);
-					console.log('After scroll - Window scrollY:', window.scrollY);
-					if (keyboard) {
-						const newKeyboardRect = keyboard.getBoundingClientRect();
-						console.log('After scroll - Keyboard rect:', newKeyboardRect);
-						console.log('After scroll - Keyboard top from viewport:', newKeyboardRect.top);
-						console.log('Alignment check - Anchor vs Keyboard:', newAnchorRect.top - newKeyboardRect.top);
-					}
-				}, 500);
-			}, 300);
-		}
-	}
-
 	function initializeVerse(verse) {
 		userInput = '';
 		feedbackMessage = '';
@@ -244,57 +181,31 @@
 				
 				// Trigger audio/haptic feedback
 				triggerErrorFeedback($settings);
-				
-				scrollTrigger++;
 			}
 		}
 	}
 
 	function detectInputMethod(initials) {
-		console.log('[IndividualReview] detectInputMethod called with initials:', initials);
 		if (!initials || initials.length === 0) {
-			console.log('[IndividualReview] No initials provided, returning null');
 			return null;
 		}
 		
 		// Sample first few characters (excluding numbers)
 		const sample = initials.split('').filter(c => !/[0-9]/.test(c)).slice(0, 5).join('');
-		console.log('[IndividualReview] Filtered sample (first 5 non-numeric chars):', sample);
 		
 		if (!sample) {
-			console.log('[IndividualReview] Sample is empty after filtering, returning null');
 			return null;
 		}
 		
-		// Log Unicode values of sample characters
-		const charCodes = sample.split('').map(c => `${c} (U+${c.charCodeAt(0).toString(16).toUpperCase().padStart(4, '0')})`).join(', ');
-		console.log('[IndividualReview] Sample character codes:', charCodes);
-		
 		// Check for Zhuyin (Bopomofo characters U+3105-U+3129 and tone marks)
-		const zhuyinMatch = /[\u3105-\u3129\u02CA\u02C7\u02CB\u02D9]/.test(sample);
-		console.log('[IndividualReview] Zhuyin regex test:', zhuyinMatch);
-		if (zhuyinMatch) {
-			console.log('[IndividualReview] Detected: zhuyin');
-			return 'zhuyin';
-		}
+		if (/[\u3105-\u3129\u02CA\u02C7\u02CB\u02D9]/.test(sample)) return 'zhuyin';
 		
 		// Check for Cangjie (Chinese characters used as input)
-		const cangjieMatch = /[\u4e00-\u9fa5]/.test(sample);
-		console.log('[IndividualReview] Cangjie regex test:', cangjieMatch);
-		if (cangjieMatch) {
-			console.log('[IndividualReview] Detected: cangjie');
-			return 'cangjie';
-		}
+		if (/[\u4e00-\u9fa5]/.test(sample)) return 'cangjie';
 		
 		// Check for Pinyin (lowercase Latin letters)
-		const pinyinMatch = /[a-z]/.test(sample);
-		console.log('[IndividualReview] Pinyin regex test:', pinyinMatch);
-		if (pinyinMatch) {
-			console.log('[IndividualReview] Detected: pinyin');
-			return 'pinyin';
-		}
-		
-		console.log('[IndividualReview] No match found, returning null');
+		if (/[a-z]/.test(sample)) return 'pinyin';
+
 		return null;
 	}
 
