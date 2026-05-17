@@ -1,13 +1,59 @@
 <script>
 	import { createEventDispatcher } from 'svelte';
+	import { settings } from '$lib/stores/settings';
 	import { achievementPanelSeries } from '$lib/stores/achievements';
 	import { achievementState } from '$lib/stores/achievements';
 	import { t } from '$lib/i18n';
+	import { findBookByName } from '$lib/utils/bibleBooks';
+	import { SPECIAL_PASSAGES } from '$lib/utils/bibleMetadata';
 
 	export let show = false;
 	const dispatch = createEventDispatcher();
 	let carouselIndexBySeries = {};
 	let carouselInitialized = false;
+
+	const PASSAGE_BOOK_ALIASES = {
+		'约翰二书': '约翰贰书',
+		'約翰二書': '約翰貳書'
+	};
+
+	const ENGLISH_BOOK_NAMES = {
+		'创世记': 'Genesis',
+		'诗篇': 'Psalm',
+		'以赛亚书': 'Isaiah',
+		'马太福音': 'Matthew',
+		'约翰福音': 'John',
+		'约翰贰书': '2 John',
+		'罗马书': 'Romans',
+		'哥林多前书': '1 Corinthians',
+		'以弗所书': 'Ephesians',
+		'腓立比书': 'Philippians',
+		'启示录': 'Revelation'
+	};
+
+	const PASSAGE_BOOK_ABBREVIATIONS = {
+		english: {
+			'约翰福音': 'Jn',
+			'罗马书': 'Rm',
+			'哥林多前书': '1 Cor',
+			'以弗所书': 'Eph',
+			'启示录': 'Rev'
+		},
+		simplified: {
+			'约翰福音': '约',
+			'罗马书': '罗',
+			'哥林多前书': '林前',
+			'以弗所书': '弗',
+			'启示录': '启'
+		},
+		traditional: {
+			'约翰福音': '約',
+			'罗马书': '羅',
+			'哥林多前书': '林前',
+			'以弗所书': '弗',
+			'启示录': '啟'
+		}
+	};
 
 	function close() {
 		dispatch('close');
@@ -28,6 +74,126 @@
 	function getProgressPercent(nextLevel) {
 		if (!nextLevel || nextLevel.target <= 0) return 0;
 		return Math.min(100, Math.round((nextLevel.current / nextLevel.target) * 100));
+	}
+
+	function normalizePassageBookName(bookName) {
+		const aliasedName = PASSAGE_BOOK_ALIASES[bookName] || bookName;
+		return findBookByName(aliasedName)?.simplified || aliasedName;
+	}
+
+	function getBookDisplayName(bookName, abbreviated = false) {
+		const language = $settings?.languagePreference || 'english';
+		const normalizedBookName = normalizePassageBookName(bookName);
+
+		if (abbreviated) {
+			const abbreviation = PASSAGE_BOOK_ABBREVIATIONS[language]?.[normalizedBookName];
+			if (abbreviation) return abbreviation;
+		}
+
+		if (language === 'english') {
+			return ENGLISH_BOOK_NAMES[normalizedBookName] || normalizedBookName;
+		}
+
+		const book = findBookByName(normalizedBookName);
+		if (language === 'traditional') {
+			return book?.traditional || PASSAGE_BOOK_ALIASES[bookName] || bookName;
+		}
+
+		return book?.simplified || normalizedBookName;
+	}
+
+	function collapseVerseRanges(verses) {
+		const sortedVerses = [...new Set(verses.map((verse) => Number(verse)).filter(Boolean))].sort((a, b) => a - b);
+		const ranges = [];
+		let rangeStart = null;
+		let previousVerse = null;
+
+		sortedVerses.forEach((verse) => {
+			if (rangeStart === null) {
+				rangeStart = verse;
+				previousVerse = verse;
+				return;
+			}
+
+			if (verse === previousVerse + 1) {
+				previousVerse = verse;
+				return;
+			}
+
+			ranges.push(rangeStart === previousVerse ? `${rangeStart}` : `${rangeStart}-${previousVerse}`);
+			rangeStart = verse;
+			previousVerse = verse;
+		});
+
+		if (rangeStart !== null) {
+			ranges.push(rangeStart === previousVerse ? `${rangeStart}` : `${rangeStart}-${previousVerse}`);
+		}
+
+		return ranges.join(', ');
+	}
+
+	function formatPassageRefs(refs, abbreviated = false) {
+		const bookOrder = [];
+		const groupedRefs = new Map();
+
+		refs.forEach((ref) => {
+			const normalizedBookName = normalizePassageBookName(ref.bookName);
+			if (!groupedRefs.has(normalizedBookName)) {
+				groupedRefs.set(normalizedBookName, new Map());
+				bookOrder.push(normalizedBookName);
+			}
+
+			const chapterMap = groupedRefs.get(normalizedBookName);
+			const chapterNumber = Number(ref.chapter);
+			const verseNumber = Number(ref.verse);
+			if (!chapterMap.has(chapterNumber)) {
+				chapterMap.set(chapterNumber, []);
+			}
+			chapterMap.get(chapterNumber).push(verseNumber);
+		});
+
+		return bookOrder
+			.map((bookName) => {
+				const chapterMap = groupedRefs.get(bookName);
+				const chapterRefs = Array.from(chapterMap.entries())
+					.sort(([chapterA], [chapterB]) => chapterA - chapterB)
+					.map(([chapterNumber, verses]) => `${chapterNumber}:${collapseVerseRanges(verses)}`);
+				return `${getBookDisplayName(bookName, abbreviated)} ${chapterRefs.join(', ')}`;
+			})
+			.join('; ');
+	}
+
+	function formatPassageRange(passageDef) {
+		const bookName = getBookDisplayName(passageDef.bookName);
+		if (passageDef.startChapter === passageDef.endChapter) {
+			return `${bookName} ${passageDef.startChapter}`;
+		}
+		return `${bookName} ${passageDef.startChapter}-${passageDef.endChapter}`;
+	}
+
+	function getPassageReferenceText(series) {
+		const passageId = series?.id?.startsWith('passage_') ? series.id.slice(8) : null;
+		const passageDef = passageId ? SPECIAL_PASSAGES[passageId] : null;
+		if (!passageDef) return '';
+
+		if (passageDef.type === 'range') {
+			return formatPassageRange(passageDef);
+		}
+
+		const useAbbreviations = passageDef.id === 'romans_road' || passageDef.id === 'good_news';
+		return formatPassageRefs(passageDef.refs || [], useAbbreviations);
+	}
+
+	function getProgressLabel(series, progressLevel) {
+		if (!progressLevel) return '';
+		if (series.category === 'passage' && progressLevel.tier === 2) {
+			return `${t('achievement_progress_to_next')}: ${t('achievement_progress_to_next_mastered', {
+				current: progressLevel.current,
+				target: progressLevel.target
+			})}`;
+		}
+
+		return `${t('achievement_progress_to_next')}: ${progressLevel.current}/${progressLevel.target}`;
 	}
 
 	$: unlockedCount = Object.keys($achievementState?.unlocked || {}).length;
@@ -110,12 +276,13 @@
 		
 		// For passage achievements
 		if (series.category === 'passage') {
+			const passage = getPassageReferenceText(series);
 			if (isLocked) {
 				const descKey = level.tier === 1 ? 'achievement_desc_locked_passage_learned' : 'achievement_desc_locked_passage_mastered';
-				return t(descKey);
+				return t(descKey, { passage });
 			} else {
 				const descKey = level.tier === 1 ? 'achievement_desc_passage_learned' : 'achievement_desc_passage_mastered';
-				return t(descKey);
+				return t(descKey, { passage });
 			}
 		}
 		
@@ -288,7 +455,7 @@
 								{#if progressLevel}
 									<div class="progress-wrap">
 										<div class="progress-label">
-											{t('achievement_progress_to_next')}: {progressLevel.current}/{progressLevel.target}
+											{getProgressLabel(series, progressLevel)}
 										</div>
 										<div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow={getProgressPercent(progressLevel)}>
 											<div class="progress-fill" style={`width: ${getProgressPercent(progressLevel)}%`}></div>
@@ -329,7 +496,7 @@
 							{#if progressLevel}
 								<div class="progress-wrap">
 									<div class="progress-label">
-										{t('achievement_progress_to_next')}: {progressLevel.current}/{progressLevel.target}
+											{getProgressLabel(series, progressLevel)}
 									</div>
 									<div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow={getProgressPercent(progressLevel)}>
 										<div class="progress-fill" style={`width: ${getProgressPercent(progressLevel)}%`}></div>
