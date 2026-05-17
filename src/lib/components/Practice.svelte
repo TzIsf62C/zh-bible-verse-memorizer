@@ -268,7 +268,7 @@
 					<path d="M19 12H5M5 12l7 7M5 12l7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
 				</svg>
 			</button>
-			<h2>{t('select_collection')}</h2>
+			<h3>{t('select_collection')}</h3>
 			<div class="spacer"></div>
 		</div>
 		
@@ -318,7 +318,7 @@
 					<path d="M19 12H5M5 12l7 7M5 12l7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
 				</svg>
 			</button>
-			<h2>{t('select_verse')}</h2>
+			<h3>{t('select_verse')}</h3>
 			<div class="spacer"></div>
 		</div>
 		
@@ -514,6 +514,12 @@
 	h2 {
 		margin: 0;
 		font-size: 1.5em;
+		flex: 1;
+		text-align: center;
+	}
+	h3 {
+		margin: 0;
+		font-size: 1.2em;
 		flex: 1;
 		text-align: center;
 	}
@@ -736,15 +742,12 @@
 	
 	@media (max-width: 767px) {
 		.practice-panel {
-			padding: 0.5rem;
+			padding: 1rem;
+			border-radius:8px;
 		}
 		
 		.panel-header {
 			margin-bottom: 1rem;
-		}
-		
-		h2 {
-			font-size: 1.2em;
 		}
 		
 		.button-group {

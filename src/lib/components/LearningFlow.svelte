@@ -1071,6 +1071,7 @@
 	h2 {
 		margin: 0;
 		color: var(--text-color);
+		text-align: center;
 	}
 
 	.difficulty-controls {

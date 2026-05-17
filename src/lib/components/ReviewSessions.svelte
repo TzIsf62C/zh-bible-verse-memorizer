@@ -453,7 +453,7 @@
 					<path d="M19 12H5M5 12l7 7M5 12l7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
 				</svg>
 			</button>
-			<h2>{t('review_collection_learned')}</h2>
+			<h3>{t('review_collection_learned')}</h3>
 			<div class="spacer"></div>
 		</div>
 
@@ -563,7 +563,7 @@
 					<path d="M19 12H5M5 12l7 7M5 12l7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
 				</svg>
 			</button>
-			<h2>{t('or_select_individual')}</h2>
+			<h3>{t('or_select_individual')}</h3>
 			<div class="spacer"></div>
 		</div>
 
@@ -647,7 +647,7 @@
 					<path d="M19 12H5M5 12l7 7M5 12l7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
 				</svg>
 			</button>
-			<h2>{t('edit_review_interval')}</h2>
+			<h3>{t('edit_review_interval')}</h3>
 			<div class="spacer"></div>
 		</div>
 
@@ -827,12 +827,13 @@
 	h2 {
 		margin: 0 0 1.5rem 0;
 		color: var(--text-color);
+		text-align: center;
 	}
 
 	h3 {
-		margin: 0 0 1rem 0;
 		color: var(--text-color);
 		font-size: 1.1em;
+		text-align: center;
 	}
 
 	.empty-state {
@@ -889,7 +890,6 @@
 		display: flex;
 		align-items: center;
 		gap: 1rem;
-		margin-bottom: 1rem;
 	}
 
 	.panel-header h2 {
@@ -1312,7 +1312,7 @@
 		.review-container {
 			padding-left: 0.5rem;
 			padding-right: 0.5rem;
-			padding-top: 0px;
+			padding-top: 1rem;
 			gap: 1rem;
 		}
 

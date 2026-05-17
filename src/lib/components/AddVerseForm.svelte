@@ -1031,7 +1031,7 @@
 <div class="add-verse-container">
 	<!-- Form Section -->
 	<div class="form-section">
-		<h3>{editingId ? t('update_verse') : t('add_verse')}</h3>
+		<h2>{editingId ? t('update_verse') : t('add_verse')}</h2>
 
 		<div class="form-grid">
 			<!-- Row 1: Chinese book name -->
@@ -1448,7 +1448,7 @@
 
 	<!-- My Verses Section -->
 	<div class="verses-section">
-		<h3>{t('my_verses')}</h3>
+		<h2>{t('my_verses')}</h2>
 
 		{#if versesList.length > 0}
 			<div class="verses-controls">
@@ -1604,7 +1604,6 @@
 		display: grid;
 		grid-template-columns: 1fr;
 		gap: 2rem;
-		padding: 1rem;
 		padding-bottom: 400px; /* Add space for keyboard at bottom */
 		box-sizing: border-box;
 		max-width: 100vw;
@@ -1645,14 +1644,14 @@
 		.form-section,
 		.verses-section {
 			padding: 1rem;
-			border-radius: 0;
 		}
 	}
 
-	h3 {
+	h2 {
 		margin-top: 0;
 		margin-bottom: 1.5rem;
 		color: var(--text-color);
+		text-align: center;
 	}
 
 	.form-grid {
@@ -1830,7 +1829,7 @@
 	button {
 		padding: 0.75rem 1.5rem;
 		border: none;
-		border-radius: 4px;
+		border-radius: 8px;
 		cursor: pointer;
 		font-size: 1em;
 		font-weight: 500;
