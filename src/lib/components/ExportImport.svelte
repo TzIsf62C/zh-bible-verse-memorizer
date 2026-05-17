@@ -5,6 +5,7 @@
 	import { practice } from '$lib/stores/practice';
 	import { achievementState } from '$lib/stores/achievements';
 	import { progressTrackingState } from '$lib/stores/progressHistory.js';
+	import { streakData } from '$lib/stores/streak.js';
 	import { t } from '$lib/i18n';
 	import {
 		parseImportPayload,
@@ -14,7 +15,8 @@
 		applyConflictResolutions,
 		mergePracticeData,
 		mergeAchievementsData,
-		mergeProgressHistoryData
+		mergeProgressHistoryData,
+		mergeStreakData
 	} from '$lib/utils/importExport';
 	import Modal from './Modal.svelte';
 
@@ -176,7 +178,8 @@
 			collectionIds: collectionIdsToExport,
 			practiceData: includeUserData ? $practice : null,
 			achievementsData: includeUserData ? $achievementState : null,
-			progressHistoryData: includeUserData ? $progressTrackingState : null
+			progressHistoryData: includeUserData ? $progressTrackingState : null,
+			streakData: includeUserData ? $streakData : null
 		});
 
 		const dataStr = JSON.stringify(payload, null, 2);
@@ -217,7 +220,8 @@
 					collections: importedCollections,
 					practiceData: importedPracticeData,
 					achievementsData: importedAchievementsData,
-					progressHistoryData: importedProgressHistoryData
+					progressHistoryData: importedProgressHistoryData,
+					streakData: importedStreakData
 				} = parseImportPayload(
 					e.target.result
 				);
@@ -235,7 +239,8 @@
 						importedCollections,
 						importedPracticeData,
 						importedAchievementsData,
-						importedProgressHistoryData
+						importedProgressHistoryData,
+						importedStreakData
 					};
 					conflicts = mergeResult.conflicts;
 					conflictResolutions = new Array(conflicts.length).fill(null);
@@ -248,7 +253,8 @@
 						importedCollections,
 						importedPracticeData,
 						importedAchievementsData,
-						importedProgressHistoryData
+						importedProgressHistoryData,
+						importedStreakData
 					);
 				}
 			} catch (error) {
@@ -265,7 +271,8 @@
 		importedCollections,
 		importedPracticeData,
 		importedAchievementsData,
-		importedProgressHistoryData
+		importedProgressHistoryData,
+		importedStreakData
 	) {
 		verses.set(mergedVerses);
 
@@ -288,6 +295,11 @@
 		if (importIncludeUserData && importedProgressHistoryData) {
 			const mergedProgressTracking = mergeProgressHistoryData($progressTrackingState, importedProgressHistoryData);
 			progressTrackingState.set(mergedProgressTracking);
+		}
+
+		if (importIncludeUserData && importedStreakData) {
+			const mergedStreak = mergeStreakData($streakData, importedStreakData);
+			streakData.set(mergedStreak);
 		}
 
 		modalMessage = t('import_successful');
@@ -324,7 +336,8 @@
 				pendingImportData.importedCollections,
 				pendingImportData.importedPracticeData,
 				pendingImportData.importedAchievementsData,
-				pendingImportData.importedProgressHistoryData
+				pendingImportData.importedProgressHistoryData,
+				pendingImportData.importedStreakData
 			);
 			
 			// Reset conflict state

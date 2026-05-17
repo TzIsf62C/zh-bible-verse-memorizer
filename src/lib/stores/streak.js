@@ -131,3 +131,18 @@ export function getDueVerseCountForStreak() {
 export function isStreakDateKeyValid(dateKey) {
 	return Boolean(fromDateKey(dateKey));
 }
+
+export function setCurrentStreakDays(days) {
+	const normalizedDays = Math.max(0, Number.parseInt(days, 10) || 0);
+	const todayKey = toDateKey(new Date());
+
+	streakData.update((state) => {
+		const safeState = normalizeState(state);
+		return {
+			...safeState,
+			current: normalizedDays,
+			best: Math.max(safeState.best, normalizedDays),
+			lastActiveDate: normalizedDays > 0 ? todayKey : null
+		};
+	});
+}

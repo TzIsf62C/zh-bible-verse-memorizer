@@ -7,7 +7,7 @@ function normalizeVerseNumbers(value) {
 export function parseImportPayload(payload) {
 	const parsed = typeof payload === 'string' ? JSON.parse(payload) : payload;
 	if (Array.isArray(parsed)) {
-		return { verses: parsed, collections: [], practiceData: null, achievementsData: null, progressHistoryData: null, raw: parsed };
+		return { verses: parsed, collections: [], practiceData: null, achievementsData: null, progressHistoryData: null, streakData: null, raw: parsed };
 	}
 
 	return {
@@ -16,6 +16,7 @@ export function parseImportPayload(payload) {
 		practiceData: parsed?.practiceData ?? null,
 		achievementsData: parsed?.achievementsData ?? null,
 		progressHistoryData: parsed?.progressHistoryData ?? null,
+		streakData: parsed?.streakData ?? null,
 		raw: parsed
 	};
 }
@@ -130,7 +131,8 @@ export function buildExportPayload(verses, collections, options = {}) {
 		collectionIds = [],
 		practiceData = null,
 		achievementsData = null,
-		progressHistoryData = null
+		progressHistoryData = null,
+		streakData = null
 	} = options;
 
 	const cleaned = verses.map((verse) => {
@@ -148,8 +150,9 @@ export function buildExportPayload(verses, collections, options = {}) {
 	const shouldIncludePracticeData = includeReview && practiceData;
 	const shouldIncludeAchievementsData = includeReview && achievementsData;
 	const shouldIncludeProgressHistoryData = includeReview && progressHistoryData;
+ 	const shouldIncludeStreakData = includeReview && streakData;
 
-	if (!includeCollections && !shouldIncludePracticeData && !shouldIncludeAchievementsData && !shouldIncludeProgressHistoryData) {
+	if (!includeCollections && !shouldIncludePracticeData && !shouldIncludeAchievementsData && !shouldIncludeProgressHistoryData && !shouldIncludeStreakData) {
 		return cleaned;
 	}
 
@@ -175,7 +178,7 @@ export function buildExportPayload(verses, collections, options = {}) {
 
 	const payload = {
 		type: 'cbm-export',
-		version: 3,
+		version: 4,
 		generatedAt: new Date().toISOString(),
 		verses: cleaned,
 		collections: collectionsExport
@@ -192,6 +195,10 @@ export function buildExportPayload(verses, collections, options = {}) {
 
 	if (shouldIncludeProgressHistoryData) {
 		payload.progressHistoryData = progressHistoryData;
+	}
+
+	if (shouldIncludeStreakData) {
+		payload.streakData = streakData;
 	}
 
 	return payload;
@@ -317,6 +324,34 @@ export function mergeProgressHistoryData(currentProgressTracking, importedProgre
 			new Date(importedUpdatedAt || 0) > new Date(currentUpdatedAt || 0)
 				? importedUpdatedAt
 				: currentUpdatedAt
+	};
+}
+
+export function mergeStreakData(currentStreak, importedStreak) {
+	const current = {
+		current: Number(currentStreak?.current || 0),
+		best: Number(currentStreak?.best || 0),
+		lastActiveDate: currentStreak?.lastActiveDate || null
+	};
+	const incoming = {
+		current: Number(importedStreak?.current || 0),
+		best: Number(importedStreak?.best || 0),
+		lastActiveDate: importedStreak?.lastActiveDate || null
+	};
+
+	const toTime = (dateString) => {
+		if (!dateString) return 0;
+		const parsed = new Date(dateString);
+		return Number.isNaN(parsed.getTime()) ? 0 : parsed.getTime();
+	};
+
+	const useIncomingDate = toTime(incoming.lastActiveDate) > toTime(current.lastActiveDate);
+	const lastActiveDate = useIncomingDate ? incoming.lastActiveDate : current.lastActiveDate;
+
+	return {
+		current: Math.max(current.current, incoming.current),
+		best: Math.max(current.best, incoming.best, incoming.current, current.current),
+		lastActiveDate: (Math.max(current.current, incoming.current) > 0) ? lastActiveDate : null
 	};
 }
 

@@ -2,6 +2,7 @@
 	import { createEventDispatcher } from 'svelte';
 	import { verses } from '$lib/stores/verses';
 	import { progressTrackingState } from '$lib/stores/progressHistory.js';
+	import { streakData, setCurrentStreakDays } from '$lib/stores/streak.js';
 	import {
 		createEmptyProgress,
 		getEffectiveInterval,
@@ -29,6 +30,7 @@
 	let timelineRange = 'all'; // 'all' | '30' | '7'
 	let showCategoryModal = false;
 	let selectedCategory = null;
+	let showStreakModal = false;
 
 	$: trackingState = $progressTrackingState || {};
 	$: currentProgress = trackingState.currentProgress || createEmptyProgress();
@@ -41,6 +43,13 @@
 	$: graphData = buildGraphData(progressHistory, timelineRange);
 	$: selectedCategoryMeta = CATEGORY_META.find((category) => category.key === selectedCategory) || null;
 	$: selectedCategoryVerses = getCategoryVerses(selectedCategory);
+	$: currentStreakDays = Math.max(0, Number($streakData?.current || 0));
+	$: streakDaysLabel = `${currentStreakDays} ${capitalizeLabel(currentStreakDays === 1 ? t('day') : t('days'))}`;
+
+	function capitalizeLabel(value) {
+		if (!value || typeof value !== 'string') return '';
+		return value.charAt(0).toUpperCase() + value.slice(1);
+	}
 
 	function showHeatMaps() {
 		dispatch('navigate-heat-maps');
@@ -48,6 +57,22 @@
 
 	function showAchievements() {
 		showAchievementsModal = true;
+	}
+
+	function openStreakModal() {
+		showStreakModal = true;
+	}
+
+	function closeStreakModal() {
+		showStreakModal = false;
+	}
+
+	function incrementStreak() {
+		setCurrentStreakDays(currentStreakDays + 1);
+	}
+
+	function decrementStreak() {
+		setCurrentStreakDays(Math.max(0, currentStreakDays - 1));
 	}
 
 	function showTotalsView() {
@@ -404,6 +429,21 @@
 			<span class="heat-maps-label">{t('heat_maps')}</span>
 		</button>
 
+		<button type="button" class="streaks-button" on:click={openStreakModal} aria-label={t('achievement_series_streak_days')}>
+			<svg
+				class="streak-icon"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+			>
+				<path d="M5 19 L 19 5 M 19 5 L 19 15 M 19 5 L 9 5"/>
+			</svg>
+			<span class="streak-days-label">{streakDaysLabel}</span>
+		</button>
+
 		<button type="button" class="achievements-button" on:click={showAchievements} aria-label={t('achievements')}>
 			<svg
 				class="trophy-icon"
@@ -446,6 +486,25 @@
 					{/each}
 				</div>
 			{/if}
+		</div>
+	</div>
+{/if}
+
+{#if showStreakModal}
+	<div class="modal-overlay" on:click={(event) => event.target === event.currentTarget && closeStreakModal()} on:keydown={(event) => event.key === 'Escape' && closeStreakModal()} role="dialog" aria-modal="true" tabindex="0">
+		<div class="stats-streak-modal" role="document">
+			<button type="button" class="stats-modal-close" on:click={closeStreakModal} aria-label={t('close')}>
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+					<path d="M6 6 L18 18"></path>
+					<path d="M18 6 L6 18"></path>
+				</svg>
+			</button>
+			<h3>{t('achievement_series_streak_days')}</h3>
+			<div class="streak-adjuster">
+				<button type="button" class="streak-arrow" on:click={incrementStreak} aria-label={t('add')}>▲</button>
+				<div class="streak-count-display">{streakDaysLabel}</div>
+				<button type="button" class="streak-arrow" on:click={decrementStreak} aria-label={t('remove')}>▼</button>
+			</div>
 		</div>
 	</div>
 {/if}
@@ -802,7 +861,7 @@
 
 	.stats-actions {
 		display: grid;
-		grid-template-columns: 1fr 1fr;
+		grid-template-columns: 1fr 1fr 1fr;
 		gap: 0.75rem;
 	}
 
@@ -855,7 +914,80 @@
 	.achievements-button:hover {
 		transform: translateY(-2px);
 		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-	}	
+	}
+
+	.streaks-button {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		width: 100%;
+		padding: 0.75rem;
+		background: var(--panel-background);
+		color: var(--text-color);
+		border: 1px solid var(--file-border);
+		border-radius: 12px;
+		font-size: 1em;
+		font-weight: 600;
+		cursor: pointer;
+		transition: all 0.2s ease;
+		gap: 0.2rem;
+	}
+
+	.streaks-button:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+	}
+
+	.streak-icon {
+		width: 30px;
+		height: 30px;
+	}
+
+	.streak-days-label {
+		font-size: 0.9em;
+		line-height: 1.2;
+	}
+
+	.stats-streak-modal {
+		position: relative;
+		background: var(--panel-background);
+		color: var(--text-color);
+		width: min(92vw, 420px);
+		border-radius: 12px;
+		padding: 1rem;
+		box-shadow: 0 10px 28px rgba(0, 0, 0, 0.24);
+	}
+
+	.stats-streak-modal h3 {
+		margin: 0 2rem 0.8rem 0;
+		font-size: 1.1em;
+	}
+
+	.streak-adjuster {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.65rem;
+		padding: 0.8rem 0 0.4rem;
+	}
+
+	.streak-arrow {
+		width: 2.4rem;
+		height: 2.4rem;
+		border: 1px solid var(--file-border);
+		border-radius: 999px;
+		background: var(--panel-background);
+		color: var(--text-color);
+		font-size: 1em;
+		cursor: pointer;
+	}
+
+	.streak-count-display {
+		font-size: 1.2em;
+		font-weight: 700;
+	}
+	
 	.trophy-icon {
 		width: 32px;
 		height: 32px;

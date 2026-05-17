@@ -10,8 +10,9 @@
 	import { createVerseReferenceFormatter } from '$lib/utils/bibleBooks';
 	import { initializeHeatArray, updateHeatArray, buildCorrectnessMap } from '$lib/utils/heatTracking';
 	import { registerStreakActivity } from '$lib/stores/streak.js';
+	import { resolveCurrentVerse } from '$lib/utils/learningFlowState.js';
 
-	let currentVerseIdx = 0;
+	let currentVerseIdx = -1;
 	let currentStage = 'basic'; // basic, intermediate, advanced - user can choose any
 	let intermediateVariant = 'odd'; // or 'even'
 	let userInput = '';
@@ -32,6 +33,7 @@
 	let verseSelectorOpacity = 1;
 	let lastErrorIndex = null;
 	let lastErrorChar = null;
+	let currentVerse = null;
 	let viewportAnchor; // Element to scroll into view for keyboard positioning
 	let scrollTrigger = 0; // Increment this to trigger viewport scroll
 	
@@ -202,14 +204,16 @@
 			filtered: versesToLearn.map(v => `${v.bookName} ${v.chapterNumber}:${v.verseNumber}`)
 		});
 		
+		const normalizedIndex = Number(currentVerseIdx);
+
 		// If we had a verse selected but it's now learned, reset
-		if (currentVerseIdx >= versesToLearn.length) {
-			currentVerseIdx = 0;
+		if (Number.isInteger(normalizedIndex) && normalizedIndex >= versesToLearn.length) {
+			currentVerseIdx = -1;
 		}
-		
-		// Initialize first verse if available
-		if (versesToLearn.length > 0 && currentVerseIdx === 0) {
-			initializeVerse(versesToLearn[0]);
+
+		// If the selected verse was removed from the unlearned list, clear selection.
+		if (Number.isInteger(normalizedIndex) && normalizedIndex !== -1 && !versesToLearn[normalizedIndex]) {
+			currentVerseIdx = -1;
 		}
 	}
 
@@ -217,8 +221,14 @@
 	$: formatVerseRef = createVerseReferenceFormatter($verses);
 
 	function selectVerse(idx) {
-		currentVerseIdx = idx;
-		const verse = versesToLearn[idx];
+		const normalizedIndex = Number(idx);
+		if (!Number.isInteger(normalizedIndex) || normalizedIndex < 0 || normalizedIndex >= versesToLearn.length) {
+			currentVerseIdx = -1;
+			return;
+		}
+
+		currentVerseIdx = normalizedIndex;
+		const verse = versesToLearn[normalizedIndex];
 		if (verse) {
 			initializeVerse(verse);
 		}
@@ -330,10 +340,7 @@
 		return null;
 	}
 
-	function getCurrentVerse() {
-		if (!versesToLearn.length) return null;
-		return versesToLearn[currentVerseIdx];
-	}
+	$: currentVerse = resolveCurrentVerse(versesToLearn, currentVerseIdx);
 
 	function getExpectedInitials() {
 		return learnFullInitials;
@@ -513,7 +520,7 @@
 			} else if (currentStage === 'advanced') {
 				console.log('[Learn] Completed advanced stage - verse learned');
 				// Mark verse as learned and update heat tracking
-				updateVerseProgress(getCurrentVerse(), userInput);
+				updateVerseProgress(currentVerse, userInput);
 				registerStreakActivity('learning');
 				// Show modal for completion
 				modalMessage = `${t('congratulations_mastered')} (${accuracy}%)`;
@@ -670,13 +677,20 @@
 	}
 
 	function handleNext() {
-		if (currentVerseIdx < versesToLearn.length - 1) {
-			selectVerse(currentVerseIdx + 1);
+		const normalizedIndex = Number(currentVerseIdx);
+		if (Number.isInteger(normalizedIndex) && normalizedIndex < versesToLearn.length - 1) {
+			selectVerse(normalizedIndex + 1);
 			setStage('basic'); // Reset to basic for new verse
 		} else {
 			// No more verses
 			feedbackMessage = t('completed_all_verses');
 			feedbackType = 'warning';
+		}
+	}
+
+	function handleModalOverlayClick(event) {
+		if (event.target === event.currentTarget) {
+			closeModal();
 		}
 	}
 
@@ -806,7 +820,7 @@
 
 	// Physical keyboard handler
 	function handlePhysicalKeyboard(e) {
-		if (!getCurrentVerse()) return;
+		if (!currentVerse) return;
 		if (showNextButton || showRetryButton) return;
 
 		if (e.key === 'Enter' && userInput.length === learnFullInitials.length) {
@@ -925,20 +939,27 @@
 			<label for="verse-selector">{t('select_verse')}</label>
 			<select 
 				id="verse-selector" 
-				bind:value={currentVerseIdx} 
-				on:change={(e) => selectVerse(parseInt(e.target.value))}
+				value={String(currentVerseIdx)}
+				on:change={(e) => selectVerse(Number(e.target.value))}
 				style="opacity: {verseSelectorOpacity}; transition: opacity 0.3s ease;"
 			>
+				<option value="-1">{t('learn_select_verse_to_start')}</option>
 				{#each versesToLearn as verse, idx}
-					<option value={idx}>
+					<option value={String(idx)}>
 						{formatVerseRef(verse)}
 					</option>
 				{/each}
 			</select>
 		</div>
 
-		{#if getCurrentVerse()}
-			{@const verse = getCurrentVerse()}
+		{#if !currentVerse}
+			<div class="empty-state">
+				<p>{t('learn_select_verse_to_start')}</p>
+			</div>
+		{/if}
+
+		{#if currentVerse}
+			{@const verse = currentVerse}
 			{@const chars = [...learnFullText]}
 			{@const refIndex = learnFullText.indexOf('\n')}
 
@@ -1036,8 +1057,8 @@
 
 <!-- Modal for Stage Completion -->
 {#if showModal}
-	<div class="modal-overlay" on:click={closeModal} on:keydown={(e) => e.key === 'Escape' && closeModal()}>
-		<div class="modal-content" on:click|stopPropagation>
+	<div class="modal-overlay" on:click={handleModalOverlayClick} on:keydown={(e) => e.key === 'Escape' && closeModal()} role="dialog" aria-modal="true" tabindex="0">
+		<div class="modal-content" role="document">
 			<div class="modal-message">{modalMessage}</div>
 			{#if currentStage === 'intermediate' && modalMessage.includes(t('nice_try'))}
 				<!-- Intermediate failure: show Retry button -->
