@@ -460,6 +460,7 @@
    				<path d="M12 17 V 21 M 9 21 H15"></path>
     			<path d="M15.898974 5.799835 C 17.232307 6.4665017, 19.898974 5.466667, 19.898974 6.8 C 19.898974 8.133333, 13.26098 13.119525, 15.732214 15.8"></path>
 			</svg>
+			<span class="achievements-label">{t('achievements')}</span>
 		</button>
 	</div>
 </div>
@@ -867,15 +868,16 @@
 
 	.heat-maps-button {
 		display: flex;
+		flex-direction: column;
 		align-items: center;
 		justify-content: center;
 		width: 100%;
-		padding: 1rem;
+		padding: .75rem;
 		background: var(--panel-background);
 		color: var(--text-color);
 		border: 1px solid var(--file-border);
 		border-radius: 12px;
-		font-size: 1.1em;
+		font-size: 1em;
 		font-weight: 600;
 		cursor: pointer;
 		transition: all 0.2s ease;
@@ -892,20 +894,22 @@
 	}
 
 	.heat-maps-label {
-		font-size: 1em;
+		font-size: 0.9em;
+		line-height: 1.2;
 	}
 
 	.achievements-button {
 		display: flex;
+		flex-direction: column;
 		align-items: center;
 		justify-content: center;
 		width: 100%;
-		padding: 1rem;
+		padding: 0.75rem;
 		background: var(--panel-background);
 		color: var(--text-color);
 		border: 1px solid var(--file-border);
 		border-radius: 12px;
-		font-size: 1.1em;
+		font-size: 1em;
 		font-weight: 600;
 		cursor: pointer;
 		transition: all 0.2s ease;
@@ -914,6 +918,11 @@
 	.achievements-button:hover {
 		transform: translateY(-2px);
 		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+	}
+
+	.achievements-label {
+		font-size: 0.9em;
+		line-height: 1.2;
 	}
 
 	.streaks-button {
