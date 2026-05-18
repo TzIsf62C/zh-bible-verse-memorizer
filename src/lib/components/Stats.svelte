@@ -31,6 +31,7 @@
 	let showCategoryModal = false;
 	let selectedCategory = null;
 	let showStreakModal = false;
+	let isEditingStreak = false;
 
 	$: trackingState = $progressTrackingState || {};
 	$: currentProgress = trackingState.currentProgress || createEmptyProgress();
@@ -45,6 +46,9 @@
 	$: selectedCategoryVerses = getCategoryVerses(selectedCategory);
 	$: currentStreakDays = Math.max(0, Number($streakData?.current || 0));
 	$: streakDaysLabel = `${currentStreakDays} ${capitalizeLabel(currentStreakDays === 1 ? t('day') : t('days'))}`;
+	$: hasExtendedStreakToday = hasStreakExtendedToday($streakData?.lastActiveDate);
+	$: dueVerseCount = getDueVerseCount();
+	$: streakStatusMessage = getStreakStatusMessage(hasExtendedStreakToday, dueVerseCount);
 
 	function capitalizeLabel(value) {
 		if (!value || typeof value !== 'string') return '';
@@ -61,10 +65,12 @@
 
 	function openStreakModal() {
 		showStreakModal = true;
+		isEditingStreak = false;
 	}
 
 	function closeStreakModal() {
 		showStreakModal = false;
+		isEditingStreak = false;
 	}
 
 	function incrementStreak() {
@@ -73,6 +79,45 @@
 
 	function decrementStreak() {
 		setCurrentStreakDays(Math.max(0, currentStreakDays - 1));
+	}
+
+	function toggleStreakEdit() {
+		isEditingStreak = !isEditingStreak;
+	}
+
+	function toDateKey(date = new Date()) {
+		const year = date.getFullYear();
+		const month = String(date.getMonth() + 1).padStart(2, '0');
+		const day = String(date.getDate()).padStart(2, '0');
+		return `${year}-${month}-${day}`;
+	}
+
+	function hasStreakExtendedToday(lastActiveDate) {
+		if (!lastActiveDate || typeof lastActiveDate !== 'string') return false;
+		return lastActiveDate === toDateKey(new Date());
+	}
+
+	function getDueVerseCount() {
+		const verseList = Array.isArray($verses) ? $verses : [];
+		const now = new Date();
+
+		return verseList.filter((verse) => {
+			if (!verse?.lastReviewed) return false;
+			if (!verse?.dueDate) return true;
+			return new Date(verse.dueDate) <= now;
+		}).length;
+	}
+
+	function getStreakStatusMessage(extendedToday, dueCount) {
+		if (extendedToday) {
+			return t('streak_status_extended_today');
+		}
+
+		if (dueCount > 0) {
+			return t('streak_status_due_verses');
+		}
+
+		return t('streak_status_no_due_options');
 	}
 
 	function showTotalsView() {
@@ -501,11 +546,27 @@
 				</svg>
 			</button>
 			<h3>{t('achievement_series_streak_days')}</h3>
-			<div class="streak-adjuster">
-				<button type="button" class="streak-arrow" on:click={incrementStreak} aria-label={t('add')}>▲</button>
-				<div class="streak-count-display">{streakDaysLabel}</div>
-				<button type="button" class="streak-arrow" on:click={decrementStreak} aria-label={t('remove')}>▼</button>
+			<div class="streak-display-area" class:editing={isEditingStreak}>
+				{#if isEditingStreak}
+					<button type="button" class="streak-interval-btn" on:click={decrementStreak} aria-label={t('remove')}>−</button>
+				{/if}
+
+				<div class="streak-count-display" class:editing={isEditingStreak}>
+					{#if isEditingStreak}
+						<span class="streak-edit-value">{currentStreakDays}</span>
+					{:else}
+						{streakDaysLabel}
+					{/if}
+				</div>
+
+				{#if isEditingStreak}
+					<button type="button" class="streak-interval-btn" on:click={incrementStreak} aria-label={t('add')}>+</button>
+				{/if}
 			</div>
+			<p class="streak-status-message">{streakStatusMessage}</p>
+			<button type="button" class="streak-edit-btn" on:click={toggleStreakEdit}>
+				{isEditingStreak ? t('done') : t('edit')}
+			</button>
 		</div>
 	</div>
 {/if}
@@ -965,36 +1026,95 @@
 		width: min(92vw, 420px);
 		border-radius: 12px;
 		padding: 1rem;
+		display: grid;
+		gap: 0.75rem;
 		box-shadow: 0 10px 28px rgba(0, 0, 0, 0.24);
 	}
 
 	.stats-streak-modal h3 {
-		margin: 0 2rem 0.8rem 0;
+		margin: 0;
 		font-size: 1.1em;
+		text-align:center;
 	}
 
-	.streak-adjuster {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 0.65rem;
-		padding: 0.8rem 0 0.4rem;
+	.streak-status-message {
+		margin: 0;
+		font-size: 0.95em;
+		line-height: 1.5;
+		color: var(--subtitle-color);
+		text-align:center;
 	}
 
-	.streak-arrow {
-		width: 2.4rem;
-		height: 2.4rem;
+	.streak-edit-btn {
+		width: 100%;
+		padding: 0.75rem;
 		border: 1px solid var(--file-border);
-		border-radius: 999px;
-		background: var(--panel-background);
+		background: var(--file-bg);
 		color: var(--text-color);
-		font-size: 1em;
+		border-radius: 8px;
 		cursor: pointer;
+		font-size: 1em;
+		font-weight: 600;
+		transition: all 0.3s;
+	}
+
+	.streak-edit-btn:hover {
+		background: var(--nav-button-bg);
+	}
+
+	.streak-display-area {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		min-height: 64px;
+	}
+
+	.streak-display-area.editing {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 1.5rem;
+		min-height: 80px;
+	}
+
+	.streak-interval-btn {
+		width: 48px;
+		height: 48px;
+		border: 2px solid var(--accent-color);
+		background: var(--file-bg);
+		color: var(--accent-color);
+		border-radius: 50%;
+		font-size: 1.5em;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		transition: all 0.3s;
+		font-weight: bold;
+	}
+
+	.streak-interval-btn:hover {
+		background: var(--accent-color);
+		color: #ffffff;
 	}
 
 	.streak-count-display {
-		font-size: 1.2em;
+		font-size: 2em;
 		font-weight: 700;
+		text-align: center;
+		color: var(--accent-color);
+	}
+
+	.streak-count-display.editing {
+		min-width: 80px;
+	}
+
+	.streak-edit-value {
+		font-size: 2.5em;
+		font-weight: bold;
+		color: var(--accent-color);
+		min-width: 80px;
+		text-align: center;
 	}
 	
 	.trophy-icon {
