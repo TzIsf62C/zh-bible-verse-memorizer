@@ -8,11 +8,11 @@
 		<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192x192.png" />
 		<link rel="apple-touch-icon" href="./icons/icon-192x192.png" />
 		
-		<link rel="modulepreload" href="./_app/immutable/entry/start.DsjQFqtT.js">
-		<link rel="modulepreload" href="./_app/immutable/chunks/DZPEh0nS.js">
+		<link rel="modulepreload" href="./_app/immutable/entry/start.DRljcp1D.js">
+		<link rel="modulepreload" href="./_app/immutable/chunks/CB90tKTc.js">
 		<link rel="modulepreload" href="./_app/immutable/chunks/BkSQT6jD.js">
-		<link rel="modulepreload" href="./_app/immutable/chunks/CHO7Mb3a.js">
-		<link rel="modulepreload" href="./_app/immutable/entry/app.BoZBkHgt.js">
+		<link rel="modulepreload" href="./_app/immutable/chunks/BbjuLciq.js">
+		<link rel="modulepreload" href="./_app/immutable/entry/app.CsrWom22.js">
 		<link rel="modulepreload" href="./_app/immutable/chunks/xIGZ3baf.js">
 		<link rel="modulepreload" href="./_app/immutable/chunks/CG2Kjvko.js">
 		<link rel="modulepreload" href="./_app/immutable/chunks/CDQkuzEc.js">
@@ -22,7 +22,7 @@
 		<div style="display: contents">
 			<script>
 				{
-					__sveltekit_zz3vua = {
+					__sveltekit_11uy1sv = {
 						base: new URL(".", location).pathname.slice(0, -1),
 						assets: "/zh-bible-verse-memorizer/preview/Refactor"
 					};
@@ -30,42 +30,19 @@
 					const element = document.currentScript.parentElement;
 
 					Promise.all([
-						import("./_app/immutable/entry/start.DsjQFqtT.js"),
-						import("./_app/immutable/entry/app.BoZBkHgt.js")
+						import("./_app/immutable/entry/start.DRljcp1D.js"),
+						import("./_app/immutable/entry/app.CsrWom22.js")
 					]).then(([kit, app]) => {
 						kit.start(app, element);
 					});
+
+					if ('serviceWorker' in navigator) {
+						addEventListener('load', function () {
+							navigator.serviceWorker.register('./service-worker.js');
+						});
+					}
 				}
 			</script>
 		</div>
-		<script>
-			// Register service worker
-			if ('serviceWorker' in navigator) {
-				window.addEventListener('load', () => {
-					navigator.serviceWorker.register('./sw.js')
-						.then((registration) => {
-							console.log('SW registered:', registration.scope);
-							
-							// Check for updates
-							registration.addEventListener('updatefound', () => {
-								const newWorker = registration.installing;
-								console.log('SW update found');
-								
-								newWorker.addEventListener('statechange', () => {
-									if (newWorker.state === 'installed') {
-										if (navigator.serviceWorker.controller) {
-											console.log('New SW available - reload to update');
-											// Optionally notify user about update
-										}
-									}
-								});
-							});
-						})
-						.catch((error) => {
-							console.error('SW registration failed:', error);
-						});
-				});
-			}
-		</script>
 	</body>
 </html>
