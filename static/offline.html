@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#1a1a1a" />
+  <title>Offline | ZH Bible Verse Memorizer</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #0f172a;
+      --card: #111827;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --accent: #38bdf8;
+    }
+
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #f8fafc;
+        --card: #ffffff;
+        --text: #111827;
+        --muted: #4b5563;
+        --accent: #0369a1;
+      }
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: radial-gradient(circle at top, #1e293b 0%, var(--bg) 50%);
+      color: var(--text);
+      font-family: "Noto Sans SC", "Segoe UI", sans-serif;
+      padding: 1rem;
+    }
+
+    .card {
+      max-width: 560px;
+      width: 100%;
+      background: color-mix(in oklab, var(--card) 92%, black 8%);
+      border: 1px solid color-mix(in oklab, var(--accent) 30%, transparent 70%);
+      border-radius: 14px;
+      padding: 1.2rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.24);
+    }
+
+    h1 {
+      margin: 0 0 0.5rem;
+      font-size: 1.4em;
+    }
+
+    p {
+      margin: 0.5rem 0;
+      line-height: 1.5;
+      color: var(--muted);
+      font-size: 1em;
+    }
+
+    button {
+      margin-top: 0.8rem;
+      border: 0;
+      border-radius: 10px;
+      padding: 0.7rem 1rem;
+      font-size: 1em;
+      font-weight: 600;
+      color: white;
+      background: linear-gradient(135deg, var(--accent), #0284c7);
+      cursor: pointer;
+    }
+
+    button:hover {
+      filter: brightness(1.05);
+    }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>You are offline</h1>
+    <p>ZH Bible Verse Memorizer is not able to reach the host right now.</p>
+    <p>If you opened the app online before, most memorization features should still work from local storage and cached assets.</p>
+    <button type="button" onclick="location.reload()">Try Again</button>
+  </main>
+</body>
+</html>

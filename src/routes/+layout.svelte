@@ -42,6 +42,22 @@
 
 	onMount(() => {
 		if (!browser) return;
+
+		if ('serviceWorker' in navigator) {
+			window.addEventListener('load', () => {
+				navigator.serviceWorker
+					.register(`${base}/service-worker.js`)
+					.then((registration) => {
+						console.log('SW registered:', registration.scope);
+						registration.addEventListener('updatefound', () => {
+							console.log('SW update found');
+						});
+					})
+					.catch((error) => {
+						console.error('SW registration failed:', error);
+					});
+			});
+		}
 		
 		// Subscribe to settings changes
 		unsubscribe = settings.subscribe((value) => {
