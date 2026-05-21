@@ -27,16 +27,16 @@
 	let showResult = false;
 	let accuracyScore = 0;
 	let alignmentData = null; // Stores the alignment result for display
-	
+
 	// Verse reference formatter
 	$: formatVerseRef = createVerseReferenceFormatter($verses);
-	
+
 	// Build verse data
 	$: {
 		if (verse) {
 			verseInitials = verse.verseInitials;
-			
-			// Extract Chinese characters (excluding punctuation) for alignment display
+
+			// Extract trackable characters for alignment display
 			verseCharacters = [];
 			for (let i = 0; i < verse.verseText.length; i++) {
 				const char = verse.verseText[i];
@@ -46,12 +46,12 @@
 			}
 		}
 	}
-	
+
 	// Update keyboard layout based on next character
 	$: {
 		const nextCharIndex = userInput.length;
 		const isNextCharNumber = nextCharIndex < verseInitials.length && /[0-9]/.test(verseInitials[nextCharIndex]);
-		
+
 		if (isNextCharNumber) {
 			keyboardLayout = keyboardLayouts.numericCompact;
 			isNumericKeyboard = true;
@@ -65,6 +65,61 @@
 			keyboardLayout = layoutMap[inputMethod] || keyboardLayouts.pinyinCompact;
 			isNumericKeyboard = false;
 		}
+	}
+
+	function isTrackableCharacter(char) {
+		return /[\u4e00-\u9fa5]/.test(char) || /[0-9]/.test(char);
+	}
+
+	function injectPunctuationIntoAlignment(baseAlignment, verseText) {
+		if (!Array.isArray(baseAlignment)) return [];
+
+		// Bucket punctuation by how many trackable chars have been consumed so far.
+		const punctuationAfterTrackableCount = {};
+		let trackableSeen = 0;
+		for (const char of [...verseText]) {
+			if (isTrackableCharacter(char)) {
+				trackableSeen++;
+				continue;
+			}
+			if (!punctuationAfterTrackableCount[trackableSeen]) {
+				punctuationAfterTrackableCount[trackableSeen] = [];
+			}
+			punctuationAfterTrackableCount[trackableSeen].push(char);
+		}
+
+		const output = [];
+		let trackableConsumed = 0;
+
+		const appendPunctuationForCount = (count) => {
+			const punctuationChars = punctuationAfterTrackableCount[count] || [];
+			for (const punctuationChar of punctuationChars) {
+				output.push({
+					type: 'punctuation',
+					expectedChar: punctuationChar,
+					expectedOriginal: punctuationChar,
+					userChar: punctuationChar,
+					userOriginal: punctuationChar,
+					verseChar: punctuationChar
+				});
+			}
+		};
+
+		appendPunctuationForCount(0);
+
+		for (const item of baseAlignment) {
+			if (item.type === 'insertion') {
+				// Keep insertion exactly where alignment placed it.
+				output.push(item);
+				continue;
+			}
+
+			output.push(item);
+			trackableConsumed++;
+			appendPunctuationForCount(trackableConsumed);
+		}
+
+		return output;
 	}
 
 	function keepTypingAreaVisible(behavior = 'smooth') {
@@ -250,8 +305,12 @@
 		// Align and score
 		const inputMethod = $settings.inputMethod || 'pinyin';
 		const result = alignStrings(verseInitials, userInput, inputMethod);
+		const punctuatedAlignment = injectPunctuationIntoAlignment(result.alignment, verse.verseText || '');
 		
-		alignmentData = result;
+			alignmentData = {
+				...result,
+				alignment: punctuatedAlignment
+			};
 		accuracyScore = result.accuracy;
 		
 		showResult = true;

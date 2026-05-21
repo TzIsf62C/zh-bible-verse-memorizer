@@ -2,7 +2,7 @@
 	import { createEventDispatcher } from 'svelte';
 	import { verses } from '$lib/stores/verses';
 	import { t } from '$lib/i18n';
-	import { calculateHeatScore, getHeatColor } from '$lib/utils/heatTracking';
+	import { calculateHeatScore, getHeatColor, transformHeatScore } from '$lib/utils/heatTracking';
 	import { sortVersesByBibleOrder } from '$lib/utils/bibleBooks';
 
 	const dispatch = createEventDispatcher();
@@ -36,10 +36,14 @@
 
 	function getSortedVerses(verses, mode, direction) {
 		// First calculate heat scores for all verses
-		const versesWithScores = verses.map(v => ({
-			...v,
-			heatScore: calculateHeatScore(v.heatArray || [])
-		}));
+		const versesWithScores = verses.map(v => {
+			const heatRawScore = calculateHeatScore(v.heatArray || []);
+			return {
+				...v,
+				heatRawScore,
+				heatScore: transformHeatScore(heatRawScore)
+			};
+		});
 
 		let sorted = [];
 		if (mode === 'biblical') {

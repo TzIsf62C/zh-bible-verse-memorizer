@@ -97,6 +97,18 @@ export function calculateHeatScore(heatArray) {
 }
 
 /**
+ * Transform a raw weakest-quartile score into a user-facing score.
+ * Uses distance-from-perfection scaling to make progress near perfection clearer.
+ *
+ * @param {number} rawScore - Raw score from weakest quartile average (0-99)
+ * @returns {number} Scaled score (0-99)
+ */
+export function transformHeatScore(rawScore) {
+	const safeRaw = Number.isFinite(rawScore) ? Math.max(0, Math.min(99, rawScore)) : 99;
+	return 99 - 99 * Math.pow((99 - safeRaw) / 99, 0.60);
+}
+
+/**
  * Build correctness map from user input and expected initials
  * Maps each character position to correct/incorrect/null
  * 

@@ -90,6 +90,7 @@ export function initializeDailyStreakOnOpen() {
 
 export function registerStreakActivity(activityType) {
 	let extended = false;
+	let queuedStreakToast = false;
 
 	streakData.update((state) => {
 		const now = new Date();
@@ -109,6 +110,12 @@ export function registerStreakActivity(activityType) {
 		const nextCurrent = baseState.current + 1;
 		extended = true;
 
+		if (!queuedStreakToast) {
+			// Enqueue immediately so streak toast is present before achievement subscribers react.
+			enqueueToast({ type: 'streak' });
+			queuedStreakToast = true;
+		}
+
 		return {
 			...baseState,
 			current: nextCurrent,
@@ -116,10 +123,6 @@ export function registerStreakActivity(activityType) {
 			lastActiveDate: todayKey
 		};
 	});
-
-	if (extended) {
-		enqueueToast({ type: 'streak' });
-	}
 
 	return extended;
 }

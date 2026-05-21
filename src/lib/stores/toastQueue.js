@@ -10,13 +10,26 @@ function makeToastId(prefix = 'toast') {
 
 export function enqueueToast(toast) {
 	if (!toast || typeof toast !== 'object') return;
-	queueStore.update((queue) => [
-		...queue,
-		{
+	queueStore.update((queue) => {
+		const nextToast = {
 			id: toast.id || makeToastId(toast.type || 'toast'),
 			...toast
+		};
+
+		if (nextToast.type === 'streak') {
+			const firstNonStreakIndex = queue.findIndex((item) => item?.type !== 'streak');
+			if (firstNonStreakIndex === -1) {
+				return [...queue, nextToast];
+			}
+			return [
+				...queue.slice(0, firstNonStreakIndex),
+				nextToast,
+				...queue.slice(firstNonStreakIndex)
+			];
 		}
-	]);
+
+		return [...queue, nextToast];
+	});
 }
 
 export function dequeueToast() {
