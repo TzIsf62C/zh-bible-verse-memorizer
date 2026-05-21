@@ -2,6 +2,7 @@ import { build, files, prerendered, version } from '$service-worker';
 
 const APP_CACHE = `app-shell-${version}`;
 const RUNTIME_CACHE = `runtime-${version}`;
+const RUNTIME_MAX_ENTRIES = 250;
 const SCOPE_PATH = new URL(self.registration.scope).pathname.replace(/\/$/, '');
 const OFFLINE_URL = `${SCOPE_PATH}/offline.html`;
 const APP_SHELL_FALLBACKS = [`${SCOPE_PATH}/`, `${SCOPE_PATH}/index.html`, OFFLINE_URL];
@@ -13,7 +14,30 @@ self.addEventListener('install', (event) => {
 	event.waitUntil(
 		(async () => {
 			const cache = await caches.open(APP_CACHE);
-			await cache.addAll(PRECACHE_URLS);
+			const failures = [];
+
+			await Promise.all(
+				PRECACHE_URLS.map(async (url) => {
+					try {
+						await cache.add(url);
+					} catch {
+						failures.push(url);
+					}
+				})
+			);
+
+			const hasOfflineFallback = !failures.includes(OFFLINE_URL);
+			const hasNavigationShell = [`${SCOPE_PATH}/`, `${SCOPE_PATH}/index.html`].some(
+				(url) => !failures.includes(url)
+			);
+
+			if (!hasOfflineFallback || !hasNavigationShell) {
+				throw new Error('Service worker install failed: critical shell assets are unavailable');
+			}
+
+			if (failures.length > 0) {
+				console.warn('[SW] Optional precache assets failed to cache', failures);
+			}
 		})()
 	);
 });
@@ -79,14 +103,14 @@ function isStaticAssetRequest(request) {
 
 async function cacheFirstPrecached(pathname, request) {
 	const cache = await caches.open(APP_CACHE);
+	const cachedByRequest = await cache.match(request, { ignoreSearch: true });
+	if (cachedByRequest) {
+		return cachedByRequest;
+	}
+
 	const cachedByPath = await cache.match(pathname);
 	if (cachedByPath) {
 		return cachedByPath;
-	}
-
-	const cachedByRequest = await cache.match(request);
-	if (cachedByRequest) {
-		return cachedByRequest;
 	}
 
 	return fetch(request);
@@ -98,6 +122,7 @@ async function handleNavigationRequest(request) {
 		if (response && response.ok) {
 			const cache = await caches.open(RUNTIME_CACHE);
 			await cache.put(request, response.clone());
+			await trimCache(cache, RUNTIME_MAX_ENTRIES);
 		}
 
 		return response;
@@ -130,24 +155,53 @@ async function staleWhileRevalidate(request, event) {
 	const cache = await caches.open(RUNTIME_CACHE);
 	const cached = await cache.match(request);
 
-	const networkPromise = fetch(request)
-		.then((response) => {
+	const updateFromNetwork = async () => {
+		try {
+			const response = await fetch(request);
 			if (response && response.ok) {
-				event.waitUntil(cache.put(request, response.clone()));
+				event.waitUntil(
+					(async () => {
+						await cache.put(request, response.clone());
+						await trimCache(cache, RUNTIME_MAX_ENTRIES);
+					})()
+				);
 			}
 			return response;
-		})
-		.catch(() => null);
+		} catch {
+			return null;
+		}
+	};
 
-	return cached || networkPromise || new Response('', { status: 504, statusText: 'Gateway Timeout' });
+	if (cached) {
+		event.waitUntil(updateFromNetwork());
+		return cached;
+	}
+
+	const networkResponse = await updateFromNetwork();
+	if (networkResponse) {
+		return networkResponse;
+	}
+
+	return new Response('Offline', {
+		status: 503,
+		statusText: 'Service Unavailable',
+		headers: {
+			'Content-Type': 'text/plain; charset=utf-8'
+		}
+	});
 }
 
 async function networkFirstData(request, event) {
 	try {
 		const response = await fetch(request);
-		if (response && response.ok) {
+		if (shouldCacheDataResponse(request, response)) {
 			const cache = await caches.open(RUNTIME_CACHE);
-			event.waitUntil(cache.put(request, response.clone()));
+			event.waitUntil(
+				(async () => {
+					await cache.put(request, response.clone());
+					await trimCache(cache, RUNTIME_MAX_ENTRIES);
+				})()
+			);
 		}
 		return response;
 	} catch {
@@ -174,5 +228,40 @@ async function networkFirstData(request, event) {
 				'Content-Type': 'text/plain; charset=utf-8'
 			}
 		});
+	}
+}
+
+function shouldCacheDataResponse(request, response) {
+	if (!response || !response.ok) {
+		return false;
+	}
+
+	const cacheControl = response.headers.get('cache-control')?.toLowerCase() || '';
+	if (cacheControl.includes('no-store') || cacheControl.includes('private')) {
+		return false;
+	}
+
+	const contentType = response.headers.get('content-type')?.toLowerCase() || '';
+	if (contentType.includes('text/html')) {
+		return false;
+	}
+
+	const url = new URL(request.url);
+	if (url.pathname.endsWith('/service-worker.js') || url.pathname.endsWith('/sw.js')) {
+		return false;
+	}
+
+	return true;
+}
+
+async function trimCache(cache, maxEntries) {
+	const keys = await cache.keys();
+	if (keys.length <= maxEntries) {
+		return;
+	}
+
+	const deleteCount = keys.length - maxEntries;
+	for (let i = 0; i < deleteCount; i += 1) {
+		await cache.delete(keys[i]);
 	}
 }
