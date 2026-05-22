@@ -704,7 +704,7 @@
 	.collection-item.selected,
 	.verse-item.selected {
 		border-color: var(--accent-color);
-		background: var(--accent-color-light, rgba(76, 175, 80, 0.1));
+		background: var(--nav-button-bg);
 	}
 	
 	.collection-title,
@@ -759,7 +759,7 @@
 		text-align: center;
 		margin-bottom: 1rem;
 		padding: 0.75rem 1rem;
-		background: var(--accent-color-light, rgba(76, 175, 80, 0.1));
+		background: var(--accent-color);
 		border-radius: 8px;
 	}
 	
