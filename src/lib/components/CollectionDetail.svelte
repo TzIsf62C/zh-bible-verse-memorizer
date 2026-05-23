@@ -5,6 +5,7 @@
 	import { t } from '$lib/i18n';
 	import Modal from './Modal.svelte';
 	import { onMount, afterUpdate } from 'svelte';
+	import { createVerseReferenceFormatter, sortVersesByBibleOrder } from '$lib/utils/bibleBooks';
 	
 	export let collection;
 	
@@ -123,11 +124,44 @@
 		dispatch('close');
 	}
 	
-	// Import createVerseReferenceFormatter
-	import { createVerseReferenceFormatter } from '$lib/utils/bibleBooks';
-	
 	// Create formatter that checks all verses for duplicates
 	$: formatVerseReference = createVerseReferenceFormatter($verses);
+	$: sortedAvailableVerses = sortVersesByBibleOrder(availableVerses);
+	$: groupedAvailableVerses = sortedAvailableVerses.reduce((books, verse) => {
+		let bookGroup = books.find((book) => book.bookName === verse.bookName);
+		if (!bookGroup) {
+			bookGroup = {
+				bookName: verse.bookName,
+				chapters: []
+			};
+			books.push(bookGroup);
+		}
+
+		let chapterGroup = bookGroup.chapters.find(
+			(chapter) => String(chapter.chapterNumber) === String(verse.chapterNumber)
+		);
+		if (!chapterGroup) {
+			chapterGroup = {
+				chapterNumber: verse.chapterNumber,
+				verses: []
+			};
+			bookGroup.chapters.push(chapterGroup);
+		}
+
+		chapterGroup.verses.push(verse);
+		return books;
+	}, []);
+
+	function toggleVerseSelection(verseId, checked) {
+		if (checked) {
+			if (!selectedVerseIds.includes(verseId)) {
+				selectedVerseIds = [...selectedVerseIds, verseId];
+			}
+			return;
+		}
+
+		selectedVerseIds = selectedVerseIds.filter((id) => id !== verseId);
+	}
 </script>
 
 <div class="collection-detail">
@@ -141,16 +175,50 @@
 		<div class="spacer" aria-hidden="true"></div>
 	</div>
 	
-	<div class="add-verse-section">
+	<div class="add-verse-section" bind:this={addVerseElement}>
 		<label for="verseSelector">{t('add_verse_to_collection')}</label>
 		<div class="add-verse-row">
-			<select id="verseSelector" multiple bind:value={selectedVerseIds}>
-				{#each availableVerses as verse (verse.id)}
-					<option value={verse.id}>
-						{formatVerseReference(verse)}
-					</option>
-				{/each}
-			</select>
+			<div id="verseSelector" class="verse-picker" role="group" aria-label={t('select_verse')}>
+				{#if groupedAvailableVerses.length === 0}
+					<div class="picker-empty">{t('no_verses')}</div>
+				{:else}
+					{#each groupedAvailableVerses as bookGroup (bookGroup.bookName)}
+						<details class="book-group">
+							<summary class="group-toggle">
+								<span class="toggle-icon" aria-hidden="true">▶</span>
+								<span class="group-label">{bookGroup.bookName}</span>
+								<span class="group-count">({bookGroup.chapters.reduce((total, chapter) => total + chapter.verses.length, 0)})</span>
+							</summary>
+
+							<div class="chapter-groups">
+								{#each bookGroup.chapters as chapterGroup (chapterGroup.chapterNumber)}
+									<details class="chapter-group">
+										<summary class="group-toggle chapter-toggle">
+											<span class="toggle-icon" aria-hidden="true">▶</span>
+												<span class="group-label">{t('chapter')} {chapterGroup.chapterNumber}</span>
+												<span class="group-count">({chapterGroup.verses.length})</span>
+										</summary>
+
+										<div class="chapter-verses">
+											{#each chapterGroup.verses as verse (verse.id)}
+												<label class="verse-option" for={`verse-opt-${verse.id}`}>
+													<input
+														id={`verse-opt-${verse.id}`}
+														type="checkbox"
+														checked={selectedVerseIds.includes(verse.id)}
+														on:change={(event) => toggleVerseSelection(verse.id, event.currentTarget.checked)}
+													/>
+													<span>{formatVerseReference(verse)}</span>
+												</label>
+											{/each}
+										</div>
+									</details>
+								{/each}
+							</div>
+						</details>
+					{/each}
+				{/if}
+			</div>
 			<button on:click={addVerseToCollection} disabled={selectedVerseIds.length === 0}>
 				{t('add')}
 			</button>
@@ -305,17 +373,110 @@
 		max-width: 100%;
 	}
 	
-	.add-verse-row select {
+	.verse-picker {
 		flex: 1;
 		min-width: 0;
-		min-height: 8rem;
-		padding: 0.75rem;
+		max-height: 22rem;
+		overflow-y: auto;
+		padding: 0.5rem;
 		border: 1px solid var(--file-border);
 		background: var(--file-bg);
 		color: var(--text-color);
 		border-radius: 4px;
 		font-family: inherit;
 		font-size: 1em;
+	}
+
+	.picker-empty {
+		padding: 0.75rem;
+		color: var(--subtitle-color);
+	}
+
+	.book-group,
+	.chapter-group {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+	}
+
+	.book-group + .book-group {
+		margin-top: 0.35rem;
+	}
+
+	.group-toggle {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+		width: 100%;
+		padding: 0.45rem 0.5rem;
+		border: none;
+		background: transparent;
+		color: var(--text-color);
+		cursor: pointer;
+		text-align: left;
+		border-radius: 4px;
+	}
+
+	.group-toggle::-webkit-details-marker {
+		display: none;
+	}
+
+	.group-toggle::marker {
+		content: '';
+	}
+
+	.group-toggle:hover {
+		background: var(--nav-button-bg);
+	}
+
+	details[open] > .group-toggle .toggle-icon {
+		transform: rotate(90deg);
+	}
+
+	.chapter-toggle {
+		padding-left: 1.25rem;
+	}
+
+	.toggle-icon {
+		width: 1em;
+		text-align: center;
+		color: var(--subtitle-color);
+	}
+
+	.group-label {
+		font-weight: 600;
+	}
+
+	.group-count {
+		margin-left: auto;
+		font-size: 0.9em;
+		color: var(--subtitle-color);
+	}
+
+	.chapter-groups {
+		display: flex;
+		flex-direction: column;
+		gap: 0.15rem;
+	}
+
+	.chapter-verses {
+		display: flex;
+		flex-direction: column;
+		gap: 0.2rem;
+		padding: 0.15rem 0.4rem 0.4rem 2rem;
+	}
+
+	.verse-option {
+		display: flex;
+		align-items: flex-start;
+		gap: 0.45rem;
+		padding: 0.2rem 0;
+		cursor: pointer;
+		line-height: 1.4;
+	}
+
+	.verse-option input {
+		margin-top: 0.2rem;
 	}
 	
 	.add-verse-row button {
