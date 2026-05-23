@@ -650,7 +650,7 @@
 	}
 
 	.bar-container {
-		background: var(--panel-background);
+		background: var(--app-background);
 		border-radius: 8px;
 		height: 2rem;
 		position: relative;

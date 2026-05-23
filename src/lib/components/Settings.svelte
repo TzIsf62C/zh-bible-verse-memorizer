@@ -421,8 +421,8 @@
 	</div>
 	
 	<div class="app-info">
-		<p>ZH Bible Verse Memorizer PWA (Version 0.9.4)</p>
-		<p>Copyright © 2025 TzIsf62C</p>
+		<p>ZH Bible Verse Memorizer PWA (Version 1.0)</p>
+		<p>Copyright © 2026 TzIsf62C</p>
 	</div>
 </div>
 
@@ -439,9 +439,7 @@
 		max-width: 100%;
 		margin: 0 auto;
 		padding: 1.5rem;
-		background: var(--panel-background, #ffffff);
-		border-radius: 16px;
-		box-shadow: var(--panel-shadow, 0 10px 30px rgba(24, 24, 27, 0.08));
+		background: var(--app-background, #ffffff);
 	}
 	
 	h2 {

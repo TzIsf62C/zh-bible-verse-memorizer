@@ -298,7 +298,7 @@
 </script>
 
 {#if state === 'initial'}
-	<div class="panel practice-panel">
+	<div class="practice-panel">
 		<div class="panel-header">
 			<h2>{t('practice_mode')}</h2>
 		</div>
@@ -314,7 +314,7 @@
 	</div>
 
 {:else if state === 'selectCollection'}
-	<div class="panel practice-panel">
+	<div class="practice-panel">
 		<div class="panel-header">
 			<button class="back-button" on:click={goBack} aria-label={t('back')}>
 				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -364,7 +364,7 @@
 	</div>
 
 {:else if state === 'selectVerse'}
-	<div class="panel practice-panel">
+	<div class="practice-panel">
 		<div class="panel-header">
 			<button class="back-button" on:click={goBack} aria-label={t('back')}>
 				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -410,13 +410,13 @@
 				disabled={!selectedVerse}
 				on:click={proceedToActivitySelection}
 			>
-				{t('select_activity')}
+				{t('next')}
 			</button>
 		</div>
 	</div>
 
 {:else if state === 'selectActivity'}
-	<div class="panel practice-panel">
+	<div class="practice-panel">
 		<div class="panel-header">
 			<button class="back-button" on:click={goBack} aria-label={t('back')}>
 				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -562,6 +562,7 @@
 		height: 100%;
 		padding: 1rem;
 		overflow-y: auto;
+		background: --var(--app-background);
 	}
 	
 	.panel-header {
@@ -647,7 +648,7 @@
 	}
 
 	.verse-group {
-		border: 1px solid var(--border-color);
+		border: 1px solid var(--file-border);
 		border-radius: 8px;
 		overflow: hidden;
 		background: var(--panel-background);
@@ -780,7 +781,7 @@
 		padding: 2rem 1rem;
 		background: var(--panel-background);
 		border: 2px solid var(--border-color);
-		border-radius: 8px;
+		border-radius: 16px;
 		cursor: pointer;
 		display: flex;
 		flex-direction: column;
@@ -908,10 +909,6 @@
 		.fixed-bottom-button .primary-button {
 			max-width: 100%;
 			width: 100%;
-		}
-		
-		.activity-grid {
-			gap: 0.5rem;
 		}
 		
 		.activity-card {
