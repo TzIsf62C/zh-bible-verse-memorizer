@@ -246,7 +246,7 @@
 				</svg>
 			</button>
 			<h2 class="heat-maps-title">{t('heat_map')}</h2>
-			<button type="button" class="exit-btn" on:click={exitHeatMaps} aria-label={t('close')}>×</button>
+			<div class="header-spacer" aria-hidden="true"></div>
 		</div>
 
 		<div class="heat-map">
@@ -359,6 +359,12 @@
 		margin-bottom: 1.5rem;
 		gap: 1rem;
 	}
+
+	.heat-maps-header .header-spacer {
+		width: 2.5rem;
+		height: 2.5rem;
+		flex-shrink: 0;
+	}
 	
 	.heat-maps-title {
 		font-size: 1.5em;
@@ -410,26 +416,6 @@
 
 	.list-header .heat-maps-title {
 		flex: none;
-	}
-	
-	.exit-btn {
-		width: 2.5rem;
-		height: 2.5rem;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		border: none;
-		background: transparent;
-		color: var(--nav-button-color);
-		font-size: 2em;
-		line-height: 1;
-		cursor: pointer;
-		border-radius: 50%;
-		transition: background 0.2s ease;
-	}
-	
-	.exit-btn:hover {
-		background: var(--nav-button-bg);
 	}
 	
 	.empty-state {

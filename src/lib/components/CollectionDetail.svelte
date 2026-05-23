@@ -132,10 +132,13 @@
 
 <div class="collection-detail">
 	<div class="detail-header" bind:this={headerElement}>
-		<button class="back-btn" on:click={close}>
-			← {t('back')}
+		<button class="back-btn" on:click={close} aria-label={t('back')}>
+			<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+				<path d="M19 12H5M5 12l7 7M5 12l7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+			</svg>
 		</button>
 		<h3>{collection.title}</h3>
+		<div class="spacer" aria-hidden="true"></div>
 	</div>
 	
 	<div class="add-verse-section">
@@ -232,20 +235,28 @@
 	}
 	
 	.back-btn {
-		padding: 0.5rem 1rem;
-		border: 1px solid var(--file-border);
-		background: var(--nav-button-bg);
-		color: var(--nav-button-color);
-		border-radius: 4px;
+		width: 40px;
+		height: 40px;
+		padding: 0;
+		border: none;
+		background: none;
+		color: var(--text-color);
+		border-radius: 50%;
 		cursor: pointer;
-		font-size: 1em;
+		display: flex;
+		align-items: center;
+		justify-content: center;
 		transition: all 0.3s;
 	}
 	
 	.back-btn:hover {
-		background: var(--accent-color);
-		color: white;
-		border-color: var(--accent-color);
+		background: var(--nav-button-bg);
+	}
+
+	.detail-header .spacer {
+		width: 40px;
+		height: 40px;
+		flex-shrink: 0;
 	}
 	
 	h3 {
@@ -253,6 +264,7 @@
 		color: var(--text-color);
 		flex: 1;
 		min-width: 0;
+		text-align: center;
 		overflow-wrap: break-word;
 		word-wrap: break-word;
 	}

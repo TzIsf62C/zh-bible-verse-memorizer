@@ -158,22 +158,19 @@
 		}
 		expandedVerseGroups = new Set(expandedVerseGroups);
 	}
-	
+
 	function proceedToActivitySelection() {
-		if (practiceType === 'collection' && !selectedCollection) {
-			modalMessage = t('select_collection_to_review');
-			showModal = true;
-			return;
-		}
-		if (practiceType === 'collection' && !selectedCollectionFilter) {
-			modalMessage = t('select_learned_or_all');
-			showModal = true;
-			return;
-		}
-		if (practiceType === 'verse' && !selectedVerse) {
-			modalMessage = t('select_verse');
-			showModal = true;
-			return;
+		if (practiceType === 'collection') {
+			if (!selectedCollection) {
+				return;
+			}
+			selectedVerse = null;
+		} else {
+			if (!selectedVerse) {
+				return;
+			}
+			selectedCollection = null;
+			selectedCollectionFilter = null;
 		}
 		state = 'selectActivity';
 	}
@@ -480,7 +477,15 @@
 {:else if state === 'selectPracticeOrder'}
 	<div class="modal-overlay" on:click={handlePracticeOrderOverlayClick} on:keydown={(e) => e.key === 'Escape' && goBack()} role="dialog" aria-modal="true" tabindex="0">
 		<div class="modal-content" role="document">
-			<h3>{t('choose_practice_order')}</h3>
+			<div class="modal-header">
+				<button class="modal-back-button" on:click={goBack} aria-label={t('back')}>
+					<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+						<path d="M19 12H5M5 12l7 7M5 12l7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+					</svg>
+				</button>
+				<h3>{t('choose_practice_order')}</h3>
+				<div class="spacer" aria-hidden="true"></div>
+			</div>
 			<div class="modal-buttons">
 				<button class="modal-option" on:click={() => choosePracticeOrder('collection')}>
 					<div class="option-title">{t('order_collection')}</div>
@@ -495,7 +500,6 @@
 					<div class="option-title">{t('order_random')}</div>
 				</button>
 			</div>
-			<button class="cancel-btn" on:click={goBack}>{t('back')}</button>
 		</div>
 	</div>
 
@@ -874,6 +878,36 @@
 		text-align: center;
 	}
 
+	.modal-header {
+		display: grid;
+		grid-template-columns: 40px 1fr 40px;
+		align-items: center;
+		gap: 0.5rem;
+		margin-bottom: 1.25rem;
+	}
+
+	.modal-header h3 {
+		margin: 0;
+		text-align: center;
+	}
+
+	.modal-back-button {
+		width: 40px;
+		height: 40px;
+		padding: 0;
+		background: none;
+		border: none;
+		color: var(--text-color);
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.modal-back-button:hover {
+		opacity: 0.85;
+	}
+
 	.modal-buttons {
 		display: flex;
 		flex-direction: column;
@@ -901,22 +935,6 @@
 		font-weight: 600;
 		font-size: 1.1em;
 		color: var(--accent-color);
-	}
-
-	.cancel-btn {
-		width: 100%;
-		padding: 0.75rem;
-		border: 1px solid var(--file-border);
-		background: var(--nav-button-bg);
-		color: var(--nav-button-color);
-		border-radius: 4px;
-		cursor: pointer;
-		font-size: 1em;
-		transition: all 0.3s;
-	}
-
-	.cancel-btn:hover {
-		background: var(--file-bg);
 	}
 	
 	@media (max-width: 767px) {

@@ -890,19 +890,21 @@
 
 	/* Header with back button */
 	.panel-header {
-		display: flex;
+		display: grid;
+		grid-template-columns: 40px 1fr 40px;
 		align-items: center;
-		gap: 1rem;
+		gap: 0.5rem;
 	}
 
-	.panel-header h2 {
+	.panel-header h3 {
 		margin: 0;
-		flex: 1;
 		text-align: center;
 	}
 
 	.back-button {
-		padding: 0.5rem;
+		width: 40px;
+		height: 40px;
+		padding: 0;
 		background: none;
 		border: none;
 		color: var(--text-color);
@@ -918,6 +920,7 @@
 
 	.spacer {
 		width: 40px;
+		height: 40px;
 	}
 
 	/* Sort controls */
