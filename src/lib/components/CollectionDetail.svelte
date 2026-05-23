@@ -49,7 +49,7 @@
 		}
 	}
 	
-	let selectedVerseId = '';
+	let selectedVerseIds = [];
 	let showModal = false;
 	let modalMessage = '';
 	
@@ -62,7 +62,7 @@
 	);
 	
 	function addVerseToCollection() {
-		if (!selectedVerseId) {
+		if (!selectedVerseIds.length) {
 			modalMessage = t('select_verse');
 			showModal = true;
 			return;
@@ -71,12 +71,12 @@
 		collections.update(cols =>
 			cols.map(c =>
 				c.id === collection.id
-					? { ...c, verseIds: [...(c.verseIds || []), selectedVerseId] }
+					? { ...c, verseIds: [...(c.verseIds || []), ...selectedVerseIds] }
 					: c
 			)
 		);
 		
-		selectedVerseId = '';
+		selectedVerseIds = [];
 	}
 	
 	function removeVerseFromCollection(verseId) {
@@ -144,15 +144,14 @@
 	<div class="add-verse-section">
 		<label for="verseSelector">{t('add_verse_to_collection')}</label>
 		<div class="add-verse-row">
-			<select id="verseSelector" bind:value={selectedVerseId}>
-				<option value="">{t('select_verse')}</option>
+			<select id="verseSelector" multiple bind:value={selectedVerseIds}>
 				{#each availableVerses as verse (verse.id)}
 					<option value={verse.id}>
 						{formatVerseReference(verse)}
 					</option>
 				{/each}
 			</select>
-			<button on:click={addVerseToCollection} disabled={!selectedVerseId}>
+			<button on:click={addVerseToCollection} disabled={selectedVerseIds.length === 0}>
 				{t('add')}
 			</button>
 		</div>
@@ -309,6 +308,7 @@
 	.add-verse-row select {
 		flex: 1;
 		min-width: 0;
+		min-height: 8rem;
 		padding: 0.75rem;
 		border: 1px solid var(--file-border);
 		background: var(--file-bg);

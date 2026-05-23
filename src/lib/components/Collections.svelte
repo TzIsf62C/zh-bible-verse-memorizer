@@ -106,22 +106,24 @@
 
 <div class="collections-container">
 	<h2>{t('collections_title')}</h2>
-	
-	<div class="create-collection">
-		<label for="newCollectionTitle">{t('new_collection_title')}</label>
-		<div class="create-collection-row">
-			<input
-				id="newCollectionTitle"
-				type="text"
-				bind:value={newCollectionTitle}
-				on:keydown={(e) => e.key === 'Enter' && createCollection()}
-				placeholder={t('new_collection_title')}
-			/>
-			<button on:click={createCollection}>
-				{t('create_collection')}
-			</button>
+
+	{#if !selectedCollection}
+		<div class="create-collection">
+			<label for="newCollectionTitle">{t('new_collection_title')}</label>
+			<div class="create-collection-row">
+				<input
+					id="newCollectionTitle"
+					type="text"
+					bind:value={newCollectionTitle}
+					on:keydown={(e) => e.key === 'Enter' && createCollection()}
+					placeholder={t('new_collection_title')}
+				/>
+				<button on:click={createCollection}>
+					{t('create_collection')}
+				</button>
+			</div>
 		</div>
-	</div>
+	{/if}
 	
 	{#if !selectedCollection}
 		<div class="collections-list">
