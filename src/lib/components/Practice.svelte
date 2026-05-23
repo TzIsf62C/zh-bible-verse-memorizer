@@ -37,6 +37,11 @@
 	$: baseVerses = selectedCollection 
 		? $verses.filter(v => selectedCollection.verseIds.includes(v.id))
 		: [];
+
+	$: selectedCollectionTotalCount = selectedCollection ? baseVerses.length : 0;
+	$: selectedCollectionLearnedCount = selectedCollection
+		? baseVerses.filter(v => v.lastReviewed && v.lastReviewed !== null).length
+		: 0;
 	
 	$: filteredVerses = selectedCollectionFilter === 'learned' && baseVerses
 		? baseVerses.filter(v => v.lastReviewed && v.lastReviewed !== null)
@@ -327,9 +332,6 @@
 		
 		<div class="collection-list">
 			{#each $collections as collection}
-				{@const collectionBaseVerses = $verses.filter(v => collection.verseIds.includes(v.id))}
-				{@const learnedCount = collectionBaseVerses.filter(v => v.lastReviewed && v.lastReviewed !== null).length}
-				{@const allCount = collectionBaseVerses.length}
 				<div class="collection-item-container">
 					<button 
 						class="collection-item" 
@@ -342,25 +344,32 @@
 							<span class="check-icon">✓</span>
 						{/if}
 					</button>
-					{#if selectedCollection?.id === collection.id}
-						<div class="collection-practice-actions">
-							{#if learnedCount !== allCount}
-								<button class="primary-button split-action" on:click={() => startCollectionPractice('learned')}>
-									{t('practice')} {t('learned')}
-								</button>
-								<button class="primary-button split-action" on:click={() => startCollectionPractice('all')}>
-									{t('practice')} {t('all')}
-								</button>
-							{:else}
-								<button class="primary-button" on:click={() => startCollectionPractice('all')}>
-									{t('next')}
-								</button>
-							{/if}
-						</div>
-					{/if}
 				</div>
 			{/each}
 		</div>
+
+		{#if selectedCollection}
+			<div class="fixed-bottom-button">
+				{#if selectedCollectionLearnedCount === 0}
+					<button class="primary-button fixed-action-button" on:click={() => startCollectionPractice('all')}>
+						{t('next')}
+					</button>
+				{:else if selectedCollectionLearnedCount < selectedCollectionTotalCount}
+					<div class="fixed-bottom-actions two-up">
+						<button class="primary-button fixed-action-button collection-choice-pulse" on:click={() => startCollectionPractice('learned')}>
+							{t('practice')} {t('learned')}
+						</button>
+						<button class="primary-button fixed-action-button collection-choice-pulse" on:click={() => startCollectionPractice('all')}>
+							{t('practice')} {t('all')}
+						</button>
+					</div>
+				{:else}
+					<button class="primary-button fixed-action-button" on:click={() => startCollectionPractice('all')}>
+						{t('next')}
+					</button>
+				{/if}
+			</div>
+		{/if}
 	</div>
 
 {:else if state === 'selectVerse'}
@@ -406,7 +415,7 @@
 		
 		<div class="fixed-bottom-button">
 			<button 
-				class="primary-button"
+				class="primary-button fixed-action-button"
 				disabled={!selectedVerse}
 				on:click={proceedToActivitySelection}
 			>
@@ -728,18 +737,6 @@
 		font-weight: bold;
 	}
 	
-	.collection-practice-actions {
-		display: flex;
-		gap: 0.5rem;
-		flex-wrap: nowrap;
-		padding: 0 0.25rem 0.5rem;
-	}
-
-	.split-action {
-		flex: 1;
-		padding: 0.9rem;
-	}
-	
 	.fixed-bottom-button {
 		position: fixed;
 		bottom: 0;
@@ -752,8 +749,43 @@
 		justify-content: center;
 	}
 	
-	.fixed-bottom-button .primary-button {
-		max-width: 400px;
+	.fixed-bottom-actions {
+		display: flex;
+		gap: 0.75rem;
+		width: 100%;
+		max-width: 600px;
+	}
+
+	.fixed-bottom-actions.two-up .fixed-action-button {
+		flex: 1;
+	}
+
+	.fixed-action-button {
+		max-width: 600px;
+		padding: 1.25rem 2rem;
+		font-size: 1.1em;
+	}
+
+	@keyframes collectionChoicePulse {
+		0% {
+			background: var(--accent-color);
+			border-color: var(--accent-color);
+			color: #ffffff;
+		}
+		45% {
+			background: color-mix(in srgb, var(--accent-color) 75%, #ffffff 25%);
+			border-color: var(--accent-color);
+			color: #ffffff;
+		}
+		100% {
+			background: var(--file-bg);
+			border-color: var(--file-border);
+			color: var(--text-color);
+		}
+	}
+
+	.collection-choice-pulse {
+		animation: collectionChoicePulse 900ms ease-out 1 forwards;
 	}
 	
 	.selected-target {
@@ -906,7 +938,11 @@
 			font-size: 1em;
 		}
 		
-		.fixed-bottom-button .primary-button {
+		.fixed-bottom-actions {
+			max-width: 100%;
+		}
+
+		.fixed-action-button {
 			max-width: 100%;
 			width: 100%;
 		}
@@ -924,8 +960,8 @@
 			font-size: 0.95em;
 		}
 
-		.collection-practice-actions {
-			flex-direction: row;
+		.fixed-bottom-actions.two-up {
+			gap: 0.5rem;
 		}
 	}
 </style>
