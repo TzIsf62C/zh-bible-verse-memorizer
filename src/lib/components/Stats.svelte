@@ -24,6 +24,13 @@
 		{ key: 'mastered', labelKey: 'mastered', className: 'bar-mastered', fill: '#f8ae2f' }
 	];
 
+	const CATEGORY_INTERVAL_LABEL_KEYS = {
+		newLearning: 'stats_interval_range_new_learning',
+		developing: 'stats_interval_range_developing',
+		solid: 'stats_interval_range_solid',
+		mastered: 'stats_interval_range_mastered'
+	};
+
 	const dispatch = createEventDispatcher();
 	let showAchievementsModal = false;
 	let viewMode = 'totals';
@@ -167,6 +174,11 @@
 	function formatVerseReference(verse) {
 		if (!verse) return '';
 		return `${verse.bookName} ${verse.chapterNumber}:${verse.verseNumber}`;
+	}
+
+	function getCategoryIntervalLabel(categoryKey) {
+		const key = CATEGORY_INTERVAL_LABEL_KEYS[categoryKey];
+		return key ? t(key) : '';
 	}
 
 	function getPleasantStep(maxValue) {
@@ -519,7 +531,11 @@
 					<path d="M18 6 L6 18"></path>
 				</svg>
 			</button>
-			<h3>{selectedCategoryMeta ? t(selectedCategoryMeta.labelKey) : ''}</h3>
+			<h3>
+				{#if selectedCategoryMeta}
+					{t(selectedCategoryMeta.labelKey)} {getCategoryIntervalLabel(selectedCategoryMeta.key)}
+				{/if}
+			</h3>
 			{#if selectedCategoryVerses.length === 0}
 				<p class="stats-modal-empty">{t('no_reviewed_verses')}</p>
 			{:else}
