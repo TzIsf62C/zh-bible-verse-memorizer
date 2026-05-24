@@ -34,6 +34,7 @@
 	
 	// Sort and score verses for list view
 	$: sortedVerses = getSortedVerses(versesWithHeat, sortMode, sortDirection);
+	$: groupedBiblicalVerses = sortMode === 'biblical' ? groupVersesByBookAndChapter(sortedVerses) : [];
 
 	function getSortedVerses(verses, mode, direction) {
 		// First calculate heat scores for all verses
@@ -58,6 +59,33 @@
 			});
 		}
 		return sorted;
+	}
+
+	function groupVersesByBookAndChapter(verses) {
+		return verses.reduce((books, verse) => {
+			let bookGroup = books.find((book) => book.bookName === verse.bookName);
+			if (!bookGroup) {
+				bookGroup = {
+					bookName: verse.bookName,
+					chapters: []
+				};
+				books.push(bookGroup);
+			}
+
+			let chapterGroup = bookGroup.chapters.find(
+				(chapter) => String(chapter.chapterNumber) === String(verse.chapterNumber)
+			);
+			if (!chapterGroup) {
+				chapterGroup = {
+					chapterNumber: verse.chapterNumber,
+					verses: []
+				};
+				bookGroup.chapters.push(chapterGroup);
+			}
+
+			chapterGroup.verses.push(verse);
+			return books;
+		}, []);
 	}
 
 	function showVerseDetail(verse) {
@@ -232,22 +260,65 @@
 				{/if}
 			</div>
 
-			<div class="verse-list">
-				{#each sortedVerses as verse (verse.id)}
-					<button 
-						type="button" 
-						class="verse-list-item" 
-						on:click={() => showVerseDetail(verse)}
-					>
-						<div class="verse-ref">
-							{verse.bookName} {verse.chapterNumber}:{verse.verseNumber}
-						</div>
-						<div class="verse-score">
-							{verse.heatScore.toFixed(2)}
-						</div>
-					</button>
-				{/each}
-			</div>
+			{#if sortMode === 'biblical'}
+				<div class="verse-list grouped-list">
+					{#each groupedBiblicalVerses as bookGroup (bookGroup.bookName)}
+						<details class="verse-book-group">
+							<summary class="verse-group-toggle book-toggle">
+								<span class="verse-toggle-icon" aria-hidden="true">▶</span>
+								<span class="verse-group-label">{bookGroup.bookName}</span>
+								<span class="verse-group-count">({bookGroup.chapters.reduce((total, chapter) => total + chapter.verses.length, 0)})</span>
+							</summary>
+
+							<div class="verse-chapter-groups">
+								{#each bookGroup.chapters as chapterGroup (chapterGroup.chapterNumber)}
+									<details class="verse-chapter-group" open={bookGroup.chapters.length === 1}>
+										<summary class="verse-group-toggle chapter-toggle">
+											<span class="verse-toggle-icon" aria-hidden="true">▶</span>
+											<span class="verse-group-label">{t('chapter')} {chapterGroup.chapterNumber}</span>
+											<span class="verse-group-count">({chapterGroup.verses.length})</span>
+										</summary>
+
+										<div class="verse-group-items">
+											{#each chapterGroup.verses as verse (verse.id)}
+												<button
+													type="button"
+													class="verse-list-item"
+													on:click={() => showVerseDetail(verse)}
+												>
+													<div class="verse-ref">
+														{verse.bookName} {verse.chapterNumber}:{verse.verseNumber}
+													</div>
+													<div class="verse-score">
+														{verse.heatScore.toFixed(2)}
+													</div>
+												</button>
+											{/each}
+										</div>
+									</details>
+								{/each}
+							</div>
+						</details>
+					{/each}
+				</div>
+			{:else}
+				<div class="verse-list">
+					{#each sortedVerses as verse (verse.id)}
+						<button 
+							type="button" 
+							class="verse-list-item" 
+							on:click={() => showVerseDetail(verse)}
+						>
+							<div class="verse-ref">
+								{verse.bookName} {verse.chapterNumber}:{verse.verseNumber}
+							</div>
+							<div class="verse-score">
+								{verse.heatScore.toFixed(2)}
+							</div>
+						</button>
+					{/each}
+				</div>
+			{/if}
 		{/if}
 	</div>
 
@@ -466,6 +537,87 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.75rem;
+	}
+
+	.grouped-list {
+		gap: 0.5rem;
+	}
+
+	.verse-book-group,
+	.verse-chapter-group {
+		border: 1px solid var(--nav-button-bg);
+		border-radius: 8px;
+		background: var(--panel-background);
+		overflow: hidden;
+	}
+
+	.verse-chapter-group {
+		border-color: color-mix(in srgb, var(--nav-button-bg) 75%, transparent);
+	}
+
+	.verse-chapter-groups {
+		display: flex;
+		flex-direction: column;
+		gap: 0.35rem;
+		padding: 0.35rem;
+	}
+
+	.verse-group-toggle {
+		display: flex;
+		align-items: center;
+		gap: 0.45rem;
+		width: 100%;
+		padding: 0.55rem 0.75rem;
+		cursor: pointer;
+		font-weight: 600;
+		color: var(--nav-button-color);
+		list-style: none;
+	}
+
+	.verse-group-toggle::-webkit-details-marker {
+		display: none;
+	}
+
+	.verse-group-toggle::marker {
+		content: '';
+	}
+
+	.book-toggle {
+		background: color-mix(in srgb, var(--nav-button-bg) 55%, transparent);
+	}
+
+	.chapter-toggle {
+		background: color-mix(in srgb, var(--nav-button-bg) 35%, transparent);
+		padding-left: 1rem;
+	}
+
+	.verse-toggle-icon {
+		width: 1em;
+		text-align: center;
+		color: var(--subtitle-color);
+		transition: transform 0.2s ease;
+	}
+
+	details[open] > .verse-group-toggle .verse-toggle-icon {
+		transform: rotate(90deg);
+	}
+
+	.verse-group-label {
+		min-width: 0;
+	}
+
+	.verse-group-count {
+		margin-left: auto;
+		font-size: 0.9em;
+		font-weight: 500;
+		color: var(--subtitle-color);
+	}
+
+	.verse-group-items {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+		padding: 0.5rem;
 	}
 	
 	.verse-list-item {
