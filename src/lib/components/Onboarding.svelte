@@ -8,6 +8,8 @@
 	import { translations } from '$lib/i18n/translations';
 	import Modal from './Modal.svelte';
 
+	export let startAtTutorial = false;
+
 	const dispatch = createEventDispatcher();
 
 	const STEPS = {
@@ -35,7 +37,7 @@
 		cangjie: ['尸', '竹', '廿', '大', '田', '十']
 	};
 
-	let currentStep = STEPS.language;
+	let currentStep = startAtTutorial ? STEPS.tutorialIntro : STEPS.language;
 	let selectedLanguage = 'english';
 	let selectedInputMethod = 'pinyin';
 	let selectedCharset = 'simplified';
@@ -183,12 +185,16 @@
 
 	function markOnboardingComplete() {
 		clearTutorialAnimation();
-		settings.update((current) => ({
-			...current,
-			hasCompletedOnboarding: true
-		}));
+		if (!startAtTutorial) {
+			settings.update((current) => ({
+				...current,
+				hasCompletedOnboarding: true
+			}));
+			if (browser) {
+				localStorage.setItem('hasVisitedBefore', 'true');
+			}
+		}
 		if (browser) {
-			localStorage.setItem('hasVisitedBefore', 'true');
 			localStorage.setItem('onboardingInProgress', 'false');
 		}
 		dispatch('complete');
@@ -384,7 +390,7 @@
 		}
 	}
 
-	if (browser) {
+	if (browser && !startAtTutorial) {
 		localStorage.setItem('onboardingInProgress', 'true');
 	}
 

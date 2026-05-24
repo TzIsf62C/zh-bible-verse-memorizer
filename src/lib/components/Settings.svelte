@@ -1,8 +1,11 @@
 <script>
+	import { createEventDispatcher } from 'svelte';
 	import { settings } from '$lib/stores/settings';
 	import { t } from '$lib/i18n';
 	import { browser } from '$app/environment';
 	import Modal from './Modal.svelte';
+
+	const dispatch = createEventDispatcher();
 	
 	let updateStatus = '';
 	let updateStatusType = 'info'; // 'info', 'success', 'error'
@@ -26,9 +29,7 @@
 	}
 	
 	function showTutorial() {
-		// TODO: Implement tutorial modal
-		modalMessage = 'Tutorial feature will be implemented';
-		showModal = true;
+		dispatch('viewtutorial');
 	}
 	
 	async function checkForUpdates() {

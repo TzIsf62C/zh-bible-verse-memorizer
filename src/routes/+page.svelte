@@ -40,6 +40,7 @@
 	let reviewBadgeCount = 0;
 	let lastKnownVersesSnapshot = '';
 	let showBackupReminder = false;
+	let tutorialOnlyMode = false;
 
 	$: keyboardLayout = keyboardLayouts[$settings.inputMethod] || keyboardLayouts.pinyin;
 
@@ -95,11 +96,16 @@
 	// Check if onboarding should be shown
 	$: {
 		const inProgress = browser && localStorage.getItem('onboardingInProgress') === 'true';
-		const shouldShow = !$settings.hasCompletedOnboarding && ($verses.length === 0 || inProgress);
+		const shouldShow = tutorialOnlyMode || (!$settings.hasCompletedOnboarding && ($verses.length === 0 || inProgress));
 		showOnboarding = shouldShow;
 		if (showOnboarding) {
 			showBackupReminder = false;
 		}
+	}
+
+	function openTutorialFromSettings() {
+		tutorialOnlyMode = true;
+		showOnboarding = true;
 	}
 
 	function getBackupReminderMessage() {
@@ -156,6 +162,7 @@
 	function handleOnboardingComplete() {
 		showOnboarding = false;
 		showBackupReminder = false;
+		tutorialOnlyMode = false;
 	}
 
 	function appendKeyboardInput(key) {
@@ -348,7 +355,7 @@
 		{/key}
 	{:else if currentPanel === 'settings'}
 		{#key $settings.languagePreference}
-			<Settings />
+			<Settings on:viewtutorial={openTutorialFromSettings} />
 		{/key}
 	{:else if currentPanel === 'data'}
 		{#key $settings.languagePreference}
@@ -389,7 +396,7 @@
 	
 	<!-- Onboarding overlay (shown on first run) -->
 	{#if showOnboarding}
-		<Onboarding on:complete={handleOnboardingComplete} />
+		<Onboarding startAtTutorial={tutorialOnlyMode} on:complete={handleOnboardingComplete} />
 	{/if}
 
 	<Modal
