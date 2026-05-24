@@ -21,6 +21,7 @@
 	import MenuOverlay from '$lib/components/MenuOverlay.svelte';
 	import ShareOverlay from '$lib/components/ShareOverlay.svelte';
 	import Onboarding from '$lib/components/Onboarding.svelte';
+	import Modal from '$lib/components/Modal.svelte';
 	import AchievementToast from '$lib/components/AchievementToast.svelte';
 	import { t } from '$lib/i18n/index.js';
 	import { initializeAchievementsTracking } from '$lib/stores/achievements';
@@ -38,6 +39,7 @@
 	let removeListener = () => {};
 	let reviewBadgeCount = 0;
 	let lastKnownVersesSnapshot = '';
+	let showBackupReminder = false;
 
 	$: keyboardLayout = keyboardLayouts[$settings.inputMethod] || keyboardLayouts.pinyin;
 
@@ -92,8 +94,68 @@
 	
 	// Check if onboarding should be shown
 	$: {
-		const shouldShow = !$settings.hasCompletedOnboarding && $verses.length === 0;
+		const inProgress = browser && localStorage.getItem('onboardingInProgress') === 'true';
+		const shouldShow = !$settings.hasCompletedOnboarding && ($verses.length === 0 || inProgress);
 		showOnboarding = shouldShow;
+		if (showOnboarding) {
+			showBackupReminder = false;
+		}
+	}
+
+	function getBackupReminderMessage() {
+		return `${t('backup_reminder_message')}<div style="margin-top: 16px; padding: 12px; background: var(--card-background); border-radius: 4px; font-size: 0.9em;"><p style="margin: 0 0 8px 0;"><strong>${t('backup_reminder_how')}</strong></p><p style="margin: 0;">${t('backup_reminder_steps')}</p></div>`;
+	}
+
+	function checkBackupReminder() {
+		if (!browser || showOnboarding || !$settings.hasCompletedOnboarding) {
+			return;
+		}
+
+		if ($settings.backupReminderEnabled === false) {
+			return;
+		}
+
+		const now = Date.now();
+		const lastReminderRaw = localStorage.getItem('lastBackupReminder');
+
+		if (!lastReminderRaw) {
+			localStorage.setItem('firstBackupReminder', String(now));
+			localStorage.setItem('lastBackupReminder', String(now));
+			showBackupReminder = true;
+			return;
+		}
+
+		const firstReminderRaw = localStorage.getItem('firstBackupReminder') || lastReminderRaw;
+		const lastReminder = Number(lastReminderRaw);
+		const firstReminder = Number(firstReminderRaw);
+		if (!Number.isFinite(lastReminder) || !Number.isFinite(firstReminder)) {
+			localStorage.setItem('firstBackupReminder', String(now));
+			localStorage.setItem('lastBackupReminder', String(now));
+			showBackupReminder = true;
+			return;
+		}
+
+		const daysSinceLast = (now - lastReminder) / (1000 * 60 * 60 * 24);
+		const daysSinceFirst = (now - firstReminder) / (1000 * 60 * 60 * 24);
+		const intervalDays = daysSinceFirst < 30 ? 7 : 30;
+
+		if (daysSinceLast >= intervalDays) {
+			localStorage.setItem('lastBackupReminder', String(now));
+			showBackupReminder = true;
+		}
+	}
+
+	function handleBackupReminderClick(event) {
+		const action = event.detail?.action;
+		showBackupReminder = false;
+		if (action === 'export') {
+			switchPanel('data');
+		}
+	}
+
+	function handleOnboardingComplete() {
+		showOnboarding = false;
+		showBackupReminder = false;
 	}
 
 	function appendKeyboardInput(key) {
@@ -225,10 +287,14 @@
 		window.addEventListener('keydown', handlePhysicalKey);
 		window.addEventListener(STORE_SYNC_EVENT, handleStoreSync);
 		const badgePollId = window.setInterval(syncReviewBadgeFromStorage, 250);
+		const backupReminderTimer = window.setTimeout(() => {
+			checkBackupReminder();
+		}, 350);
 		removeListener = () => {
 			window.removeEventListener('keydown', handlePhysicalKey);
 			window.removeEventListener(STORE_SYNC_EVENT, handleStoreSync);
 			window.clearInterval(badgePollId);
+			window.clearTimeout(backupReminderTimer);
 		};
 	});
 
@@ -323,6 +389,20 @@
 	
 	<!-- Onboarding overlay (shown on first run) -->
 	{#if showOnboarding}
-		<Onboarding on:complete={() => { showOnboarding = false; }} />
+		<Onboarding on:complete={handleOnboardingComplete} />
 	{/if}
+
+	<Modal
+		show={showBackupReminder}
+		title={t('backup_reminder_title')}
+		message={getBackupReminderMessage()}
+		buttons={[
+			{ label: t('backup_reminder_got_it'), action: 'dismiss', variant: 'primary' },
+			{ label: t('backup_reminder_export_now'), action: 'export', variant: 'secondary' }
+		]}
+		on:click={handleBackupReminderClick}
+		on:close={() => {
+			showBackupReminder = false;
+		}}
+	/>
 </main>

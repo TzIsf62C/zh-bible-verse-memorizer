@@ -1,0 +1,1235 @@
+<!-- Onboarding Modals -->
+<div id="onboardingLanguageModal" class="modal" aria-hidden="true">
+  <div class="modal-overlay"></div>
+  <div class="modal-content" role="dialog" aria-modal="true">
+    <img src="icons/icon-192x192.png" alt="App Icon" style="width: 80px; height: 80px; margin: 0 auto 16px; display: block;">
+    <div style="text-align: center; margin-bottom: 24px;">
+      <div style="font-size: var(--font-size-md); font-weight: 600; margin-bottom: 4px;">ZH Bible Verse Memorizer</div>
+      <div style="font-size: var(--font-size-base); color: var(--text-secondary);">聖經經文背誦 V1.0</div>
+    </div>
+    <h2>Set Language<br>设定语言 / 設定語言</h2>
+    <div class="onboarding-options">
+      <button id="onboardingLangEnglish" class="onboarding-btn" data-lang="english">English</button>
+      <button id="onboardingLangSimplified" class="onboarding-btn" data-lang="simplified">简体中文</button>
+      <button id="onboardingLangTraditional" class="onboarding-btn" data-lang="traditional">繁體中文</button>
+    </div>
+  </div>
+</div>
+
+<div id="onboardingInstallModal" class="modal" aria-hidden="true">
+  <div class="modal-overlay"></div>
+  <div class="modal-content" role="dialog" aria-modal="true">
+    <h2 id="onboardingInstallTitle" data-i18n="install_app_title">Install App</h2>
+    <div id="onboardingInstallInstructions" style="margin: 20px 0; line-height: 1.6;"></div>
+    <div class="onboarding-options">
+      <button id="onboardingInstallSkip" class="onboarding-btn" data-i18n="skip">Skip</button>
+    </div>
+  </div>
+</div>
+
+<div id="onboardingInputMethodModal" class="modal" aria-hidden="true">
+  <div class="modal-overlay"></div>
+  <div class="modal-content" role="dialog" aria-modal="true">
+    <h2 id="onboardingInputMethodTitle"></h2>
+    <div class="onboarding-options">
+      <button id="onboardingInputPinyin" class="onboarding-btn" data-method="pinyin" data-i18n="input_pinyin">Pinyin</button>
+      <button id="onboardingInputZhuyin" class="onboarding-btn" data-method="zhuyin" data-i18n="input_zhuyin">Zhuyin (注音)</button>
+      <button id="onboardingInputCangjie" class="onboarding-btn" data-method="cangjie" data-i18n="input_cangjie">Cangjie (倉頡)</button>
+    </div>
+  </div>
+</div>
+
+<div id="onboardingCharsetModal" class="modal" aria-hidden="true">
+  <div class="modal-overlay"></div>
+  <div class="modal-content" role="dialog" aria-modal="true">
+    <h2>Choose Character Set</h2>
+    <p style="margin: 16px 0; color: var(--text-secondary);">This can be changed in Settings</p>
+    <div class="onboarding-options">
+      <button id="onboardingCharsetSimplified" class="onboarding-btn">Simplified (简体)</button>
+      <button id="onboardingCharsetTraditional" class="onboarding-btn">Traditional (繁體)</button>
+    </div>
+  </div>
+</div>
+<!-- End Onboarding Modals -->
+
+<!-- Learning Mode Tutorial Modals -->
+<div id="tutorialIntroModal" class="modal" aria-hidden="true">
+  <div class="modal-overlay"></div>
+  <div class="modal-content" role="dialog" aria-modal="true">
+    <h2 id="tutorialIntroTitle" data-i18n="tutorial_intro_title">Learning Method</h2>
+    <p id="tutorialIntroDesc" data-i18n="tutorial_intro_desc">This app uses a three-stage memorization method to help you learn Bible verses:</p>
+    
+    <div class="tutorial-stages-list">
+      <div class="tutorial-stage-item">
+        <div class="tutorial-stage-number">1</div>
+        <div class="tutorial-stage-info">
+          <h3 data-i18n="basic">Basic</h3>
+          <p data-i18n="tutorial_intro_basic">Full text visible</p>
+        </div>
+      </div>
+      <div class="tutorial-stage-item">
+        <div class="tutorial-stage-number">2</div>
+        <div class="tutorial-stage-info">
+          <h3 data-i18n="intermediate">Intermediate</h3>
+          <p data-i18n="tutorial_intro_intermediate">Every other character hidden</p>
+        </div>
+      </div>
+      <div class="tutorial-stage-item">
+        <div class="tutorial-stage-number">3</div>
+        <div class="tutorial-stage-info">
+          <h3 data-i18n="advanced">Advanced</h3>
+          <p data-i18n="tutorial_intro_advanced">Pure recall with no hints</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="onboarding-options">
+      <button id="tutorialIntroStart" class="onboarding-btn tutorial-start-btn" data-i18n="tutorial_start">Start Tutorial</button>
+      <button id="tutorialIntroSkip" class="onboarding-btn" data-i18n="skip">Skip</button>
+    </div>
+  </div>
+</div>
+
+<div id="tutorialBasicModal" class="modal" aria-hidden="true">
+  <div class="modal-overlay"></div>
+  <div class="modal-content" role="dialog" aria-modal="true">
+    <h2 id="tutorialBasicTitle" data-i18n="tutorial_basic_title">Basic Stage</h2>
+    <p id="tutorialBasicDesc" data-i18n="tutorial_basic_desc">The verse text is fully displayed. Type the first key for each character according to your input method.</p>
+    
+    <div class="tutorial-example">
+      <table class="tutorial-table">
+        <tr id="tutorialBasicChars">
+          <td><span class="tutorial-char" data-index="0">耶</span></td>
+          <td><span class="tutorial-char" data-index="1">和</span></td>
+          <td><span class="tutorial-char" data-index="2">華</span></td>
+          <td><span class="tutorial-char" data-index="3">有</span></td>
+          <td><span class="tutorial-char" data-index="4">恩</span></td>
+          <td><span class="tutorial-char" data-index="5">惠</span></td>
+        </tr>
+        <tr class="tutorial-arrows">
+          <td>↑</td>
+          <td>↑</td>
+          <td>↑</td>
+          <td>↑</td>
+          <td>↑</td>
+          <td>↑</td>
+        </tr>
+        <tr id="tutorialBasicKeys" class="tutorial-keys">
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+      </table>
+    </div>
+    
+    <p id="tutorialBasicNote" data-i18n="tutorial_basic_note">Characters will change color as you type.</p>
+    <div class="onboarding-options">
+      <button id="tutorialBasicContinue" class="onboarding-btn" data-i18n="continue">Continue</button>
+    </div>
+  </div>
+</div>
+
+<div id="tutorialIntermediateModal" class="modal" aria-hidden="true">
+  <div class="modal-overlay"></div>
+  <div class="modal-content" role="dialog" aria-modal="true">
+    <h2 id="tutorialIntermediateTitle" data-i18n="tutorial_intermediate_title">Intermediate Stage</h2>
+    <p id="tutorialIntermediateDesc" data-i18n="tutorial_intermediate_desc">Every other character is hidden. Type a key for each character, even the hidden ones. They will appear as you type.</p>
+    
+    <div class="tutorial-example">
+      <table class="tutorial-table">
+        <tr id="tutorialIntermediateChars">
+          <td><span class="tutorial-char" data-index="0">耶</span></td>
+          <td><span class="tutorial-char tutorial-hidden" data-index="1">和</span></td>
+          <td><span class="tutorial-char" data-index="2">華</span></td>
+          <td><span class="tutorial-char tutorial-hidden" data-index="3">有</span></td>
+          <td><span class="tutorial-char" data-index="4">恩</span></td>
+          <td><span class="tutorial-char tutorial-hidden" data-index="5">惠</span></td>
+        </tr>
+        <tr class="tutorial-arrows">
+          <td>↑</td>
+          <td>↑</td>
+          <td>↑</td>
+          <td>↑</td>
+          <td>↑</td>
+          <td>↑</td>
+        </tr>
+        <tr id="tutorialIntermediateKeys" class="tutorial-keys">
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+      </table>
+    </div>
+    
+    <div class="onboarding-options">
+      <button id="tutorialIntermediateContinue" class="onboarding-btn" data-i18n="continue">Continue</button>
+    </div>
+  </div>
+</div>
+
+<div id="tutorialAdvancedModal" class="modal" aria-hidden="true">
+  <div class="modal-overlay"></div>
+  <div class="modal-content" role="dialog" aria-modal="true">
+    <h2 id="tutorialAdvancedTitle" data-i18n="tutorial_advanced_title">Advanced Stage</h2>
+    <p id="tutorialAdvancedDesc" data-i18n="tutorial_advanced_desc">No text is shown. The characters will appear as you type the correct keys.</p>
+    
+
+    
+    <div class="tutorial-example">
+      <table class="tutorial-table">
+        <tr id="tutorialAdvancedChars">
+          <td><span class="tutorial-char tutorial-hidden" data-index="0">耶</span></td>
+          <td><span class="tutorial-char tutorial-hidden" data-index="1">和</span></td>
+          <td><span class="tutorial-char tutorial-hidden" data-index="2">華</span></td>
+          <td><span class="tutorial-char tutorial-hidden" data-index="3">有</span></td>
+          <td><span class="tutorial-char tutorial-hidden" data-index="4">恩</span></td>
+          <td><span class="tutorial-char tutorial-hidden" data-index="5">惠</span></td>
+        </tr>
+        <tr class="tutorial-arrows">
+          <td>↑</td>
+          <td>↑</td>
+          <td>↑</td>
+          <td>↑</td>
+          <td>↑</td>
+          <td>↑</td>
+        </tr>
+        <tr id="tutorialAdvancedKeys" class="tutorial-keys">
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+      </table>
+    </div>
+
+    <div style="margin: 16px 0; padding: 12px; background: var(--card-background); border-radius: 4px; font-size: 0.9em;">
+      <p style="margin: 0 0 8px 0;" id="tutorialAdvancedComplete" data-i18n="tutorial_advanced_complete"><strong>Completing a verse:</strong></p>
+      <p style="margin: 0;" id="tutorialAdvancedSpaced" data-i18n="tutorial_advanced_spaced">When you achieve 90% or higher accuracy on the Advanced stage, the verse will be marked as learned. The spaced repetition system will then remind you to review your learned verses at optimal intervals.</p>
+    </div>
+    
+    <div class="onboarding-options">
+      <button id="tutorialAdvancedBegin" class="onboarding-btn" data-i18n="begin">Begin</button>
+    </div>
+  </div>
+</div>
+<!-- End Tutorial Modals -->
+
+<!-- Backup Reminder Modal -->
+<div id="backupReminderModal" class="modal" aria-hidden="true">
+  <div class="modal-overlay"></div>
+  <div class="modal-content" role="dialog" aria-modal="true">
+    <h2 data-i18n="backup_reminder_title">⚠️ Backup Reminder</h2>
+    <p data-i18n="backup_reminder_message">Your verses and progress are stored locally on this device. If you clear your browser data or uninstall the app, all data will be lost. Please export your data regularly as a backup!</p>
+    <div style="margin-top: 16px; padding: 12px; background: var(--card-background); border-radius: 4px; font-size: 0.9em;">
+      <p style="margin: 0 0 8px 0;"><strong data-i18n="backup_reminder_how">How to backup:</strong></p>
+      <p style="margin: 0;" data-i18n="backup_reminder_steps">Go to Export & Import → Download Data → Save the file to a safe location (cloud storage recommended)</p>
+    </div>
+    <div class="modal-buttons" style="margin-top: 24px;">
+      <button id="backupReminderGotItBtn" data-i18n="backup_reminder_got_it">Got it!</button>
+      <button id="backupReminderExportBtn" data-i18n="backup_reminder_export_now" style="display: none;">Export Now</button>
+    </div>
+  </div>
+</div>
+<!-- End Backup Reminder Modal -->
+
+// Onboarding Flow for First-Time Users
+  const onboardingLanguageModal = document.getElementById('onboardingLanguageModal');
+  const onboardingInstallModal = document.getElementById('onboardingInstallModal');
+  const onboardingInstallTitle = document.getElementById('onboardingInstallTitle');
+  const onboardingInstallInstructions = document.getElementById('onboardingInstallInstructions');
+  const onboardingInstallSkip = document.getElementById('onboardingInstallSkip');
+  const onboardingInputMethodModal = document.getElementById('onboardingInputMethodModal');
+  const onboardingInputMethodTitle = document.getElementById('onboardingInputMethodTitle');
+  const onboardingCharsetModal = document.getElementById('onboardingCharsetModal');
+
+  const inputMethodTitles = {
+    english: 'Choose Input Method',
+    simplified: '选择输入法',
+    traditional: '選擇輸入法'
+  };
+
+  function showOnboardingLanguageModal() {
+    onboardingLanguageModal.style.display = 'block';
+    onboardingLanguageModal.classList.add('open');
+    onboardingLanguageModal.setAttribute('aria-hidden', 'false');
+  }
+
+  function hideOnboardingLanguageModal() {
+    onboardingLanguageModal.style.display = 'none';
+    onboardingLanguageModal.classList.remove('open');
+    onboardingLanguageModal.setAttribute('aria-hidden', 'true');
+  }
+
+  // Check if app is running in standalone mode (already installed)
+  function isStandalone() {
+    return window.matchMedia('(display-mode: standalone)').matches || 
+           window.navigator.standalone === true;
+  }
+
+  // Detect platform for installation instructions
+  function detectPlatform() {
+    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+    
+    // iOS Safari
+    if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
+      return 'ios_safari';
+    }
+    
+    // Android Chrome
+    if (/android/i.test(userAgent)) {
+      return 'android_chrome';
+    }
+    
+    // Desktop (Windows, Mac, Linux)
+    if (!/mobile/i.test(userAgent)) {
+      return 'desktop';
+    }
+    
+    // Fallback for other browsers/devices
+    return 'browser_generic';
+  }
+
+  function showOnboardingInstallModal(language) {
+    const platform = detectPlatform();
+    
+    // Update title and button text
+    onboardingInstallTitle.textContent = t('install_app_title', language);
+    onboardingInstallSkip.textContent = t('skip', language);
+    
+    // Set instructions based on detected platform
+    onboardingInstallInstructions.innerHTML = t(`install_${platform}`, language);
+    
+    // Show modal
+    onboardingInstallModal.style.display = 'block';
+    onboardingInstallModal.classList.add('open');
+    onboardingInstallModal.setAttribute('aria-hidden', 'false');
+  }
+
+  function hideOnboardingInstallModal() {
+    onboardingInstallModal.style.display = 'none';
+    onboardingInstallModal.classList.remove('open');
+    onboardingInstallModal.setAttribute('aria-hidden', 'true');
+  }
+
+  function showOnboardingInputMethodModal(language) {
+    // Set the title based on language
+    onboardingInputMethodTitle.textContent = inputMethodTitles[language];
+    
+    // Apply translations to the buttons
+    applyLanguage(language);
+    
+    onboardingInputMethodModal.style.display = 'block';
+    onboardingInputMethodModal.classList.add('open');
+    onboardingInputMethodModal.setAttribute('aria-hidden', 'false');
+  }
+
+  function hideOnboardingInputMethodModal() {
+    onboardingInputMethodModal.style.display = 'none';
+    onboardingInputMethodModal.classList.remove('open');
+    onboardingInputMethodModal.setAttribute('aria-hidden', 'true');
+  }
+
+  function showOnboardingCharsetModal() {
+    onboardingCharsetModal.style.display = 'block';
+    onboardingCharsetModal.classList.add('open');
+    onboardingCharsetModal.setAttribute('aria-hidden', 'false');
+  }
+
+  function hideOnboardingCharsetModal() {
+    onboardingCharsetModal.style.display = 'none';
+    onboardingCharsetModal.classList.remove('open');
+    onboardingCharsetModal.setAttribute('aria-hidden', 'true');
+  }
+
+  async function loadSampleVerses(inputMethod, charset) {
+    const language = localStorage.getItem('languagePreference') || 'english';
+    
+    // Map input method and language to sample file
+    let fileName;
+    if (inputMethod === 'pinyin') {
+      // For pinyin, use charset parameter if provided (for English users),
+      // otherwise use language-specific samples
+      if (charset) {
+        fileName = charset === 'traditional' ? 'PY-Samples-zht.json' : 'PY-Samples-zhs.json';
+      } else if (language === 'traditional') {
+        fileName = 'PY-Samples-zht.json';
+      } else {
+        // Use simplified for both 'simplified' and 'english' language settings
+        fileName = 'PY-Samples-zhs.json';
+      }
+    } else if (inputMethod === 'zhuyin') {
+      fileName = 'ZY-Samples.json';
+    } else if (inputMethod === 'cangjie') {
+      fileName = 'CJ-Samples.json';
+    }
+
+    if (!fileName) return;
+
+    try {
+      const response = await fetch(fileName);
+      const data = await response.json();
+
+      if (data.verses && data.verses.length > 0) {
+        // Import verses
+        const currentVerses = JSON.parse(localStorage.getItem('verses') || '[]');
+        const mergedVerses = [...currentVerses, ...data.verses];
+        localStorage.setItem('verses', JSON.stringify(mergedVerses));
+      }
+
+      if (data.collections && data.collections.length > 0) {
+        // Import collections
+        const currentCollections = getCollections();
+        
+        // Build lookup from verse ref -> id
+        const allVerses = JSON.parse(localStorage.getItem('verses') || '[]');
+        function findIdByRef(ref) {
+          const v = allVerses.find(x => 
+            x.bookName === ref.bookName && 
+            String(x.chapterNumber) === String(ref.chapterNumber) && 
+            String(x.verseNumber) === String(ref.verseNumber)
+          );
+          return v ? v.id : null;
+        }
+
+        data.collections.forEach(ic => {
+          const ids = (ic.verseRefs || []).map(findIdByRef).filter(Boolean);
+          if (ids.length > 0) {
+            currentCollections.push({
+              id: Date.now().toString() + Math.random().toString(36).slice(2, 8),
+              title: ic.title,
+              verseIds: ids
+            });
+          }
+        });
+        
+        saveCollections(currentCollections);
+      }
+    } catch (error) {
+      console.error('Error loading sample verses:', error);
+    }
+  }
+
+  // Language selection handlers
+  document.getElementById('onboardingLangEnglish').addEventListener('click', () => {
+    localStorage.setItem('languagePreference', 'english');
+    hideOnboardingLanguageModal();
+    
+    // Check if app is already installed (standalone mode)
+    if (isStandalone()) {
+      // Skip install modal, go directly to input method
+      showOnboardingInputMethodModal('english');
+    } else {
+      // Show install instructions
+      showOnboardingInstallModal('english');
+    }
+  });
+
+  document.getElementById('onboardingLangSimplified').addEventListener('click', () => {
+    localStorage.setItem('languagePreference', 'simplified');
+    hideOnboardingLanguageModal();
+    
+    // Check if app is already installed (standalone mode)
+    if (isStandalone()) {
+      // Skip install modal, go directly to input method
+      showOnboardingInputMethodModal('simplified');
+    } else {
+      // Show install instructions
+      showOnboardingInstallModal('simplified');
+    }
+  });
+
+  document.getElementById('onboardingLangTraditional').addEventListener('click', () => {
+    localStorage.setItem('languagePreference', 'traditional');
+    hideOnboardingLanguageModal();
+    
+    // Check if app is already installed (standalone mode)
+    if (isStandalone()) {
+      // Skip install modal, go directly to input method
+      showOnboardingInputMethodModal('traditional');
+    } else {
+      // Show install instructions
+      showOnboardingInstallModal('traditional');
+    }
+  });
+
+  // Install modal button handlers
+  onboardingInstallSkip.addEventListener('click', () => {
+    const language = localStorage.getItem('languagePreference') || 'english';
+    hideOnboardingInstallModal();
+    showOnboardingInputMethodModal(language);
+  });
+
+  // Input method selection handlers
+  document.getElementById('onboardingInputPinyin').addEventListener('click', async () => {
+    localStorage.setItem('inputMethod', 'pinyin');
+    hideOnboardingInputMethodModal();
+    
+    const language = localStorage.getItem('languagePreference') || 'english';
+    
+    // For English users, show charset selection modal
+    if (language === 'english') {
+      showOnboardingCharsetModal();
+    } else {
+      // For Chinese users, set charset based on language and continue
+      const charset = language === 'traditional' ? 'traditional' : 'simplified';
+      localStorage.setItem('bookNameCharset', charset);
+      rebuildBibleBooks();
+      
+      await loadSampleVerses('pinyin');
+      updateInputMethodLabels();
+      applyLanguage();
+      localStorage.setItem('hasVisitedBefore', 'true');
+      
+      // Show backup reminder on first visit
+      const now = new Date().getTime();
+      localStorage.setItem('firstBackupReminder', now.toString());
+      localStorage.setItem('lastBackupReminder', now.toString());
+      showBackupReminderModal(true); // true = onboarding mode, hides Export Now button
+      
+      // After user dismisses backup reminder, show tutorial intro
+      const onModalClose = () => {
+        showTutorialIntroModal();
+      };
+      
+      // Update event listeners to call onModalClose
+      backupReminderGotItBtn.removeEventListener('click', hideBackupReminderModal);
+      backupReminderGotItBtn.addEventListener('click', () => {
+        hideBackupReminderModal();
+        onModalClose();
+      }, { once: true });
+      
+      backupReminderExportBtn.removeEventListener('click', hideBackupReminderModal);
+      backupReminderExportBtn.addEventListener('click', () => {
+        hideBackupReminderModal();
+        showPanel(exportImportPanel);
+      }, { once: true });
+    }
+  });
+
+  document.getElementById('onboardingInputZhuyin').addEventListener('click', async () => {
+    localStorage.setItem('inputMethod', 'zhuyin');
+    
+    // Set book name charset based on language: if simplified use that, otherwise Zhuyin defaults to traditional
+    const language = localStorage.getItem('languagePreference') || 'english';
+    const charset = language === 'simplified' ? 'simplified' : 'traditional';
+    localStorage.setItem('bookNameCharset', charset);
+    rebuildBibleBooks();
+    
+    hideOnboardingInputMethodModal();
+    await loadSampleVerses('zhuyin');
+    updateInputMethodLabels();
+    applyLanguage();
+    localStorage.setItem('hasVisitedBefore', 'true');
+    
+    // Show backup reminder on first visit
+    const now = new Date().getTime();
+    localStorage.setItem('firstBackupReminder', now.toString());
+    localStorage.setItem('lastBackupReminder', now.toString());
+    showBackupReminderModal(true); // true = onboarding mode, hides Export Now button
+    
+    // After user dismisses backup reminder, show tutorial intro
+    const onModalClose = () => {
+      showTutorialIntroModal();
+    };
+    
+    // Update event listeners to call onModalClose
+    backupReminderGotItBtn.removeEventListener('click', hideBackupReminderModal);
+    backupReminderGotItBtn.addEventListener('click', () => {
+      hideBackupReminderModal();
+      onModalClose();
+    }, { once: true });
+    
+    backupReminderExportBtn.removeEventListener('click', hideBackupReminderModal);
+    backupReminderExportBtn.addEventListener('click', () => {
+      hideBackupReminderModal();
+      showPanel(exportImportPanel);
+    }, { once: true });
+  });
+
+  document.getElementById('onboardingInputCangjie').addEventListener('click', async () => {
+    localStorage.setItem('inputMethod', 'cangjie');
+    
+    // Set book name charset based on language: if simplified use that, otherwise Cangjie defaults to traditional
+    const language = localStorage.getItem('languagePreference') || 'english';
+    const charset = language === 'simplified' ? 'simplified' : 'traditional';
+    localStorage.setItem('bookNameCharset', charset);
+    rebuildBibleBooks();
+    
+    hideOnboardingInputMethodModal();
+    await loadSampleVerses('cangjie');
+    updateInputMethodLabels();
+    applyLanguage();
+    localStorage.setItem('hasVisitedBefore', 'true');
+    
+    // Show backup reminder on first visit
+    const now = new Date().getTime();
+    localStorage.setItem('firstBackupReminder', now.toString());
+    localStorage.setItem('lastBackupReminder', now.toString());
+    showBackupReminderModal(true); // true = onboarding mode, hides Export Now button
+    
+    // After user dismisses backup reminder, show tutorial intro
+    const onModalClose = () => {
+      showTutorialIntroModal();
+    };
+    
+    // Update event listeners to call onModalClose
+    backupReminderGotItBtn.removeEventListener('click', hideBackupReminderModal);
+    backupReminderGotItBtn.addEventListener('click', () => {
+      hideBackupReminderModal();
+      onModalClose();
+    }, { once: true });
+    
+    backupReminderExportBtn.removeEventListener('click', hideBackupReminderModal);
+    backupReminderExportBtn.addEventListener('click', () => {
+      hideBackupReminderModal();
+      showPanel(exportImportPanel);
+    }, { once: true });
+  });
+
+  // Character set selection handlers (for English + Pinyin users only)
+  document.getElementById('onboardingCharsetSimplified').addEventListener('click', async () => {
+    localStorage.setItem('bookNameCharset', 'simplified');
+    rebuildBibleBooks();
+    hideOnboardingCharsetModal();
+    
+    await loadSampleVerses('pinyin', 'simplified');
+    updateInputMethodLabels();
+    applyLanguage();
+    localStorage.setItem('hasVisitedBefore', 'true');
+    
+    // Show backup reminder on first visit
+    const now = new Date().getTime();
+    localStorage.setItem('firstBackupReminder', now.toString());
+    localStorage.setItem('lastBackupReminder', now.toString());
+    showBackupReminderModal(true);
+    
+    // After user dismisses backup reminder, show tutorial intro
+    const onModalClose = () => {
+      showTutorialIntroModal();
+    };
+    
+    backupReminderGotItBtn.removeEventListener('click', hideBackupReminderModal);
+    backupReminderGotItBtn.addEventListener('click', () => {
+      hideBackupReminderModal();
+      onModalClose();
+    }, { once: true });
+    
+    backupReminderExportBtn.removeEventListener('click', hideBackupReminderModal);
+    backupReminderExportBtn.addEventListener('click', () => {
+      hideBackupReminderModal();
+      showPanel(exportImportPanel);
+    }, { once: true });
+  });
+
+  document.getElementById('onboardingCharsetTraditional').addEventListener('click', async () => {
+    localStorage.setItem('bookNameCharset', 'traditional');
+    rebuildBibleBooks();
+    hideOnboardingCharsetModal();
+    
+    await loadSampleVerses('pinyin', 'traditional');
+    updateInputMethodLabels();
+    applyLanguage();
+    localStorage.setItem('hasVisitedBefore', 'true');
+    
+    // Show backup reminder on first visit
+    const now = new Date().getTime();
+    localStorage.setItem('firstBackupReminder', now.toString());
+    localStorage.setItem('lastBackupReminder', now.toString());
+    showBackupReminderModal(true);
+    
+    // After user dismisses backup reminder, show tutorial intro
+    const onModalClose = () => {
+      showTutorialIntroModal();
+    };
+    
+    backupReminderGotItBtn.removeEventListener('click', hideBackupReminderModal);
+    backupReminderGotItBtn.addEventListener('click', () => {
+      hideBackupReminderModal();
+      onModalClose();
+    }, { once: true });
+    
+    backupReminderExportBtn.removeEventListener('click', hideBackupReminderModal);
+    backupReminderExportBtn.addEventListener('click', () => {
+      hideBackupReminderModal();
+      showPanel(exportImportPanel);
+    }, { once: true });
+  });
+
+  // Check if first time user and show onboarding (must be at end after all initialization)
+  function checkFirstTimeUser() {
+    const hasVisitedBefore = localStorage.getItem('hasVisitedBefore');
+    
+    if (!hasVisitedBefore) {
+      // First time user - show onboarding flow
+      showOnboardingLanguageModal();
+    } else {
+      // Check if we should show backup reminder
+      checkBackupReminder();
+    }
+  }
+  
+  // Backup Reminder Functions
+  function showBackupReminderModal(isOnboarding = false) {
+    if (!backupReminderModal) return;
+    backupReminderModal.style.display = 'flex';
+    backupReminderModal.classList.add('open');
+    backupReminderModal.setAttribute('aria-hidden', 'false');
+    
+    // Show/hide "Export Now" button based on context
+    if (backupReminderExportBtn) {
+      backupReminderExportBtn.style.display = isOnboarding ? 'none' : 'inline-block';
+    }
+  }
+  
+  function hideBackupReminderModal() {
+    if (!backupReminderModal) return;
+    backupReminderModal.style.display = 'none';
+    backupReminderModal.classList.remove('open');
+    backupReminderModal.setAttribute('aria-hidden', 'true');
+    
+    // Reset "Export Now" button to hidden (default state)
+    if (backupReminderExportBtn) {
+      backupReminderExportBtn.style.display = 'none';
+    }
+  }
+  
+  function checkBackupReminder() {
+    const isEnabled = localStorage.getItem('backupReminderEnabled');
+    // Default to enabled if not set
+    if (isEnabled === 'false') return;
+    
+    const lastReminder = localStorage.getItem('lastBackupReminder');
+    const now = new Date().getTime();
+    
+    if (!lastReminder) {
+      // Never shown before - show it now
+      showBackupReminderModal();
+      localStorage.setItem('lastBackupReminder', now.toString());
+      return;
+    }
+    
+    const daysSinceLastReminder = (now - parseInt(lastReminder)) / (1000 * 60 * 60 * 24);
+    const firstReminderDate = parseInt(localStorage.getItem('firstBackupReminder') || lastReminder);
+    const daysSinceFirstReminder = (now - firstReminderDate) / (1000 * 60 * 60 * 24);
+    
+    // Show weekly for first 30 days, then monthly
+    const reminderInterval = daysSinceFirstReminder < 30 ? 7 : 30;
+    
+    if (daysSinceLastReminder >= reminderInterval) {
+      showBackupReminderModal();
+      localStorage.setItem('lastBackupReminder', now.toString());
+    }
+  }
+  
+  // Tutorial Modal Functions
+  let tutorialAnimationInterval = null;
+  
+  function showTutorialIntroModal() {
+    console.log('=== TUTORIAL MODAL DEBUG ===');
+    console.log('Current Settings:');
+    console.log('  Language:', localStorage.getItem('languagePreference') || 'english');
+    console.log('  Input Method:', localStorage.getItem('inputMethod') || 'pinyin');
+    console.log('  Character Set (Books):', localStorage.getItem('bookNameCharset') || 'simplified');
+    console.log('==========================');
+    
+    // Stop any running tutorial animations
+    if (tutorialAnimationInterval) {
+      console.log('Stopping existing tutorial animation...');
+      clearInterval(tutorialAnimationInterval);
+      tutorialAnimationInterval = null;
+    }
+    
+    tutorialIntroModal.style.display = 'block';
+    tutorialIntroModal.classList.add('open');
+    tutorialIntroModal.setAttribute('aria-hidden', 'false');
+  }
+  
+  function hideTutorialIntroModal() {
+    tutorialIntroModal.style.display = 'none';
+    tutorialIntroModal.classList.remove('open');
+    tutorialIntroModal.setAttribute('aria-hidden', 'true');
+  }
+  
+  // Get keystroke mappings for the selected input method
+  function getTutorialKeystrokes() {
+    const inputMethod = localStorage.getItem('inputMethod') || 'pinyin';
+    const keyMappings = {
+      'pinyin': ['y', 'h', 'h', 'y', 'e', 'h'],
+      'zhuyin': ['ㄧ', 'ㄏ', 'ㄏ', 'ㄧ', 'ㄣ', 'ㄏ'],
+      'cangjie': ['尸', '竹', '廿', '大', '田', '十']
+    };
+    const keys = keyMappings[inputMethod] || keyMappings['pinyin'];
+    
+    console.log('Tutorial Keystrokes:');
+    console.log('  Input Method:', inputMethod);
+    console.log('  Keys:', keys);
+    
+    return keys;
+  }
+  
+  function startTutorialAnimation(stage) {
+    console.log(`--- Starting ${stage} Animation ---`);
+    
+    // Stop any existing animation
+    if (tutorialAnimationInterval) {
+      clearInterval(tutorialAnimationInterval);
+    }
+    
+    const chars = document.querySelectorAll(`#tutorial${stage}Chars .tutorial-char`);
+    const keysContainer = document.getElementById(`tutorial${stage}Keys`);
+    const keystrokes = getTutorialKeystrokes();
+    
+    console.log(`${stage} Animation Setup:`);
+    console.log('  Chinese Characters:', Array.from(chars).map(c => c.textContent));
+    console.log('  Keys Container:', keysContainer ? 'Found' : 'NOT FOUND');
+    console.log('  Number of chars:', chars.length);
+    console.log('  Number of keystrokes:', keystrokes.length);
+    
+    let currentIndex = 0;
+    
+    function animateStep() {
+      console.log(`  Resetting animation for ${stage} stage...`);
+      
+      // Reset all characters
+      chars.forEach((char, idx) => {
+        if (stage === 'Basic') {
+          char.classList.remove('tutorial-typed');
+          char.classList.remove('tutorial-hidden');
+          console.log(`    Char ${idx} (${char.textContent}): visible, not typed`);
+        } else if (stage === 'Intermediate') {
+          char.classList.remove('tutorial-typed');
+          if (idx % 2 === 1) {
+            char.classList.add('tutorial-hidden');
+            console.log(`    Char ${idx} (${char.textContent}): HIDDEN`);
+          } else {
+            char.classList.remove('tutorial-hidden');
+            console.log(`    Char ${idx} (${char.textContent}): visible, not typed`);
+          }
+        } else if (stage === 'Advanced') {
+          char.classList.remove('tutorial-typed');
+          char.classList.add('tutorial-hidden');
+          console.log(`    Char ${idx} (${char.textContent}): HIDDEN`);
+        }
+      });
+      
+      // Clear and setup keystrokes (all present but hidden) in table cells
+      const keyCells = keysContainer.querySelectorAll('td');
+      keyCells.forEach((cell, idx) => {
+        cell.innerHTML = '';
+        if (idx < keystrokes.length) {
+          const keySpan = document.createElement('span');
+          keySpan.textContent = keystrokes[idx];
+          cell.appendChild(keySpan);
+          console.log(`    Key ${idx}: ${keystrokes[idx]} (added as hidden)`);
+        }
+      });
+      const keySpans = keysContainer.querySelectorAll('span');
+      
+      currentIndex = 0;
+      
+      // Animate typing - store in global variable so it can be stopped
+      tutorialAnimationInterval = setInterval(() => {
+        if (currentIndex >= chars.length) {
+          console.log(`  Animation complete for ${stage}, restarting in 1s...`);
+          clearInterval(tutorialAnimationInterval);
+          // Wait 1 second before restarting the animation loop
+          tutorialAnimationInterval = setTimeout(() => {
+            animateStep();
+          }, 1000);
+          return;
+        }
+        
+        console.log(`  Step ${currentIndex}: Show key[${keystrokes[currentIndex]}], reveal char[${chars[currentIndex].textContent}]`);
+        
+        // Show keystroke
+        keySpans[currentIndex].classList.add('visible');
+        
+        // Reveal character and mark as typed
+        chars[currentIndex].classList.remove('tutorial-hidden');
+        chars[currentIndex].classList.add('tutorial-typed');
+        
+        currentIndex++;
+      }, 500);
+    }
+    
+    animateStep();
+  }
+  
+  function showTutorialBasicModal() {
+    tutorialBasicModal.style.display = 'block';
+    tutorialBasicModal.classList.add('open');
+    tutorialBasicModal.setAttribute('aria-hidden', 'false');
+    startTutorialAnimation('Basic');
+  }
+  
+  function hideTutorialBasicModal() {
+    tutorialBasicModal.style.display = 'none';
+    tutorialBasicModal.classList.remove('open');
+    tutorialBasicModal.setAttribute('aria-hidden', 'true');
+    if (tutorialAnimationInterval) {
+      clearInterval(tutorialAnimationInterval);
+      tutorialAnimationInterval = null;
+    }
+  }
+  
+  function showTutorialIntermediateModal() {
+    tutorialIntermediateModal.style.display = 'block';
+    tutorialIntermediateModal.classList.add('open');
+    tutorialIntermediateModal.setAttribute('aria-hidden', 'false');
+    startTutorialAnimation('Intermediate');
+  }
+  
+  function hideTutorialIntermediateModal() {
+    tutorialIntermediateModal.style.display = 'none';
+    tutorialIntermediateModal.classList.remove('open');
+    tutorialIntermediateModal.setAttribute('aria-hidden', 'true');
+    if (tutorialAnimationInterval) {
+      clearInterval(tutorialAnimationInterval);
+      tutorialAnimationInterval = null;
+    }
+  }
+  
+  function showTutorialAdvancedModal() {
+    tutorialAdvancedModal.style.display = 'block';
+    tutorialAdvancedModal.classList.add('open');
+    tutorialAdvancedModal.setAttribute('aria-hidden', 'false');
+    startTutorialAnimation('Advanced');
+  }
+  
+  function hideTutorialAdvancedModal() {
+    tutorialAdvancedModal.style.display = 'none';
+    tutorialAdvancedModal.classList.remove('open');
+    tutorialAdvancedModal.setAttribute('aria-hidden', 'true');
+    if (tutorialAnimationInterval) {
+      clearInterval(tutorialAnimationInterval);
+      tutorialAnimationInterval = null;
+    }
+  }
+  
+  // Tutorial Event Listeners
+  if (tutorialIntroStart) {
+    tutorialIntroStart.addEventListener('click', () => {
+      hideTutorialIntroModal();
+      showTutorialBasicModal();
+    });
+  }
+  
+  if (tutorialIntroSkip) {
+    tutorialIntroSkip.addEventListener('click', () => {
+      hideTutorialIntroModal();
+      localStorage.setItem('hasCompletedOnboarding', 'true');
+      showPanel(learnPanel);
+      const unlearnedList = populateUnlearnedSelector();
+      if (unlearnedList && unlearnedList.length > 0) {
+        startLearnMode(unlearnedList[0]);
+        setLearningStage('basic');
+      }
+    });
+  }
+  
+  if (tutorialBasicContinue) {
+    tutorialBasicContinue.addEventListener('click', () => {
+      hideTutorialBasicModal();
+      showTutorialIntermediateModal();
+    });
+  }
+  
+  if (tutorialIntermediateContinue) {
+    tutorialIntermediateContinue.addEventListener('click', () => {
+      hideTutorialIntermediateModal();
+      showTutorialAdvancedModal();
+    });
+  }
+  
+  if (tutorialAdvancedBegin) {
+    tutorialAdvancedBegin.addEventListener('click', () => {
+      hideTutorialAdvancedModal();
+      localStorage.setItem('hasCompletedOnboarding', 'true');
+      showPanel(learnPanel);
+      setActiveNavButton(learnBtn);
+      const unlearnedList = populateUnlearnedSelector();
+      if (unlearnedList && unlearnedList.length > 0) {
+        startLearnMode(unlearnedList[0]);
+        setLearningStage('basic');
+      }
+    });
+  }
+  
+  // Add Verse Tutorial Modal Event Listener
+  const addVerseTutorialGotIt = document.getElementById('addVerseTutorialGotIt');
+  if (addVerseTutorialGotIt) {
+    addVerseTutorialGotIt.addEventListener('click', () => {
+      // Hide modal
+      const tutorialModal = document.getElementById('addVerseTutorialModal');
+      tutorialModal.setAttribute('aria-hidden', 'true');
+      tutorialModal.style.display = 'none';
+      
+      // Mark as seen
+      localStorage.setItem('hasSeenAddVerseTutorial', 'true');
+      
+      // Proceed to Add Verse panel
+      setActiveNavButton(addVerseBtn);
+      showPanel(addVersePanel);
+      loadVersesForEdit();
+      populateCollectionSelector();
+      clearForm();
+      const bibleVersionInput = document.getElementById('bibleVersion');
+      if (bibleVersionInput && !bibleVersionInput.value) {
+        bibleVersionInput.value = localStorage.getItem('defaultBibleVersion') || '';
+      }
+    });
+  }
+  
+  // Backup Reminder Modal Event Listeners
+  if (backupReminderGotItBtn) {
+    backupReminderGotItBtn.addEventListener('click', () => {
+      hideBackupReminderModal();
+    });
+  }
+  
+  if (backupReminderExportBtn) {
+    backupReminderExportBtn.addEventListener('click', () => {
+      hideBackupReminderModal();
+      showPanel(exportImportPanel);
+    });
+  }
+  
+  checkFirstTimeUser();
+
+  // Input Focus Listeners
+  learnInput.addEventListener('focus', () => {
+    showKeyboardForInput(learnInput);
+  });
+  
+  verseText.addEventListener('focus', () => showKeyboardForInput(verseText));
+  
+  verseInitials.addEventListener('focus', () => showKeyboardForInput(verseInitials));
+  
+  bookInitials.addEventListener('focus', () => showKeyboardForInput(bookInitials));
+  
+  bibleVersion.addEventListener('focus', () => showKeyboardForInput(bibleVersion));
+  defaultBibleVersion.addEventListener('focus', () => showKeyboardForInput(defaultBibleVersion));
+  
+  chapterNumber.addEventListener('focus', () => showKeyboardForInput(chapterNumber));
+  
+  verseNumber.addEventListener('focus', () => showKeyboardForInput(verseNumber));
+  
+  bookNameInput.addEventListener('focus', () => showKeyboardForInput(bookNameInput));
+  newCollectionTitle.addEventListener('focus', () => showKeyboardForInput(newCollectionTitle));
+
+  // Orientation change handler - recenter focused element
+  window.addEventListener('orientationchange', () => {
+    setTimeout(() => {
+      // If there's an active input, recenter it
+      if (activeInput && document.contains(activeInput)) {
+        activeInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      // If learnInput is the active input, also scroll progressDisplay into view
+      if (activeInput && activeInput.id === 'learnInput') {
+        setTimeout(() => {
+          const progressDisplay = document.getElementById('progressDisplay');
+          if (progressDisplay) {
+            progressDisplay.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }, 100);
+      }
+      // For Add Verse panel inputs, scroll the label into view for context
+      if (activeInput && (activeInput.id === 'verseInitials' || activeInput.id === 'bookInitials' || 
+          activeInput.id === 'chapterNumber' || activeInput.id === 'verseNumber')) {
+        setTimeout(() => {
+          const label = activeInput.parentElement.querySelector('label');
+          if (label) {
+            label.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }, 100);
+      }
+    }, 200); // Delay to allow orientation change to complete
+  });
+
+  // (initialization at top of file already performed)
+};
+
+/* Onboarding Modal Styles */
+.onboarding-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.onboarding-btn {
+  padding: 14px 20px;
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  background-color: var(--button-background);
+  color: var(--button-text);
+  border: 2px solid var(--button-background);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.onboarding-btn:hover {
+  background-color: var(--button-hover);
+  border-color: var(--button-hover);
+}
+
+.onboarding-btn:active {
+  transform: scale(0.98);
+}
+
+/* Tutorial Modal Styles */
+.tutorial-example {
+  margin: 24px 0;
+  padding: 20px;
+  background: var(--card-background);
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+}
+
+.tutorial-table {
+  border-collapse: collapse;
+  margin: 0 auto;
+}
+
+.tutorial-table td {
+  text-align: center;
+  vertical-align: middle;
+  padding: 4px 4px;
+}
+
+.tutorial-char {
+  font-size: var(--font-size-3xl);
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: color 0.3s ease, opacity 0.3s ease;
+  display: inline-block;
+}
+
+.tutorial-char.tutorial-hidden {
+  opacity: 0;
+  color: transparent;
+}
+
+.tutorial-char.tutorial-typed {
+  color: var(--correct-color);
+}
+
+.tutorial-arrows td {
+  font-size: var(--font-size-lg);
+  color: var(--accent-color);
+  padding: 6px 4px;
+}
+
+.tutorial-keys {
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  color: var(--accent-color);
+}
+
+.tutorial-keys td {
+  min-height: 32px;
+  padding: 6px 4px;
+}
+
+.tutorial-keys span {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  display: inline-block;
+}
+
+.tutorial-keys span.visible {
+  opacity: 1;
+}
+
+.tutorial-stages-list {
+  margin: 24px 0;
+  text-align: left;
+  background: var(--card-background);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.tutorial-stage-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.tutorial-stage-item:last-child {
+  margin-bottom: 0;
+}
+
+.tutorial-stage-number {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--accent-color);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-lg);
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.tutorial-stage-info {
+  flex: 1;
+}
+
+.tutorial-stage-info h3 {
+  margin: 0 0 4px 0;
+  font-size: var(--font-size-md);
+  color: var(--text-color);
+}
+
+.tutorial-stage-info p {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  opacity: 0.75;
+}
+
+.tutorial-start-btn {
+  background: var(--card-background);
+  color: var(--text-color);
+}
+
+.tutorial-start-btn:hover {
+  background: var(--button-hover);
+}
+
+#tutorialBasicNote {
+  margin-top: 16px;
+  font-size: 0.9em;
+  opacity: 0.8;
+}
+
+@media (min-width: 768px) {
+  .tutorial-char {
+    font-size: var(--font-size-4xl);
+    min-width: 44px;
+  }
+  
+  .tutorial-arrows span {
+    min-width: 44px;
+  }
+  
+  .tutorial-keys {
+    font-size: var(--font-size-2xl);
+  }
+  
+  .tutorial-keys span {
+    min-width: 44px;
+  }
+}
