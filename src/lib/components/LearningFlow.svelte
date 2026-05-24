@@ -936,14 +936,13 @@
 	{:else}
 		<!-- Verse Selector -->
 		<div class="learning-controls">
-			<label for="verse-selector">{t('select_verse')}</label>
 			<select 
 				id="verse-selector" 
 				value={String(currentVerseIdx)}
 				on:change={(e) => selectVerse(Number(e.target.value))}
 				style="opacity: {verseSelectorOpacity}; transition: opacity 0.3s ease;"
 			>
-				<option value="-1">{t('learn_select_verse_to_start')}</option>
+				<option value="-1">{t('select_verse')}</option>
 				{#each versesToLearn as verse, idx}
 					<option value={String(idx)}>
 						{formatVerseRef(verse)}
