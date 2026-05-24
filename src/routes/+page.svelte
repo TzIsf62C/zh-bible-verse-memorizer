@@ -84,6 +84,11 @@
 	}
 
 	$: reviewBadgeCount = countDueReviewVerses($verses);
+
+	function scrollToTop() {
+		if (!browser) return;
+		window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+	}
 	
 	// Check if onboarding should be shown
 	$: {
@@ -125,11 +130,13 @@
 			heatMapsSource = null;
 		}
 		currentPanel = panelId;
+		scrollToTop();
 	}
 
 	function openHeatMaps(source) {
 		heatMapsSource = source;
 		currentPanel = 'heat-maps';
+		scrollToTop();
 	}
 
 	function handleMenuClick() {
@@ -150,6 +157,7 @@
 		} else {
 			heatMapsSource = null;
 			currentPanel = panelId;
+			scrollToTop();
 		}
 		showMenu = false;
 	}
@@ -294,6 +302,7 @@
 				showStatsBack={heatMapsSource === 'stats'}
 				on:back-to-stats={() => {
 					currentPanel = 'stats';
+					scrollToTop();
 				}}
 				on:practice={(e) => {
 					selectedPracticeVerseId = e.detail?.verseId || null;
