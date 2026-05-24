@@ -1,11 +1,13 @@
 <script>
 	import { createEventDispatcher, onDestroy } from 'svelte';
 	import { browser } from '$app/environment';
+	import { base } from '$app/paths';
 	import { t } from '$lib/i18n/index.js';
 	
 	export let show = false;
 	
 	const dispatch = createEventDispatcher();
+	const qrImageSrc = `${base}/share-qr.png`;
 	let showToast = false;
 	let toastTimeout;
 	
@@ -70,7 +72,7 @@
 		<!-- svelte-ignore a11y-click-events-have-key-events -->
 		<!-- svelte-ignore a11y-no-static-element-interactions -->
 		<div class="share-overlay-panel" on:click|stopPropagation>
-			<img src="/share-qr.png" alt="QR Code" class="share-qr" />
+			<img src={qrImageSrc} alt="QR Code" class="share-qr" />
 			<div class="share-buttons">
 				<button class="share-btn" on:click={handleClose}>{t('back')}</button>
 				<button class="share-btn primary" on:click={copyURL}>{t('copy_url')}</button>
