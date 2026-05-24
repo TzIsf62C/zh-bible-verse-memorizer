@@ -6,6 +6,7 @@
 	import { sortVersesByBibleOrder } from '$lib/utils/bibleBooks';
 
 	const dispatch = createEventDispatcher();
+	export let showStatsBack = false;
 
 	let currentView = 'list'; // 'list' or 'detail'
 	let selectedVerse = null;
@@ -150,6 +151,10 @@
 		dispatch('exit');
 	}
 
+	function backToStats() {
+		dispatch('back-to-stats');
+	}
+
 	// Render heat map characters for a verse
 	function getHeatMapChars(verse) {
 		if (!verse || !verse.heatArray) return [];
@@ -194,7 +199,21 @@
 	<!-- Verse List -->
 	<div class="heat-maps-container">
 		<div class="heat-maps-header list-header">
+			{#if showStatsBack}
+				<button type="button" class="back-btn" on:click={backToStats} aria-label={t('back')}>
+					<svg
+						class="back-icon"
+						viewBox="0 0 24 24"
+						aria-hidden="true"
+					>
+						<path d="M19 12H5M12 19l-7-7 7-7"/>
+					</svg>
+				</button>
+			{:else}
+				<div class="header-spacer" aria-hidden="true"></div>
+			{/if}
 			<h2 class="heat-maps-title">{t('heat_maps')}</h2>
+			<div class="header-spacer" aria-hidden="true"></div>
 		</div>
 
 		{#if versesWithHeat.length === 0}
@@ -410,12 +429,8 @@
 		stroke-linejoin: round;
 	}
 
-	.list-header {
-		justify-content: center;
-	}
-
 	.list-header .heat-maps-title {
-		flex: none;
+		flex: 1;
 	}
 	
 	.empty-state {

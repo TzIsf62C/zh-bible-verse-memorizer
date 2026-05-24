@@ -28,6 +28,7 @@
 	import { initializeDailyStreakOnOpen } from '$lib/stores/streak.js';
 
 	let currentPanel = 'learn';
+	let heatMapsSource = null; // 'stats' | 'menu' | null
 	let showMenu = false;
 	let showShare = false;
 	let showOnboarding = false;
@@ -120,7 +121,15 @@
 	}
 
 	function switchPanel(panelId) {
+		if (panelId !== 'heat-maps') {
+			heatMapsSource = null;
+		}
 		currentPanel = panelId;
+	}
+
+	function openHeatMaps(source) {
+		heatMapsSource = source;
+		currentPanel = 'heat-maps';
 	}
 
 	function handleMenuClick() {
@@ -136,7 +145,12 @@
 			return;
 		}
 		
-		currentPanel = panelId;
+		if (panelId === 'heat-maps') {
+			openHeatMaps('menu');
+		} else {
+			heatMapsSource = null;
+			currentPanel = panelId;
+		}
 		showMenu = false;
 	}
 	
@@ -270,13 +284,17 @@
 		{#key $settings.languagePreference}
 			<Stats 
 				on:exit={() => { currentPanel = 'learn'; }}
-				on:navigate-heat-maps={() => { currentPanel = 'heat-maps'; }}
+				on:navigate-heat-maps={() => openHeatMaps('stats')}
 			/>
 		{/key}
 	{:else if currentPanel === 'heat-maps'}
 		{#key $settings.languagePreference}
 			<HeatMaps 
 				on:exit={() => { currentPanel = 'learn'; }}
+				showStatsBack={heatMapsSource === 'stats'}
+				on:back-to-stats={() => {
+					currentPanel = 'stats';
+				}}
 				on:practice={(e) => {
 					selectedPracticeVerseId = e.detail?.verseId || null;
 					currentPanel = 'practice';
