@@ -1,5 +1,108 @@
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function toPositiveInteger(value, fallback = null) {
+	const parsed = Number(value);
+	if (!Number.isFinite(parsed)) return fallback;
+	const integer = Math.floor(parsed);
+	return integer > 0 ? integer : fallback;
+}
+
+function toNonNegativeInteger(value, fallback = null) {
+	const parsed = Number(value);
+	if (!Number.isFinite(parsed)) return fallback;
+	const integer = Math.floor(parsed);
+	return integer >= 0 ? integer : fallback;
+}
+
+function parseDateValue(value) {
+	if (!value) return null;
+	const parsed = value instanceof Date ? new Date(value.getTime()) : new Date(value);
+	return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function normalizeSpacingCard(card = {}) {
+	return {
+		...card,
+		interval: toPositiveInteger(card.interval, 1),
+		repetitions: toNonNegativeInteger(card.repetitions, 0),
+		dueDate: parseDateValue(card.dueDate)
+	};
+}
+
+export function getRepetitionsForInterval(interval) {
+	const normalizedInterval = Math.max(1, toPositiveInteger(interval, 1));
+	if (normalizedInterval <= 1) return 1;
+	if (normalizedInterval <= 6) return 2;
+	return 3;
+}
+
+export function normalizeReviewFields(card = {}, currentDate = new Date()) {
+	const normalized = { ...card };
+	const lastReviewed = parseDateValue(normalized.lastReviewed);
+	let interval = toPositiveInteger(normalized.interval, null);
+	const dueDate = parseDateValue(normalized.dueDate);
+
+	if (interval === null && lastReviewed && dueDate) {
+		const derivedDays = Math.round((dueDate.getTime() - lastReviewed.getTime()) / DAY_MS);
+		interval = Math.max(1, derivedDays);
+	}
+
+	if (interval === null) {
+		interval = 1;
+	}
+
+	const repetitions = toNonNegativeInteger(normalized.repetitions, null) ?? getRepetitionsForInterval(interval);
+	const normalizedDueDate = dueDate || new Date((lastReviewed || currentDate).getTime() + interval * DAY_MS);
+
+	return {
+		...normalized,
+		interval,
+		repetitions,
+		dueDate: normalizedDueDate.toISOString(),
+		lastReviewed: lastReviewed ? lastReviewed.toISOString() : normalized.lastReviewed ?? null
+	};
+}
+
+export function buildManualIntervalUpdate(intervalDays, currentDate = new Date()) {
+	const interval = Math.max(1, toPositiveInteger(intervalDays, 1));
+	return {
+		interval,
+		repetitions: getRepetitionsForInterval(interval),
+		dueDate: new Date(currentDate.getTime() + interval * DAY_MS).toISOString()
+	};
+}
+
+export function getSharedReviewSchedule(verses = [], currentDate = new Date()) {
+	const normalizedVerses = Array.isArray(verses)
+		? verses.map((verse) => normalizeReviewFields(verse, currentDate))
+		: [];
+
+	if (normalizedVerses.length === 0) {
+		return {
+			interval: null,
+			dueDate: null,
+			hasMixedIntervals: false,
+			hasMixedDueDates: false,
+			normalizedVerses
+		};
+	}
+
+	const firstInterval = normalizedVerses[0].interval;
+	const firstDueDate = normalizedVerses[0].dueDate;
+	const hasMixedIntervals = normalizedVerses.some((verse) => verse.interval !== firstInterval);
+	const hasMixedDueDates = normalizedVerses.some((verse) => verse.dueDate !== firstDueDate);
+
+	return {
+		interval: hasMixedIntervals ? null : firstInterval,
+		dueDate: hasMixedDueDates ? null : firstDueDate,
+		hasMixedIntervals,
+		hasMixedDueDates,
+		normalizedVerses
+	};
+}
+
 export function spacedRepetitionBinary(card, success, currentDate) {
-	const updated = { ...card };
+	const updated = normalizeSpacingCard(card);
 
 	if (!success) {
 		updated.repetitions = 0;
@@ -33,7 +136,7 @@ export function spacedRepetitionBinary(card, success, currentDate) {
 		}
 	}
 
-	updated.dueDate = new Date(currentDate.getTime() + updated.interval * 24 * 60 * 60 * 1000).toISOString();
+	updated.dueDate = new Date(currentDate.getTime() + updated.interval * DAY_MS).toISOString();
 	return updated;
 }
 

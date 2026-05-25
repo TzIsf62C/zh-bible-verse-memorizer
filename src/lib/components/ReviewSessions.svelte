@@ -5,9 +5,11 @@
 	import { settings } from '$lib/stores/settings';
 	import { t } from '$lib/i18n';
 	import { sortVersesByBibleOrder, createVerseReferenceFormatter } from '$lib/utils/bibleBooks';
-	import { getDaysUntilDue, countDueVerses } from '$lib/utils/spacedRepetition';
+	import { getDaysUntilDue, countDueVerses, buildManualIntervalUpdate, getSharedReviewSchedule } from '$lib/utils/spacedRepetition';
+	import { keyboardLayouts } from '$lib/utils/keyboardLayouts';
 	import IndividualReview from './IndividualReview.svelte';
 	import SingleTextReview from './SingleTextReview.svelte';
+	import Keyboard from './Keyboard.svelte';
 	import { registerStreakActivity } from '$lib/stores/streak.js';
 	import Modal from './Modal.svelte';
 
@@ -24,11 +26,27 @@
 	
 	// Interval modal state
 	let showIntervalModal = false;
-	let currentInterval = 1;
+	let intervalInputValue = '';
+	let intervalInputAppendMode = false;
+	let intervalInputDirty = false;
+	let intervalModalBaseDate = new Date();
+	let intervalModalSchedule = {
+		interval: null,
+		dueDate: null,
+		hasMixedIntervals: false,
+		hasMixedDueDates: false,
+		normalizedVerses: []
+	};
+	let intervalDraftNumber = NaN;
+	let intervalDraftIsValid = false;
+	let intervalDisplayValue = '-';
+	let intervalPreviewDueDate = '-';
 	
 	// Modal state
 	let showModal = false;
 	let modalMessage = '';
+
+	const DAY_MS = 24 * 60 * 60 * 1000;
 
 	// Get learned verses (verses that have been reviewed at least once)
 	$: learnedVerses = $verses.filter(v => v.lastReviewed);
@@ -40,6 +58,27 @@
 
 	// Create verse reference formatter that checks ALL verses for duplicates (not just learnedVerses)
 	$: formatVerseRef = createVerseReferenceFormatter($verses);
+
+	$: intervalModalSchedule = showIntervalModal
+		? getSharedReviewSchedule(selectedVerses, intervalModalBaseDate)
+		: {
+			interval: null,
+			dueDate: null,
+			hasMixedIntervals: false,
+			hasMixedDueDates: false,
+			normalizedVerses: []
+		};
+
+	$: intervalDraftNumber = Number.parseInt(intervalInputValue, 10);
+	$: intervalDraftIsValid = Number.isFinite(intervalDraftNumber) && intervalDraftNumber > 0;
+	$: intervalDisplayValue = intervalInputValue.trim().length > 0 ? intervalInputValue : '-';
+	$: intervalPreviewDueDate = intervalDraftIsValid
+		? new Date(intervalModalBaseDate.getTime() + intervalDraftNumber * DAY_MS).toLocaleDateString()
+		: !intervalInputDirty && intervalModalSchedule.dueDate
+			? new Date(intervalModalSchedule.dueDate).toLocaleDateString()
+			: intervalModalSchedule.hasMixedDueDates
+			? t('different_due_dates')
+			: '-';
 
 	// Get due verses
 	$: dueVerses = $verses.filter(v => {
@@ -353,32 +392,88 @@
 			showModal = true;
 			return;
 		}
-		currentInterval = 1;
+		intervalModalBaseDate = new Date();
+		const schedule = getSharedReviewSchedule(selectedVerses, intervalModalBaseDate);
+		intervalModalSchedule = schedule;
+		intervalInputValue = schedule.interval === null ? '' : String(schedule.interval);
+		intervalInputAppendMode = false;
+		intervalInputDirty = false;
 		showIntervalModal = true;
 	}
 
 	function closeIntervalModal() {
 		showIntervalModal = false;
+		intervalInputValue = '';
+		intervalInputAppendMode = false;
+		intervalInputDirty = false;
 	}
 
-	function incrementInterval() {
-		if (currentInterval < 20) {
-			currentInterval++;
+	function handleIntervalDigit(digit) {
+		if (!/^\d$/.test(digit)) return;
+
+		if (!intervalInputAppendMode) {
+			intervalInputValue = digit;
+			intervalInputAppendMode = true;
+			intervalInputDirty = true;
+			return;
 		}
+
+		intervalInputValue = `${intervalInputValue}${digit}`;
+		intervalInputDirty = true;
 	}
 
-	function decrementInterval() {
-		if (currentInterval > 1) {
-			currentInterval--;
+	function handleIntervalDelete() {
+		if (intervalInputValue.length === 0) return;
+
+		intervalInputValue = intervalInputValue.slice(0, -1);
+		intervalInputAppendMode = intervalInputValue.length > 0;
+		intervalInputDirty = true;
+	}
+
+	function handleIntervalKeyInput(event) {
+		const key = event.detail;
+		if (key === 'Backspace' || key === 'Delete') {
+			handleIntervalDelete();
+			return;
 		}
+
+		if (key === 'Enter') {
+			if (intervalDraftIsValid) {
+				confirmIntervalChange();
+			}
+			return;
+		}
+
+		handleIntervalDigit(key);
 	}
 
-	function calculateDaysFromInterval(interval) {
-		// Using same spaced repetition algorithm as the app
-		// interval 1 = 1 day, interval 2 = 6 days, then exponential
-		if (interval === 1) return 1;
-		if (interval === 2) return 6;
-		return Math.round(6 * Math.pow(2, interval - 2));
+	function handleIntervalPhysicalKeyboard(event) {
+		if (!showIntervalModal) return;
+
+		if (event.key === 'Escape') {
+			event.preventDefault();
+			closeIntervalModal();
+			return;
+		}
+
+		if (event.key === 'Backspace' || event.key === 'Delete') {
+			event.preventDefault();
+			handleIntervalDelete();
+			return;
+		}
+
+		if (event.key === 'Enter') {
+			if (intervalDraftIsValid) {
+				event.preventDefault();
+				confirmIntervalChange();
+			}
+			return;
+		}
+
+		if (/^\d$/.test(event.key)) {
+			event.preventDefault();
+			handleIntervalDigit(event.key);
+		}
 	}
 
 	function confirmIntervalChange() {
@@ -387,34 +482,35 @@
 			return;
 		}
 
-		// Update intervals for selected verses
-		selectedVerses.forEach(selectedVerse => {
-			verses.update(list => {
-				return list.map(v => {
-					if (v.id === selectedVerse.id) {
-						const days = calculateDaysFromInterval(currentInterval);
-						const newDueDate = new Date();
-						newDueDate.setDate(newDueDate.getDate() + days);
-						
-						return {
-							...v,
-							isLearned: v.isLearned || Boolean(v.lastReviewed),
-							interval: days,
-							repetitions: currentInterval - 1,
-							dueDate: newDueDate.toISOString()
-						};
-					}
-					return v;
-				});
-			});
-		});
+		const intervalDays = intervalDraftIsValid ? intervalDraftNumber : intervalModalSchedule.interval;
+		if (!Number.isFinite(intervalDays) || intervalDays < 1) {
+			return;
+		}
 
-		// Close modal and return to initial state
+		const manualUpdate = buildManualIntervalUpdate(intervalDays, intervalModalBaseDate);
+		const selectedVerseIds = new Set(selectedVerses.map((verse) => verse.id));
+
+		verses.update((list) => list.map((verse) => {
+			if (!selectedVerseIds.has(verse.id)) {
+				return verse;
+			}
+
+			return {
+				...verse,
+				isLearned: verse.isLearned || Boolean(verse.lastReviewed),
+				interval: manualUpdate.interval,
+				repetitions: manualUpdate.repetitions,
+				dueDate: manualUpdate.dueDate
+			};
+		}));
+
+		// Close modal and return to edit interval panel
 		closeIntervalModal();
-		backToInitial();
 	}
 
 </script>
+
+<svelte:document on:keydown={handleIntervalPhysicalKeyboard} />
 
 <div class="review-container">
 	{#if state === 'initial'}
@@ -790,25 +886,35 @@
 
 <!-- Change Interval Modal -->
 {#if showIntervalModal}
-	<div class="modal-overlay" on:click={closeIntervalModal} on:keydown={(e) => e.key === 'Escape' && closeIntervalModal()} role="dialog" aria-modal="true">
+	<div class="modal-overlay interval-modal-overlay" on:click={closeIntervalModal} on:keydown={(e) => e.key === 'Escape' && closeIntervalModal()} role="dialog" aria-modal="true">
 		<div class="modal-content interval-modal" on:click|stopPropagation role="document">
 			<h3>{t('change_interval_title')}</h3>
-			
-			<div class="interval-control">
-				<div class="interval-label">{t('interval_label')}</div>
-				<div class="interval-adjuster">
-					<button class="interval-btn" on:click={decrementInterval} aria-label="Decrease">−</button>
-					<div class="interval-value">{currentInterval}</div>
-					<button class="interval-btn" on:click={incrementInterval} aria-label="Increase">+</button>
+
+			<div class="interval-card">
+				<div class="interval-row">
+					<div class="interval-row-label">{t('interval_label')}</div>
+					<div class="interval-row-value">
+						<span class="interval-number">{intervalDisplayValue}</span>
+						<span class="interval-unit">{t('days_unit')}</span>
+					</div>
 				</div>
-				<div class="interval-days">
-					{t('review_in_days', { count: calculateDaysFromInterval(currentInterval) })}
+				<div class="interval-row">
+					<div class="interval-row-label">{t('next_due_date')}</div>
+					<div class="interval-row-value interval-preview">{intervalPreviewDueDate}</div>
 				</div>
 			</div>
 
+			<Keyboard
+				layout={keyboardLayouts.numeric}
+				showBackspace={false}
+				showEnter={false}
+				isNumeric={true}
+				on:key={handleIntervalKeyInput}
+			/>
+
 			<div class="modal-buttons-horizontal">
 				<button class="modal-btn secondary" on:click={closeIntervalModal}>{t('cancel')}</button>
-				<button class="modal-btn primary" on:click={confirmIntervalChange}>{t('confirm')}</button>
+				<button class="modal-btn primary" on:click={confirmIntervalChange} disabled={!intervalDraftIsValid}>{t('confirm')}</button>
 			</div>
 		</div>
 	</div>
@@ -1224,60 +1330,69 @@
 
 	/* Interval Modal Styles */
 	.interval-modal {
-		max-width: 400px;
+		max-width: 420px;
 	}
 
-	.interval-control {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
+	.interval-card {
+		display: grid;
 		gap: 1rem;
-		margin: 2rem 0;
-	}
-
-	.interval-label {
-		font-size: 1em;
-		color: var(--subtitle-color);
-	}
-
-	.interval-adjuster {
-		display: flex;
-		align-items: center;
-		gap: 1.5rem;
-	}
-
-	.interval-btn {
-		width: 48px;
-		height: 48px;
-		border: 2px solid var(--accent-color);
+		padding: 1rem;
+		border: 1px solid var(--file-border);
+		border-radius: 12px;
 		background: var(--file-bg);
-		color: var(--accent-color);
-		border-radius: 50%;
-		font-size: 1.5em;
-		cursor: pointer;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		transition: all 0.3s;
-		font-weight: bold;
+		margin-bottom: 1rem;
 	}
 
-	.interval-btn:hover {
-		background: var(--accent-color);
-		color: white;
+	.interval-row {
+		display: grid;
+		gap: 0.35rem;
 	}
 
-	.interval-value {
-		font-size: 2.5em;
-		font-weight: bold;
-		color: var(--accent-color);
-		min-width: 80px;
-		text-align: center;
-	}
-
-	.interval-days {
+	.interval-row-label {
 		font-size: 0.9em;
+		font-weight: 600;
 		color: var(--subtitle-color);
+	}
+
+	.interval-row-value {
+		display: flex;
+		align-items: baseline;
+		gap: 0.35rem;
+		flex-wrap: wrap;
+		font-size: 1.8em;
+		font-weight: 700;
+		color: var(--text-color);
+	}
+
+	.interval-number {
+		min-width: 1ch;
+	}
+
+	.interval-unit {
+		font-size: 0.6em;
+		font-weight: 500;
+		color: var(--subtitle-color);
+	}
+
+	.interval-preview {
+		font-size: 1.1em;
+		font-weight: 600;
+		color: var(--accent-color);
+	}
+
+	.interval-modal-overlay {
+		top: calc(4.5rem + env(safe-area-inset-top, 0px));
+		align-items: flex-start;
+		padding-top: 1rem;
+	}
+
+	:global(.interval-modal .keyboard) {
+		margin: 0;
+	}
+
+	.modal-btn:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
 	}
 
 	.modal-buttons-horizontal {
