@@ -247,6 +247,13 @@
 		// Return to initial state
 		reset();
 	}
+
+	function closeToInitial() {
+		if (preselectedVerseId) {
+			dispatch('clearPreselection');
+		}
+		reset();
+	}
 	
 	function goBack() {
 		if (state === 'selectActivity') {
@@ -430,7 +437,7 @@
 				</svg>
 			</button>
 			<h2>{t('select_activity')}</h2>
-			<div class="spacer"></div>
+			<button class="close-button" on:click={closeToInitial} aria-label={t('exit')}>✕</button>
 		</div>
 		
 		<div class="selected-target">
@@ -484,7 +491,7 @@
 					</svg>
 				</button>
 				<h3>{t('choose_practice_order')}</h3>
-				<div class="spacer" aria-hidden="true"></div>
+				<button class="modal-close-button" on:click={closeToInitial} aria-label={t('exit')}>✕</button>
 			</div>
 			<div class="modal-buttons">
 				<button class="modal-option" on:click={() => choosePracticeOrder('collection')}>
@@ -524,6 +531,7 @@
 			collection={selectedCollection}
 			verses={collectionVerses}
 			on:complete={handleActivityComplete}
+			on:back={handleActivityBack}
 			on:exit={handleActivityExit}
 		/>
 	{:else if selectedActivity === 'classic'}
@@ -531,18 +539,21 @@
 			verse={selectedVerse}
 			on:complete={handleActivityComplete}
 			on:advancedcomplete={handleClassicAdvancedComplete}
+			on:back={handleActivityBack}
 			on:exit={handleActivityExit}
 		/>
 	{:else if selectedActivity === 'reverse'}
 		<Reverse 
 			verse={selectedVerse}
 			on:complete={handleActivityComplete}
+			on:back={handleActivityBack}
 			on:exit={handleActivityExit}
 		/>
 	{:else if selectedActivity === 'blind-challenge'}
 		<BlindChallenge 
 			verse={selectedVerse}
 			on:complete={handleActivityComplete}
+			on:back={handleActivityBack}
 			on:exit={handleActivityExit}
 		/>
 	{:else if selectedActivity === 'reverse-by-verse'}
@@ -550,6 +561,7 @@
 			collection={selectedCollection}
 			verses={collectionVerses}
 			on:complete={handleActivityComplete}
+			on:back={handleActivityBack}
 			on:exit={handleActivityExit}
 		/>
 	{:else if selectedActivity === 'first-and-last'}
@@ -557,6 +569,7 @@
 			collection={selectedCollection}
 			verses={firstAndLastVerses}
 			on:complete={handleActivityComplete}
+			on:back={handleActivityBack}
 			on:exit={handleActivityExit}
 		/>
 	{/if}
@@ -594,6 +607,20 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
+	}
+
+	.close-button {
+		width: 40px;
+		height: 40px;
+		padding: 0;
+		background: none;
+		border: none;
+		color: var(--text-color);
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 1.5em;
 	}
 	
 	.spacer {
@@ -906,6 +933,20 @@
 
 	.modal-back-button:hover {
 		opacity: 0.85;
+	}
+
+	.modal-close-button {
+		width: 40px;
+		height: 40px;
+		padding: 0;
+		background: none;
+		border: none;
+		color: var(--text-color);
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 1.5em;
 	}
 
 	.modal-buttons {

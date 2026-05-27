@@ -23,6 +23,7 @@
 	let sortedVerses = [];
 	let expandedCollections = new Set(); // Track which collections are expanded
 	let verseSortOrder = 'biblical'; // 'biblical' | 'dueDate'
+	let reviewModeBackState = 'initial';
 	
 	// Interval modal state
 	let showIntervalModal = false;
@@ -313,6 +314,8 @@
 	}
 
 	function proceedToReviewMode() {
+		const originatingState = state;
+
 		if (selectedVerses.length === 1) {
 			// Single verse - start individual review immediately
 			reviewMode = 'individual';
@@ -320,6 +323,7 @@
 			state = 'reviewing';
 		} else {
 			// Multiple verses - show review mode modal
+			reviewModeBackState = originatingState;
 			state = 'reviewMode';
 		}
 	}
@@ -383,6 +387,16 @@
 		selectedVerses = [];
 		selectedCollectionIds = [];
 		reviewMode = null;
+	}
+
+	function backFromReviewMode() {
+		state = reviewModeBackState || 'initial';
+		reviewMode = null;
+		sortedVerses = [];
+	}
+
+	function backFromReviewOrder() {
+		state = 'reviewMode';
 	}
 
 	// Interval change functions
@@ -827,7 +841,15 @@
 		<!-- Review Mode Modal -->
 		<div class="modal-overlay" on:click={cancelReview} on:keydown={(e) => e.key === 'Escape' && cancelReview()} role="dialog" aria-modal="true">
 			<div class="modal-content" on:click|stopPropagation role="document">
-				<h3>{t('choose_review_mode')}</h3>
+				<div class="modal-header">
+					<button class="modal-icon-btn" on:click={backFromReviewMode} aria-label={t('back')}>
+						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+							<path d="M19 12H5M5 12l7 7M5 12l7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+						</svg>
+					</button>
+					<h3>{t('choose_review_mode')}</h3>
+					<button class="modal-close-btn" on:click={cancelReview} aria-label={t('exit')}>✕</button>
+				</div>
 				<div class="modal-buttons">
 					<button class="initial-btn" on:click={chooseIndividualReview}>
 						{t('review_individually')}
@@ -836,7 +858,6 @@
 						{t('review_single_text')}
 					</button>
 				</div>
-				<button class="cancel-btn" on:click={cancelReview}>{t('cancel')}</button>
 			</div>
 		</div>
 
@@ -844,7 +865,15 @@
 		<!-- Review Order Modal -->
 		<div class="modal-overlay" on:click={cancelReview} on:keydown={(e) => e.key === 'Escape' && cancelReview()} role="dialog" aria-modal="true">
 			<div class="modal-content" on:click|stopPropagation role="document">
-				<h3>{t('choose_review_order')}</h3>
+				<div class="modal-header">
+					<button class="modal-icon-btn" on:click={backFromReviewOrder} aria-label={t('back')}>
+						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+							<path d="M19 12H5M5 12l7 7M5 12l7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+						</svg>
+					</button>
+					<h3>{t('choose_review_order')}</h3>
+					<button class="modal-close-btn" on:click={cancelReview} aria-label={t('exit')}>✕</button>
+				</div>
 				<div class="modal-buttons">
 					{#if selectedCollectionIds.length > 0}
 						<button class="modal-option" on:click={() => chooseOrder('collection')}>
@@ -864,7 +893,6 @@
 						<div class="option-title">{t('order_random')}</div>
 					</button>
 				</div>
-				<button class="cancel-btn" on:click={() => state = 'reviewMode'}>{t('back')}</button>
 			</div>
 		</div>
 
@@ -1281,6 +1309,36 @@
 		text-align: center;
 	}
 
+	.modal-header {
+		display: grid;
+		grid-template-columns: 40px 1fr 40px;
+		align-items: center;
+		gap: 0.5rem;
+		margin-bottom: 1.5rem;
+	}
+
+	.modal-header h3 {
+		margin: 0;
+	}
+
+	.modal-icon-btn,
+	.modal-close-btn {
+		width: 40px;
+		height: 40px;
+		padding: 0;
+		border: none;
+		background: none;
+		color: var(--text-color);
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.modal-close-btn {
+		font-size: 1.5em;
+	}
+
 	.modal-buttons {
 		display: flex;
 		flex-direction: column;
@@ -1310,22 +1368,6 @@
 		font-weight: 600;
 		font-size: 1.1em;
 		color: var(--accent-color);
-	}
-
-	.cancel-btn {
-		width: 100%;
-		padding: 0.75rem;
-		border: 1px solid var(--file-border);
-		background: var(--nav-button-bg);
-		color: var(--nav-button-color);
-		border-radius: 4px;
-		cursor: pointer;
-		font-size: 1em;
-		transition: all 0.3s;
-	}
-
-	.cancel-btn:hover {
-		background: var(--file-bg);
 	}
 
 	/* Interval Modal Styles */

@@ -378,6 +378,25 @@
 	function exit() {
 		dispatch('exit');
 	}
+
+	function goBack() {
+		dispatch('back');
+	}
+
+	function closeToInitial() {
+		currentSubsetSize = 1;
+		userInput = '';
+		totalInputs = 0;
+		correctInputs = 0;
+		finalPhaseTotalInputs = 0;
+		finalPhaseCorrectInputs = 0;
+		showCompletionModal = false;
+		pressedKey = null;
+		correctKey = null;
+		lastCorrectKey = null;
+		phaseCompleteGlow = false;
+		exit();
+	}
 	
 	function renderCharacter(char, charIndex) {
 		const map = charToInputIndex[charIndex];
@@ -432,9 +451,13 @@
 
 <div class="reverse-by-verse-container">
 	<div class="header">
-		<button class="exit-button" on:click={exit}>✕</button>
+		<button class="back-button" on:click={goBack} aria-label={t('back')}>
+			<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+				<path d="M19 12H5M5 12l7 7M5 12l7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+			</svg>
+		</button>
 		<h2>{t('reverse_by_verse')}</h2>
-		<div class="spacer"></div>
+		<button class="exit-button" on:click={closeToInitial} aria-label={t('exit')}>✕</button>
 	</div>
 	
 	{#if collection}
@@ -527,29 +550,34 @@
 	}
 	
 	.header {
+		display: grid;
+		grid-template-columns: 40px 1fr 40px;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	.back-button,
+	.exit-button {
+		width: 40px;
+		height: 40px;
+		padding: 0;
+		background: none;
+		border: none;
+		cursor: pointer;
+		color: var(--text-color);
 		display: flex;
 		align-items: center;
-		justify-content: space-between;
+		justify-content: center;
 	}
 	
 	.exit-button {
-		padding: 0.5rem;
-		background: none;
-		border: none;
 		font-size: 1.5em;
-		cursor: pointer;
-		color: var(--text-color);
 	}
 	
 	h2 {
 		margin: 0;
 		font-size: 1.2em;
-		flex: 1;
 		text-align: center;
-	}
-	
-	.spacer {
-		min-width: 40px;
 	}
 	
 	.collection-header {

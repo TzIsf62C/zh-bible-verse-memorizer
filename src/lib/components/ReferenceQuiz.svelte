@@ -71,20 +71,39 @@
 	function exit() {
 		dispatch('exit');
 	}
+
+	function goBack() {
+		dispatch('back');
+	}
+
+	function closeToInitial() {
+		initializeQuiz();
+		exit();
+	}
 	
 	$: currentVerse = quizQueue[0];
 	$: progress = `${correctCount} / ${verses.length}`;
+	$: progressPercent = verses.length > 0 ? (correctCount / verses.length) * 100 : 0;
 </script>
 
 <div class="reference-quiz-container">
 	<div class="header">
-		<button class="exit-button" on:click={exit}>✕</button>
+		<button class="back-button" on:click={goBack} aria-label={t('back')}>
+			<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+				<path d="M19 12H5M5 12l7 7M5 12l7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+			</svg>
+		</button>
 		<h2>{t('reference_quiz')}</h2>
-		<div class="progress">{progress}</div>
+		<button class="exit-button" on:click={closeToInitial} aria-label={t('exit')}>✕</button>
 	</div>
 	
 	<div class="instructions">
 		{t('try_recall_reference')}
+	</div>
+
+	<div class="progress-bar">
+		<div class="progress-text">{progress}</div>
+		<div class="progress-fill" style="width: {progressPercent}%"></div>
 	</div>
 	
 	{#if currentVerse}
@@ -140,32 +159,63 @@
 	}
 	
 	.header {
+		display: grid;
+		grid-template-columns: 40px 1fr 40px;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	.back-button,
+	.exit-button {
+		width: 40px;
+		height: 40px;
+		padding: 0;
+		background: none;
+		border: none;
+		cursor: pointer;
+		color: var(--text-color);
 		display: flex;
 		align-items: center;
-		justify-content: space-between;
+		justify-content: center;
 	}
 	
 	.exit-button {
-		padding: 0.5rem;
-		background: none;
-		border: none;
 		font-size: 1.5em;
-		cursor: pointer;
-		color: var(--text-color);
 	}
 	
 	h2 {
 		margin: 0;
 		font-size: 1.2em;
-		flex: 1;
 		text-align: center;
 	}
 	
-	.progress {
+	.progress-bar {
+		position: relative;
+		width: 100%;
+		height: 32px;
+		background: var(--file-bg);
+		border-radius: 8px;
+		overflow: hidden;
+		border: 1px solid var(--file-border);
+	}
+
+	.progress-fill {
+		position: absolute;
+		top: 0;
+		left: 0;
+		height: 100%;
+		background: var(--accent-color);
+		transition: width 0.3s ease;
+	}
+
+	.progress-text {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
 		font-weight: 600;
-		color: var(--accent-color);
-		min-width: 60px;
-		text-align: right;
+		color: var(--text-color);
+		z-index: 1;
 	}
 	
 	.instructions {
