@@ -390,23 +390,13 @@
 					aria-label="Edit heat score"
 					tabindex="-1"
 				>
-					<div class="tooltip-row">
-						<button type="button" class="tooltip-btn" on:click={() => adjustHeat(editingCharIndex, 3)} aria-label="Increase by 3">
-							+3
-						</button>
-						<button type="button" class="tooltip-btn" on:click={() => adjustHeat(editingCharIndex, 1)} aria-label="Increase by 1">
-							+1
-						</button>
-					</div>
+					<button type="button" class="tooltip-btn" on:click={() => adjustHeat(editingCharIndex, 5)} aria-label="Increase by 5">
+						+5
+					</button>
 					<div class="tooltip-value">{selectedVerse.heatArray[editingCharIndex]}</div>
-					<div class="tooltip-row">
-						<button type="button" class="tooltip-btn" on:click={() => adjustHeat(editingCharIndex, -10)} aria-label="Decrease by 10">
-							-10
-						</button>
-						<button type="button" class="tooltip-btn" on:click={() => adjustHeat(editingCharIndex, -1)} aria-label="Decrease by 1">
-							-1
-						</button>
-					</div>
+					<button type="button" class="tooltip-btn" on:click={() => adjustHeat(editingCharIndex, -10)} aria-label="Decrease by 10">
+						-10
+					</button>
 				</div>
 			{/if}
 
@@ -740,7 +730,7 @@
 		padding: 0.5rem;
 		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 		z-index: 1000;
-		width: 132px;
+		width: 100px;
 	}
 
 	.tooltip-row {
@@ -751,7 +741,7 @@
 	
 	.tooltip-btn {
 		flex: 1;
-		padding: 0.25rem;
+		padding: 0.25rem 1.5rem 0.25rem 1.5rem;
 		background: var(--accent-color);
 		color: white;
 		border: none;

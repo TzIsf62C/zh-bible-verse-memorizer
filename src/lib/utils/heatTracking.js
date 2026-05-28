@@ -57,8 +57,8 @@ export function updateHeatArray(heatArray, correctnessMap) {
 		const isCorrect = correctnessMap[index];
 		
 		if (isCorrect === true) {
-			// Correct character: add 3 (max 99)
-			return Math.min(score + 3, 99);
+			// Correct character: add 5 (max 99)
+			return Math.min(score + 5, 99);
 		} else if (isCorrect === false) {
 			// Incorrect character: subtract 10 (min 0)
 			return Math.max(score - 10, 0);
