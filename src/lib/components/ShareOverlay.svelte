@@ -72,9 +72,13 @@
 		<!-- svelte-ignore a11y-click-events-have-key-events -->
 		<!-- svelte-ignore a11y-no-static-element-interactions -->
 		<div class="share-overlay-panel" on:click|stopPropagation>
+			<div class="share-header">
+				<div class="share-header-spacer"></div>
+				<h2 class="share-title">{t('share_app')}</h2>
+				<button class="share-close-btn" on:click={handleClose} aria-label={t('close')}>✕</button>
+			</div>
 			<img src={qrImageSrc} alt="QR Code" class="share-qr" />
 			<div class="share-buttons">
-				<button class="share-btn" on:click={handleClose}>{t('back')}</button>
 				<button class="share-btn primary" on:click={copyURL}>{t('copy_url')}</button>
 			</div>
 			
@@ -123,6 +127,38 @@
 		align-items: center;
 		gap: 2rem;
 	}
+
+	.share-header {
+		display: grid;
+		grid-template-columns: 40px 1fr 40px;
+		align-items: center;
+		width: 100%;
+	}
+
+	.share-header-spacer {
+		width: 40px;
+	}
+
+	.share-title {
+		margin: 0;
+		text-align: center;
+		font-size: 1.2em;
+		color: var(--text-color);
+	}
+
+	.share-close-btn {
+		width: 40px;
+		height: 40px;
+		padding: 0;
+		border: none;
+		background: none;
+		color: var(--text-color);
+		cursor: pointer;
+		font-size: 1.5em;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
 	
 	@keyframes slideUp {
 		from {
@@ -147,6 +183,7 @@
 		gap: 1rem;
 		width: 100%;
 		max-width: 400px;
+		justify-content: center;
 	}
 
 	.share-btn {

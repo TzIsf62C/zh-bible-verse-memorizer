@@ -375,14 +375,17 @@
 		<h3>{t('export_data')}</h3>
 		
 		<div class="export-tree">
-			<label class="tree-item master-checkbox">
+			<details class="tree-details">
+			<summary class="tree-item master-checkbox">
 				<input 
 					type="checkbox" 
 					checked={exportAllChecked}
 					on:change={toggleAll}
+					on:click|stopPropagation
 				/>
 				<strong>{t('all_verses')}</strong>
-			</label>
+				<span class="tree-expand-icon" aria-hidden="true">▸</span>
+			</summary>
 			
 			<div class="tree-children">
 				{#each $collections as collection}
@@ -407,6 +410,7 @@
 					<span>{t('not_in_collection')} ({uncollectedCount} {t('verses')})</span>
 				</label>
 			</div>
+			</details>
 		</div>
 
 		<div class="options">
@@ -589,6 +593,37 @@
 	.master-checkbox {
 		font-weight: 600;
 		margin-bottom: 0.5rem;
+		justify-content: flex-start;
+		gap: 0.5rem;
+		border: 1px solid var(--accent-color);
+	}
+
+	.tree-details > .tree-children {
+		display: none;
+	}
+
+	details[open].tree-details > .tree-children {
+		display: block;
+	}
+
+	.tree-details > summary {
+		list-style: none;
+		cursor: pointer;
+	}
+
+	.tree-details > summary::-webkit-details-marker {
+		display: none;
+	}
+
+	.tree-expand-icon {
+		margin-left: auto;
+		color: var(--subtitle-color);
+		transition: transform 0.2s;
+		font-size: 2em;
+	}
+
+	details[open].tree-details > summary .tree-expand-icon {
+		transform: rotate(90deg);
 	}
 
 	.tree-children {
@@ -691,7 +726,8 @@
 	/* Mobile responsiveness */
 	@media (max-width: 767px) {
 		.export-import-container {
-			padding: 1rem;
+			padding-left: 0;
+			padding-right: 0;
 		}
 
 		.export-section,
