@@ -882,7 +882,12 @@
 			font-size: 1.25em;
 			padding: 0.75rem 0.75rem 0.3rem 0.75rem;
 		}
-		
+
+		.sort-select {
+			min-width: 0;               /* remove the 15em floor */
+			width: 100%;                /* take full width of its flex line */
+			flex: 1 1 100%;             /* allow shrinking and growing */
+		}
 		.practice-button,
 		.edit-button {
 			width: 100%;
