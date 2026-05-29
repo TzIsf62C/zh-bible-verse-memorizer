@@ -1,6 +1,7 @@
 <script>
 	import { createEventDispatcher } from 'svelte';
 	import { verses } from '$lib/stores/verses';
+	import { collections } from '$lib/stores/collections';
 	import { t } from '$lib/i18n';
 	import { calculateHeatScore, getHeatColor, transformHeatScore } from '$lib/utils/heatTracking';
 	import { sortVersesByBibleOrder } from '$lib/utils/bibleBooks';
@@ -10,8 +11,7 @@
 
 	let currentView = 'list'; // 'list' or 'detail'
 	let selectedVerse = null;
-	let sortMode = 'biblical'; // 'biblical' or 'score'
-	let sortDirection = 'asc'; // 'asc' or 'desc'
+	let sortMode = 'biblical'; // 'biblical' | 'collection' | 'scoreAsc' | 'scoreDesc'
 	let editMode = false; // Heat map edit mode
 	let editingCharIndex = null; // Index of character being edited
 	let tooltipPosition = { x: 0, y: 0 }; // Tooltip position
@@ -31,34 +31,92 @@
 
 	// Get verses with heat arrays for Heat Maps view
 	$: versesWithHeat = $verses.filter(v => v.heatArray && v.heatArray.length > 0);
+	$: scoredVerses = versesWithHeat.map(v => {
+		const heatRawScore = calculateHeatScore(v.heatArray || []);
+		return {
+			...v,
+			heatRawScore,
+			heatScore: transformHeatScore(heatRawScore)
+		};
+	});
 	
 	// Sort and score verses for list view
-	$: sortedVerses = getSortedVerses(versesWithHeat, sortMode, sortDirection);
+	$: sortedVerses = getSortedVerses(scoredVerses, sortMode);
 	$: groupedBiblicalVerses = sortMode === 'biblical' ? groupVersesByBookAndChapter(sortedVerses) : [];
+	$: groupedCollectionVerses = sortMode === 'collection' ? groupVersesByCollection(scoredVerses) : [];
 
-	function getSortedVerses(verses, mode, direction) {
-		// First calculate heat scores for all verses
-		const versesWithScores = verses.map(v => {
-			const heatRawScore = calculateHeatScore(v.heatArray || []);
-			return {
-				...v,
-				heatRawScore,
-				heatScore: transformHeatScore(heatRawScore)
-			};
-		});
-
+	function getSortedVerses(versesWithScores, mode) {
 		let sorted = [];
 		if (mode === 'biblical') {
 			sorted = sortVersesByBibleOrder(versesWithScores);
+		} else if (mode === 'collection') {
+			sorted = sortByCollectionOrder(versesWithScores);
 		} else {
 			// Sort by score
 			sorted = [...versesWithScores].sort((a, b) => {
-				return direction === 'asc' 
+				return mode === 'scoreAsc'
 					? a.heatScore - b.heatScore
 					: b.heatScore - a.heatScore;
 			});
 		}
 		return sorted;
+	}
+
+	function sortByCollectionOrder(inputVerses) {
+		const verseById = new Map(inputVerses.map((verse) => [verse.id, verse]));
+		const ordered = [];
+		const seen = new Set();
+
+		for (const collection of $collections) {
+			for (const verseId of collection.verseIds || []) {
+				if (seen.has(verseId)) continue;
+				const verse = verseById.get(verseId);
+				if (verse) {
+					seen.add(verseId);
+					ordered.push(verse);
+				}
+			}
+		}
+
+		for (const verse of inputVerses) {
+			if (!seen.has(verse.id)) {
+				ordered.push(verse);
+			}
+		}
+
+		return ordered;
+	}
+
+	function groupVersesByCollection(inputVerses) {
+		const verseById = new Map(inputVerses.map((verse) => [verse.id, verse]));
+		const groups = [];
+		const seen = new Set();
+
+		for (const collection of $collections) {
+			const collectionVerses = (collection.verseIds || [])
+				.map((verseId) => verseById.get(verseId))
+				.filter(Boolean);
+
+			if (collectionVerses.length > 0) {
+				groups.push({
+					id: collection.id,
+					title: collection.title,
+					verses: collectionVerses
+				});
+				collectionVerses.forEach((verse) => seen.add(verse.id));
+			}
+		}
+
+		const uncollectedVerses = inputVerses.filter((verse) => !seen.has(verse.id));
+		if (uncollectedVerses.length > 0) {
+			groups.push({
+				id: '__uncollected__',
+				title: t('not_in_collection'),
+				verses: uncollectedVerses
+			});
+		}
+
+		return groups;
 	}
 
 	function groupVersesByBookAndChapter(verses) {
@@ -98,20 +156,6 @@
 		selectedVerse = null;
 		editMode = false;
 		closeTooltip();
-	}
-
-	function toggleSortMode() {
-		if (sortMode === 'biblical') {
-			sortMode = 'score';
-			sortDirection = 'asc'; // Start with lowest scores
-		} else {
-			sortMode = 'biblical';
-			sortDirection = 'asc';
-		}
-	}
-
-	function toggleSortDirection() {
-		sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
 	}
 
 	function practiceVerse(verseId) {
@@ -250,14 +294,13 @@
 			</div>
 		{:else}
 			<div class="sort-controls">
-				<button type="button" class="sort-button" on:click={toggleSortMode}>
-					{sortMode === 'biblical' ? t('sort_biblical') : t('sort_by_score')}
-				</button>
-				{#if sortMode === 'score'}
-					<button type="button" class="sort-button" on:click={toggleSortDirection}>
-						{sortDirection === 'asc' ? '↑' : '↓'}
-					</button>
-				{/if}
+				<label class="sort-label" for="heatmaps-sort">Sort order:</label>
+				<select id="heatmaps-sort" class="sort-select" bind:value={sortMode}>
+					<option value="biblical">{t('order_biblical')}</option>
+					<option value="collection">{t('order_collection')}</option>
+					<option value="scoreAsc">{t('sort_by_score')} (Low to High)</option>
+					<option value="scoreDesc">{t('sort_by_score')} (High to Low)</option>
+				</select>
 			</div>
 
 			{#if sortMode === 'biblical'}
@@ -296,6 +339,35 @@
 											{/each}
 										</div>
 									</details>
+								{/each}
+							</div>
+						</details>
+					{/each}
+				</div>
+			{:else if sortMode === 'collection'}
+				<div class="verse-list grouped-list">
+					{#each groupedCollectionVerses as group (group.id)}
+						<details class="verse-book-group">
+							<summary class="verse-group-toggle book-toggle">
+								<span class="verse-toggle-icon" aria-hidden="true">▶</span>
+								<span class="verse-group-label">{group.title}</span>
+								<span class="verse-group-count">({group.verses.length})</span>
+							</summary>
+
+							<div class="verse-group-items">
+								{#each group.verses as verse (verse.id)}
+									<button
+										type="button"
+										class="verse-list-item"
+										on:click={() => showVerseDetail(verse)}
+									>
+										<div class="verse-ref">
+											{verse.bookName} {verse.chapterNumber}:{verse.verseNumber}
+										</div>
+										<div class="verse-score">
+											{verse.heatScore.toFixed(2)}
+										</div>
+									</button>
 								{/each}
 							</div>
 						</details>
@@ -503,23 +575,31 @@
 	
 	.sort-controls {
 		display: flex;
-		gap: 0.5rem;
+		align-items: center;
+		gap: 0.75rem;
 		margin-bottom: 1rem;
 		justify-content: flex-start;
 	}
+
+	.sort-label {
+		font-size: 0.95em;
+		font-weight: 600;
+		color: var(--subtitle-color);
+		white-space: nowrap;
+	}
 	
-	.sort-button {
-		padding: 0.5rem 1rem;
+	.sort-select {
+		padding: 0.55rem 0.75rem;
 		background: var(--panel-background);
 		border: 1px solid var(--nav-button-bg);
 		border-radius: 8px;
 		color: var(--nav-button-color);
-		cursor: pointer;
-		font-size: 0.9em;
+		font-size: 0.95em;
+		min-width: 15em;
 		transition: all 0.2s ease;
 	}
 	
-	.sort-button:hover {
+	.sort-select:hover {
 		background: var(--nav-button-bg);
 	}
 	

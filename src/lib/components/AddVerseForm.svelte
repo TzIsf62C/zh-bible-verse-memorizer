@@ -39,10 +39,12 @@
 
 	let editingId = null;
 	let versesList = [];
+	let myVersesSortOrder = 'biblical'; // 'biblical' | 'collection'
 	let expandedAll = false;
 	let expandedBooks = [];
 	let expandedChapters = [];
 	let groupedVerses = [];
+	let groupedCollectionVerses = [];
 
 	let selectOptions = [];
 	let bookOptions = [];
@@ -72,10 +74,13 @@
 
 	// Update from store
 	$: {
-		versesList = sortVersesByBibleOrder(
+		const biblicalVerses = sortVersesByBibleOrder(
 			$verses,
 			$settings.bookNameCharset || 'simplified'
 		);
+		versesList = myVersesSortOrder === 'collection'
+			? sortVersesByCollectionOrder(biblicalVerses)
+			: biblicalVerses;
 		selectOptions = [
 			...new Set($verses.map((v) => v.bibleVersion).filter(Boolean))
 		];
@@ -966,7 +971,65 @@
 		return grouped;
 	}
 
+	function sortVersesByCollectionOrder(inputVerses) {
+		const verseById = new Map(inputVerses.map((verse) => [verse.id, verse]));
+		const ordered = [];
+		const seen = new Set();
+
+		for (const collection of $collections) {
+			for (const verseId of collection.verseIds || []) {
+				if (seen.has(verseId)) continue;
+				const verse = verseById.get(verseId);
+				if (verse) {
+					seen.add(verseId);
+					ordered.push(verse);
+				}
+			}
+		}
+
+		for (const verse of inputVerses) {
+			if (!seen.has(verse.id)) {
+				ordered.push(verse);
+			}
+		}
+
+		return ordered;
+	}
+
+	function buildCollectionGroups(list) {
+		const verseById = new Map(list.map((verse) => [verse.id, verse]));
+		const groups = [];
+		const seen = new Set();
+
+		for (const collection of $collections) {
+			const versesInCollection = (collection.verseIds || [])
+				.map((verseId) => verseById.get(verseId))
+				.filter(Boolean);
+
+			if (versesInCollection.length > 0) {
+				groups.push({
+					id: collection.id,
+					title: collection.title,
+					verses: versesInCollection
+				});
+				versesInCollection.forEach((verse) => seen.add(verse.id));
+			}
+		}
+
+		const uncollectedVerses = list.filter((verse) => !seen.has(verse.id));
+		if (uncollectedVerses.length > 0) {
+			groups.push({
+				id: '__uncollected__',
+				title: t('not_in_collection'),
+				verses: uncollectedVerses
+			});
+		}
+
+		return groups;
+	}
+
 	$: groupedVerses = buildGroupedVerses(versesList);
+	$: groupedCollectionVerses = buildCollectionGroups(versesList);
 
 	// Close collection dropdown on resize or click outside
 	function handleResize() {
@@ -1452,89 +1515,94 @@
 
 		{#if versesList.length > 0}
 			<div class="verses-controls">
-				<button on:click={toggleAll} class="secondary">
-					{(expandedBooks.length > 0 || expandedChapters.length > 0) ? t('collapse_all') : t('expand_all')}
-				</button>
+				<div class="sort-control-inline">
+					<label class="my-verses-sort-label" for="my-verses-sort">Sort order:</label>
+					<select id="my-verses-sort" class="my-verses-sort-select" bind:value={myVersesSortOrder}>
+						<option value="biblical">{t('order_biblical')}</option>
+						<option value="collection">{t('order_collection')}</option>
+					</select>
+				</div>
+				{#if myVersesSortOrder === 'biblical'}
+					<button on:click={toggleAll} class="secondary">
+						{(expandedBooks.length > 0 || expandedChapters.length > 0) ? t('collapse_all') : t('expand_all')}
+					</button>
+				{/if}
 				<span class="verse-count">{versesList.length} {t('verses')}</span>
 			</div>
 		{/if}
 
 		<div class="verses-list">
-			{#each groupedVerses as book}
-				<div class="verse-item">
-					<button
-						class="verse-header"
-						on:click={() => toggleBook(book.bookName)}
-						type="button"
-					>
-						<span class="book-ref">{book.bookName}</span>
-						<span class="toggle-icon">{(expandedAll || expandedBooks.includes(book.bookName)) ? '▼' : '▶'}</span>
-					</button>
+			{#if myVersesSortOrder === 'collection'}
+				{#each groupedCollectionVerses as group (group.id)}
+					<details class="verse-item">
+						<summary class="verse-header">
+							<span class="book-ref">{group.title}</span>
+							<span class="verse-count">{group.verses.length} {t('verses')}</span>
+							<span class="toggle-icon">▶</span>
+						</summary>
 
-					{#if (expandedAll || expandedBooks.includes(book.bookName))}
 						<div class="verse-content">
-							{#if book.chapters.length === 1}
-								<!-- Single chapter - show verses directly without chapter header -->
-								<div class="verses-in-chapter">
-									{#each book.chapters[0].verses as verse}
-										<div class="verse-item-detail">
-											<div class="verse-reference-row">
-												<div class="verse-reference">
-													{verse.bookName} {verse.chapterNumber}:{verse.verseNumber}
-												</div>
-												{#if verse.bibleVersion}
-													<div class="verse-version">{verse.bibleVersion}</div>
-												{/if}
+							<div class="verses-in-chapter">
+								{#each group.verses as verse (verse.id)}
+									<div class="verse-item-detail">
+										<div class="verse-reference-row">
+											<div class="verse-reference">
+												{verse.bookName} {verse.chapterNumber}:{verse.verseNumber}
 											</div>
-											<div class="verse-text">{verse.verseText}</div>
-											<div class="verse-meta-row">
-												<div class="verse-tags">
-													{#if verse.lastReviewed}
-														<span class="tag learned-tag">{t('learned_tag')}</span>
-													{/if}
-													{#each getVerseCollections(verse.id) as collection}
-														<span class="tag collection-tag">{collection.title}</span>
-													{/each}
-												</div>
-												<div class="verse-actions">
-													<button
-														class="icon-button edit-button"
-														on:click={() => editVerse(verse.id)}
-														title={t('edit')}
-													>
-														✏️
-													</button>
-													<button
-														class="icon-button delete-button"
-														on:click={() => deleteVerse(verse.id)}
-														title={t('delete')}
-													>
-														❌
-													</button>
-												</div>
+											{#if verse.bibleVersion}
+												<div class="verse-version">{verse.bibleVersion}</div>
+											{/if}
+										</div>
+										<div class="verse-text">{verse.verseText}</div>
+										<div class="verse-meta-row">
+											<div class="verse-tags">
+												{#if verse.lastReviewed}
+													<span class="tag learned-tag">{t('learned_tag')}</span>
+												{/if}
+												{#each getVerseCollections(verse.id) as collection}
+													<span class="tag collection-tag">{collection.title}</span>
+												{/each}
+											</div>
+											<div class="verse-actions">
+												<button
+													class="icon-button edit-button"
+													on:click={() => editVerse(verse.id)}
+													title={t('edit')}
+												>
+													✏️
+												</button>
+												<button
+													class="icon-button delete-button"
+													on:click={() => deleteVerse(verse.id)}
+													title={t('delete')}
+												>
+													❌
+												</button>
 											</div>
 										</div>
-									{/each}
-								</div>
-							{:else}
-								<!-- Multiple chapters - show chapter headers -->
-								{#each book.chapters as chapter}
-								<button
-									class="verse-header chapter-header"
-									on:click={() => toggleChapter(book.bookName, chapter.chapterNumber)}
-									type="button"
-								>
-									<span class="book-ref">
-										{t('chapter_heading')} {chapter.chapterNumber}{t('chapter_suffix')}
-									</span>
-									<span class="toggle-icon">
-										{(expandedAll || expandedChapters.includes(`${book.bookName}-${chapter.chapterNumber}`)) ? '▼' : '▶'}
-									</span>
-								</button>
+									</div>
+								{/each}
+							</div>
+						</div>
+					</details>
+				{/each}
+			{:else}
+				{#each groupedVerses as book}
+					<div class="verse-item">
+						<button
+							class="verse-header"
+							on:click={() => toggleBook(book.bookName)}
+							type="button"
+						>
+							<span class="book-ref">{book.bookName}</span>
+							<span class="toggle-icon">{(expandedAll || expandedBooks.includes(book.bookName)) ? '▼' : '▶'}</span>
+						</button>
 
-								{#if (expandedAll || expandedChapters.includes(`${book.bookName}-${chapter.chapterNumber}`))}
+						{#if (expandedAll || expandedBooks.includes(book.bookName))}
+							<div class="verse-content">
+								{#if book.chapters.length === 1}
 									<div class="verses-in-chapter">
-										{#each chapter.verses as verse}
+										{#each book.chapters[0].verses as verse}
 											<div class="verse-item-detail">
 												<div class="verse-reference-row">
 													<div class="verse-reference">
@@ -1574,13 +1642,71 @@
 											</div>
 										{/each}
 									</div>
+								{:else}
+									{#each book.chapters as chapter}
+										<button
+											class="verse-header chapter-header"
+											on:click={() => toggleChapter(book.bookName, chapter.chapterNumber)}
+											type="button"
+										>
+											<span class="book-ref">
+												{t('chapter_heading')} {chapter.chapterNumber}{t('chapter_suffix')}
+											</span>
+											<span class="toggle-icon">
+												{(expandedAll || expandedChapters.includes(`${book.bookName}-${chapter.chapterNumber}`)) ? '▼' : '▶'}
+											</span>
+										</button>
+
+										{#if (expandedAll || expandedChapters.includes(`${book.bookName}-${chapter.chapterNumber}`))}
+											<div class="verses-in-chapter">
+												{#each chapter.verses as verse}
+													<div class="verse-item-detail">
+														<div class="verse-reference-row">
+															<div class="verse-reference">
+																{verse.bookName} {verse.chapterNumber}:{verse.verseNumber}
+															</div>
+															{#if verse.bibleVersion}
+																<div class="verse-version">{verse.bibleVersion}</div>
+															{/if}
+														</div>
+														<div class="verse-text">{verse.verseText}</div>
+														<div class="verse-meta-row">
+															<div class="verse-tags">
+																{#if verse.lastReviewed}
+																	<span class="tag learned-tag">{t('learned_tag')}</span>
+																{/if}
+																{#each getVerseCollections(verse.id) as collection}
+																	<span class="tag collection-tag">{collection.title}</span>
+																{/each}
+															</div>
+															<div class="verse-actions">
+																<button
+																	class="icon-button edit-button"
+																	on:click={() => editVerse(verse.id)}
+																	title={t('edit')}
+																>
+																	✏️
+																</button>
+																<button
+																	class="icon-button delete-button"
+																	on:click={() => deleteVerse(verse.id)}
+																	title={t('delete')}
+																>
+																	❌
+																</button>
+															</div>
+														</div>
+													</div>
+												{/each}
+											</div>
+										{/if}
+									{/each}
 								{/if}
-							{/each}
+							</div>
 						{/if}
-						</div>
-					{/if}
-				</div>
-			{/each}
+					</div>
+				{/each}
+			{/if}
 
 			{#if versesList.length === 0}
 				<div class="empty-state">{t('no_verses_to_learn')}</div>
@@ -1867,6 +1993,29 @@
 		gap: 1rem;
 		margin-bottom: 1.5rem;
 		align-items: center;
+		flex-wrap: wrap;
+	}
+
+	.sort-control-inline {
+		display: flex;
+		align-items: center;
+		gap: 0.6rem;
+	}
+
+	.my-verses-sort-label {
+		font-size: 0.95em;
+		font-weight: 600;
+		color: var(--subtitle-color);
+		white-space: nowrap;
+	}
+
+	.my-verses-sort-select {
+		padding: 0.5rem 0.7rem;
+		border: 1px solid var(--file-border);
+		background: var(--file-bg);
+		color: var(--text-color);
+		border-radius: 6px;
+		font-size: 0.95em;
 	}
 
 	.verse-count {
@@ -1899,6 +2048,11 @@
 		font-size: 1em;
 		color: inherit;
 		transition: background 0.3s;
+		list-style: none;
+	}
+
+	.verse-header::-webkit-details-marker {
+		display: none;
 	}
 
 	.verse-header:hover {
@@ -1912,6 +2066,11 @@
 
 	.toggle-icon {
 		color: var(--subtitle-color);
+		transition: transform 0.2s ease;
+	}
+
+	details[open] > .verse-header .toggle-icon {
+		transform: rotate(90deg);
 	}
 
 	.verse-content {

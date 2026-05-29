@@ -22,7 +22,7 @@
 	let selectedCollectionIds = []; // Array for multi-select collections
 	let sortedVerses = [];
 	let expandedCollections = new Set(); // Track which collections are expanded
-	let verseSortOrder = 'biblical'; // 'biblical' | 'dueDate'
+	let verseSortOrder = 'biblical'; // 'biblical' | 'dueDate' | 'collection'
 	let reviewModeBackState = 'initial';
 	
 	// Interval modal state
@@ -53,9 +53,16 @@
 	$: learnedVerses = $verses.filter(v => v.lastReviewed);
 
 	// Sort learned verses based on selected order
-	$: sortedLearnedVerses = verseSortOrder === 'biblical' 
-		? sortVersesByBibleOrder(learnedVerses, $settings.bookNameCharset || 'simplified')
-		: sortByDueDate(learnedVerses);
+	$: sortedLearnedVerses = verseSortOrder === 'collection'
+		? sortByCollectionOrder(learnedVerses)
+		: verseSortOrder === 'dueDate'
+			? sortByDueDate(learnedVerses)
+			: sortVersesByBibleOrder(learnedVerses, $settings.bookNameCharset || 'simplified');
+
+	$: reviewBiblicalGroups = buildReviewBiblicalGroups(
+		sortVersesByBibleOrder(learnedVerses, $settings.bookNameCharset || 'simplified')
+	);
+	$: reviewCollectionGroups = buildCollectionGroups(sortedLearnedVerses);
 
 	// Create verse reference formatter that checks ALL verses for duplicates (not just learnedVerses)
 	$: formatVerseRef = createVerseReferenceFormatter($verses);
@@ -133,6 +140,87 @@
 		}
 
 		return ordered;
+	}
+
+	function buildCollectionGroups(inputVerses) {
+		const verseById = new Map(inputVerses.map((verse) => [verse.id, verse]));
+		const groups = [];
+		const seen = new Set();
+
+		for (const collection of $collections) {
+			const versesInCollection = (collection.verseIds || [])
+				.map((verseId) => verseById.get(verseId))
+				.filter(Boolean);
+
+			if (versesInCollection.length > 0) {
+				groups.push({
+					id: collection.id,
+					title: collection.title,
+					verses: versesInCollection
+				});
+				versesInCollection.forEach((verse) => seen.add(verse.id));
+			}
+		}
+
+		const uncollectedVerses = inputVerses.filter((verse) => !seen.has(verse.id));
+		if (uncollectedVerses.length > 0) {
+			groups.push({
+				id: '__uncollected__',
+				title: t('not_in_collection'),
+				verses: uncollectedVerses
+			});
+		}
+
+		return groups;
+	}
+
+	function buildReviewBiblicalGroups(inputVerses) {
+		const books = [];
+
+		for (const verse of inputVerses) {
+			let bookGroup = books.find((book) => book.bookName === verse.bookName);
+			if (!bookGroup) {
+				bookGroup = {
+					bookName: verse.bookName,
+					chapters: [],
+					verseCount: 0
+				};
+				books.push(bookGroup);
+			}
+
+			let chapterGroup = bookGroup.chapters.find(
+				(chapter) => String(chapter.chapterNumber) === String(verse.chapterNumber)
+			);
+			if (!chapterGroup) {
+				chapterGroup = {
+					chapterNumber: verse.chapterNumber,
+					verses: []
+				};
+				bookGroup.chapters.push(chapterGroup);
+			}
+
+			chapterGroup.verses.push(verse);
+			bookGroup.verseCount += 1;
+		}
+
+		return books.map((book) => {
+			if (book.verseCount === 1) {
+				return {
+					type: 'single',
+					key: `single-${book.bookName}`,
+					verse: book.chapters[0].verses[0]
+				};
+			}
+
+			return {
+				type: 'book',
+				key: `book-${book.bookName}`,
+				bookName: book.bookName,
+				chapters: book.chapters,
+				verseCount: book.verseCount,
+				showChapterHeaders: book.chapters.length > 1
+			};
+		});
 	}
 
 	// Button handlers for initial state
@@ -681,69 +769,287 @@
 		</div>
 
 		<div class="sort-controls">
-			<button 
-				class="sort-btn" 
-				class:active={verseSortOrder === 'biblical'}
-				on:click={() => verseSortOrder = 'biblical'}
-			>
-				{t('order_biblical')}
-			</button>
-			<button 
-				class="sort-btn" 
-				class:active={verseSortOrder === 'dueDate'}
-				on:click={() => verseSortOrder = 'dueDate'}
-			>
-				{t('order_due_date')}
-			</button>
+			<label class="sort-label" for="select-verses-sort">Sort order:</label>
+			<select id="select-verses-sort" class="sort-select" bind:value={verseSortOrder}>
+				<option value="biblical">{t('order_biblical')}</option>
+				<option value="dueDate">{t('order_due_date')}</option>
+				<option value="collection">{t('order_collection')}</option>
+			</select>
 		</div>
 
-		<div class="verse-list">
-			{#each sortedLearnedVerses as verse (verse.id)}
-				{@const isSelected = selectedVerses.some(v => v.id === verse.id)}
-				{@const dueInfo = getDaysUntilDue(verse.dueDate)}
-				<label class="verse-item">
-					<input
-						type="checkbox"
-						checked={isSelected}
-						on:change={() => toggleVerseSelection(verse.id)}
-					/>
-					<div class="verse-info">
-						<div class="verse-ref">{formatVerseRef(verse)}</div>
-						<div class="verse-status">
-							{#if verse.lastReviewed}
-								{@const date = new Date(verse.lastReviewed)}
-								<span class="last-reviewed-text">{t('last_reviewed')}: {date.toLocaleDateString()}</span>
-								{#if dueInfo !== null}
-									{#if dueInfo.milliseconds < 0}
-										{#if dueInfo.days <= -2}
-											<span class="overdue">({t('days_overdue', { count: Math.abs(dueInfo.days) })})</span>
+		{#if verseSortOrder === 'collection'}
+			<div class="verse-list grouped-verse-list">
+				{#each reviewCollectionGroups as group (group.id)}
+					<details class="review-group-details">
+						<summary class="review-group-summary">
+							<span class="review-toggle-icon" aria-hidden="true">▶</span>
+							<span class="review-group-label">{group.title}</span>
+							<span class="review-group-count">({group.verses.length})</span>
+						</summary>
+						<div class="review-group-items">
+							{#each group.verses as verse (verse.id)}
+								{@const isSelected = selectedVerses.some(v => v.id === verse.id)}
+								{@const dueInfo = getDaysUntilDue(verse.dueDate)}
+								<label class="verse-item">
+									<input
+										type="checkbox"
+										checked={isSelected}
+										on:change={() => toggleVerseSelection(verse.id)}
+									/>
+									<div class="verse-info">
+										<div class="verse-ref">{formatVerseRef(verse)}</div>
+										<div class="verse-status">
+											{#if verse.lastReviewed}
+												{@const date = new Date(verse.lastReviewed)}
+												<span class="last-reviewed-text">{t('last_reviewed')}: {date.toLocaleDateString()}</span>
+												{#if dueInfo !== null}
+													{#if dueInfo.milliseconds < 0}
+														{#if dueInfo.days <= -2}
+															<span class="overdue">({t('days_overdue', { count: Math.abs(dueInfo.days) })})</span>
+														{:else}
+															<span class="due-soon">({t('due_today')})</span>
+														{/if}
+													{:else if dueInfo.days >= 1}
+														{#if dueInfo.days === 1}
+															<span class="due-future">({t('due_in_day')})</span>
+														{:else}
+															<span class="due-future">({t('due_in_days', { count: dueInfo.days })})</span>
+														{/if}
+													{:else if dueInfo.hours >= 2}
+														<span class="due-soon">({t('due_in_hours', { count: dueInfo.hours })})</span>
+													{:else if dueInfo.hours === 1}
+														<span class="due-soon">({t('due_in_hour')})</span>
+													{:else if dueInfo.minutes >= 1}
+														<span class="due-soon">({t('due_in_minutes', { count: dueInfo.minutes })})</span>
+													{:else}
+														<span class="due-soon">({t('due_today')})</span>
+													{/if}
+												{/if}
+											{:else}
+												{t('not_reviewed_yet')}
+											{/if}
+										</div>
+									</div>
+								</label>
+							{/each}
+						</div>
+					</details>
+				{/each}
+			</div>
+		{:else if verseSortOrder === 'biblical'}
+			<div class="verse-list grouped-verse-list">
+				{#each reviewBiblicalGroups as group (group.key)}
+					{#if group.type === 'single'}
+						{@const verse = group.verse}
+						{@const isSelected = selectedVerses.some(v => v.id === verse.id)}
+						{@const dueInfo = getDaysUntilDue(verse.dueDate)}
+						<label class="verse-item">
+							<input
+								type="checkbox"
+								checked={isSelected}
+								on:change={() => toggleVerseSelection(verse.id)}
+							/>
+							<div class="verse-info">
+								<div class="verse-ref">{formatVerseRef(verse)}</div>
+								<div class="verse-status">
+									{#if verse.lastReviewed}
+										{@const date = new Date(verse.lastReviewed)}
+										<span class="last-reviewed-text">{t('last_reviewed')}: {date.toLocaleDateString()}</span>
+										{#if dueInfo !== null}
+											{#if dueInfo.milliseconds < 0}
+												{#if dueInfo.days <= -2}
+													<span class="overdue">({t('days_overdue', { count: Math.abs(dueInfo.days) })})</span>
+												{:else}
+													<span class="due-soon">({t('due_today')})</span>
+												{/if}
+											{:else if dueInfo.days >= 1}
+												{#if dueInfo.days === 1}
+													<span class="due-future">({t('due_in_day')})</span>
+												{:else}
+													<span class="due-future">({t('due_in_days', { count: dueInfo.days })})</span>
+												{/if}
+											{:else if dueInfo.hours >= 2}
+												<span class="due-soon">({t('due_in_hours', { count: dueInfo.hours })})</span>
+											{:else if dueInfo.hours === 1}
+												<span class="due-soon">({t('due_in_hour')})</span>
+											{:else if dueInfo.minutes >= 1}
+												<span class="due-soon">({t('due_in_minutes', { count: dueInfo.minutes })})</span>
+											{:else}
+												<span class="due-soon">({t('due_today')})</span>
+											{/if}
+										{/if}
+									{:else}
+										{t('not_reviewed_yet')}
+									{/if}
+								</div>
+							</div>
+						</label>
+					{:else}
+						<details class="review-group-details">
+							<summary class="review-group-summary">
+								<span class="review-toggle-icon" aria-hidden="true">▶</span>
+								<span class="review-group-label">{group.bookName}</span>
+								<span class="review-group-count">({group.verseCount})</span>
+							</summary>
+							<div class="review-group-items">
+								{#if group.showChapterHeaders}
+									{#each group.chapters as chapter (chapter.chapterNumber)}
+										<details class="review-chapter-details">
+											<summary class="review-chapter-summary">
+												<span class="review-toggle-icon" aria-hidden="true">▶</span>
+												<span>{t('chapter')} {chapter.chapterNumber}</span>
+												<span class="review-group-count">({chapter.verses.length})</span>
+											</summary>
+											<div class="review-group-items">
+												{#each chapter.verses as verse (verse.id)}
+													{@const isSelected = selectedVerses.some(v => v.id === verse.id)}
+													{@const dueInfo = getDaysUntilDue(verse.dueDate)}
+													<label class="verse-item">
+														<input
+															type="checkbox"
+															checked={isSelected}
+															on:change={() => toggleVerseSelection(verse.id)}
+														/>
+														<div class="verse-info">
+															<div class="verse-ref">{formatVerseRef(verse)}</div>
+															<div class="verse-status">
+																{#if verse.lastReviewed}
+																	{@const date = new Date(verse.lastReviewed)}
+																	<span class="last-reviewed-text">{t('last_reviewed')}: {date.toLocaleDateString()}</span>
+																	{#if dueInfo !== null}
+																		{#if dueInfo.milliseconds < 0}
+																			{#if dueInfo.days <= -2}
+																				<span class="overdue">({t('days_overdue', { count: Math.abs(dueInfo.days) })})</span>
+																			{:else}
+																				<span class="due-soon">({t('due_today')})</span>
+																			{/if}
+																		{:else if dueInfo.days >= 1}
+																			{#if dueInfo.days === 1}
+																				<span class="due-future">({t('due_in_day')})</span>
+																			{:else}
+																				<span class="due-future">({t('due_in_days', { count: dueInfo.days })})</span>
+																			{/if}
+																		{:else if dueInfo.hours >= 2}
+																			<span class="due-soon">({t('due_in_hours', { count: dueInfo.hours })})</span>
+																		{:else if dueInfo.hours === 1}
+																			<span class="due-soon">({t('due_in_hour')})</span>
+																		{:else if dueInfo.minutes >= 1}
+																			<span class="due-soon">({t('due_in_minutes', { count: dueInfo.minutes })})</span>
+																		{:else}
+																			<span class="due-soon">({t('due_today')})</span>
+																		{/if}
+																	{/if}
+																{:else}
+																	{t('not_reviewed_yet')}
+																{/if}
+															</div>
+														</div>
+													</label>
+												{/each}
+											</div>
+										</details>
+									{/each}
+								{:else}
+									{#each group.chapters[0].verses as verse (verse.id)}
+										{@const isSelected = selectedVerses.some(v => v.id === verse.id)}
+										{@const dueInfo = getDaysUntilDue(verse.dueDate)}
+										<label class="verse-item">
+											<input
+												type="checkbox"
+												checked={isSelected}
+												on:change={() => toggleVerseSelection(verse.id)}
+											/>
+											<div class="verse-info">
+												<div class="verse-ref">{formatVerseRef(verse)}</div>
+												<div class="verse-status">
+													{#if verse.lastReviewed}
+														{@const date = new Date(verse.lastReviewed)}
+														<span class="last-reviewed-text">{t('last_reviewed')}: {date.toLocaleDateString()}</span>
+														{#if dueInfo !== null}
+															{#if dueInfo.milliseconds < 0}
+																{#if dueInfo.days <= -2}
+																	<span class="overdue">({t('days_overdue', { count: Math.abs(dueInfo.days) })})</span>
+																{:else}
+																	<span class="due-soon">({t('due_today')})</span>
+																{/if}
+															{:else if dueInfo.days >= 1}
+																{#if dueInfo.days === 1}
+																	<span class="due-future">({t('due_in_day')})</span>
+																{:else}
+																	<span class="due-future">({t('due_in_days', { count: dueInfo.days })})</span>
+																{/if}
+															{:else if dueInfo.hours >= 2}
+																<span class="due-soon">({t('due_in_hours', { count: dueInfo.hours })})</span>
+															{:else if dueInfo.hours === 1}
+																<span class="due-soon">({t('due_in_hour')})</span>
+															{:else if dueInfo.minutes >= 1}
+																<span class="due-soon">({t('due_in_minutes', { count: dueInfo.minutes })})</span>
+															{:else}
+																<span class="due-soon">({t('due_today')})</span>
+															{/if}
+														{/if}
+													{:else}
+														{t('not_reviewed_yet')}
+													{/if}
+												</div>
+											</div>
+										</label>
+									{/each}
+								{/if}
+							</div>
+						</details>
+					{/if}
+				{/each}
+			</div>
+		{:else}
+			<div class="verse-list">
+				{#each sortedLearnedVerses as verse (verse.id)}
+					{@const isSelected = selectedVerses.some(v => v.id === verse.id)}
+					{@const dueInfo = getDaysUntilDue(verse.dueDate)}
+					<label class="verse-item">
+						<input
+							type="checkbox"
+							checked={isSelected}
+							on:change={() => toggleVerseSelection(verse.id)}
+						/>
+						<div class="verse-info">
+							<div class="verse-ref">{formatVerseRef(verse)}</div>
+							<div class="verse-status">
+								{#if verse.lastReviewed}
+									{@const date = new Date(verse.lastReviewed)}
+									<span class="last-reviewed-text">{t('last_reviewed')}: {date.toLocaleDateString()}</span>
+									{#if dueInfo !== null}
+										{#if dueInfo.milliseconds < 0}
+											{#if dueInfo.days <= -2}
+												<span class="overdue">({t('days_overdue', { count: Math.abs(dueInfo.days) })})</span>
+											{:else}
+												<span class="due-soon">({t('due_today')})</span>
+											{/if}
+										{:else if dueInfo.days >= 1}
+											{#if dueInfo.days === 1}
+												<span class="due-future">({t('due_in_day')})</span>
+											{:else}
+												<span class="due-future">({t('due_in_days', { count: dueInfo.days })})</span>
+											{/if}
+										{:else if dueInfo.hours >= 2}
+											<span class="due-soon">({t('due_in_hours', { count: dueInfo.hours })})</span>
+										{:else if dueInfo.hours === 1}
+											<span class="due-soon">({t('due_in_hour')})</span>
+										{:else if dueInfo.minutes >= 1}
+											<span class="due-soon">({t('due_in_minutes', { count: dueInfo.minutes })})</span>
 										{:else}
 											<span class="due-soon">({t('due_today')})</span>
 										{/if}
-									{:else if dueInfo.days >= 1}
-										{#if dueInfo.days === 1}
-											<span class="due-future">({t('due_in_day')})</span>
-										{:else}
-											<span class="due-future">({t('due_in_days', { count: dueInfo.days })})</span>
-										{/if}
-									{:else if dueInfo.hours >= 2}
-										<span class="due-soon">({t('due_in_hours', { count: dueInfo.hours })})</span>
-									{:else if dueInfo.hours === 1}
-										<span class="due-soon">({t('due_in_hour')})</span>
-									{:else if dueInfo.minutes >= 1}
-										<span class="due-soon">({t('due_in_minutes', { count: dueInfo.minutes })})</span>
-									{:else}
-										<span class="due-soon">({t('due_today')})</span>
 									{/if}
+								{:else}
+									{t('not_reviewed_yet')}
 								{/if}
-							{:else}
-								{t('not_reviewed_yet')}
-							{/if}
+							</div>
 						</div>
-					</div>
-				</label>
-			{/each}
-		</div>
+					</label>
+				{/each}
+			</div>
+		{/if}
 
 		{#if selectedVerses.length > 0}
 			<div class="fixed-bottom-btn">
@@ -765,69 +1071,122 @@
 		</div>
 
 		<div class="sort-controls">
-			<button 
-				class="sort-btn" 
-				class:active={verseSortOrder === 'biblical'}
-				on:click={() => verseSortOrder = 'biblical'}
-			>
-				{t('order_biblical')}
-			</button>
-			<button 
-				class="sort-btn" 
-				class:active={verseSortOrder === 'dueDate'}
-				on:click={() => verseSortOrder = 'dueDate'}
-			>
-				{t('order_due_date')}
-			</button>
+			<label class="sort-label" for="edit-interval-sort">Sort order:</label>
+			<select id="edit-interval-sort" class="sort-select" bind:value={verseSortOrder}>
+				<option value="biblical">{t('order_biblical')}</option>
+				<option value="dueDate">{t('order_due_date')}</option>
+				<option value="collection">{t('order_collection')}</option>
+			</select>
 		</div>
 
-		<div class="verse-list">
-			{#each sortedLearnedVerses as verse (verse.id)}
-				{@const isSelected = selectedVerses.some(v => v.id === verse.id)}
-				{@const dueInfo = getDaysUntilDue(verse.dueDate)}
-				<label class="verse-item">
-					<input
-						type="checkbox"
-						checked={isSelected}
-						on:change={() => toggleVerseSelection(verse.id)}
-					/>
-					<div class="verse-info">
-						<div class="verse-ref">{formatVerseRef(verse)}</div>
-						<div class="verse-status">
-							{#if verse.lastReviewed}
-								{@const date = new Date(verse.lastReviewed)}
-								<span class="last-reviewed-text">{t('last_reviewed')}: {date.toLocaleDateString()}</span>
-								{#if dueInfo !== null}
-									{#if dueInfo.milliseconds < 0}
-										{#if dueInfo.days <= -2}
-											<span class="overdue">({t('days_overdue', { count: Math.abs(dueInfo.days) })})</span>
+		{#if verseSortOrder === 'collection'}
+			<div class="verse-list grouped-verse-list">
+				{#each reviewCollectionGroups as group (group.id)}
+					<details class="review-group-details">
+						<summary class="review-group-summary">
+							<span class="review-toggle-icon" aria-hidden="true">▶</span>
+							<span class="review-group-label">{group.title}</span>
+							<span class="review-group-count">({group.verses.length})</span>
+						</summary>
+						<div class="review-group-items">
+							{#each group.verses as verse (verse.id)}
+								{@const isSelected = selectedVerses.some(v => v.id === verse.id)}
+								{@const dueInfo = getDaysUntilDue(verse.dueDate)}
+								<label class="verse-item">
+									<input
+										type="checkbox"
+										checked={isSelected}
+										on:change={() => toggleVerseSelection(verse.id)}
+									/>
+									<div class="verse-info">
+										<div class="verse-ref">{formatVerseRef(verse)}</div>
+										<div class="verse-status">
+											{#if verse.lastReviewed}
+												{@const date = new Date(verse.lastReviewed)}
+												<span class="last-reviewed-text">{t('last_reviewed')}: {date.toLocaleDateString()}</span>
+												{#if dueInfo !== null}
+													{#if dueInfo.milliseconds < 0}
+														{#if dueInfo.days <= -2}
+															<span class="overdue">({t('days_overdue', { count: Math.abs(dueInfo.days) })})</span>
+														{:else}
+															<span class="due-soon">({t('due_today')})</span>
+														{/if}
+													{:else if dueInfo.days >= 1}
+														{#if dueInfo.days === 1}
+															<span class="due-future">({t('due_in_day')})</span>
+														{:else}
+															<span class="due-future">({t('due_in_days', { count: dueInfo.days })})</span>
+														{/if}
+													{:else if dueInfo.hours >= 2}
+														<span class="due-soon">({t('due_in_hours', { count: dueInfo.hours })})</span>
+													{:else if dueInfo.hours === 1}
+														<span class="due-soon">({t('due_in_hour')})</span>
+													{:else if dueInfo.minutes >= 1}
+														<span class="due-soon">({t('due_in_minutes', { count: dueInfo.minutes })})</span>
+													{:else}
+														<span class="due-soon">({t('due_today')})</span>
+													{/if}
+												{/if}
+											{:else}
+												{t('not_reviewed_yet')}
+											{/if}
+										</div>
+									</div>
+								</label>
+							{/each}
+						</div>
+					</details>
+				{/each}
+			</div>
+		{:else}
+			<div class="verse-list">
+				{#each sortedLearnedVerses as verse (verse.id)}
+					{@const isSelected = selectedVerses.some(v => v.id === verse.id)}
+					{@const dueInfo = getDaysUntilDue(verse.dueDate)}
+					<label class="verse-item">
+						<input
+							type="checkbox"
+							checked={isSelected}
+							on:change={() => toggleVerseSelection(verse.id)}
+						/>
+						<div class="verse-info">
+							<div class="verse-ref">{formatVerseRef(verse)}</div>
+							<div class="verse-status">
+								{#if verse.lastReviewed}
+									{@const date = new Date(verse.lastReviewed)}
+									<span class="last-reviewed-text">{t('last_reviewed')}: {date.toLocaleDateString()}</span>
+									{#if dueInfo !== null}
+										{#if dueInfo.milliseconds < 0}
+											{#if dueInfo.days <= -2}
+												<span class="overdue">({t('days_overdue', { count: Math.abs(dueInfo.days) })})</span>
+											{:else}
+												<span class="due-soon">({t('due_today')})</span>
+											{/if}
+										{:else if dueInfo.days >= 1}
+											{#if dueInfo.days === 1}
+												<span class="due-future">({t('due_in_day')})</span>
+											{:else}
+												<span class="due-future">({t('due_in_days', { count: dueInfo.days })})</span>
+											{/if}
+										{:else if dueInfo.hours >= 2}
+											<span class="due-soon">({t('due_in_hours', { count: dueInfo.hours })})</span>
+										{:else if dueInfo.hours === 1}
+											<span class="due-soon">({t('due_in_hour')})</span>
+										{:else if dueInfo.minutes >= 1}
+											<span class="due-soon">({t('due_in_minutes', { count: dueInfo.minutes })})</span>
 										{:else}
 											<span class="due-soon">({t('due_today')})</span>
 										{/if}
-									{:else if dueInfo.days >= 1}
-										{#if dueInfo.days === 1}
-											<span class="due-future">({t('due_in_day')})</span>
-										{:else}
-											<span class="due-future">({t('due_in_days', { count: dueInfo.days })})</span>
-										{/if}
-									{:else if dueInfo.hours >= 2}
-										<span class="due-soon">({t('due_in_hours', { count: dueInfo.hours })})</span>
-									{:else if dueInfo.hours === 1}
-										<span class="due-soon">({t('due_in_hour')})</span>
-									{:else if dueInfo.minutes >= 1}
-										<span class="due-soon">({t('due_in_minutes', { count: dueInfo.minutes })})</span>
-									{:else}
-										<span class="due-soon">({t('due_today')})</span>
 									{/if}
+								{:else}
+									{t('not_reviewed_yet')}
 								{/if}
-							{:else}
-								{t('not_reviewed_yet')}
-							{/if}
+							</div>
 						</div>
-					</div>
-				</label>
-			{/each}
-		</div>
+					</label>
+				{/each}
+			</div>
+		{/if}
 
 		{#if selectedVerses.length > 0}
 			<div class="fixed-bottom-btn">
@@ -1060,30 +1419,26 @@
 	/* Sort controls */
 	.sort-controls {
 		display: flex;
-		gap: 0.5rem;
+		align-items: center;
+		gap: 0.75rem;
 		margin-bottom: 1rem;
 	}
 
-	.sort-btn {
+	.sort-label {
+		color: var(--subtitle-color);
+		font-size: 0.95em;
+		font-weight: 600;
+		white-space: nowrap;
+	}
+
+	.sort-select {
 		flex: 1;
-		padding: 0.75rem;
+		padding: 0.6rem 0.75rem;
 		border: 1px solid var(--file-border);
 		background: var(--file-bg);
 		color: var(--text-color);
-		border-radius: 4px;
-		cursor: pointer;
-		font-size: 0.9em;
-		transition: all 0.3s;
-	}
-
-	.sort-btn:hover {
-		background: var(--nav-button-bg);
-	}
-
-	.sort-btn.active {
-		background: var(--accent-color);
-		color: white;
-		border-color: var(--accent-color);
+		border-radius: 6px;
+		font-size: 0.95em;
 	}
 
 	/* Fixed bottom button */
@@ -1224,12 +1579,70 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.5rem;
-		max-height: 60vh;
 		overflow-y: auto;
 		padding: 0.5rem;
 		border: 1px solid var(--file-border);
 		border-radius: 4px;
 		margin-bottom: 1rem;
+	}
+
+	.grouped-verse-list {
+		gap: 0.5rem;
+	}
+
+	.review-group-details,
+	.review-chapter-details {
+		border: 1px solid var(--file-border);
+		border-radius: 6px;
+		background: var(--file-bg);
+		overflow: hidden;
+	}
+
+	.review-group-summary,
+	.review-chapter-summary {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.65rem 0.75rem;
+		cursor: pointer;
+		list-style: none;
+		font-weight: 600;
+		color: var(--text-color);
+	}
+
+	.review-group-summary::-webkit-details-marker,
+	.review-chapter-summary::-webkit-details-marker {
+		display: none;
+	}
+
+	.review-toggle-icon {
+		width: 1em;
+		color: var(--subtitle-color);
+		text-align: center;
+		transition: transform 0.2s ease;
+	}
+
+	details[open] > .review-group-summary .review-toggle-icon,
+	details[open] > .review-chapter-summary .review-toggle-icon {
+		transform: rotate(90deg);
+	}
+
+	.review-group-label {
+		min-width: 0;
+	}
+
+	.review-group-count {
+		margin-left: auto;
+		color: var(--subtitle-color);
+		font-size: 0.9em;
+		font-weight: 500;
+	}
+
+	.review-group-items {
+		display: flex;
+		flex-direction: column;
+		gap: 0.4rem;
+		padding: 0.4rem;
 	}
 
 	.verse-item {
@@ -1484,10 +1897,6 @@
 		.initial-btn {
 			padding: 1.25rem;
 			font-size: 1em;
-		}
-
-		.verse-list {
-			max-height: 50vh;
 		}
 
 		.fixed-bottom-btn {

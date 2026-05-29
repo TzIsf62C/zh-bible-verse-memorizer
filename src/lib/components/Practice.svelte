@@ -29,6 +29,7 @@
 	let selectedCollectionFilter = null; // 'learned' | 'all'
 	let selectedVerse = null;
 	let selectedActivity = null;
+	let verseSortOrder = 'biblical'; // 'biblical' | 'collection'
 	let selectedPracticeOrder = 'biblical'; // 'collection' | 'biblical' | 'reverseBiblical' | 'random'
 	let processedPreselection = false; // Prevent reactive loop with preselection
 	let expandedVerseGroups = new Set();
@@ -60,8 +61,10 @@
 	// Create verse reference formatter
 	$: formatVerseRef = createVerseReferenceFormatter($verses);
 	
-	// Sort verses by biblical order for verse selection
-	$: sortedVerses = sortVersesByBibleOrder($verses, $settings.bookNameCharset || 'simplified');
+	// Sort verses for verse selection
+	$: sortedVerses = verseSortOrder === 'collection'
+		? sortVersesByCollectionOrder($verses)
+		: sortVersesByBibleOrder($verses, $settings.bookNameCharset || 'simplified');
 
 	// Group verses by book/chapter for expandable verse selection list
 	$: groupedVerses = (() => {
@@ -84,7 +87,9 @@
 		return groups;
 	})();
 
-	$: if (state === 'selectVerse' && groupedVerses.length > 0 && expandedVerseGroups.size === 0) {
+	$: groupedCollectionVerses = buildPracticeCollectionGroups(sortedVerses);
+
+	$: if (state === 'selectVerse' && verseSortOrder === 'biblical' && groupedVerses.length > 0 && expandedVerseGroups.size === 0) {
 		expandedVerseGroups = new Set([groupedVerses[0].key]);
 	}
 	
@@ -130,6 +135,7 @@
 			return;
 		}
 		practiceType = 'verse';
+		verseSortOrder = 'biblical';
 		expandedVerseGroups = new Set();
 		state = 'selectVerse';
 	}
@@ -157,6 +163,63 @@
 			expandedVerseGroups.add(groupKey);
 		}
 		expandedVerseGroups = new Set(expandedVerseGroups);
+	}
+
+	function sortVersesByCollectionOrder(inputVerses) {
+		const verseById = new Map(inputVerses.map((verse) => [verse.id, verse]));
+		const ordered = [];
+		const seen = new Set();
+
+		for (const collection of $collections) {
+			for (const verseId of collection.verseIds || []) {
+				if (seen.has(verseId)) continue;
+				const verse = verseById.get(verseId);
+				if (verse) {
+					seen.add(verseId);
+					ordered.push(verse);
+				}
+			}
+		}
+
+		for (const verse of inputVerses) {
+			if (!seen.has(verse.id)) {
+				ordered.push(verse);
+			}
+		}
+
+		return ordered;
+	}
+
+	function buildPracticeCollectionGroups(inputVerses) {
+		const verseById = new Map(inputVerses.map((verse) => [verse.id, verse]));
+		const groups = [];
+		const seen = new Set();
+
+		for (const collection of $collections) {
+			const versesInCollection = (collection.verseIds || [])
+				.map((verseId) => verseById.get(verseId))
+				.filter(Boolean);
+
+			if (versesInCollection.length > 0) {
+				groups.push({
+					id: collection.id,
+					title: collection.title,
+					verses: versesInCollection
+				});
+				versesInCollection.forEach((verse) => seen.add(verse.id));
+			}
+		}
+
+		const uncollected = inputVerses.filter((verse) => !seen.has(verse.id));
+		if (uncollected.length > 0) {
+			groups.push({
+				id: '__uncollected__',
+				title: t('not_in_collection'),
+				verses: uncollected
+			});
+		}
+
+		return groups;
 	}
 
 	function proceedToActivitySelection() {
@@ -387,16 +450,24 @@
 			<h3>{t('select_verse')}</h3>
 			<div class="spacer"></div>
 		</div>
+
+		<div class="sort-controls">
+			<label class="sort-label" for="practice-verse-sort">Sort order:</label>
+			<select id="practice-verse-sort" class="sort-select" bind:value={verseSortOrder}>
+				<option value="biblical">{t('order_biblical')}</option>
+				<option value="collection">{t('order_collection')}</option>
+			</select>
+		</div>
 		
 		<div class="verse-list">
-			{#each groupedVerses as group}
-				<div class="verse-group" class:expanded={expandedVerseGroups.has(group.key)}>
-					<button class="verse-group-header" on:click={() => toggleVerseGroup(group.key)}>
-						<span>{group.bookName} {group.chapterNumber}</span>
-						<span class="group-meta">{group.verses.length} {t('verses')}</span>
-						<span class="expand-icon">{expandedVerseGroups.has(group.key) ? '▾' : '▸'}</span>
-					</button>
-					{#if expandedVerseGroups.has(group.key)}
+			{#if verseSortOrder === 'collection'}
+				{#each groupedCollectionVerses as group (group.id)}
+					<details class="verse-group">
+						<summary class="verse-group-header">
+							<span>{group.title}</span>
+							<span class="group-meta">{group.verses.length} {t('verses')}</span>
+							<span class="expand-icon">▸</span>
+						</summary>
 						<div class="verse-group-items">
 							{#each group.verses as verse}
 								<button
@@ -412,9 +483,36 @@
 								</button>
 							{/each}
 						</div>
-					{/if}
-				</div>
-			{/each}
+					</details>
+				{/each}
+			{:else}
+				{#each groupedVerses as group}
+					<div class="verse-group" class:expanded={expandedVerseGroups.has(group.key)}>
+						<button class="verse-group-header" on:click={() => toggleVerseGroup(group.key)}>
+							<span>{group.bookName} {group.chapterNumber}</span>
+							<span class="group-meta">{group.verses.length} {t('verses')}</span>
+							<span class="expand-icon">{expandedVerseGroups.has(group.key) ? '▾' : '▸'}</span>
+						</button>
+						{#if expandedVerseGroups.has(group.key)}
+							<div class="verse-group-items">
+								{#each group.verses as verse}
+									<button
+										class="verse-item"
+										class:selected={selectedVerse?.id === verse.id}
+										on:click={() => selectVerse(verse)}
+									>
+										<span class="verse-ref">{formatVerseRef(verse)}</span>
+										<span class="verse-preview">{verse.verseText.substring(0, 20)}...</span>
+										{#if selectedVerse?.id === verse.id}
+											<span class="check-icon">✓</span>
+										{/if}
+									</button>
+								{/each}
+							</div>
+						{/if}
+					</div>
+				{/each}
+			{/if}
 		</div>
 		
 		<div class="fixed-bottom-button">
@@ -680,6 +778,30 @@
 		gap: 0.75rem;
 		margin-bottom: 5rem;
 	}
+
+	.sort-controls {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		margin-bottom: 0.8rem;
+	}
+
+	.sort-label {
+		font-size: 0.95em;
+		font-weight: 600;
+		color: var(--subtitle-color);
+		white-space: nowrap;
+	}
+
+	.sort-select {
+		flex: 1;
+		padding: 0.6rem 0.75rem;
+		border: 1px solid var(--file-border);
+		border-radius: 6px;
+		background: var(--file-bg);
+		color: var(--text-color);
+		font-size: 0.95em;
+	}
 	
 	.collection-item-container {
 		display: flex;
@@ -706,6 +828,11 @@
 		font-weight: 600;
 		cursor: pointer;
 		text-align: left;
+		list-style: none;
+	}
+
+	.verse-group-header::-webkit-details-marker {
+		display: none;
 	}
 
 	.verse-group-items {
@@ -726,6 +853,11 @@
 		min-width: 1.2em;
 		text-align: center;
 		color: var(--subtitle-color);
+		transition: transform 0.2s ease;
+	}
+
+	details[open] .expand-icon {
+		transform: rotate(90deg);
 	}
 	
 	.collection-item,
