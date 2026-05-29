@@ -890,10 +890,7 @@
 	}
 
 	function toggleAll() {
-		const listDiv = document.querySelector('.verses-list');
-		if (!listDiv) return;
-		
-		if (expandedBooks.length > 0 || expandedChapters.length > 0) {
+		if (expandedAll || expandedBooks.length > 0 || expandedChapters.length > 0) {
 			// Some headings are expanded, so collapse all
 			expandedAll = false;
 			expandedBooks = [];
@@ -1524,7 +1521,7 @@
 				</div>
 				{#if myVersesSortOrder === 'biblical'}
 					<button on:click={toggleAll} class="secondary">
-						{(expandedBooks.length > 0 || expandedChapters.length > 0) ? t('collapse_all') : t('expand_all')}
+						{(expandedAll || expandedBooks.length > 0 || expandedChapters.length > 0) ? t('collapse_all') : t('expand_all')}
 					</button>
 				{/if}
 				<span class="verse-count">{versesList.length} {t('verses')}</span>
