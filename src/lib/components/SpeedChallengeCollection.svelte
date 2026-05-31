@@ -103,13 +103,17 @@
 		const charRect = targetChar.getBoundingClientRect();
 		const visibleTop = containerRect.top + 12;
 		const visibleBottom = Math.min(containerRect.bottom, window.innerHeight, keyboardRect.top) - 12;
-		const overlapsTop = charRect.top < visibleTop;
-		const overlapsBottom = charRect.bottom > visibleBottom;
+		const visibleHeight = Math.max(0, visibleBottom - visibleTop);
+		if (visibleHeight <= 0) return;
+		const charCenter = charRect.top + (charRect.height / 2);
+		const preferredTop = visibleTop + (visibleHeight * 0.35);
+		const preferredBottom = visibleTop + (visibleHeight * 0.55);
+		const overlapsTop = charCenter < preferredTop;
+		const overlapsBottom = charCenter > preferredBottom;
 
 		if (!overlapsTop && !overlapsBottom) return;
 
-		const visibleCenter = (visibleTop + visibleBottom) / 2;
-		const charCenter = charRect.top + (charRect.height / 2);
+		const visibleCenter = (preferredTop + preferredBottom) / 2;
 		const scrollDelta = charCenter - visibleCenter;
 
 		passageDisplayEl.scrollTo({
@@ -815,6 +819,14 @@
 	@media (max-width: 767px) {
 		.speed-challenge-container {
 			padding: 0.5rem;
+		}
+
+		.passage-display {
+			padding: 0.75rem 0.75rem 11.5rem;
+		}
+
+		.keyboard-space {
+			height: 240px;
 		}
 		
 		.stats-bar {

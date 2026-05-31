@@ -407,9 +407,11 @@
 		</div>
 	{/if}
 	
-	<div class="instructions">
-		{t('blind_challenge_instructions')}
-	</div>
+	{#if !showResult}
+		<div class="instructions">
+			{t('blind_challenge_instructions')}
+		</div>
+	{/if}
 	
 	{#if !isComplete}
 		<!-- During typing: password-style display (last character visible) -->

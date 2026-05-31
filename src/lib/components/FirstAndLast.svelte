@@ -332,14 +332,18 @@
 		<button class="exit-button" on:click={closeToInitial} aria-label={t('exit')}>✕</button>
 	</div>
 	
-	{#if collection}
-		<div class="collection-header">
-			{collection.title}
+	<div class="collection-meta-row">
+		<div class="collection-meta-spacer" aria-hidden="true"></div>
+		{#if collection}
+			<div class="collection-header">
+				{collection.title}
+			</div>
+		{:else}
+			<div></div>
+		{/if}
+		<div class="progress-indicator">
+			{currentVerseIndex + 1} / {verses.length}
 		</div>
-	{/if}
-	
-	<div class="progress-indicator">
-		{currentVerseIndex + 1} / {verses.length}
 	</div>
 	
 	{#if currentVerse}
@@ -460,6 +464,17 @@
 		text-align: center;
 	}
 	
+	.collection-meta-row {
+		display: grid;
+		grid-template-columns: 1fr auto 1fr;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	.collection-meta-spacer {
+		justify-self: start;
+	}
+
 	.collection-header {
 		text-align: center;
 		font-weight: 600;
@@ -468,7 +483,7 @@
 	}
 	
 	.progress-indicator {
-		text-align: center;
+		justify-self: end;
 		color: var(--subtitle-color);
 		font-size: 0.9em;
 		padding: 0.25rem;

@@ -1,5 +1,5 @@
 <script>
-	import { createEventDispatcher } from 'svelte';
+	import { createEventDispatcher, tick } from 'svelte';
 	import { settings } from '$lib/stores/settings';
 	import { verses } from '$lib/stores/verses';
 	import { practice } from '$lib/stores/practice';
@@ -27,6 +27,7 @@
 	let fullText = '';
 	let fullInitials = '';
 	let charToInputIndex = [];
+	let verseDisplayEl;
 	
 	// Keyboard feedback
 	let keyboardLayout = keyboardLayouts.pinyinCompact;
@@ -82,6 +83,64 @@
 			};
 			keyboardLayout = layoutMap[inputMethod] || keyboardLayouts.pinyinCompact;
 			isNumericKeyboard = false;
+		}
+	}
+
+	$: {
+		const __ = userInput.length;
+		if (verseDisplayEl && !showCompletionModal) {
+			scheduleAutoscroll();
+		}
+	}
+
+	async function scheduleAutoscroll() {
+		await tick();
+		requestAnimationFrame(() => {
+			scrollNextHiddenCharacterIntoView();
+		});
+	}
+
+	function scrollNextHiddenCharacterIntoView() {
+		if (!verseDisplayEl) return;
+		const keyboard = document.querySelector('.speed-challenge-container .keyboard-space .keyboard');
+		if (!keyboard) return;
+
+		const nextInputIndex = userInput.length;
+		const charIndex = charToInputIndex.findIndex((value) => value === nextInputIndex);
+		if (charIndex === -1) return;
+
+		const targetChar = verseDisplayEl.querySelector(`span:nth-child(${charIndex + 1})`);
+		if (!targetChar) return;
+
+		const containerRect = verseDisplayEl.getBoundingClientRect();
+		const keyboardRect = keyboard.getBoundingClientRect();
+		const charRect = targetChar.getBoundingClientRect();
+		const visibleTop = containerRect.top + 12;
+		const visibleBottom = Math.min(containerRect.bottom, window.innerHeight, keyboardRect.top) - 12;
+		const visibleHeight = Math.max(0, visibleBottom - visibleTop);
+		if (visibleHeight <= 0) return;
+		const charCenter = charRect.top + (charRect.height / 2);
+		const preferredTop = visibleTop + (visibleHeight * 0.35);
+		const preferredBottom = visibleTop + (visibleHeight * 0.55);
+		const overlapsTop = charCenter < preferredTop;
+		const overlapsBottom = charCenter > preferredBottom;
+
+		if (!overlapsTop && !overlapsBottom) return;
+
+		const visibleCenter = (preferredTop + preferredBottom) / 2;
+		const scrollDelta = charCenter - visibleCenter;
+
+		const containerCanScroll = verseDisplayEl.scrollHeight > verseDisplayEl.clientHeight + 1;
+		if (containerCanScroll) {
+			verseDisplayEl.scrollTo({
+				top: verseDisplayEl.scrollTop + scrollDelta,
+				behavior: 'smooth'
+			});
+		} else {
+			window.scrollTo({
+				top: window.scrollY + scrollDelta,
+				behavior: 'smooth'
+			});
 		}
 	}
 	
@@ -150,7 +209,7 @@
 			// Still add to input
 			userInput += key;
 		}
-		
+
 		// Check if complete
 		if (userInput.length === fullInitials.length) {
 			completeChallenge();
@@ -380,7 +439,7 @@
 		{/if}
 	</div>
 	
-	<div class="verse-display">
+	<div class="verse-display" bind:this={verseDisplayEl}>
 		{#key userInput}
 			{#each fullText.split('') as char, idx}
 				{@const rendered = renderCharacter(char, idx)}
@@ -572,7 +631,7 @@
 		font-size: 1.5em;
 		line-height: 2;
 		margin-bottom: 1rem;
-		padding: 1rem;
+		padding: 1rem 1rem 12rem;
 		background: var(--panel-background);
 		border-radius: 8px;
 		overflow-y: auto;
@@ -605,6 +664,8 @@
 	
 	.keyboard-space {
 		margin-top: auto;
+		height: 250px;
+		flex-shrink: 0;
 	}
 	
 	/* Modal styles */
@@ -740,7 +801,11 @@
 		}
 		
 		.verse-display {
-			padding: 0.75rem;
+			padding: 0.75rem 0.75rem 11.5rem;
+		}
+
+		.keyboard-space {
+			height: 240px;
 		}
 		
 		.stats-bar {

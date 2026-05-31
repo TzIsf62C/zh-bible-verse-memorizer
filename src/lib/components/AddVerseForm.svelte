@@ -69,8 +69,10 @@
 	let bookCursorPos = 0;
 	let verseCaretVisible = false;
 	let verseCaretOffset = 0;
+	let verseCaretPaddingLeft = 12;
 	let bookCaretVisible = false;
 	let bookCaretOffset = 0;
+	let bookCaretPaddingLeft = 12;
 
 	// Track original values for edit mode change detection
 	let originalFormState = null;
@@ -246,19 +248,29 @@
 		}, 0);
 	}
 
-	function getTextMeasureContext(inputEl) {
-		const canvas = document.createElement('canvas');
-		const ctx = canvas.getContext('2d');
-		if (!ctx) return null;
-		const styles = window.getComputedStyle(inputEl);
-		ctx.font = `${styles.fontStyle} ${styles.fontWeight} ${styles.fontSize} ${styles.fontFamily}`;
-		return ctx;
-	}
-
 	function measureTextWidth(inputEl, value) {
-		const ctx = getTextMeasureContext(inputEl);
-		if (!ctx) return 0;
-		return ctx.measureText(value).width;
+		if (!inputEl) return 0;
+		const styles = window.getComputedStyle(inputEl);
+		const probe = document.createElement('span');
+		probe.style.position = 'absolute';
+		probe.style.visibility = 'hidden';
+		probe.style.whiteSpace = 'pre';
+		probe.style.pointerEvents = 'none';
+		probe.style.padding = '0';
+		probe.style.border = '0';
+		probe.style.margin = '0';
+		probe.style.font = styles.font;
+		probe.style.fontFamily = styles.fontFamily;
+		probe.style.fontSize = styles.fontSize;
+		probe.style.fontWeight = styles.fontWeight;
+		probe.style.fontStyle = styles.fontStyle;
+		probe.style.letterSpacing = styles.letterSpacing;
+		probe.style.textTransform = styles.textTransform;
+		probe.textContent = value || '';
+		document.body.appendChild(probe);
+		const width = probe.getBoundingClientRect().width;
+		document.body.removeChild(probe);
+		return width;
 	}
 
 	function getCursorPositionFromClick(inputEl, clickClientX, value) {
@@ -289,7 +301,9 @@
 		const cursorX = measureTextWidth(inputEl, inputEl.value.slice(0, safePos));
 		const left = inputEl.scrollLeft;
 		const right = left + inputEl.clientWidth;
-		const edgePadding = 20;
+		const styles = window.getComputedStyle(inputEl);
+		const fontSizePx = parseFloat(styles.fontSize || '16') || 16;
+		const edgePadding = Math.max(18, fontSizePx * 1.1);
 
 		if (cursorX < left + edgePadding) {
 			inputEl.scrollLeft = Math.max(0, cursorX - edgePadding);
@@ -307,15 +321,8 @@
 		const safePos = Math.max(0, Math.min(verseCursorPos, verseInitials.length));
 		const beforeCursor = verseInitials.slice(0, safePos);
 		const styles = window.getComputedStyle(verseInitialsInputEl);
-		const canvas = document.createElement('canvas');
-		const ctx = canvas.getContext('2d');
-		if (!ctx) {
-			verseCaretVisible = false;
-			return;
-		}
-
-		ctx.font = `${styles.fontStyle} ${styles.fontWeight} ${styles.fontSize} ${styles.fontFamily}`;
-		verseCaretOffset = ctx.measureText(beforeCursor).width - verseInitialsInputEl.scrollLeft;
+		verseCaretPaddingLeft = parseFloat(styles.paddingLeft || '0') || 0;
+		verseCaretOffset = measureTextWidth(verseInitialsInputEl, beforeCursor) - verseInitialsInputEl.scrollLeft;
 		verseCaretVisible = activeInput?.id?.includes('verseInitials') ?? false;
 	}
 
@@ -328,15 +335,8 @@
 		const safePos = Math.max(0, Math.min(bookCursorPos, bookInitials.length));
 		const beforeCursor = bookInitials.slice(0, safePos);
 		const styles = window.getComputedStyle(bookInitialsInputEl);
-		const canvas = document.createElement('canvas');
-		const ctx = canvas.getContext('2d');
-		if (!ctx) {
-			bookCaretVisible = false;
-			return;
-		}
-
-		ctx.font = `${styles.fontStyle} ${styles.fontWeight} ${styles.fontSize} ${styles.fontFamily}`;
-		bookCaretOffset = ctx.measureText(beforeCursor).width - bookInitialsInputEl.scrollLeft;
+		bookCaretPaddingLeft = parseFloat(styles.paddingLeft || '0') || 0;
+		bookCaretOffset = measureTextWidth(bookInitialsInputEl, beforeCursor) - bookInitialsInputEl.scrollLeft;
 		bookCaretVisible = activeInput?.id?.includes('bookInitials') ?? false;
 	}
 
@@ -1272,7 +1272,7 @@
 							on:click={handleVerseInitialsClick}
 						/>
 						{#if verseCaretVisible}
-							<span class="simulated-caret" aria-hidden="true" style={`left: calc(0.75rem + ${Math.max(0, verseCaretOffset)}px);`}></span>
+							<span class="simulated-caret" aria-hidden="true" style={`left: ${Math.max(0, verseCaretPaddingLeft + verseCaretOffset)}px;`}></span>
 						{/if}
 					</div>
 					{#if showKeyboard === 'verse'}
@@ -1303,7 +1303,7 @@
 							on:click={handleVerseInitialsClick}
 						/>
 						{#if verseCaretVisible}
-							<span class="simulated-caret" aria-hidden="true" style={`left: calc(0.75rem + ${Math.max(0, verseCaretOffset)}px);`}></span>
+							<span class="simulated-caret" aria-hidden="true" style={`left: ${Math.max(0, verseCaretPaddingLeft + verseCaretOffset)}px;`}></span>
 						{/if}
 					</div>
 					{#if showKeyboard === 'verse'}
@@ -1334,7 +1334,7 @@
 							on:click={handleVerseInitialsClick}
 						/>
 						{#if verseCaretVisible}
-							<span class="simulated-caret" aria-hidden="true" style={`left: calc(0.75rem + ${Math.max(0, verseCaretOffset)}px);`}></span>
+							<span class="simulated-caret" aria-hidden="true" style={`left: ${Math.max(0, verseCaretPaddingLeft + verseCaretOffset)}px;`}></span>
 						{/if}
 					</div>
 					{#if showKeyboard === 'verse'}
@@ -1367,7 +1367,7 @@
 							on:click={handleBookInitialsClick}
 						/>
 						{#if bookCaretVisible}
-							<span class="simulated-caret" aria-hidden="true" style={`left: calc(0.75rem + ${Math.max(0, bookCaretOffset)}px);`}></span>
+							<span class="simulated-caret" aria-hidden="true" style={`left: ${Math.max(0, bookCaretPaddingLeft + bookCaretOffset)}px;`}></span>
 						{/if}
 					</div>
 					{#if showKeyboard === 'book'}
@@ -1397,7 +1397,7 @@
 							on:click={handleBookInitialsClick}
 						/>
 						{#if bookCaretVisible}
-							<span class="simulated-caret" aria-hidden="true" style={`left: calc(0.75rem + ${Math.max(0, bookCaretOffset)}px);`}></span>
+							<span class="simulated-caret" aria-hidden="true" style={`left: ${Math.max(0, bookCaretPaddingLeft + bookCaretOffset)}px;`}></span>
 						{/if}
 					</div>
 					{#if showKeyboard === 'book'}
@@ -1427,7 +1427,7 @@
 							on:click={handleBookInitialsClick}
 						/>
 						{#if bookCaretVisible}
-							<span class="simulated-caret" aria-hidden="true" style={`left: calc(0.75rem + ${Math.max(0, bookCaretOffset)}px);`}></span>
+							<span class="simulated-caret" aria-hidden="true" style={`left: ${Math.max(0, bookCaretPaddingLeft + bookCaretOffset)}px;`}></span>
 						{/if}
 					</div>
 					{#if showKeyboard === 'book'}
@@ -2017,7 +2017,7 @@
 		color: var(--text-color);
 		border-radius: 4px;
 		font-family: inherit;
-		font-size: 1em;
+		font-size: 1.5em;
 		box-sizing: border-box;
 		width: 100%;
 		max-width: 100%;
@@ -2029,6 +2029,7 @@
 		text-overflow: clip;
 		cursor: text;
 		caret-color: transparent;
+		letter-spacing: 0.1em;
 	}
 
 	.initials-input-shell {
