@@ -57,6 +57,9 @@
 	// Modal state
 	let showModal = false;
 	let modalMessage = '';
+	let showActivityInfoModal = false;
+
+	const infoIconPath = '<path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"></path>';
 	
 	// Create verse reference formatter
 	$: formatVerseRef = createVerseReferenceFormatter($verses);
@@ -104,6 +107,18 @@
 		{ id: 'speed-challenge', label: t('speed_challenge'), icon: 'lightning' },
 		{ id: 'reverse', label: t('reverse'), icon: 'arrows-reverse' },
 		{ id: 'blind-challenge', label: t('blind_challenge'), icon: 'eye-off' }
+	];
+
+	$: activityInfoItems = practiceType === 'collection' ? [
+		{ labelKey: 'speed_challenge_collection', descriptionKey: 'speed_challenge_collection_desc', icon: 'lightning' },
+		{ labelKey: 'reference_quiz', descriptionKey: 'reference_quiz_desc', icon: 'question' },
+		{ labelKey: 'reverse_by_verse', descriptionKey: 'reverse_by_verse_desc', icon: 'arrows-reverse' },
+		{ labelKey: 'first_and_last', descriptionKey: 'first_and_last_desc', icon: 'brackets' }
+	] : [
+		{ labelKey: 'classic', descriptionKey: 'classic_desc', icon: 'book-open' },
+		{ labelKey: 'speed_challenge_verse', descriptionKey: 'speed_challenge_verse_desc', icon: 'lightning' },
+		{ labelKey: 'reverse', descriptionKey: 'reverse_desc', icon: 'arrows-reverse' },
+		{ labelKey: 'blind_challenge', descriptionKey: 'blind_challenge_desc', icon: 'eye-off' }
 	];
 	
 	// SVG icon paths for practice activities
@@ -270,6 +285,7 @@
 	}
 	
 	function chooseActivity(activityId) {
+		showActivityInfoModal = false;
 		selectedActivity = activityId;
 		if (activityId === 'first-and-last' && practiceType === 'collection') {
 			selectedPracticeOrder = 'biblical';
@@ -291,6 +307,7 @@
 	}
 	
 	function handleActivityComplete() {
+		showActivityInfoModal = false;
 		registerStreakActivity('practice');
 		// Return to activity selection
 		selectedActivity = null;
@@ -298,6 +315,7 @@
 	}
 
 	function handleActivityBack() {
+		showActivityInfoModal = false;
 		selectedActivity = null;
 		state = 'selectActivity';
 	}
@@ -307,11 +325,13 @@
 	}
 	
 	function handleActivityExit() {
+		showActivityInfoModal = false;
 		// Return to initial state
 		reset();
 	}
 
 	function closeToInitial() {
+		showActivityInfoModal = false;
 		if (preselectedVerseId) {
 			dispatch('clearPreselection');
 		}
@@ -319,6 +339,7 @@
 	}
 	
 	function goBack() {
+		showActivityInfoModal = false;
 		if (state === 'selectActivity') {
 			processedPreselection = false; // Clear preselection flag when user manually navigates
 			// Clear the parent's preselection when manually navigating back
@@ -337,6 +358,7 @@
 	}
 	
 	function reset() {
+		showActivityInfoModal = false;
 		state = 'initial';
 		practiceType = null;
 		selectedCollection = null;
@@ -577,7 +599,42 @@
 				</button>
 			{/each}
 		</div>
+
+		<div class="activity-info-footer">
+			<button
+				type="button"
+				class="activity-info-trigger"
+				on:click={() => showActivityInfoModal = true}
+				aria-label={t('activity_info_aria')}
+			>
+				<svg class="activity-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+					{@html infoIconPath}
+				</svg>
+			</button>
+		</div>
 	</div>
+
+	{#if showActivityInfoModal}
+		<div class="modal-overlay" on:click={(e) => e.target === e.currentTarget && (showActivityInfoModal = false)} on:keydown={(e) => e.key === 'Escape' && (showActivityInfoModal = false)} role="dialog" aria-modal="true" tabindex="0">
+			<div class="modal-content activity-info-modal" role="document">
+				<button class="modal-close-button activity-info-close" type="button" on:click={() => showActivityInfoModal = false} aria-label={t('close')}>✕</button>
+				<h3>{t('activity_info_title')}</h3>
+				<div class="activity-info-list">
+					{#each activityInfoItems as infoItem}
+						<div class="activity-info-item">
+							<svg class="activity-info-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+								{@html activityIcons[infoItem.icon]}
+							</svg>
+							<div class="activity-info-item-content">
+								<div class="activity-info-item-title">{t(infoItem.labelKey)}</div>
+								<p>{t(infoItem.descriptionKey)}</p>
+							</div>
+						</div>
+					{/each}
+				</div>
+			</div>
+		</div>
+	{/if}
 
 {:else if state === 'selectPracticeOrder'}
 	<div class="modal-overlay" on:click={handlePracticeOrderOverlayClick} on:keydown={(e) => e.key === 'Escape' && goBack()} role="dialog" aria-modal="true" tabindex="0">
@@ -971,6 +1028,38 @@
 		gap: 1rem;
 		margin-top: 1rem;
 	}
+
+	.activity-info-footer {
+		margin-top: 1rem;
+		display: flex;
+		justify-content: flex-start;
+	}
+
+	.activity-info-trigger {
+		width: 34px;
+		height: 34px;
+		padding: 0;
+		border: none;
+		border-radius: 999px;
+		background: transparent;
+		color: var(--subtitle-color);
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		cursor: pointer;
+	}
+
+	.activity-info-trigger:hover,
+	.activity-info-trigger:focus-visible {
+		background: var(--nav-button-bg);
+		color: var(--accent-color);
+		outline: none;
+	}
+
+	.activity-info-trigger .activity-icon {
+		width: 1.2em;
+		height: 1.2em;
+	}
 	
 	.activity-card {
 		padding: 2rem 1rem;
@@ -1035,6 +1124,57 @@
 		margin-top: 0;
 		margin-bottom: 1.5rem;
 		text-align: center;
+	}
+
+	.activity-info-modal {
+		position: relative;
+		max-width: 760px;
+		max-height: min(88vh, 760px);
+		overflow-y: auto;
+	}
+
+	.activity-info-close {
+		position: absolute;
+		top: 0.6rem;
+		right: 0.6rem;
+	}
+
+	.activity-info-list {
+		display: grid;
+		gap: 0.75rem;
+	}
+
+	.activity-info-item {
+		display: grid;
+		grid-template-columns: 32px 1fr;
+		gap: 0.75rem;
+		align-items: start;
+		padding: 0.8rem;
+		border: 1px solid var(--file-border);
+		border-radius: 10px;
+		background: var(--file-bg);
+	}
+
+	.activity-info-item-icon {
+		width: 1.2em;
+		height: 1.2em;
+		color: var(--text-color);
+		margin-top: 0.15rem;
+	}
+
+	.activity-info-item-content {
+		min-width: 0;
+	}
+
+	.activity-info-item-title {
+		font-weight: 600;
+		margin-bottom: 0.3rem;
+		color: var(--accent-color);
+	}
+
+	.activity-info-item p {
+		margin: 0;
+		line-height: 1.5;
 	}
 
 	.modal-header {
@@ -1140,6 +1280,12 @@
 		
 		.activity-card {
 			padding: 1.5rem 0.75rem;
+		}
+
+		.activity-info-item {
+			grid-template-columns: 28px 1fr;
+			gap: 0.6rem;
+			padding: 0.65rem;
 		}
 		
 		.activity-icon {

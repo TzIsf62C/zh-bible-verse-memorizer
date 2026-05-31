@@ -46,6 +46,9 @@
 	// Modal state
 	let showModal = false;
 	let modalMessage = '';
+	let showReviewModeInfoModal = false;
+
+	const infoIconPath = '<path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"></path>';
 
 	const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -417,6 +420,7 @@
 	}
 
 	function chooseIndividualReview() {
+		showReviewModeInfoModal = false;
 		reviewMode = 'individual';
 		
 		if (selectedVerses.length > 1) {
@@ -432,6 +436,7 @@
 	}
 
 	function chooseSingleTextReview() {
+		showReviewModeInfoModal = false;
 		reviewMode = 'singleText';
 		// Single-text always uses Biblical order
 		sortedVerses = sortVersesByBibleOrder(selectedVerses, $settings.bookNameCharset || 'simplified');
@@ -471,6 +476,7 @@
 	}
 
 	function cancelReview() {
+		showReviewModeInfoModal = false;
 		state = 'initial';
 		selectedVerses = [];
 		selectedCollectionIds = [];
@@ -478,6 +484,7 @@
 	}
 
 	function backFromReviewMode() {
+		showReviewModeInfoModal = false;
 		state = reviewModeBackState || 'initial';
 		reviewMode = null;
 		sortedVerses = [];
@@ -1198,8 +1205,8 @@
 
 	{:else if state === 'reviewMode'}
 		<!-- Review Mode Modal -->
-		<div class="modal-overlay" on:click={cancelReview} on:keydown={(e) => e.key === 'Escape' && cancelReview()} role="dialog" aria-modal="true">
-			<div class="modal-content" on:click|stopPropagation role="document">
+		<div class="modal-overlay" on:click={(e) => e.target === e.currentTarget && cancelReview()} on:keydown={(e) => e.key === 'Escape' && cancelReview()} role="dialog" aria-modal="true" tabindex="0">
+			<div class="modal-content" role="document">
 				<div class="modal-header">
 					<button class="modal-icon-btn" on:click={backFromReviewMode} aria-label={t('back')}>
 						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -1217,13 +1224,44 @@
 						{t('review_single_text')}
 					</button>
 				</div>
+				<div class="modal-info-footer">
+					<button
+						type="button"
+						class="modal-info-icon-btn"
+						on:click={() => showReviewModeInfoModal = true}
+						aria-label={t('review_mode_info_aria')}
+					>
+						<svg class="activity-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+							{@html infoIconPath}
+						</svg>
+					</button>
+				</div>
 			</div>
 		</div>
 
+		{#if showReviewModeInfoModal}
+			<div class="modal-overlay" on:click={(e) => e.target === e.currentTarget && (showReviewModeInfoModal = false)} on:keydown={(e) => e.key === 'Escape' && (showReviewModeInfoModal = false)} role="dialog" aria-modal="true" tabindex="0">
+				<div class="modal-content info-content" role="document">
+					<button class="modal-close-btn info-modal-close-btn" type="button" on:click={() => showReviewModeInfoModal = false} aria-label={t('close')}>✕</button>
+					<h3>{t('review_mode_info_title')}</h3>
+					<div class="info-description-list">
+						<div class="info-description-item">
+							<div class="info-description-title">{t('review_individually')}</div>
+							<p>{t('review_individually_desc')}</p>
+						</div>
+						<div class="info-description-item">
+							<div class="info-description-title">{t('review_single_text')}</div>
+							<p>{t('review_single_text_desc')}</p>
+						</div>
+					</div>
+				</div>
+			</div>
+		{/if}
+
 	{:else if state === 'reviewOrder'}
 		<!-- Review Order Modal -->
-		<div class="modal-overlay" on:click={cancelReview} on:keydown={(e) => e.key === 'Escape' && cancelReview()} role="dialog" aria-modal="true">
-			<div class="modal-content" on:click|stopPropagation role="document">
+		<div class="modal-overlay" on:click={(e) => e.target === e.currentTarget && cancelReview()} on:keydown={(e) => e.key === 'Escape' && cancelReview()} role="dialog" aria-modal="true" tabindex="0">
+			<div class="modal-content" role="document">
 				<div class="modal-header">
 					<button class="modal-icon-btn" on:click={backFromReviewOrder} aria-label={t('back')}>
 						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -1273,8 +1311,8 @@
 
 <!-- Change Interval Modal -->
 {#if showIntervalModal}
-	<div class="modal-overlay interval-modal-overlay" on:click={closeIntervalModal} on:keydown={(e) => e.key === 'Escape' && closeIntervalModal()} role="dialog" aria-modal="true">
-		<div class="modal-content interval-modal" on:click|stopPropagation role="document">
+	<div class="modal-overlay interval-modal-overlay" on:click={(e) => e.target === e.currentTarget && closeIntervalModal()} on:keydown={(e) => e.key === 'Escape' && closeIntervalModal()} role="dialog" aria-modal="true" tabindex="0">
+		<div class="modal-content interval-modal" role="document">
 			<h3>{t('change_interval_title')}</h3>
 
 			<div class="interval-card">
@@ -1756,7 +1794,38 @@
 		display: flex;
 		flex-direction: column;
 		gap: 1rem;
-		margin-bottom: 1.5rem;
+		margin-bottom: 0.75rem;
+	}
+
+	.modal-info-footer {
+		display: flex;
+		justify-content: flex-start;
+	}
+
+	.modal-info-icon-btn {
+		width: 34px;
+		height: 34px;
+		padding: 0;
+		border: none;
+		border-radius: 999px;
+		background: transparent;
+		color: var(--subtitle-color);
+		cursor: pointer;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.modal-info-icon-btn:hover,
+	.modal-info-icon-btn:focus-visible {
+		background: var(--nav-button-bg);
+		color: var(--accent-color);
+		outline: none;
+	}
+
+	.modal-info-icon-btn .activity-icon {
+		width: 1.2em;
+		height: 1.2em;
 	}
 
 	.modal-option {
@@ -1786,6 +1855,40 @@
 	/* Interval Modal Styles */
 	.interval-modal {
 		max-width: 420px;
+	}
+
+	.info-content {
+		position: relative;
+		max-width: 680px;
+	}
+
+	.info-modal-close-btn {
+		position: absolute;
+		top: 0.6rem;
+		right: 0.6rem;
+	}
+
+	.info-description-list {
+		display: grid;
+		gap: 0.9rem;
+	}
+
+	.info-description-item {
+		padding: 0.85rem;
+		border: 1px solid var(--file-border);
+		border-radius: 8px;
+		background: var(--file-bg);
+	}
+
+	.info-description-title {
+		font-weight: 600;
+		margin-bottom: 0.35rem;
+		color: var(--accent-color);
+	}
+
+	.info-description-item p {
+		margin: 0;
+		line-height: 1.5;
 	}
 
 	.interval-card {

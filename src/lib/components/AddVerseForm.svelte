@@ -36,6 +36,9 @@
 	let modalButtons = [];
 	let confirmAction = null;
 	let cancelAction = null;
+	let showAddVerseInfoModal = false;
+
+	const infoIconPath = '<path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"></path>';
 
 	let editingId = null;
 	let versesList = [];
@@ -89,6 +92,18 @@
 	}
 
 	$: currentInputMethod = $settings.inputMethod || 'pinyin';
+
+	$: addVerseTutorialInitialsLabelKey = currentInputMethod === 'zhuyin'
+		? 'zhuyin_initials_verse'
+		: currentInputMethod === 'cangjie'
+			? 'cangjie_initials_verse'
+			: 'pinyin_initials_verse';
+
+	$: addVerseTutorialExampleInitials = currentInputMethod === 'zhuyin'
+		? t('add_verse_tutorial_example_initials_zhuyin')
+		: currentInputMethod === 'cangjie'
+			? t('add_verse_tutorial_example_initials_cangjie')
+			: t('add_verse_tutorial_example_initials_pinyin');
 
 	$: if (!editingId && !bibleVersion && $settings.defaultBibleVersion) {
 		bibleVersion = $settings.defaultBibleVersion;
@@ -433,6 +448,12 @@
 	}
 
 	function handlePhysicalKey(event) {
+		if (showAddVerseInfoModal && event?.key === 'Escape') {
+			event.preventDefault();
+			showAddVerseInfoModal = false;
+			return;
+		}
+
 		if (!activeInput) return;
 		if (currentInputMethod === 'pinyin' && !activeInput.readOnly) return;
 		if (!event?.key) return;
@@ -868,6 +889,14 @@
 		confirmAction = null;
 	}
 
+	function openAddVerseInfoModal() {
+		showAddVerseInfoModal = true;
+	}
+
+	function closeAddVerseInfoModal() {
+		showAddVerseInfoModal = false;
+	}
+
 	function clearForm() {
 		verseText = '';
 		bookName = '';
@@ -1091,7 +1120,20 @@
 <div class="add-verse-container">
 	<!-- Form Section -->
 	<div class="form-section">
-		<h2>{editingId ? t('update_verse') : t('add_verse')}</h2>
+		<div class="add-verse-header-row">
+			<div class="add-verse-header-spacer" aria-hidden="true"></div>
+			<h2>{editingId ? t('update_verse') : t('add_verse')}</h2>
+			<button
+				type="button"
+				class="modal-info-icon-btn"
+				on:click={openAddVerseInfoModal}
+				aria-label={t('add_verse_info_aria')}
+			>
+				<svg class="activity-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+					{@html infoIconPath}
+				</svg>
+			</button>
+		</div>
 
 		<div class="form-grid">
 			<!-- Row 1: Chinese book name -->
@@ -1712,6 +1754,30 @@
 	</div>
 </div>
 
+{#if showAddVerseInfoModal}
+	<div class="add-verse-info-overlay" on:click={(e) => e.target === e.currentTarget && closeAddVerseInfoModal()} on:keydown={(e) => e.key === 'Escape' && closeAddVerseInfoModal()} role="dialog" aria-modal="true" tabindex="0">
+		<div class="add-verse-info-modal" role="document">
+			<button class="modal-close-btn" type="button" on:click={closeAddVerseInfoModal} aria-label={t('close')}>✕</button>
+			<h2>{t('add_verse_tutorial_title')}</h2>
+			<p>{t('add_verse_tutorial_desc1')}</p>
+			<p>{t('add_verse_tutorial_desc2')}</p>
+
+			<div class="add-verse-example-block">
+				<h3>{t('add_verse_tutorial_example')}</h3>
+				<div class="add-verse-example-row">
+					<div class="example-label">{t('chinese_verse_text')}</div>
+					<div class="example-value">{t('add_verse_tutorial_example_text')}</div>
+				</div>
+				<div class="add-verse-example-row">
+					<div class="example-label">{t(addVerseTutorialInitialsLabelKey)}</div>
+					<div class="example-value initials-value">{addVerseTutorialExampleInitials}</div>
+				</div>
+				<p class="add-verse-note">{t('add_verse_tutorial_note')}</p>
+			</div>
+		</div>
+	</div>
+{/if}
+
 <Modal 
 	show={showModal} 
 	message={modalMessage}
@@ -1775,6 +1841,150 @@
 		margin-bottom: 1.5rem;
 		color: var(--text-color);
 		text-align: center;
+	}
+
+	.add-verse-header-row {
+		display: grid;
+		grid-template-columns: 40px 1fr 40px;
+		align-items: center;
+		gap: 0.25rem;
+	}
+
+	.add-verse-header-row h2 {
+		margin-bottom: 1.2rem;
+	}
+
+	.add-verse-header-spacer {
+		width: 40px;
+		height: 40px;
+	}
+
+	.modal-info-icon-btn {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 40px;
+		height: 40px;
+		padding: 0;
+		border: none;
+		border-radius: 999px;
+		background: transparent;
+		color: var(--subtitle-color);
+		cursor: pointer;
+		margin-bottom: 1.2rem;
+	}
+
+	.modal-info-icon-btn:hover,
+	.modal-info-icon-btn:focus-visible {
+		color: var(--accent-color);
+		background: var(--nav-button-bg);
+		outline: none;
+	}
+
+	.modal-info-icon-btn .activity-icon {
+		width: 1.25em;
+		height: 1.25em;
+	}
+
+	.add-verse-info-overlay {
+		position: fixed;
+		inset: 0;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 1rem;
+		background: rgba(0, 0, 0, 0.55);
+		z-index: 2200;
+	}
+
+	.add-verse-info-modal {
+		position: relative;
+		width: min(720px, 92vw);
+		max-height: 90vh;
+		overflow-y: auto;
+		background: var(--panel-background);
+		border-radius: 8px;
+		padding: 1.2rem 1rem;
+	}
+
+	.add-verse-info-modal h2 {
+		margin: 0 2rem 1rem 0;
+		text-align: left;
+		font-size: 1.2em;
+	}
+
+	.add-verse-info-modal p {
+		margin: 0 0 0.75rem;
+		line-height: 1.5;
+	}
+
+	.add-verse-example-block {
+		margin-top: 1rem;
+		padding: 0.9rem;
+		border: 1px solid var(--file-border);
+		border-radius: 8px;
+		background: var(--file-bg);
+	}
+
+	.add-verse-example-block h3 {
+		margin: 0 0 0.8rem;
+		font-size: 1em;
+		color: var(--subtitle-color);
+	}
+
+	.add-verse-example-row {
+		display: grid;
+		gap: 0.3rem;
+		margin-bottom: 0.75rem;
+	}
+
+	.add-verse-example-row .example-label {
+		font-size: 0.9em;
+		font-weight: 600;
+	}
+
+	.add-verse-example-row .example-value {
+		padding: 0.5rem;
+		border: 1px solid var(--file-border);
+		border-radius: 6px;
+		background: var(--panel-background);
+		font-size: 0.95em;
+		line-height: 1.45;
+	}
+
+	.add-verse-example-row .initials-value {
+		font-family: monospace;
+		word-break: break-all;
+	}
+
+	.add-verse-note {
+		margin: 0;
+		font-size: 0.9em;
+		color: var(--subtitle-color);
+	}
+
+	.modal-close-btn {
+		position: absolute;
+		top: 0.6rem;
+		right: 0.6rem;
+		padding: 0.25rem;
+		width: 32px;
+		height: 32px;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		background: transparent;
+		border: none;
+		border-radius: 999px;
+		color: var(--text-color);
+		font-size: 1.1em;
+		cursor: pointer;
+	}
+
+	.modal-close-btn:hover,
+	.modal-close-btn:focus-visible {
+		background: var(--nav-button-bg);
+		outline: none;
 	}
 
 	.form-grid {
