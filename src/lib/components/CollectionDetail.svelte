@@ -547,6 +547,7 @@
 		line-height: 1.6;
 		word-wrap: break-word;
 		overflow-wrap: break-word;
+		font-size: 1.2em;
 	}
 	
 	.verse-actions {

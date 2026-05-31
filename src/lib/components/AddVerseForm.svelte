@@ -1513,7 +1513,7 @@
 		{#if versesList.length > 0}
 			<div class="verses-controls">
 				<div class="sort-control-inline">
-					<label class="my-verses-sort-label" for="my-verses-sort">Sort order:</label>
+					<label class="my-verses-sort-label" for="my-verses-sort">{t('sort')}:</label>
 					<select id="my-verses-sort" class="my-verses-sort-select" bind:value={myVersesSortOrder}>
 						<option value="biblical">{t('order_biblical')}</option>
 						<option value="collection">{t('order_collection')}</option>
@@ -2079,6 +2079,7 @@
 		margin-bottom: 0;
 		line-height: 1.6;
 		color: var(--text-color);
+		font-size: 1.2em;
 	}
 
 	.verses-in-chapter {

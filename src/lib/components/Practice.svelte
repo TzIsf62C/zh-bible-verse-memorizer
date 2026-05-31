@@ -452,7 +452,7 @@
 		</div>
 
 		<div class="sort-controls">
-			<label class="sort-label" for="practice-verse-sort">Sort order:</label>
+			<label class="sort-label" for="practice-verse-sort">{t('sort')}:</label>
 			<select id="practice-verse-sort" class="sort-select" bind:value={verseSortOrder}>
 				<option value="biblical">{t('order_biblical')}</option>
 				<option value="collection">{t('order_collection')}</option>

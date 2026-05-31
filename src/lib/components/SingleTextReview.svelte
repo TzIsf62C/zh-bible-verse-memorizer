@@ -957,7 +957,6 @@
 		}
 
 		.passage-display {
-			font-size: 1.2em;
 			padding: 1.5rem;
 		}
 

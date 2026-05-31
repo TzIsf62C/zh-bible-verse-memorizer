@@ -817,10 +817,6 @@
 			padding: 0.5rem;
 		}
 		
-		.passage-display {
-			font-size: 1.2em;
-		}
-		
 		.stats-bar {
 			gap: 1rem;
 			font-size: 0.9em;

@@ -769,7 +769,7 @@
 		</div>
 
 		<div class="sort-controls">
-			<label class="sort-label" for="select-verses-sort">Sort order:</label>
+			<label class="sort-label" for="select-verses-sort">{t('sort')}:</label>
 			<select id="select-verses-sort" class="sort-select" bind:value={verseSortOrder}>
 				<option value="biblical">{t('order_biblical')}</option>
 				<option value="dueDate">{t('order_due_date')}</option>
@@ -1071,7 +1071,7 @@
 		</div>
 
 		<div class="sort-controls">
-			<label class="sort-label" for="edit-interval-sort">Sort order:</label>
+			<label class="sort-label" for="edit-interval-sort">{t('sort')}:</label>
 			<select id="edit-interval-sort" class="sort-select" bind:value={verseSortOrder}>
 				<option value="biblical">{t('order_biblical')}</option>
 				<option value="dueDate">{t('order_due_date')}</option>

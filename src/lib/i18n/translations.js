@@ -196,8 +196,7 @@ export const translations = {
 		achievement_progress_to_next_mastered: '{current}/{target} mastered',
 		
 		practice_now: 'Practice',
-		sort_biblical: 'Sort: Biblical',
-		sort_by_score: 'Sort: Score',
+		sort: 'Sort',
 		no_reviewed_verses: 'No verses reviewed yet. Complete some reviews to see stats!',
 		
 		// Add Verse Panel
@@ -262,7 +261,7 @@ export const translations = {
 		reference_quiz: 'Reference Quiz',
 		classic: 'Classic',
 		reverse: 'Reverse',
-		blind_challenge: 'Blind Challenge',
+		blind_challenge: 'No Peeking',
 		raw_time: 'Raw Time',
 		penalties: 'Penalties',
 		official_time: 'Official Time',
@@ -692,8 +691,7 @@ export const translations = {
 		achievement_progress_to_next_mastered: '{current}/{target} 已精通',
 		
 		practice_now: '练习',
-		sort_biblical: '排序：圣经顺序',
-		sort_by_score: '排序：得分',
+		sort: '排序',
 		no_reviewed_verses: '还没有复习过经文。完成一些复习后查看统计！',
 		
 		// Add Verse Panel
@@ -755,10 +753,10 @@ export const translations = {
 		reverse_by_verse: '倒序练习',
 		first_and_last: '首尾练习',
 		choose_practice_order: '选择练习顺序',
-		reference_quiz: '经文出处测验',
+		reference_quiz: '出处测验',
 		classic: '经典模式',
-		reverse: '倒序',
-		blind_challenge: '盲打挑战',
+		reverse: '倒序模式',
+		blind_challenge: '不许偷看',
 		raw_time: '原始时间',
 		penalties: '错误次数',
 		official_time: '正式时间',
@@ -1181,8 +1179,7 @@ export const translations = {
 		achievement_progress_to_next_mastered: '{current}/{target} 已精通',
 		
 		practice_now: '練習',
-		sort_biblical: '排序：聖經順序',
-		sort_by_score: '排序：得分',
+		sort: '排序',
 		no_reviewed_verses: '還沒有複習過經文。完成一些複習後查看統計！',
 		
 		// Add Verse Panel
@@ -1245,10 +1242,10 @@ export const translations = {
 		reverse_by_verse: '倒序練習',
 		first_and_last: '首尾練習',
 		choose_practice_order: '選擇練習順序',
-		reference_quiz: '經文出處測驗',
+		reference_quiz: '出處測驗',
 		classic: '經典模式',
-		reverse: '倒序',
-		blind_challenge: '盲打挑戰',
+		reverse: '倒序模式',
+		blind_challenge: '不許偷看',
 		raw_time: '原始時間',
 		penalties: '錯誤次數',
 		official_time: '正式時間',

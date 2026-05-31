@@ -540,7 +540,6 @@
 		align-items: flex-start;
 		justify-content: flex-start;
 		position: relative;
-		z-index: 1002;
 	}
 	
 	.input-text {
@@ -605,7 +604,7 @@
 		min-width: 1.2em;
 		text-align: center;
 		font-weight: 500;
-		font-size: 1.3em;
+		font-size: 1.5em;
 		line-height: 1.5;
 	}
 	
@@ -686,7 +685,6 @@
 		color: white;
 		transition: opacity 0.2s;
 		position: relative;
-		z-index: 1002;
 	}
 	
 	.submit-button:disabled {
@@ -706,6 +704,13 @@
 		
 		.alignment-row {
 			font-size: 1.3em;
+		}
+		.verse-selector-header {
+		padding: 0rem;
+		}
+	
+		.instructions {
+		padding: 0rem;
 		}
 	}
 </style>

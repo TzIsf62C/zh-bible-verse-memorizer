@@ -926,7 +926,6 @@
 			padding-top: 0px;
 		}
 		.verse-display {
-			font-size: 1.5rem;
 			padding: 1.5rem;
 		}
 

@@ -808,7 +808,6 @@
 		
 		.verse-display {
 			padding: 1rem;
-			font-size: 1.3em;
 		}
 	}
 </style>

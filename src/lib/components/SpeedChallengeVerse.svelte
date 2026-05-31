@@ -740,7 +740,6 @@
 		}
 		
 		.verse-display {
-			font-size: 1.2em;
 			padding: 0.75rem;
 		}
 		

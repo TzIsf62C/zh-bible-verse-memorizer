@@ -294,7 +294,7 @@
 			</div>
 		{:else}
 			<div class="sort-controls">
-				<label class="sort-label" for="heatmaps-sort">Sort order:</label>
+				<label class="sort-label" for="heatmaps-sort">{t('sort')}:</label>
 				<select id="heatmaps-sort" class="sort-select" bind:value={sortMode}>
 					<option value="biblical">{t('order_biblical')}</option>
 					<option value="collection">{t('order_collection')}</option>
