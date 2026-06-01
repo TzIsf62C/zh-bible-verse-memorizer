@@ -298,8 +298,8 @@
 				<select id="heatmaps-sort" class="sort-select" bind:value={sortMode}>
 					<option value="biblical">{t('order_biblical')}</option>
 					<option value="collection">{t('order_collection')}</option>
-					<option value="scoreAsc">{t('sort_by_score')} (Low to High)</option>
-					<option value="scoreDesc">{t('sort_by_score')} (High to Low)</option>
+					<option value="scoreAsc">{t('sort_by_score_L2H')}</option>
+					<option value="scoreDesc">{t('sort_by_score_H2L')}</option>
 				</select>
 			</div>
 
