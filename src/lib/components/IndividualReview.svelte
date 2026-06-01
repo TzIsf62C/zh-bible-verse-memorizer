@@ -808,7 +808,7 @@
 	}
 
 	.modal-message .accuracy-text {
-		font-size: 2em;
+		font-size: 1.5em;
 		font-weight: 600;
 		margin-bottom: 1rem;
 		color: var(--text-color);
