@@ -451,7 +451,7 @@
 		</span>
 		{#if bestTime}
 			<span class="stat">
-				<span class="stat-label">{t('best_time').replace('{time}', '')}:</span>
+				<span class="stat-label">{t('best_time').replace('{time}', '')}</span>
 				<span class="stat-value">{formatTime(bestTime.officialTime)}</span>
 			</span>
 		{/if}

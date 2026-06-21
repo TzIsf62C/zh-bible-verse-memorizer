@@ -433,10 +433,10 @@ export const translations = {
 		verse_updated: 'Verse updated!',
 		
 		// Learning mode feedback
-		congratulations_mastered: 'Congratulations you have mastered this verse!',
+		congratulations_mastered: 'Congratulations you have learned this verse!',
 		great_job_continue: 'Great job! Let\'s continue with the next verse.',
 		great_job_finish: 'Great job! Review complete.',
-		great_job_intermediate: 'Great job! You can recite it with hints, now let\'s master it.',
+		great_job_intermediate: 'Great job! You can recite it with hints, now let\'s fully learn it.',
 		great_job_basic: 'Great job! Now that you\'re familiar with this verse, try to Memorize it.',
 		nice_try: 'Nice Try! Aim for greater than 90%',
 		congratulations_reviewed: 'Congratulations, you have reviewed',
