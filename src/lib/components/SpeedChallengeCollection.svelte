@@ -586,6 +586,9 @@
 	}
 
 	.timer-stat {
+		display: flex;
+		justify-content: flex-end;
+		min-width: 9ch;
 		border-right: 1px solid var(--border-color);
 		padding-right: 1rem;
 		margin-right: 0.5rem;
@@ -594,6 +597,8 @@
 	.timer-value {
 		font-weight: 700;
 		color: var(--accent-color);
+		font-variant-numeric: tabular-nums;
+		font-feature-settings: "tnum" 1;
 	}
 
 	.retry-fab {
@@ -616,7 +621,9 @@
 	}
 	
 	.stats-bar {
-		display: flex;
+		display: grid;
+		grid-template-columns: repeat(3, max-content);
+		align-items: center;
 		gap: 1.5rem;
 		justify-content: center;
 		margin-bottom: 1rem;
@@ -639,6 +646,8 @@
 	.stat-value {
 		font-weight: 600;
 		color: var(--text-color);
+		font-variant-numeric: tabular-nums;
+		font-feature-settings: "tnum" 1;
 	}
 	
 	.passage-display {
