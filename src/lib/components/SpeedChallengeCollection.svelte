@@ -45,6 +45,9 @@
 	let collectionWasChanged = false;
 	let previousBestTime = null;
 	let improvementMs = 0;
+	let accuracyScore = 0;
+	let unrecordedTime = 0;
+	let challengeSucceeded = false;
 	
 	// Get best time for this collection
 	$: bestTime = $practice.bestTimes[collection?.id];
@@ -238,25 +241,34 @@
 		}
 		
 		rawTime = Date.now() - startTime;
-		const officialTime = rawTime + (penalties * 1000);
+		unrecordedTime = rawTime + (penalties * 1000);
+		accuracyScore = calculateAccuracyScore();
+		challengeSucceeded = accuracyScore >= 90;
 		
-		// Check if collection changed
-		const verseIds = verses.map(v => v.id);
-		collectionWasChanged = practice.isCollectionChanged(collection.id, verseIds);
-		
-		if (collectionWasChanged) {
-			practice.resetCollectionTime(collection.id);
-		}
-		
-		// Check if new best
-		const currentBest = $practice.bestTimes[collection.id];
-		previousBestTime = currentBest || null;
-		isNewBest = !currentBest || (officialTime < currentBest.officialTime && !collectionWasChanged);
-		improvementMs = isNewBest && currentBest ? currentBest.officialTime - officialTime : 0;
-		
-		// Save if new best
-		if (isNewBest || !currentBest) {
-			practice.updateCollectionBestTime(collection.id, rawTime, penalties, verseIds);
+		if (challengeSucceeded) {
+			// Check if collection changed
+			const verseIds = verses.map(v => v.id);
+			collectionWasChanged = practice.isCollectionChanged(collection.id, verseIds);
+			
+			if (collectionWasChanged) {
+				practice.resetCollectionTime(collection.id);
+			}
+			
+			// Check if new best
+			const currentBest = $practice.bestTimes[collection.id];
+			previousBestTime = currentBest || null;
+			isNewBest = !currentBest || (unrecordedTime < currentBest.officialTime && !collectionWasChanged);
+			improvementMs = isNewBest && currentBest ? currentBest.officialTime - unrecordedTime : 0;
+			
+			// Save if new best
+			if (isNewBest || !currentBest) {
+				practice.updateCollectionBestTime(collection.id, rawTime, penalties, verseIds);
+			}
+		} else {
+			collectionWasChanged = false;
+			previousBestTime = null;
+			isNewBest = false;
+			improvementMs = 0;
 		}
 		
 		showCompletionModal = true;
@@ -277,6 +289,9 @@
 		collectionWasChanged = false;
 		previousBestTime = null;
 		improvementMs = 0;
+		accuracyScore = 0;
+		unrecordedTime = 0;
+		challengeSucceeded = false;
 		if (timerInterval) {
 			clearInterval(timerInterval);
 			timerInterval = null;
@@ -288,7 +303,11 @@
 			clearInterval(timerInterval);
 			timerInterval = null;
 		}
-		dispatch('complete');
+		if (challengeSucceeded) {
+			dispatch('complete');
+		} else {
+			dispatch('back');
+		}
 	}
 	
 	function exit() {
@@ -305,6 +324,10 @@
 			timerInterval = null;
 		}
 		dispatch('back');
+	}
+
+	function selectActivity() {
+		back();
 	}
 	
 	function renderCharacter(char, charIndex) {
@@ -357,6 +380,24 @@
 	
 	function formatTime(ms) {
 		return (ms / 1000).toFixed(1) + 's';
+	}
+
+	function calculateAccuracyScore() {
+		if (!fullInitials.length) return 0;
+
+		const inputMethod = $settings.inputMethod || 'pinyin';
+		let correct = 0;
+
+		for (let i = 0; i < fullInitials.length; i++) {
+			const typedChar = inputMethod === 'pinyin' ? (userInput[i] || '').toLowerCase() : (userInput[i] || '');
+			const expectedChar = inputMethod === 'pinyin' ? fullInitials[i].toLowerCase() : fullInitials[i];
+
+			if (typedChar === expectedChar) {
+				correct++;
+			}
+		}
+
+		return Math.round((correct / fullInitials.length) * 100);
 	}
 	
 	function handlePhysicalKeyboard(e) {
@@ -488,57 +529,80 @@
 	<div class="modal-overlay" on:click={done} on:keydown={(e) => e.key === 'Escape' && done()} role="button" tabindex="0">
 		<div class="modal-content" on:click|stopPropagation on:keydown|stopPropagation role="dialog" aria-modal="true" tabindex="-1">
 			<h3>{t('speed_challenge')} {t('finish')}</h3>
-			
-			{#if collectionWasChanged}
-				<p class="warning">⚠️ {t('collection_changed')}</p>
-			{/if}
-			
-			{#if isNewBest}
-				<p class="new-best">🎉 {t('new_best')}!</p>
-			{/if}
-			
-			<div class="time-stats">
-				<div class="time-stat">
-					<span class="label">{t('raw_time')}:</span>
-					<span class="value">{formatTime(rawTime)}</span>
-				</div>
-				<div class="time-stat">
-					<span class="label">{t('penalties')}:</span>
-					<span class="value">{penalties} (+{formatTime(penalties * 1000)})</span>
-				</div>
-				<div class="time-stat official">
-					<span class="label">{t('official_time')}:</span>
-					<span class="value">{formatTime(rawTime + (penalties * 1000))}</span>
-				</div>
-
-				{#if isNewBest && previousBestTime}
-					<div class="time-stat best">
-						<span class="label">{t('previous_best')}:</span>
-						<span class="value">{formatTime(previousBestTime.officialTime)}</span>
-					</div>
-					<div class="time-stat improvement">
-						<span class="label">{t('improved_by')}:</span>
-						<span class="value">-{formatTime(improvementMs)}</span>
-					</div>
+			{#if challengeSucceeded}
+				{#if collectionWasChanged}
+					<p class="warning">⚠️ {t('collection_changed')}</p>
 				{/if}
 				
-				{#if $practice.bestTimes[collection.id] && !isNewBest}
-					{@const bestTimeData = $practice.bestTimes[collection.id]}
-					<div class="time-stat best">
-						<span class="label">{t('best_time').replace('{time}', '')}:</span>
-						<span class="value">{formatTime(bestTimeData.officialTime)}</span>
-					</div>
+				{#if isNewBest}
+					<p class="new-best">🎉 {t('new_best')}!</p>
 				{/if}
-			</div>
-			
-			<div class="modal-buttons">
-				<button class="secondary-button" on:click={tryAgain}>
-					{t('try_again')}
-				</button>
-				<button class="primary-button" on:click={done}>
-					{t('done')}
-				</button>
-			</div>
+				
+				<div class="time-stats">
+					<div class="time-stat">
+						<span class="label">{t('raw_time')}:</span>
+						<span class="value">{formatTime(rawTime)}</span>
+					</div>
+					<div class="time-stat">
+						<span class="label">{t('penalties')}:</span>
+						<span class="value">{penalties} (+{formatTime(penalties * 1000)})</span>
+					</div>
+					<div class="time-stat official">
+						<span class="label">{t('official_time')}:</span>
+						<span class="value">{formatTime(unrecordedTime)}</span>
+					</div>
+
+					{#if isNewBest && previousBestTime}
+						<div class="time-stat best">
+							<span class="label">{t('previous_best')}:</span>
+							<span class="value">{formatTime(previousBestTime.officialTime)}</span>
+						</div>
+						<div class="time-stat improvement">
+							<span class="label">{t('improved_by')}:</span>
+							<span class="value">-{formatTime(improvementMs)}</span>
+						</div>
+					{/if}
+					
+					{#if $practice.bestTimes[collection.id] && !isNewBest}
+						{@const bestTimeData = $practice.bestTimes[collection.id]}
+						<div class="time-stat best">
+							<span class="label">{t('best_time').replace('{time}', '')}:</span>
+							<span class="value">{formatTime(bestTimeData.officialTime)}</span>
+						</div>
+					{/if}
+				</div>
+				
+				<div class="modal-buttons">
+					<button class="secondary-button" on:click={tryAgain}>
+						{t('try_again')}
+					</button>
+					<button class="primary-button" on:click={done}>
+						{t('done')}
+					</button>
+				</div>
+			{:else}
+				<p class="warning">⚠️ {t('time_not_recorded')}</p>
+				
+				<div class="time-stats">
+					<div class="time-stat accuracy">
+						<span class="label">{t('accuracy')}:</span>
+						<span class="value">{accuracyScore}%</span>
+					</div>
+					<div class="time-stat unrecorded">
+						<span class="label">{t('unrecorded_time')}:</span>
+						<span class="value">{formatTime(unrecordedTime)}</span>
+					</div>
+				</div>
+				
+				<div class="modal-buttons">
+					<button class="secondary-button" on:click={tryAgain}>
+						{t('try_again')}
+					</button>
+					<button class="primary-button" on:click={selectActivity}>
+						{t('select_activity')}
+					</button>
+				</div>
+			{/if}
 		</div>
 	</div>
 {/if}
@@ -774,10 +838,28 @@
 	.time-stat.best {
 		background: rgba(33, 150, 243, 0.1);
 	}
+
+	.time-stat.accuracy {
+		background: rgba(33, 150, 243, 0.1);
+	}
+
+	.time-stat.unrecorded {
+		background: rgba(255, 152, 0, 0.12);
+	}
 	
 	.time-stat.best .label,
 	.time-stat.best .value {
 		color: #2196f3;
+	}
+
+	.time-stat.accuracy .label,
+	.time-stat.accuracy .value {
+		color: #1976d2;
+	}
+
+	.time-stat.unrecorded .label,
+	.time-stat.unrecorded .value {
+		color: #ef6c00;
 	}
 
 	.time-stat.improvement {
