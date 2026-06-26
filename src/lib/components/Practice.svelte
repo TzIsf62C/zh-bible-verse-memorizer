@@ -34,6 +34,8 @@
 	let selectedPracticeOrder = 'biblical'; // 'collection' | 'biblical' | 'reverseBiblical' | 'random'
 	let processedPreselection = false; // Prevent reactive loop with preselection
 	let expandedVerseGroups = new Set();
+	let needsPracticeCollection = null;
+	let availableCollections = [];
 
 	$: needsPracticeCollection = buildNeedsPracticeCollection(
 		$verses,
@@ -82,7 +84,7 @@
 	
 	// Sort verses for verse selection
 	$: sortedVerses = verseSortOrder === 'collection'
-		? sortVersesByCollectionOrder($verses)
+		? sortVersesByCollectionOrder($verses, availableCollections)
 		: sortVersesByBibleOrder($verses, $settings.bookNameCharset || 'simplified');
 
 	// Group verses by book/chapter for expandable verse selection list
@@ -106,7 +108,7 @@
 		return groups;
 	})();
 
-	$: groupedCollectionVerses = buildPracticeCollectionGroups(sortedVerses);
+	$: groupedCollectionVerses = buildPracticeCollectionGroups(sortedVerses, availableCollections);
 
 	$: if (state === 'selectVerse' && verseSortOrder === 'biblical' && groupedVerses.length > 0 && expandedVerseGroups.size === 0) {
 		expandedVerseGroups = new Set([groupedVerses[0].key]);
@@ -196,12 +198,12 @@
 		expandedVerseGroups = new Set(expandedVerseGroups);
 	}
 
-	function sortVersesByCollectionOrder(inputVerses) {
+	function sortVersesByCollectionOrder(inputVerses, inputCollections = []) {
 		const verseById = new Map(inputVerses.map((verse) => [verse.id, verse]));
 		const ordered = [];
 		const seen = new Set();
 
-		for (const collection of availableCollections) {
+		for (const collection of inputCollections) {
 			for (const verseId of collection.verseIds || []) {
 				if (seen.has(verseId)) continue;
 				const verse = verseById.get(verseId);
@@ -221,12 +223,12 @@
 		return ordered;
 	}
 
-	function buildPracticeCollectionGroups(inputVerses) {
+	function buildPracticeCollectionGroups(inputVerses, inputCollections = []) {
 		const verseById = new Map(inputVerses.map((verse) => [verse.id, verse]));
 		const groups = [];
 		const seen = new Set();
 
-		for (const collection of availableCollections) {
+		for (const collection of inputCollections) {
 			const versesInCollection = (collection.verseIds || [])
 				.map((verseId) => verseById.get(verseId))
 				.filter(Boolean);

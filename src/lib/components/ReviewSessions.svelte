@@ -28,6 +28,8 @@
 	let expandedCollections = new Set(); // Track which collections are expanded
 	let verseSortOrder = 'biblical'; // 'biblical' | 'dueDate' | 'collection'
 	let reviewModeBackState = 'initial';
+	let needsPracticeCollection = null;
+	let selectableCollections = [];
 	
 	// Interval modal state
 	let showIntervalModal = false;
@@ -69,7 +71,7 @@
 	$: reviewBiblicalGroups = buildReviewBiblicalGroups(
 		sortVersesByBibleOrder(learnedVerses, $settings.bookNameCharset || 'simplified')
 	);
-	$: reviewCollectionGroups = buildCollectionGroups(sortedLearnedVerses);
+	$: reviewCollectionGroups = buildCollectionGroups(sortedLearnedVerses, selectableCollections);
 	$: needsPracticeCollection = buildNeedsPracticeCollection(
 		$verses,
 		$settings,
@@ -155,12 +157,12 @@
 		return ordered;
 	}
 
-	function buildCollectionGroups(inputVerses) {
+	function buildCollectionGroups(inputVerses, inputCollections = []) {
 		const verseById = new Map(inputVerses.map((verse) => [verse.id, verse]));
 		const groups = [];
 		const seen = new Set();
 
-		for (const collection of selectableCollections) {
+		for (const collection of inputCollections) {
 			const versesInCollection = (collection.verseIds || [])
 				.map((verseId) => verseById.get(verseId))
 				.filter(Boolean);
