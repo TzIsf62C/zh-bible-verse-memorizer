@@ -190,14 +190,14 @@
 		if (visibleHeight <= 0) return;
 
 		const charCenter = charRect.top + (charRect.height / 2);
-		const preferredTop = visibleTop + (visibleHeight * 0.35);
-		const preferredBottom = visibleTop + (visibleHeight * 0.55);
+		const preferredTop = visibleTop + (visibleHeight * 0.10);
+		const preferredBottom = visibleTop + (visibleHeight * 0.75);
 		const overlapsTop = charCenter < preferredTop;
 		const overlapsBottom = charCenter > preferredBottom;
 
 		if (!overlapsTop && !overlapsBottom) return;
 
-		const visibleCenter = (preferredTop + preferredBottom) / 2;
+		const visibleCenter = visibleTop + (visibleHeight * 0.55);
 		const scrollDelta = charCenter - visibleCenter;
 
 		const containerCanScroll = verseDisplayEl.scrollHeight > verseDisplayEl.clientHeight + 1;
