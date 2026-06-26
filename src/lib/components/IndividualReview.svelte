@@ -1,5 +1,5 @@
 <script>
-	import { createEventDispatcher } from 'svelte';
+	import { createEventDispatcher, tick } from 'svelte';
 	import { verses as versesStore } from '$lib/stores/verses';
 	import { settings } from '$lib/stores/settings';
 	import { t } from '$lib/i18n';
@@ -30,6 +30,7 @@
 	let lastErrorIndex = null;
 	let lastErrorChar = null;
 	let viewportAnchor;
+	let verseDisplayEl;
 	let keyboardLayout = keyboardLayouts.pinyinCompact;
 	let isNumericKeyboard = false;
 	let verseHeaderOpacity = 1;
@@ -113,6 +114,13 @@
 			isNumericKeyboard = false;
 		}
 	}
+
+	$: {
+		const _ = userInput.length;
+		if (verseDisplayEl && !showResult) {
+			scheduleAutoscroll();
+		}
+	}
 	
 	// Initialize verse data when current verse changes
 	$: if (currentVerse && !showResult) {
@@ -147,6 +155,62 @@
 			} else {
 				charToInputIndex[i] = null;
 			}
+		}
+	}
+
+	async function scheduleAutoscroll() {
+		await tick();
+		requestAnimationFrame(() => {
+			scrollNextHiddenCharacterIntoView();
+		});
+	}
+
+	function scrollNextHiddenCharacterIntoView() {
+		if (!verseDisplayEl) return;
+
+		const keyboard = document.querySelector('.individual-review .input-section .keyboard');
+		const nextInputIndex = userInput.length;
+		const charIndex = charToInputIndex.findIndex((value) => value === nextInputIndex);
+		if (charIndex === -1) return;
+
+		const targetChar = verseDisplayEl.querySelector(`span:nth-child(${charIndex + 1})`);
+		if (!targetChar) return;
+
+		const containerRect = verseDisplayEl.getBoundingClientRect();
+		const keyboardRect = keyboard ? keyboard.getBoundingClientRect() : null;
+		const charRect = targetChar.getBoundingClientRect();
+		const viewportTop = 12;
+		const viewportBottom = Math.min(
+			window.innerHeight,
+			keyboardRect ? keyboardRect.top : window.innerHeight
+		) - 12;
+		const visibleTop = Math.max(viewportTop, containerRect.top + 12);
+		const visibleBottom = Math.min(viewportBottom, containerRect.bottom - 12);
+		const visibleHeight = Math.max(0, visibleBottom - visibleTop);
+		if (visibleHeight <= 0) return;
+
+		const charCenter = charRect.top + (charRect.height / 2);
+		const preferredTop = visibleTop + (visibleHeight * 0.35);
+		const preferredBottom = visibleTop + (visibleHeight * 0.55);
+		const overlapsTop = charCenter < preferredTop;
+		const overlapsBottom = charCenter > preferredBottom;
+
+		if (!overlapsTop && !overlapsBottom) return;
+
+		const visibleCenter = (preferredTop + preferredBottom) / 2;
+		const scrollDelta = charCenter - visibleCenter;
+
+		const containerCanScroll = verseDisplayEl.scrollHeight > verseDisplayEl.clientHeight + 1;
+		if (containerCanScroll) {
+			verseDisplayEl.scrollTo({
+				top: verseDisplayEl.scrollTop + scrollDelta,
+				behavior: 'smooth'
+			});
+		} else {
+			window.scrollTo({
+				top: window.scrollY + scrollDelta,
+				behavior: 'smooth'
+			});
 		}
 	}
 
@@ -509,7 +573,7 @@
 		</div>
 
 		{#key `${currentIndex}-${userInput.length}`}
-			<div class="verse-display">
+			<div class="verse-display" bind:this={verseDisplayEl}>
 				{#each [...reviewFullText] as char, i}
 					{@const rendered = renderCharacter(char, i)}
 					<span class={rendered.className}>{rendered.char}</span>
