@@ -11,8 +11,18 @@ const defaultSettings = {
 	buzzerEnabled: false,
 	backupReminderEnabled: true,
 	textSizePreference: 1,
+	needsPracticeIncludeBelow: 80,
+	needsPracticeIgnoreAbove: 94,
 	hasCompletedOnboarding: false
 };
+
+function clampThreshold(value, fallback) {
+	if (!Number.isFinite(value)) {
+		return fallback;
+	}
+
+	return Math.max(0, Math.min(99, value));
+}
 
 function mergeDefinedSettings(base, overrides) {
 	return Object.fromEntries(
@@ -23,12 +33,23 @@ function mergeDefinedSettings(base, overrides) {
 function sanitizeSettings(settings) {
 	const merged = mergeDefinedSettings(defaultSettings, settings);
 	const textSizePreference = Number(merged.textSizePreference);
+	const needsPracticeIncludeBelow = clampThreshold(
+		Number(merged.needsPracticeIncludeBelow),
+		defaultSettings.needsPracticeIncludeBelow
+	);
+	const needsPracticeIgnoreAbove = clampThreshold(
+		Number(merged.needsPracticeIgnoreAbove),
+		defaultSettings.needsPracticeIgnoreAbove
+	);
+	const normalizedIgnoreAbove = Math.max(needsPracticeIgnoreAbove, needsPracticeIncludeBelow);
 
 	return {
 		...merged,
 		textSizePreference: Number.isFinite(textSizePreference) && textSizePreference > 0
 			? textSizePreference
-			: defaultSettings.textSizePreference
+			: defaultSettings.textSizePreference,
+		needsPracticeIncludeBelow,
+		needsPracticeIgnoreAbove: normalizedIgnoreAbove
 	};
 }
 
@@ -56,6 +77,14 @@ function readLegacySettings() {
 		textSizePreference:
 			localStorage.getItem('textSizePreference') !== null
 				? Number(localStorage.getItem('textSizePreference'))
+				: undefined,
+		needsPracticeIncludeBelow:
+			localStorage.getItem('needsPracticeIncludeBelow') !== null
+				? Number(localStorage.getItem('needsPracticeIncludeBelow'))
+				: undefined,
+		needsPracticeIgnoreAbove:
+			localStorage.getItem('needsPracticeIgnoreAbove') !== null
+				? Number(localStorage.getItem('needsPracticeIgnoreAbove'))
 				: undefined
 	};
 }

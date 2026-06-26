@@ -27,6 +27,29 @@
 		// Force reactive update
 		settings.update((value) => value);
 	}
+
+	function updateNeedsPracticeThresholds(key, rawValue) {
+		const parsed = Number(rawValue);
+		const clamped = Number.isFinite(parsed) ? Math.max(0, Math.min(99, parsed)) : 0;
+
+		settings.update((current) => {
+			const includeBelow = key === 'needsPracticeIncludeBelow'
+				? clamped
+				: Number(current.needsPracticeIncludeBelow ?? 80);
+			const ignoreAbove = key === 'needsPracticeIgnoreAbove'
+				? clamped
+				: Number(current.needsPracticeIgnoreAbove ?? 94);
+
+			return {
+				...current,
+				needsPracticeIncludeBelow: Math.max(0, Math.min(99, includeBelow)),
+				needsPracticeIgnoreAbove: Math.max(
+					Math.max(0, Math.min(99, ignoreAbove)),
+					Math.max(0, Math.min(99, includeBelow))
+				)
+			};
+		});
+	}
 	
 	function showTutorial() {
 		dispatch('viewtutorial');
@@ -318,6 +341,35 @@
 	</div>
 	
 	<div class="settings-section">
+		<div class="setting-group">
+			<label for="needsPracticeIncludeBelow">{t('needs_practice_include_below_label')}</label>
+			<input
+				id="needsPracticeIncludeBelow"
+				type="number"
+				min="0"
+				max="99"
+				value={$settings.needsPracticeIncludeBelow}
+				on:input={(e) => updateNeedsPracticeThresholds('needsPracticeIncludeBelow', e.currentTarget.value)}
+			/>
+			<p class="help-text">{t('needs_practice_include_below_help')}</p>
+		</div>
+
+		<div class="setting-group">
+			<label for="needsPracticeIgnoreAbove">{t('needs_practice_ignore_above_label')}</label>
+			<input
+				id="needsPracticeIgnoreAbove"
+				type="number"
+				min="0"
+				max="99"
+				value={$settings.needsPracticeIgnoreAbove}
+				on:input={(e) => updateNeedsPracticeThresholds('needsPracticeIgnoreAbove', e.currentTarget.value)}
+			/>
+			<p class="help-text">{t('needs_practice_ignore_above_help')}</p>
+		</div>
+
+	</div>
+
+	<div class="settings-section">
 		
 		<div class="setting-group">
 			<label for="defaultBibleVersion">{t('default_bible_version')}</label>
@@ -542,7 +594,8 @@
 		font-weight: 500;
 	}
 	
-	input[type="text"] {
+	input[type="text"],
+	input[type="number"] {
 		width: 100%;
 		padding: 0.75rem;
 		border: 1px solid var(--file-border);

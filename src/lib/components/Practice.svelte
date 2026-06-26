@@ -6,6 +6,7 @@
 	import { practice } from '$lib/stores/practice';
 	import { t } from '$lib/i18n';
 	import { sortVersesByBibleOrder, createVerseReferenceFormatter } from '$lib/utils/bibleBooks';
+	import { buildNeedsPracticeCollection } from '$lib/utils/computedCollections';
 	import Modal from './Modal.svelte';
 	import SpeedChallengeCollection from './SpeedChallengeCollection.svelte';
 	import SpeedChallengeVerse from './SpeedChallengeVerse.svelte';
@@ -33,6 +34,21 @@
 	let selectedPracticeOrder = 'biblical'; // 'collection' | 'biblical' | 'reverseBiblical' | 'random'
 	let processedPreselection = false; // Prevent reactive loop with preselection
 	let expandedVerseGroups = new Set();
+
+	$: needsPracticeCollection = buildNeedsPracticeCollection(
+		$verses,
+		$settings,
+		t('needs_practice_collection_title')
+	);
+	$: availableCollections = [...$collections, needsPracticeCollection];
+	$: if (selectedCollection) {
+		const latestSelected = availableCollections.find((collection) => collection.id === selectedCollection.id);
+		if (!latestSelected) {
+			selectedCollection = null;
+		} else if (latestSelected !== selectedCollection) {
+			selectedCollection = latestSelected;
+		}
+	}
 	
 	// Get verses for selected collection (reactive based on stores and selected collection/filter)
 	$: baseVerses = selectedCollection 
@@ -134,7 +150,7 @@
 	
 	// Button handlers
 	function practiceCollection() {
-		if ($collections.length === 0) {
+		if (availableCollections.length === 0) {
 			modalMessage = t('no_collections');
 			showModal = true;
 			return;
@@ -185,7 +201,7 @@
 		const ordered = [];
 		const seen = new Set();
 
-		for (const collection of $collections) {
+		for (const collection of availableCollections) {
 			for (const verseId of collection.verseIds || []) {
 				if (seen.has(verseId)) continue;
 				const verse = verseById.get(verseId);
@@ -210,7 +226,7 @@
 		const groups = [];
 		const seen = new Set();
 
-		for (const collection of $collections) {
+		for (const collection of availableCollections) {
 			const versesInCollection = (collection.verseIds || [])
 				.map((verseId) => verseById.get(verseId))
 				.filter(Boolean);
@@ -420,7 +436,7 @@
 		</div>
 		
 		<div class="collection-list">
-			{#each $collections as collection}
+			{#each availableCollections as collection}
 				<div class="collection-item-container">
 					<button 
 						class="collection-item" 

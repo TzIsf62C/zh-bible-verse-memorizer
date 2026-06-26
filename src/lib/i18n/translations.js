@@ -32,6 +32,10 @@ export const translations = {
 		text_size_normal: 'Normal (100%)',
 		text_size_large: 'Large (120%)',
 		text_size_extra_large: 'Extra Large (150%)',
+		needs_practice_include_below_label: 'Needs Practice: Include all scores below',
+		needs_practice_include_below_help: 'Verses with displayed heat score below this value are always included.',
+		needs_practice_ignore_above_label: 'Needs Practice: Ignore all scores above',
+		needs_practice_ignore_above_help: 'Verses above this displayed heat score are excluded even from the lowest-five fallback.',
 		view_tutorial: 'View Tutorial',
 		view_tutorial_description: 'View the interactive tutorial explaining the three-stage learning method.',
 		book_name_charset: 'Character Set for Book Names',
@@ -342,6 +346,9 @@ export const translations = {
 		add_verse_to_collection: 'Add verse to collection',
 		verses_in_collection: 'Verses in collection',
 		no_verses_in_collection: 'No verses in this collection yet',
+		needs_practice_collection_title: 'Needs Practice',
+		dynamic_collection_badge: 'Dynamic',
+		dynamic_collection_read_only_note: 'This dynamic collection is auto-generated from heat map scores and cannot be edited manually.',
 		
 		// Export/Import Panel
 		export_import_title: 'Export & Import',
@@ -550,6 +557,10 @@ export const translations = {
 		text_size_normal: '正常 (100%)',
 		text_size_large: '大 (120%)',
 		text_size_extra_large: '特大 (150%)',
+		needs_practice_include_below_label: '加強背誦：包含所有低於此分數',
+		needs_practice_include_below_help: '顯示熱力分數低於此值的經文會全部納入。',
+		needs_practice_ignore_above_label: '加強背誦：忽略所有高於此分數',
+		needs_practice_ignore_above_help: '顯示熱力分數高於此值的經文會被排除，即使在最低五節補足規則中。',
 		view_tutorial: '查看教程',
 		view_tutorial_description: '查看交互式教程，了解三阶段学习方法。',
 		book_name_charset: '书卷名称字符集',
@@ -860,6 +871,9 @@ export const translations = {
 		add_verse_to_collection: '添加经文到集合',
 		verses_in_collection: '集合中的经文',
 		no_verses_in_collection: '此集合中还没有经文',
+		needs_practice_collection_title: '加强背诵',
+		dynamic_collection_badge: '动态',
+		dynamic_collection_read_only_note: '此动态集合会根据热力图分数自动更新，无法手动编辑。',
 		
 		// Export/Import Panel
 		export_import_title: '导出导入',
@@ -1061,6 +1075,10 @@ export const translations = {
 		text_size_normal: '正常 (100%)',
 		text_size_large: '大 (120%)',
 		text_size_extra_large: '特大 (150%)',
+		needs_practice_include_below_label: '加強背誦：包含所有低於此分數',
+		needs_practice_include_below_help: '顯示熱力分數低於此值的經文會全部納入。',
+		needs_practice_ignore_above_label: '加強背誦：忽略所有高於此分數',
+		needs_practice_ignore_above_help: '顯示熱力分數高於此值的經文會被排除，即使在最低五節補足規則中。',
 		view_tutorial: '查看教程',
 		view_tutorial_description: '查看互動式教程，瞭解三階段學習方法。',
 		book_name_charset: '書卷名稱字符集',
@@ -1372,6 +1390,9 @@ export const translations = {
 		add_verse_to_collection: '新增經文到集合',
 		verses_in_collection: '集合中的經文',
 		no_verses_in_collection: '此集合中還沒有經文',
+		needs_practice_collection_title: '加強背誦',
+		dynamic_collection_badge: '動態',
+		dynamic_collection_read_only_note: '此動態集合會根據熱力圖分數自動更新，無法手動編輯。',
 		
 		// Export/Import Panel
 		export_import_title: '匯出匯入',

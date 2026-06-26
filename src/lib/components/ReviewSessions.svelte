@@ -7,6 +7,10 @@
 	import { sortVersesByBibleOrder, createVerseReferenceFormatter } from '$lib/utils/bibleBooks';
 	import { getDaysUntilDue, countDueVerses, buildManualIntervalUpdate, getSharedReviewSchedule } from '$lib/utils/spacedRepetition';
 	import { keyboardLayouts } from '$lib/utils/keyboardLayouts';
+	import {
+		buildNeedsPracticeCollection,
+		findCollectionById
+	} from '$lib/utils/computedCollections';
 	import IndividualReview from './IndividualReview.svelte';
 	import SingleTextReview from './SingleTextReview.svelte';
 	import Keyboard from './Keyboard.svelte';
@@ -66,6 +70,12 @@
 		sortVersesByBibleOrder(learnedVerses, $settings.bookNameCharset || 'simplified')
 	);
 	$: reviewCollectionGroups = buildCollectionGroups(sortedLearnedVerses);
+	$: needsPracticeCollection = buildNeedsPracticeCollection(
+		$verses,
+		$settings,
+		t('needs_practice_collection_title')
+	);
+	$: selectableCollections = [...$collections, needsPracticeCollection];
 
 	// Create verse reference formatter that checks ALL verses for duplicates (not just learnedVerses)
 	$: formatVerseRef = createVerseReferenceFormatter($verses);
@@ -124,7 +134,7 @@
 		const seen = new Set();
 
 		for (const collectionId of selectedCollectionIds) {
-			const collection = $collections.find(c => c.id === collectionId);
+			const collection = findCollectionById($collections, needsPracticeCollection, collectionId);
 			if (!collection) continue;
 			for (const verseId of collection.verseIds) {
 				if (seen.has(verseId)) continue;
@@ -150,7 +160,7 @@
 		const groups = [];
 		const seen = new Set();
 
-		for (const collection of $collections) {
+		for (const collection of selectableCollections) {
 			const versesInCollection = (collection.verseIds || [])
 				.map((verseId) => verseById.get(verseId))
 				.filter(Boolean);
@@ -239,7 +249,7 @@
 	}
 
 	function showCollectionSelection() {
-		if ($collections.length === 0) {
+		if (selectableCollections.length === 0) {
 			modalMessage = t('no_collections');
 			showModal = true;
 			return;
@@ -293,7 +303,7 @@
 		// Gather all verses from selected collections (use Set to deduplicate)
 		const verseIdSet = new Set();
 		selectedCollectionIds.forEach(collId => {
-			const collection = $collections.find(c => c.id === collId);
+			const collection = findCollectionById($collections, needsPracticeCollection, collId);
 			if (collection) {
 				collection.verseIds.forEach(vId => verseIdSet.add(vId));
 			}
@@ -345,7 +355,7 @@
 		// Gather all verses from selected collections (use Set to deduplicate)
 		const verseIdSet = new Set();
 		selectedCollectionIds.forEach(collId => {
-			const collection = $collections.find(c => c.id === collId);
+			const collection = findCollectionById($collections, needsPracticeCollection, collId);
 			if (collection) {
 				collection.verseIds.forEach(vId => verseIdSet.add(vId));
 			}
@@ -638,7 +648,7 @@
 					</button>
 				{/if}
 				
-				{#if $collections.length > 0}
+				{#if selectableCollections.length > 0}
 					<button class="initial-btn" on:click={showCollectionSelection}>
 						{t('review_collection_learned')}
 					</button>
@@ -666,10 +676,10 @@
 		</div>
 
 		<div class="collections-list">
-			{#if $collections.length === 0}
+			{#if selectableCollections.length === 0}
 				<p class="empty-message">{t('no_collections')}</p>
 			{:else}
-				{#each $collections as collection (collection.id)}
+				{#each selectableCollections as collection (collection.id)}
 					{@const learnedInCollection = collection.verseIds.map(id => $verses.find(v => v.id === id)).filter(v => v && v.lastReviewed)}
 					{@const dueCount = countDueVerses(collection.verseIds, $verses)}
 					{@const isExpanded = expandedCollections.has(collection.id)}

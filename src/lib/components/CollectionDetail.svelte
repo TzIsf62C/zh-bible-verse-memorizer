@@ -53,12 +53,13 @@
 	let selectedVerseIds = [];
 	let showModal = false;
 	let modalMessage = '';
+	$: isReadOnlyCollection = Boolean(collection?.isComputed || collection?.readOnly);
 	
 	$: collectionVerses = collection.verseIds
 		?.map(id => $verses.find(v => v.id === id))
 		.filter(v => v != null) || [];
 	
-	$: availableVerses = $verses.filter(
+	$: availableVerses = isReadOnlyCollection ? [] : $verses.filter(
 		v => !collection.verseIds?.includes(v.id)
 	);
 	
@@ -176,53 +177,57 @@
 	</div>
 	
 	<div class="add-verse-section" bind:this={addVerseElement}>
-		<label for="verseSelector">{t('add_verse_to_collection')}</label>
-		<div class="add-verse-row">
-			<div id="verseSelector" class="verse-picker" role="group" aria-label={t('select_verse')}>
-				{#if groupedAvailableVerses.length === 0}
-					<div class="picker-empty">{t('no_verses')}</div>
-				{:else}
-					{#each groupedAvailableVerses as bookGroup (bookGroup.bookName)}
-						<details class="book-group">
-							<summary class="group-toggle">
-								<span class="toggle-icon" aria-hidden="true">▶</span>
-								<span class="group-label">{bookGroup.bookName}</span>
-								<span class="group-count">({bookGroup.chapters.reduce((total, chapter) => total + chapter.verses.length, 0)})</span>
-							</summary>
+		{#if isReadOnlyCollection}
+			<p class="help-text">{t('dynamic_collection_read_only_note')}</p>
+		{:else}
+			<label for="verseSelector">{t('add_verse_to_collection')}</label>
+			<div class="add-verse-row">
+				<div id="verseSelector" class="verse-picker" role="group" aria-label={t('select_verse')}>
+					{#if groupedAvailableVerses.length === 0}
+						<div class="picker-empty">{t('no_verses')}</div>
+					{:else}
+						{#each groupedAvailableVerses as bookGroup (bookGroup.bookName)}
+							<details class="book-group">
+								<summary class="group-toggle">
+									<span class="toggle-icon" aria-hidden="true">▶</span>
+									<span class="group-label">{bookGroup.bookName}</span>
+									<span class="group-count">({bookGroup.chapters.reduce((total, chapter) => total + chapter.verses.length, 0)})</span>
+								</summary>
 
-							<div class="chapter-groups">
-								{#each bookGroup.chapters as chapterGroup (chapterGroup.chapterNumber)}
-									<details class="chapter-group">
-										<summary class="group-toggle chapter-toggle">
-											<span class="toggle-icon" aria-hidden="true">▶</span>
+								<div class="chapter-groups">
+									{#each bookGroup.chapters as chapterGroup (chapterGroup.chapterNumber)}
+										<details class="chapter-group">
+											<summary class="group-toggle chapter-toggle">
+												<span class="toggle-icon" aria-hidden="true">▶</span>
 												<span class="group-label">{t('chapter')} {chapterGroup.chapterNumber}</span>
 												<span class="group-count">({chapterGroup.verses.length})</span>
-										</summary>
+											</summary>
 
-										<div class="chapter-verses">
-											{#each chapterGroup.verses as verse (verse.id)}
-												<label class="verse-option" for={`verse-opt-${verse.id}`}>
-													<input
-														id={`verse-opt-${verse.id}`}
-														type="checkbox"
-														checked={selectedVerseIds.includes(verse.id)}
-														on:change={(event) => toggleVerseSelection(verse.id, event.currentTarget.checked)}
-													/>
-													<span>{formatVerseReference(verse)}</span>
-												</label>
-											{/each}
-										</div>
-									</details>
-								{/each}
-							</div>
-						</details>
-					{/each}
-				{/if}
+											<div class="chapter-verses">
+												{#each chapterGroup.verses as verse (verse.id)}
+													<label class="verse-option" for={`verse-opt-${verse.id}`}>
+														<input
+															id={`verse-opt-${verse.id}`}
+															type="checkbox"
+															checked={selectedVerseIds.includes(verse.id)}
+															on:change={(event) => toggleVerseSelection(verse.id, event.currentTarget.checked)}
+														/>
+														<span>{formatVerseReference(verse)}</span>
+													</label>
+												{/each}
+											</div>
+										</details>
+									{/each}
+								</div>
+							</details>
+						{/each}
+					{/if}
+				</div>
+				<button on:click={addVerseToCollection} disabled={selectedVerseIds.length === 0}>
+					{t('add')}
+				</button>
 			</div>
-			<button on:click={addVerseToCollection} disabled={selectedVerseIds.length === 0}>
-				{t('add')}
-			</button>
-		</div>
+		{/if}
 	</div>
 	
 	<div class="verses-list">
@@ -247,29 +252,31 @@
 						</div>
 					</div>
 					<div class="verse-actions">
-						<button
-							class="icon-btn"
-							on:click={() => moveVerseUp(verse.id)}
-							disabled={index === 0}
-							title={t('move_up')}
-						>
-							▲
-						</button>
-						<button
-							class="icon-btn"
-							on:click={() => moveVerseDown(verse.id)}
-							disabled={index === collectionVerses.length - 1}
-							title={t('move_down')}
-						>
-							▼
-						</button>
-						<button
-							class="icon-btn danger"
-							on:click={() => removeVerseFromCollection(verse.id)}
-							title={t('remove')}
-						>
-							❌
-						</button>
+						{#if !isReadOnlyCollection}
+							<button
+								class="icon-btn"
+								on:click={() => moveVerseUp(verse.id)}
+								disabled={index === 0}
+								title={t('move_up')}
+							>
+								▲
+							</button>
+							<button
+								class="icon-btn"
+								on:click={() => moveVerseDown(verse.id)}
+								disabled={index === collectionVerses.length - 1}
+								title={t('move_down')}
+							>
+								▼
+							</button>
+							<button
+								class="icon-btn danger"
+								on:click={() => removeVerseFromCollection(verse.id)}
+								title={t('remove')}
+							>
+								❌
+							</button>
+						{/if}
 					</div>
 				</div>
 			{/each}
@@ -364,6 +371,13 @@
 		font-weight: 500;
 		margin-bottom: 0.5rem;
 		color: var(--text-color);
+	}
+
+	.help-text {
+		margin: 0;
+		font-size: 0.9em;
+		color: var(--subtitle-color);
+		line-height: 1.5;
 	}
 	
 	.add-verse-row {
