@@ -74,7 +74,7 @@
 	class="keyboard"
 	class:numeric={isNumeric}
 	class:compact={isCompact}
-	style={`--layout-max-keys: ${maxRowKeys};`}
+	style={`--max-keys: ${maxRowKeys};`}
 >
 	{#each layout as row}
 		<div class="keyboard-row">
