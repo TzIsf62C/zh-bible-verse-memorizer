@@ -16,11 +16,8 @@
 	let currentStage = 'basic'; // basic, intermediate, advanced - user can choose any
 	let intermediateVariant = 'odd'; // or 'even'
 	let userInput = '';
-	let feedbackMessage = '';
-	let feedbackType = ''; // success, error, warning
 	let accuracy = 0;
 	let showNextButton = false;
-	let showRetryButton = false;
 	let keyboardLayout = keyboardLayouts.pinyin;
 	let versesToLearn = [];
 	let learnFullText = '';
@@ -29,6 +26,8 @@
 	let inputIndexToCharIndex = [];
 	let showModal = false;
 	let modalMessage = '';
+	let modalType = '';
+	let lastMismatchModalKey = null;
 	let isNumericKeyboard = false;
 	let verseSelectorOpacity = 1;
 	let lastErrorIndex = null;
@@ -75,17 +74,20 @@
 					cangjie: t('input_cangjie') 
 				};
 				const warningMsg = t('input_method_mismatch').replace('{method}', methodNames[verseInputMethod] || verseInputMethod);
+				const mismatchKey = `${currentVerseIdx}:${verseInputMethod}:${currentMethod}:${fullInitials}`;
 				console.log('[LearningFlow] MISMATCH DETECTED! Setting warning:', warningMsg);
-				feedbackMessage = warningMsg;
-				feedbackType = 'warning';
-			} else if (verseInputMethod === currentMethod && feedbackType === 'warning') {
-				// Only clear warning if we successfully detected a matching method
-				console.log('[LearningFlow] Methods match, clearing warning');
-				feedbackMessage = '';
-				feedbackType = '';
+				if (!showModal && lastMismatchModalKey !== mismatchKey) {
+					modalMessage = warningMsg;
+					modalType = 'input-mismatch';
+					showModal = true;
+					lastMismatchModalKey = mismatchKey;
+				}
+			} else if (verseInputMethod === currentMethod) {
+				lastMismatchModalKey = null;
 			}
 		} else {
 			console.log('[LearningFlow] Skipping mismatch check - missing fullInitials or currentMethod');
+			lastMismatchModalKey = null;
 		}
 	}
 
@@ -238,9 +240,7 @@
 	function setStage(stage) {
 		currentStage = stage;
 		userInput = '';
-		feedbackMessage = '';
 		showNextButton = false;
-		showRetryButton = false;
 		pressedKey = null;
 		correctKey = null;
 		lastCorrectKey = null;
@@ -250,15 +250,13 @@
 	function toggleIntermediateVariant() {
 		intermediateVariant = intermediateVariant === 'odd' ? 'even' : 'odd';
 		userInput = '';
-		feedbackMessage = '';
 		console.log('[Learn] Toggled intermediate variant to', intermediateVariant);
 	}
 
 	function initializeVerse(verse) {
 		userInput = '';
-		feedbackMessage = '';
 		showNextButton = false;
-		showRetryButton = false;
+		lastMismatchModalKey = null;
 
 		// Combine verse text and reference like original app
 		learnFullText = `${verse.verseText}\n${verse.bookName} ${verse.chapterNumber}:${verse.verseNumber}`;
@@ -472,8 +470,9 @@
 		const expected = getExpectedInitials();
 
 		if (!expected) {
-			feedbackMessage = t('fill_all_fields');
-			feedbackType = 'error';
+			modalMessage = t('fill_all_fields');
+			modalType = 'validation-error';
+			showModal = true;
 			console.log('[Learn] Submit failed - no expected initials');
 			return;
 		}
@@ -506,16 +505,14 @@
 			if (currentStage === 'basic') {
 				console.log('[Learn] Completed basic stage - showing modal');
 				modalMessage = t('great_job_basic');
+				modalType = 'basic-success';
 				showModal = true;
-				feedbackMessage = '';
-				feedbackType = '';
 				userInput = '';
 			} else if (currentStage === 'intermediate') {
 				console.log('[Learn] Completed intermediate stage - showing modal');
 				modalMessage = t('great_job_intermediate');
+				modalType = 'intermediate-success';
 				showModal = true;
-				feedbackMessage = '';
-				feedbackType = '';
 				userInput = '';
 			} else if (currentStage === 'advanced') {
 				console.log('[Learn] Completed advanced stage - verse learned');
@@ -524,9 +521,8 @@
 				registerStreakActivity('learning');
 				// Show modal for completion
 				modalMessage = `${t('congratulations_mastered')} (${accuracy}%)`;
+				modalType = 'advanced-success';
 				showModal = true;
-				feedbackMessage = '';
-				feedbackType = '';
 				userInput = '';
 				// Set a flag to indicate we need to advance to next verse
 				window._advancedCompleted = true;
@@ -534,27 +530,16 @@
 		} else {
 			// Failed - show error feedback
 			console.log('[Learn] Failed with accuracy:', accuracy);
-			let mismatchIndex = -1;
-			for (let i = 0; i < Math.max(userInput.length, expected.length); i++) {
-				const typedChar = inputMethod === 'pinyin' ? (userInput[i] || '').toLowerCase() : (userInput[i] || '');
-				const expectedChar = inputMethod === 'pinyin' ? expected[i].toLowerCase() : expected[i];
-				if (typedChar !== expectedChar) {
-					mismatchIndex = i;
-					break;
-				}
-			}
 			if (currentStage === 'intermediate') {
-				// Show modal for intermediate failure - NO retry button below verse
+				// Show modal for intermediate failure
 				modalMessage = `${t('nice_try')} (${accuracy}%)`;
+				modalType = 'intermediate-failure';
 				showModal = true;
-				feedbackMessage = '';
-				feedbackType = '';
 				userInput = '';
-				// Don't set showRetryButton - modal handles retry
 			} else {
-				showRetryButton = true;
-				feedbackMessage = `${t('nice_try')} (${accuracy}%)`;
-				feedbackType = 'error';
+				modalMessage = `${t('nice_try')} (${accuracy}%)`;
+				modalType = 'stage-failure';
+				showModal = true;
 				userInput = '';
 			}
 		}
@@ -602,18 +587,6 @@
 		);
 	}
 
-	function handleRetry() {
-		// Toggle intermediate variant on retry if in intermediate mode
-		if (currentStage === 'intermediate') {
-			intermediateVariant = intermediateVariant === 'odd' ? 'even' : 'odd';
-		}
-		userInput = '';
-		feedbackMessage = '';
-		accuracy = 0;
-		showNextButton = false;
-		showRetryButton = false;
-	}
-	
 	function closeModal() {
 		showModal = false;
 		
@@ -630,46 +603,40 @@
 				setStage('basic');
 				console.log('[Learn] Advanced completed - moved to next verse at basic stage');
 			} else {
-				feedbackMessage = t('completed_all_verses');
-				feedbackType = 'warning';
+				modalMessage = t('completed_all_verses');
+				modalType = 'all-complete';
+				showModal = true;
 				console.log('[Learn] Advanced completed - no more verses');
 			}
-		} else if (currentStage === 'basic') {
+		} else if (modalType === 'basic-success') {
 			// Advance to next stage on success
 			currentStage = 'intermediate';
 			userInput = '';
-			feedbackMessage = '';
 			showNextButton = false;
-			showRetryButton = false;
-		} else if (currentStage === 'intermediate') {
-			// Check if this was a success or failure modal
-			if (modalMessage.includes(t('great_job_intermediate'))) {
-				// Success - advance to advanced
-				currentStage = 'advanced';
-				userInput = '';
-				feedbackMessage = '';
-				showNextButton = false;
-				showRetryButton = false;
-			} else {
-				// Failure - toggle variant and allow immediate retry (no retry button)
-				intermediateVariant = intermediateVariant === 'odd' ? 'even' : 'odd';
-				// Don't show retry button - user can type immediately
-				showRetryButton = false;
-				userInput = '';
-				feedbackMessage = '';
-			}
+		} else if (modalType === 'intermediate-success') {
+			// Success - advance to advanced
+			currentStage = 'advanced';
+			userInput = '';
+			showNextButton = false;
+		} else if (modalType === 'intermediate-failure') {
+			intermediateVariant = intermediateVariant === 'odd' ? 'even' : 'odd';
+			userInput = '';
+			showNextButton = false;
 		}
+
+		modalType = '';
 	}
 
 	function retryFromModal() {
-		if (currentStage === 'intermediate' && modalMessage.includes(t('great_job_intermediate'))) {
+		if (modalType === 'intermediate-success') {
+			intermediateVariant = intermediateVariant === 'odd' ? 'even' : 'odd';
+		} else if (modalType === 'intermediate-failure') {
 			intermediateVariant = intermediateVariant === 'odd' ? 'even' : 'odd';
 		}
 		showModal = false;
+		modalType = '';
 		userInput = '';
-		feedbackMessage = '';
 		showNextButton = false;
-		showRetryButton = false;
 		pressedKey = null;
 		correctKey = null;
 		lastCorrectKey = null;
@@ -683,8 +650,9 @@
 			setStage('basic'); // Reset to basic for new verse
 		} else {
 			// No more verses
-			feedbackMessage = t('completed_all_verses');
-			feedbackType = 'warning';
+			modalMessage = t('completed_all_verses');
+			modalType = 'all-complete';
+			showModal = true;
 		}
 	}
 
@@ -821,7 +789,7 @@
 	// Physical keyboard handler
 	function handlePhysicalKeyboard(e) {
 		if (!currentVerse) return;
-		if (showNextButton || showRetryButton) return;
+		if (showNextButton) return;
 
 		if (e.key === 'Enter' && userInput.length === learnFullInitials.length) {
 			e.preventDefault();
@@ -1003,33 +971,11 @@
 				tabindex="-1"
 			/>
 
-			<!-- Feedback -->
-			{#if feedbackMessage}
-				<div class="feedback" class:success={feedbackType === 'success'} class:error={feedbackType === 'error'} class:warning={feedbackType === 'warning'}>
-					{feedbackMessage}
-				</div>
-			{/if}
-
 			<!-- Invisible viewport anchor for keyboard positioning -->
 			<div bind:this={viewportAnchor} class="viewport-anchor" aria-hidden="true"></div>
 
 			<!-- Onscreen Keyboard (no backspace/enter during learning) -->
-			<!-- Hide keyboard in intermediate mode when showRetryButton is true -->
-			{#if !showNextButton && !showRetryButton}
-			<Keyboard 
-				layout={keyboardLayout} 
-				on:key={handleKeyInput} 
-				showBackspace={false} 
-				showEnter={false} 
-				isNumeric={isNumericKeyboard}
-				pressedKey={pressedKey}
-				correctKey={correctKey}
-				lastCorrectKey={lastCorrectKey}
-			/>
-		{:else if currentStage === 'intermediate' && showRetryButton}
-			<!-- Keyboard hidden in intermediate until retry pressed -->
-		{:else if showRetryButton}
-			<!-- Show keyboard for other stages even with retry button -->
+			{#if !showNextButton}
 			<Keyboard 
 				layout={keyboardLayout} 
 				on:key={handleKeyInput} 
@@ -1044,9 +990,6 @@
 
 		<!-- Action Buttons -->
 		<div class="control-buttons">
-			{#if showRetryButton}
-				<button class="retry-btn" on:click={handleRetry}>{t('retry')}</button>
-			{/if}
 			{#if showNextButton}
 				<button class="next-btn" on:click={handleNext}>{t('next')}</button>
 			{/if}
@@ -1059,10 +1002,9 @@
 	<div class="modal-overlay" on:click={handleModalOverlayClick} on:keydown={(e) => e.key === 'Escape' && closeModal()} role="dialog" aria-modal="true" tabindex="0">
 		<div class="modal-content" role="document">
 			<div class="modal-message">{modalMessage}</div>
-			{#if currentStage === 'intermediate' && modalMessage.includes(t('nice_try'))}
-				<!-- Intermediate failure: show Retry button -->
-				<button class="modal-btn" on:click={closeModal}>{t('retry')}</button>
-			{:else if currentStage === 'basic' || (currentStage === 'intermediate' && modalMessage.includes(t('great_job_intermediate')))}
+			{#if modalType === 'intermediate-failure' || modalType === 'stage-failure'}
+				<button class="modal-btn" on:click={retryFromModal}>{t('retry')}</button>
+			{:else if modalType === 'basic-success' || modalType === 'intermediate-success'}
 				<!-- Basic/intermediate success: allow retry same stage or continue -->
 				<div class="modal-btn-row">
 					<button class="modal-btn secondary" on:click={retryFromModal}>{t('retry')}</button>
@@ -1129,11 +1071,6 @@
 	.learning-controls {
 		display: grid;
 		gap: 0.5rem;
-	}
-
-	.learning-controls label {
-		font-weight: 500;
-		color: var(--subtitle-color);
 	}
 
 	.learning-controls select {
@@ -1218,47 +1155,6 @@
 		opacity: 0;
 	}
 
-	.feedback {
-		padding: 1rem;
-		border-radius: 6px;
-		text-align: center;
-		font-weight: 500;
-		transition: all 0.3s;
-	}
-
-	.feedback.success {
-		background: #e8f5e9;
-		color: #2e7d32;
-		border: 1px solid #4caf50;
-	}
-
-	.feedback.error {
-		background: #ffebee;
-		color: #c62828;
-		border: 1px solid #f44336;
-	}
-
-	.feedback.warning {
-		background: #fff3e0;
-		color: #e65100;
-		border: 1px solid #ff9800;
-	}
-
-	[data-theme='dark'] .feedback.success {
-		background: #1b5e20;
-		color: #81c784;
-	}
-
-	[data-theme='dark'] .feedback.error {
-		background: #b71c1c;
-		color: #ef5350;
-	}
-
-	[data-theme='dark'] .feedback.warning {
-		background: #e65100;
-		color: #ffb74d;
-	}
-
 	.viewport-anchor {
 		height: 1px;
 		width: 100%;
@@ -1274,7 +1170,6 @@
 		justify-content: center;
 	}
 
-	.retry-btn,
 	.next-btn {
 		padding: 0.75rem 2rem;
 		border: none;
@@ -1285,17 +1180,11 @@
 		transition: all 0.3s;
 	}
 
-	.retry-btn {
-		background: var(--nav-button-bg);
-		color: var(--nav-button-color);
-	}
-
 	.next-btn {
 		background: var(--accent-color);
 		color: white;
 	}
 
-	.retry-btn:hover,
 	.next-btn:hover {
 		opacity: 0.9;
 	}
