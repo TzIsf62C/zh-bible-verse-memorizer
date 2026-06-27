@@ -133,6 +133,9 @@
 		feedbackType = '';
 		lastErrorIndex = null;
 		lastErrorChar = null;
+		if (verseDisplayEl) {
+			verseDisplayEl.scrollTop = 0;
+		}
 
 		// Combine verse text and reference (same as Learning Mode Advanced)
 		reviewFullText = `${verse.verseText}\n${verse.bookName} ${verse.chapterNumber}:${verse.verseNumber}`;
@@ -190,28 +193,23 @@
 		if (visibleHeight <= 0) return;
 
 		const charCenter = charRect.top + (charRect.height / 2);
-		const preferredTop = visibleTop + (visibleHeight * 0.10);
-		const preferredBottom = visibleTop + (visibleHeight * 0.75);
+		const preferredTop = visibleTop + (visibleHeight * 0.35);
+		const preferredBottom = visibleTop + (visibleHeight * 0.55);
 		const overlapsTop = charCenter < preferredTop;
 		const overlapsBottom = charCenter > preferredBottom;
 
 		if (!overlapsTop && !overlapsBottom) return;
 
-		const visibleCenter = visibleTop + (visibleHeight * 0.55);
+		const visibleCenter = (preferredTop + preferredBottom) / 2;
 		const scrollDelta = charCenter - visibleCenter;
 
 		const containerCanScroll = verseDisplayEl.scrollHeight > verseDisplayEl.clientHeight + 1;
-		if (containerCanScroll) {
-			verseDisplayEl.scrollTo({
-				top: verseDisplayEl.scrollTop + scrollDelta,
-				behavior: 'smooth'
-			});
-		} else {
-			window.scrollTo({
-				top: window.scrollY + scrollDelta,
-				behavior: 'smooth'
-			});
-		}
+		if (!containerCanScroll) return;
+
+		verseDisplayEl.scrollTo({
+			top: verseDisplayEl.scrollTop + scrollDelta,
+			behavior: 'smooth'
+		});
 	}
 
 	function updateErrorFeedback() {
@@ -494,7 +492,7 @@
 	}
 
 	// Character rendering (same as Advanced Learning Mode)
-	function renderCharacter(char, charIndex) {
+	function renderCharacter(char, charIndex, typedInput, inputMethod) {
 		const map = charToInputIndex[charIndex];
 
 		if (map !== null) {
@@ -504,9 +502,8 @@
 			let hidden = true; // Always hidden initially (like advanced mode)
 
 			// Reveal as user types
-			if (userInput.length > map) {
-				const inputMethod = $settings.inputMethod || 'pinyin';
-				const typedChar = inputMethod === 'pinyin' ? userInput[map].toLowerCase() : userInput[map];
+			if (typedInput.length > map) {
+				const typedChar = inputMethod === 'pinyin' ? typedInput[map].toLowerCase() : typedInput[map];
 				const expectedChar = inputMethod === 'pinyin' ? expected.toLowerCase() : expected;
 				const isCorrect = typedChar === expectedChar;
 				return { 
@@ -538,7 +535,7 @@
 				className = 'verse-character correct';
 			} else {
 				// Show when previous character is typed
-				if (prevMap !== null && userInput.length > prevMap) {
+				if (prevMap !== null && typedInput.length > prevMap) {
 					shown = true;
 					className = 'verse-character punctuation correct';
 				} else {
@@ -572,14 +569,12 @@
 			<h3>{formatVerseRef(currentVerse)}</h3>
 		</div>
 
-		{#key `${currentIndex}-${userInput.length}`}
-			<div class="verse-display" bind:this={verseDisplayEl}>
-				{#each [...reviewFullText] as char, i}
-					{@const rendered = renderCharacter(char, i)}
-					<span class={rendered.className}>{rendered.char}</span>
-				{/each}
-			</div>
-		{/key}
+		<div class="verse-display" bind:this={verseDisplayEl}>
+			{#each [...reviewFullText] as char, i}
+				{@const rendered = renderCharacter(char, i, userInput, $settings.inputMethod || 'pinyin')}
+				<span class={rendered.className}>{rendered.char}</span>
+			{/each}
+		</div>
 
 		<div class="input-section">
 			<!-- Input method mismatch warning -->
@@ -645,10 +640,10 @@
 <style>
 	.individual-review {
 		display: grid;
-		gap: 1.5rem;
+		gap: .5rem;
 		padding: 1rem;
 		padding-top: 0px;
-		padding-bottom: 400px; /* Add space for keyboard at bottom */
+		padding-bottom: 1rem;
 		max-width: 1000px;
 		margin: 0 auto;
 	}
@@ -739,8 +734,12 @@
 		background: var(--panel-background);
 		border-radius: 8px;
 		min-height: 120px;
+		max-height: clamp(240px, 44vh, 560px);
 		width: 100%;
 		box-sizing: border-box;
+		overflow-y: auto;
+		overscroll-behavior: contain;
+		-webkit-overflow-scrolling: touch;
 	}
 
 	.input-section {
