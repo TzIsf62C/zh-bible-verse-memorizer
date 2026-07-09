@@ -9,6 +9,7 @@
 	import { keyboardLayouts } from '$lib/utils/keyboardLayouts';
 	import { triggerErrorFeedback } from '$lib/utils/feedback';
 	import { zhuyinKeyMap, cangjieKeyMap } from '$lib/utils/inputMaps';
+	import { icons } from '$lib/utils/icons.js';
 
 	export let collection;
 	export let verses = [];
@@ -470,14 +471,14 @@
 <svelte:document on:keydown={handlePhysicalKeyboard} />
 
 <div class="speed-challenge-container">
-	<div class="header">
-		<button class="back-button" on:click={back} aria-label={t('back')}>
-			<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-				<path d="M19 12H5M5 12l7 7M5 12l7-7"/>
+	<div class="mode-header">
+		<button class="back-btn" on:click={back} aria-label={t('back')}>
+			<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+				{@html icons.back}
 			</svg>
 		</button>
 		<h2>{t('speed_challenge')}</h2>
-		<button class="exit-button" on:click={exit}>✕</button>
+		<button class="back-btn exit-button" on:click={exit}>✕</button>
 	</div>
 	
 	<div class="stats-bar">
@@ -573,10 +574,10 @@
 				</div>
 				
 				<div class="modal-buttons">
-					<button class="secondary-button" on:click={tryAgain}>
+					<button class="btn-outline" on:click={tryAgain}>
 						{t('try_again')}
 					</button>
-					<button class="primary-button" on:click={done}>
+					<button on:click={done}>
 						{t('done')}
 					</button>
 				</div>
@@ -595,10 +596,10 @@
 				</div>
 				
 				<div class="modal-buttons">
-					<button class="secondary-button" on:click={tryAgain}>
+					<button class="btn-outline" on:click={tryAgain}>
 						{t('try_again')}
 					</button>
-					<button class="primary-button" on:click={selectActivity}>
+					<button on:click={selectActivity}>
 						{t('select_activity')}
 					</button>
 				</div>
@@ -616,44 +617,15 @@
 		overflow-y: auto;
 	}
 	
-	.header {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		margin-bottom: 1rem;
-	}
-	
-	.back-button {
-		padding: 0.5rem;
-		background: none;
-		border: none;
-		cursor: pointer;
-		color: var(--text-color);
-		display: flex;
-		align-items: center;
-	}
-
 	.exit-button {
-		padding: 0.5rem;
-		background: none;
-		border: none;
 		font-size: 1.5em;
-		cursor: pointer;
-		color: var(--text-color);
-	}
-	
-	h2 {
-		margin: 0;
-		font-size: 1.2em;
-		flex: 1;
-		text-align: center;
 	}
 
 	.timer-stat {
 		display: flex;
 		justify-content: flex-end;
 		min-width: 9ch;
-		border-right: 1px solid var(--border-color);
+		border-right: 1px solid var(--file-border);
 		padding-right: 1rem;
 		margin-right: 0.5rem;
 	}
@@ -671,7 +643,7 @@
 		bottom: calc(2rem + env(safe-area-inset-bottom, 0px));
 		z-index: 1002;
 		background: var(--panel-background);
-		border: 1px solid var(--border-color);
+		border: 1px solid var(--file-border);
 		border-radius: 999px;
 		padding: 0.45rem 0.95rem;
 		font-size: 0.9em;
@@ -725,28 +697,28 @@
 		overflow-y: auto;
 	}
 	
-	:global(.verse-character) {
+	.verse-display :global(.verse-character) {
 		transition: opacity 0.1s;
 	}
 	
-	:global(.verse-character.correct) {
+	.verse-display :global(.verse-character.correct) {
 		color: var(--text-color);
 		opacity: 1;
 	}
 	
-	:global(.verse-character.incorrect) {
-		color: #f44336;
-		background: rgba(244, 67, 54, 0.1);
+	.verse-display :global(.verse-character.incorrect) {
+		color: var(--danger-color);
+		background: color-mix(in srgb, var(--danger-color) 12%, transparent);
 		padding: 0 2px;
 		border-radius: 2px;
 	}
 	
-	:global(.verse-character.hidden),
-	:global(.verse-punctuation.hidden) {
+	.verse-display :global(.verse-character.hidden),
+	.verse-display :global(.verse-punctuation.hidden) {
 		opacity: 0;
 	}
 	
-	:global(.verse-punctuation) {
+	.verse-display :global(.verse-punctuation) {
 		color: var(--text-color);
 	}
 	
@@ -755,29 +727,7 @@
 	}
 	
 	/* Modal styles */
-	.modal-overlay {
-		position: fixed;
-		top: 0;
-		left: 0;
-		right: 0;
-		bottom: 0;
-		background: rgba(0, 0, 0, 0.5);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		z-index: 2000;
-		padding: 1rem;
-	}
-	
-	.modal-content {
-		background: var(--panel-background);
-		padding: 2rem;
-		border-radius: 12px;
-		max-width: 400px;
-		width: 100%;
-		box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-	}
-	
+	/* Overlay/content shells come from the shared modal classes in app.css */
 	.modal-content h3 {
 		margin: 0 0 1rem 0;
 		text-align: center;
@@ -785,7 +735,7 @@
 	}
 	
 	.warning {
-		color: #ff9800;
+		color: var(--warning-color);
 		font-weight: 600;
 		margin: 0 0 1rem 0;
 		text-align: center;
@@ -825,86 +775,58 @@
 	}
 	
 	.time-stat.official {
-		background: rgba(76, 175, 80, 0.1);
+		background: color-mix(in srgb, var(--success-color) 12%, transparent);
 		font-weight: 600;
 		font-size: 1.1em;
 	}
 	
 	.time-stat.official .label,
 	.time-stat.official .value {
-		color: #4caf50;
+		color: var(--success-color);
 	}
 	
 	.time-stat.best {
-		background: rgba(33, 150, 243, 0.1);
+		background: color-mix(in srgb, var(--accent-color) 12%, transparent);
 	}
 
 	.time-stat.accuracy {
-		background: rgba(33, 150, 243, 0.1);
+		background: color-mix(in srgb, var(--accent-color) 12%, transparent);
 	}
 
 	.time-stat.unrecorded {
-		background: rgba(255, 152, 0, 0.12);
+		background: color-mix(in srgb, var(--warning-color) 15%, transparent);
 	}
 	
 	.time-stat.best .label,
 	.time-stat.best .value {
-		color: #2196f3;
+		color: var(--accent-color);
 	}
 
 	.time-stat.accuracy .label,
 	.time-stat.accuracy .value {
-		color: #1976d2;
+		color: var(--accent-color);
 	}
 
 	.time-stat.unrecorded .label,
 	.time-stat.unrecorded .value {
-		color: #ef6c00;
+		color: var(--warning-color);
 	}
 
 	.time-stat.improvement {
-		background: rgba(76, 175, 80, 0.12);
+		background: color-mix(in srgb, var(--success-color) 12%, transparent);
 	}
 
 	.time-stat.improvement .label,
 	.time-stat.improvement .value {
-		color: #2e7d32;
+		color: var(--success-color);
 	}
 	
 	.modal-buttons {
-		display: flex;
-		gap: 0.75rem;
 		margin-top: 1.5rem;
 	}
-	
-	.primary-button,
-	.secondary-button {
+
+	.modal-buttons button {
 		flex: 1;
-		padding: 0.75rem;
-		border: none;
-		border-radius: 6px;
-		font-size: 1em;
-		cursor: pointer;
-		font-weight: 600;
-	}
-	
-	.primary-button {
-		background: var(--accent-color);
-		color: white;
-	}
-	
-	.primary-button:hover {
-		opacity: 0.9;
-	}
-	
-	.secondary-button {
-		background: var(--panel-background);
-		color: var(--text-color);
-		border: 1px solid var(--border-color);
-	}
-	
-	.secondary-button:hover {
-		background: var(--app-background);
 	}
 	
 	@media (max-width: 767px) {
