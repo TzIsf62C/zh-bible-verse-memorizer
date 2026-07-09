@@ -1,54 +1,82 @@
+/* ==========================================================================
+   Design tokens
+   --------------------------------------------------------------------------
+   Light is the default on :root. Dark is applied by :root[data-theme='dark']
+   (set by +layout.svelte from the Settings store) or, before the layout has
+   run, by the prefers-color-scheme fallback below.
+   Components must reference tokens (var(--…)) — never hardcode colors.
+   ========================================================================== */
 :root {
-	color-scheme: light dark;
+	color-scheme: light;
 	font-family: 'Noto Sans SC', system-ui, sans-serif;
-	background-color: #f7f7f9;
-	color: #1b1b1f;
-	--app-background: #f7f7f9;
+	--app-background: #f7f9fc;
 	--panel-background: #ffffff;
-	--panel-shadow: 0 10px 30px rgba(24, 24, 27, 0.08);
-	--subtitle-color: #4b4b56;
+	--panel-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+	--text-color: #1b1b1f;
+	--subtitle-color: #777787;
 	--nav-button-bg: #eef1ff;
 	--nav-button-color: #2f2f3a;
-	--accent-color: #3264ff;
-	--file-border: #d7d7df;
-	--file-bg: #f7f7fb;
-	--text-color: #1b1b1f;
+	--accent-color: #5b8dff;
+	--file-border: #e5e5eb;
+	--file-bg: #fafbff;
 	--correct-color: #000000;
 	--error-color: #cc0000;
+	--success-color: #1a7f37;
+	--warning-color: #e65100;
+	--danger-color: #d32f2f;
 	--text-scale: 1.0;
-}
-
-:root[data-theme='light'] {
-	color-scheme: light;
-	background-color: #f7f7f9;
-	color: #1b1b1f;
-	--text-color: #1b1b1f;
-	--correct-color: #000000;
-	--error-color: #cc0000;
+	background-color: var(--app-background);
+	color: var(--text-color);
 }
 
 :root[data-theme='dark'] {
 	color-scheme: dark;
-	background-color: #111114;
-	color: #f4f4f6;
 	--app-background: #111114;
 	--panel-background: #1b1b20;
 	--panel-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+	--text-color: #f4f4f6;
 	--subtitle-color: #b7b7c6;
 	--nav-button-bg: #2a2a36;
 	--nav-button-color: #f4f4f6;
 	--accent-color: #5b8dff;
 	--file-border: #2c2c34;
 	--file-bg: #22222a;
-	--text-color: #f4f4f6;
 	--correct-color: #ffffff;
 	--error-color: #ff0000;
+	--success-color: #4caf50;
+	--warning-color: #ffb74d;
+	--danger-color: #ef5350;
 }
 
+/* First-paint fallback when data-theme isn't set yet and the system is dark */
+@media (prefers-color-scheme: dark) {
+	:root:not([data-theme='light']) {
+		color-scheme: dark;
+		--app-background: #111114;
+		--panel-background: #1b1b20;
+		--panel-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+		--text-color: #f4f4f6;
+		--subtitle-color: #b7b7c6;
+		--nav-button-bg: #2a2a36;
+		--nav-button-color: #f4f4f6;
+		--accent-color: #5b8dff;
+		--file-border: #2c2c34;
+		--file-bg: #22222a;
+		--correct-color: #ffffff;
+		--error-color: #ff0000;
+		--success-color: #4caf50;
+		--warning-color: #ffb74d;
+		--danger-color: #ef5350;
+	}
+}
+
+/* ==========================================================================
+   Base elements
+   ========================================================================== */
 body {
 	margin: 0;
 	min-height: 100vh;
-	background: var(--app-background, #f7f7f9);
+	background: var(--app-background, #f7f9fc);
 	color: inherit;
 	overflow-x: hidden;
 	font-size: calc(16px * var(--text-scale));
@@ -77,14 +105,27 @@ main.app-shell {
 
 .subtitle {
 	margin: 0;
-	color: var(--subtitle-color, #4b4b56);
+	color: var(--subtitle-color);
 }
 
+/* ==========================================================================
+   Panels & cards
+   .panel — the primary content container for a screen section
+   .card  — a list-item / sub-container that sits inside a panel
+   ========================================================================== */
 .panel {
 	background: var(--panel-background, #ffffff);
 	border-radius: 16px;
 	padding: 1.5rem;
-	box-shadow: var(--panel-shadow, 0 10px 30px rgba(24, 24, 27, 0.08));
+	box-shadow: var(--panel-shadow, 0 8px 24px rgba(0, 0, 0, 0.08));
+}
+
+.card {
+	background: var(--panel-background);
+	border: 1px solid var(--file-border);
+	border-radius: 8px;
+	padding: 1rem;
+	transition: border-color 0.2s ease;
 }
 
 .panel-nav {
@@ -99,7 +140,7 @@ main.app-shell {
 }
 
 .panel-nav button.active {
-	background: #3264ff;
+	background: var(--accent-color);
 	color: #fff;
 }
 
@@ -122,33 +163,26 @@ main.app-shell {
 	gap: 0.5rem;
 }
 
-select {
+/* ==========================================================================
+   Form inputs — one shared look for text-like inputs and selects.
+   (Special "invisible" verse-typing inputs opt out in their components with
+   background: transparent; border: none.)
+   ========================================================================== */
+select,
+textarea,
+input[type='text'],
+input[type='number'],
+input[type='search'],
+input[type='email'],
+input[type='password'],
+input[type='date'] {
 	padding: 0.6rem 0.75rem;
-	border-radius: 10px;
+	border-radius: 8px;
 	border: 1px solid var(--file-border, #d7d7df);
 	background: var(--file-bg, #f7f7fb);
 	color: inherit;
 	font-size: inherit;
 	font-family: inherit;
-}
-
-button {
-	border: none;
-	background: #3264ff;
-	color: #fff;
-	padding: 0.7rem 1.5rem;
-	border-radius: 999px;
-	font-weight: 600;
-	cursor: pointer;
-	font-size: inherit;
-	font-family: inherit;
-	touch-action: manipulation;
-}
-
-input[type='button'],
-input[type='submit'],
-[role='button'] {
-	touch-action: manipulation;
 }
 
 input[type='file'] {
@@ -160,11 +194,166 @@ input[type='file'] {
 	font-family: inherit;
 }
 
-.status {
-	margin-top: 0.75rem;
-	color: #1a7f37;
+/* ==========================================================================
+   Buttons
+   --------------------------------------------------------------------------
+   A bare <button> is the primary action: accent-filled pill.
+   Add ONE variant class to change the role:
+     .btn-secondary — quiet filled (nav-button surface)
+     .btn-outline   — input-like fill with a border
+     .btn-danger    — destructive action
+     .btn-ghost     — transparent (toolbar / inline actions)
+     .btn-icon      — small square icon-only button (8px radius)
+   Optional size classes: .btn-sm | .btn-lg
+   ========================================================================== */
+button {
+	border: none;
+	background: var(--accent-color);
+	color: #fff;
+	padding: 0.7rem 1.5rem;
+	border-radius: 999px;
+	font-weight: 600;
+	cursor: pointer;
+	font-size: inherit;
+	font-family: inherit;
+	touch-action: manipulation;
+	transition: opacity 0.2s ease, background 0.2s ease, transform 0.15s ease;
 }
 
+button:hover:not(:disabled) {
+	opacity: 0.92;
+}
+
+button:active:not(:disabled) {
+	transform: scale(0.95);
+	transition-duration: 75ms;
+}
+
+button:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.btn-secondary {
+	background: var(--nav-button-bg);
+	color: var(--nav-button-color);
+}
+
+.btn-outline {
+	background: var(--file-bg);
+	color: var(--text-color);
+	border: 1px solid var(--file-border);
+}
+
+.btn-danger {
+	background: var(--danger-color);
+	color: #fff;
+}
+
+.btn-ghost {
+	background: transparent;
+	color: inherit;
+	font-weight: 500;
+}
+
+.btn-icon {
+	padding: 0.5rem;
+	min-width: 2.25rem;
+	border-radius: 8px;
+	background: var(--nav-button-bg);
+	color: var(--nav-button-color);
+	font-weight: 500;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.btn-sm {
+	padding: 0.4rem 0.9rem;
+	font-size: 0.85em;
+}
+
+.btn-lg {
+	padding: 0.85rem 1.75rem;
+	font-size: 1.05em;
+}
+
+input[type='button'],
+input[type='submit'],
+[role='button'] {
+	touch-action: manipulation;
+}
+
+/* ==========================================================================
+   Status & helper text
+   ========================================================================== */
+.status {
+	margin-top: 0.75rem;
+	color: var(--success-color);
+}
+
+.helper-text {
+	margin: 0;
+	color: var(--subtitle-color);
+}
+
+/* Badge for notification counts (e.g., review due count) */
+.badge {
+	display: inline-block;
+	min-width: 20px;
+	height: 20px;
+	padding: 0 6px;
+	margin-left: 6px;
+	background: var(--danger-color);
+	color: white;
+	border-radius: 10px;
+	font-size: 0.75em;
+	font-weight: bold;
+	line-height: 20px;
+	text-align: center;
+	vertical-align: middle;
+}
+
+/* Due date status indicators */
+.overdue {
+	color: var(--danger-color);
+	font-weight: 500;
+}
+
+.due-soon {
+	color: var(--warning-color);
+	font-weight: 500;
+}
+
+.due-future {
+	color: var(--success-color);
+}
+
+.verse-character.correct {
+	color: var(--correct-color);
+	opacity: 1;
+}
+
+.verse-character.incorrect {
+	color: var(--error-color);
+	opacity: 1;
+}
+
+.visually-hidden {
+	position: absolute !important;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+/* ==========================================================================
+   On-screen keyboard
+   ========================================================================== */
 .keyboard-demo {
 	margin-top: 1.5rem;
 	display: grid;
@@ -179,23 +368,6 @@ input[type='file'] {
 	border: 1px solid var(--file-border, #d7d7df);
 	background: var(--file-bg, #f7f7fb);
 	font-size: 1.1em;
-}
-
-.helper-text {
-	margin: 0;
-	color: var(--subtitle-color, #4b4b56);
-}
-
-.visually-hidden {
-	position: absolute !important;
-	width: 1px;
-	height: 1px;
-	padding: 0;
-	margin: -1px;
-	overflow: hidden;
-	clip: rect(0, 0, 0, 0);
-	white-space: nowrap;
-	border: 0;
 }
 
 .keyboard {
@@ -359,7 +531,7 @@ input[type='file'] {
 	.keyboard.numeric .keyboard-row {
 		gap: 8px;
 	}
-	
+
 	.keyboard.numeric .key {
 		min-width: 50px;
 		max-width: 70px;
@@ -374,15 +546,15 @@ input[type='file'] {
 		padding: 10px 4px;
 		font-size: 0.9em;
 	}
-	
+
 	.keyboard-row {
 		gap: 3px;
 	}
-	
+
 	.key.spacer {
 		min-width: 26px;
 	}
-	
+
 	/* Make Zhuyin tone keys narrower on small screens */
 	.key.narrow {
 		flex: 0.6;
@@ -414,97 +586,4 @@ input[type='file'] {
 	.app-header {
 		display: none;
 	}
-}
-
-@media (prefers-color-scheme: dark) {
-	:root:not([data-theme='light']) {
-		background-color: #111114;
-		color: #f4f4f6;
-		--app-background: #111114;
-		--panel-background: #1b1b20;
-		--panel-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
-		--subtitle-color: #b7b7c6;
-		--nav-button-bg: #2a2a36;
-		--nav-button-color: #f4f4f6;
-		--accent-color: #5b8dff;
-		--file-border: #2c2c34;
-		--file-bg: #22222a;
-		--correct-color: #ffffff;
-		--error-color: #ff0000;
-	}
-}
-
-[data-theme='dark'] {
-	background-color: #111114;
-	color: #f4f4f6;
-	--app-background: #111114;
-	--panel-background: #1b1b20;
-	--panel-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
-	--subtitle-color: #b7b7c6;
-	--nav-button-bg: #2a2a36;
-	--nav-button-color: #f4f4f6;
-	--accent-color: #5b8dff;
-	--file-border: #2c2c34;
-	--file-bg: #22222a;
-	--correct-color: #ffffff;
-	--error-color: #ff0000;
-}
-
-.verse-character.correct {
-	color: var(--correct-color);
-	opacity: 1;
-}
-
-.verse-character.incorrect {
-	color: var(--error-color);
-	opacity: 1;
-}
-
-[data-theme='light'] {
-	background-color: #f7f9fc;
-	color: #2f2f3a;
-	--app-background: #f7f9fc;
-	--panel-background: #ffffff;
-	--panel-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-	--text-color: #2f2f3a;
-	--subtitle-color: #777787;
-	--nav-button-bg: #eef1ff;
-	--nav-button-color: #2f2f3a;
-	--accent-color: #5b8dff;
-	--file-border: #e5e5eb;
-	--file-bg: #fafbff;
-	--correct-color: #000000;
-	--error-color: #cc0000;
-}
-
-/* Badge for notification counts (e.g., review due count) */
-.badge {
-	display: inline-block;
-	min-width: 20px;
-	height: 20px;
-	padding: 0 6px;
-	margin-left: 6px;
-	background: #ff4444;
-	color: white;
-	border-radius: 10px;
-	font-size: 0.75em;
-	font-weight: bold;
-	line-height: 20px;
-	text-align: center;
-	vertical-align: middle;
-}
-
-/* Due date status indicators */
-.overdue {
-	color: #ff4444;
-	font-weight: 500;
-}
-
-.due-soon {
-	color: #ff9800;
-	font-weight: 500;
-}
-
-.due-future {
-	color: #4caf50;
 }
