@@ -16,6 +16,7 @@
 	import BlindChallenge from './BlindChallenge.svelte';
 	import ReverseByVerse from './ReverseByVerse.svelte';
 	import FirstAndLast from './FirstAndLast.svelte';
+	import SingleTextPractice from './SingleTextPractice.svelte';
 	import { registerStreakActivity } from '$lib/stores/streak.js';
 	
 	const dispatch = createEventDispatcher();
@@ -119,6 +120,7 @@
 		{ id: 'speed-challenge', label: t('speed_challenge'), icon: 'lightning' },
 		{ id: 'reference-quiz', label: t('reference_quiz'), icon: 'question' },
 		{ id: 'reverse-by-verse', label: t('reverse_by_verse'), icon: 'arrows-reverse' },
+		{ id: 'single-text', label: t('single_text'), icon: 'paragraph-text' },
 		{ id: 'first-and-last', label: t('first_and_last'), icon: 'brackets' }
 	] : [
 		{ id: 'classic', label: t('classic'), icon: 'book-open' },
@@ -131,6 +133,7 @@
 		{ labelKey: 'speed_challenge_collection', descriptionKey: 'speed_challenge_collection_desc', icon: 'lightning' },
 		{ labelKey: 'reference_quiz', descriptionKey: 'reference_quiz_desc', icon: 'question' },
 		{ labelKey: 'reverse_by_verse', descriptionKey: 'reverse_by_verse_desc', icon: 'arrows-reverse' },
+		{ labelKey: 'single_text', descriptionKey: 'single_text_desc', icon: 'paragraph-text' },
 		{ labelKey: 'first_and_last', descriptionKey: 'first_and_last_desc', icon: 'brackets' }
 	] : [
 		{ labelKey: 'classic', descriptionKey: 'classic_desc', icon: 'book-open' },
@@ -146,6 +149,7 @@
 		'arrows-reverse': '<path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3"/>',
 		'eye-off': '<path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"/>',
 		'question': '<path stroke-linecap="round" stroke-linejoin="round" d="m 5.1297573,10.396224 3.6211605,3.873801 c 0,0 2.3630352,-7.6437691 5.4789202,-8.0648344 m 2.911277,10.6632464 5.663622,6.043742 M 19.452522,10.397506 c 0,4.966957 -4.026514,8.993471 -8.993471,8.993471 -4.9669553,0 -8.9934693,-4.026513 -8.9934692,-8.993471 -3e-7,-4.966958 4.0265136,-8.9934729 8.9934692,-8.9934726 4.966957,3e-7 8.993471,4.0265151 8.993471,8.9934726 z"/>',
+		'paragraph-text': '<rect x="4" y="3" width="16" height="18" rx="2" ry="2"/><path stroke-linecap="round" stroke-linejoin="round" d="M7 7.5h10M7 10.5h10M7 13.5h10M7 16.5h7"/>',
 		'layers': '<path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z"/>',
 		'brackets': '<path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21V3M16.5 21V3M3 7.5h4.5M3 16.5h4.5M16.5 7.5H21M16.5 16.5H21"/>'
 	};
@@ -731,6 +735,14 @@
 		/>
 	{:else if selectedActivity === 'reverse-by-verse'}
 		<ReverseByVerse 
+			collection={selectedCollection}
+			verses={collectionVerses}
+			on:complete={handleActivityComplete}
+			on:back={handleActivityBack}
+			on:exit={handleActivityExit}
+		/>
+	{:else if selectedActivity === 'single-text'}
+		<SingleTextPractice
 			collection={selectedCollection}
 			verses={collectionVerses}
 			on:complete={handleActivityComplete}
