@@ -1530,15 +1530,14 @@
 
 			<!-- Row 8: Save verse, Clear form -->
 			<div class="button-group">
-				<button 
-					class="primary" 
+				<button
 					on:click={saveVerse}
 					disabled={!isSaveEnabled}
 				>
 					{editingId ? t('update_verse') : t('add_verse')}
 				</button>
-				<button 
-					class="secondary" 
+				<button
+					class="btn-secondary"
 					on:click={clearForm}
 					disabled={!isClearEnabled}
 				>
@@ -1562,7 +1561,7 @@
 					</select>
 				</div>
 				{#if myVersesSortOrder === 'biblical'}
-					<button on:click={toggleAll} class="secondary">
+					<button on:click={toggleAll} class="btn-secondary">
 						{(expandedAll || expandedBooks.length > 0 || expandedChapters.length > 0) ? t('collapse_all') : t('expand_all')}
 					</button>
 				{/if}
@@ -1821,7 +1820,7 @@
 	.form-section,
 	.verses-section {
 		background: var(--panel-background);
-		border-radius: 8px;
+		border-radius: 16px;
 		padding: 1.5rem;
 		box-shadow: var(--panel-shadow);
 		box-sizing: border-box;
@@ -1903,7 +1902,7 @@
 		max-height: 90vh;
 		overflow-y: auto;
 		background: var(--panel-background);
-		border-radius: 8px;
+		border-radius: 16px;
 		padding: 1.2rem 1rem;
 	}
 
@@ -2009,16 +2008,11 @@
 		color: var(--subtitle-color);
 	}
 
+	/* Look comes from the shared input styles in app.css — sizing kept local */
 	.field input,
 	.field textarea {
 		padding: 0.75rem;
-		border: 1px solid var(--file-border);
-		background: var(--file-bg);
-		color: var(--text-color);
-		border-radius: 4px;
-		font-family: inherit;
 		font-size: 1.5em;
-		box-sizing: border-box;
 		width: 100%;
 		max-width: 100%;
 	}
@@ -2160,42 +2154,6 @@
 		margin-top: 1rem;
 	}
 
-	button {
-		padding: 0.75rem 1.5rem;
-		border: none;
-		border-radius: 8px;
-		cursor: pointer;
-		font-size: 1em;
-		font-weight: 500;
-		transition: all 0.3s;
-		box-sizing: border-box;
-	}
-
-	button.primary {
-		background: var(--accent-color);
-		color: white;
-	}
-
-	button.primary:hover {
-		opacity: 0.9;
-	}
-
-	button:disabled {
-		background: var(--subtitle-color);
-		color: var(--text-color);
-		opacity: 0.5;
-		cursor: not-allowed;
-	}
-
-	button:disabled:hover {
-		opacity: 0.5;
-	}
-
-	button.secondary {
-		background: var(--nav-button-bg);
-		color: var(--nav-button-color);
-	}
-
 	.verses-controls {
 		display: flex;
 		gap: 1rem;
@@ -2217,12 +2175,9 @@
 		white-space: nowrap;
 	}
 
+	/* Look comes from the shared select styles in app.css */
 	.my-verses-sort-select {
 		padding: 0.5rem 0.7rem;
-		border: 1px solid var(--file-border);
-		background: var(--file-bg);
-		color: var(--text-color);
-		border-radius: 6px;
 		font-size: 0.95em;
 	}
 
@@ -2239,7 +2194,7 @@
 
 	.verse-item {
 		border: 1px solid var(--file-border);
-		border-radius: 4px;
+		border-radius: 8px;
 		overflow: hidden;
 	}
 
@@ -2302,7 +2257,7 @@
 		padding: 1rem;
 		margin-bottom: 0.75rem;
 		background: var(--file-bg);
-		border-radius: 4px;
+		border-radius: 8px;
 		border: 1px solid var(--file-border);
 	}
 
@@ -2345,7 +2300,7 @@
 	.tag {
 		display: inline-block;
 		padding: 0.25rem 0.5rem;
-		border-radius: 3px;
+		border-radius: 4px;
 		font-size: 0.85rem;
 		font-weight: 500;
 	}

@@ -4,52 +4,11 @@
 	import { verses } from '$lib/stores/verses';
 	import { t } from '$lib/i18n';
 	import Modal from './Modal.svelte';
-	import { onMount, afterUpdate } from 'svelte';
 	import { createVerseReferenceFormatter, sortVersesByBibleOrder } from '$lib/utils/bibleBooks';
 	
 	export let collection;
 	
 	const dispatch = createEventDispatcher();
-	let detailElement;
-	let headerElement;
-	let addVerseElement;
-	
-	onMount(() => {
-		logWidths();
-	});
-	
-	afterUpdate(() => {
-		logWidths();
-	});
-	
-	function logWidths() {
-		if (detailElement) {
-			const rect = detailElement.getBoundingClientRect();
-			console.log('=== COLLECTION DETAIL ===');
-			console.log('Detail element:', detailElement);
-			console.log('Width:', rect.width);
-			console.log('Offset width:', detailElement.offsetWidth);
-			console.log('Scroll width:', detailElement.scrollWidth);
-			console.log('Client width:', detailElement.clientWidth);
-			console.log('Is overflowing:', detailElement.scrollWidth > detailElement.clientWidth);
-		}
-		if (headerElement) {
-			const headerRect = headerElement.getBoundingClientRect();
-			console.log('=== DETAIL HEADER ===');
-			console.log('Header width:', headerRect.width);
-			console.log('Header offset width:', headerElement.offsetWidth);
-			console.log('Header scroll width:', headerElement.scrollWidth);
-			console.log('Header is overflowing:', headerElement.scrollWidth > headerElement.clientWidth);
-		}
-		if (addVerseElement) {
-			const addRect = addVerseElement.getBoundingClientRect();
-			console.log('=== ADD VERSE SECTION ===');
-			console.log('Add verse width:', addRect.width);
-			console.log('Add verse scroll width:', addVerseElement.scrollWidth);
-			console.log('Add verse is overflowing:', addVerseElement.scrollWidth > addVerseElement.clientWidth);
-		}
-	}
-	
 	let selectedVerseIds = [];
 	let showModal = false;
 	let modalMessage = '';
@@ -166,7 +125,7 @@
 </script>
 
 <div class="collection-detail">
-	<div class="detail-header" bind:this={headerElement}>
+	<div class="detail-header">
 		<button class="back-btn" on:click={close} aria-label={t('back')}>
 			<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
 				<path d="M19 12H5M5 12l7 7M5 12l7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -176,7 +135,7 @@
 		<div class="spacer" aria-hidden="true"></div>
 	</div>
 	
-	<div class="add-verse-section" bind:this={addVerseElement}>
+	<div class="add-verse-section card">
 		{#if isReadOnlyCollection}
 			<p class="help-text">{t('dynamic_collection_read_only_note')}</p>
 		{:else}
@@ -242,7 +201,7 @@
 			</div>
 		{:else}
 			{#each collectionVerses as verse, index (verse.id)}
-				<div class="verse-item">
+				<div class="verse-item card">
 					<div class="verse-content">
 						<div class="verse-reference">
 							{formatVerseReference(verse)}
@@ -254,7 +213,7 @@
 					<div class="verse-actions">
 						{#if !isReadOnlyCollection}
 							<button
-								class="icon-btn"
+								class="btn-icon"
 								on:click={() => moveVerseUp(verse.id)}
 								disabled={index === 0}
 								title={t('move_up')}
@@ -262,7 +221,7 @@
 								▲
 							</button>
 							<button
-								class="icon-btn"
+								class="btn-icon"
 								on:click={() => moveVerseDown(verse.id)}
 								disabled={index === collectionVerses.length - 1}
 								title={t('move_down')}
@@ -270,7 +229,7 @@
 								▼
 							</button>
 							<button
-								class="icon-btn danger"
+								class="btn-icon danger"
 								on:click={() => removeVerseFromCollection(verse.id)}
 								title={t('remove')}
 							>
@@ -308,25 +267,6 @@
 		max-width: 100%;
 	}
 	
-	.back-btn {
-		width: 40px;
-		height: 40px;
-		padding: 0;
-		border: none;
-		background: none;
-		color: var(--text-color);
-		border-radius: 50%;
-		cursor: pointer;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		transition: all 0.3s;
-	}
-	
-	.back-btn:hover {
-		background: var(--nav-button-bg);
-	}
-
 	.detail-header .spacer {
 		width: 40px;
 		height: 40px;
@@ -357,11 +297,8 @@
 		color: var(--subtitle-color);
 	}
 	
+	/* Container look comes from .card in app.css */
 	.add-verse-section {
-		padding: 1rem;
-		background: var(--panel-background);
-		border: 1px solid var(--file-border);
-		border-radius: 8px;
 		min-width: 0;
 		max-width: 100%;
 	}
@@ -396,7 +333,7 @@
 		border: 1px solid var(--file-border);
 		background: var(--file-bg);
 		color: var(--text-color);
-		border-radius: 4px;
+		border-radius: 8px;
 		font-family: inherit;
 		font-size: 1em;
 	}
@@ -428,7 +365,7 @@
 		color: var(--text-color);
 		cursor: pointer;
 		text-align: left;
-		border-radius: 4px;
+		border-radius: 8px;
 	}
 
 	.group-toggle::-webkit-details-marker {
@@ -493,27 +430,10 @@
 		margin-top: 0.2rem;
 	}
 	
+	/* Look comes from the shared button styles in app.css */
 	.add-verse-row button {
-		padding: 0.75rem 1.5rem;
-		border: none;
-		background: var(--accent-color);
-		color: white;
-		border-radius: 4px;
-		cursor: pointer;
-		font-size: 1em;
-		font-weight: 500;
-		transition: all 0.3s;
 		white-space: nowrap;
 		flex-shrink: 0;
-	}
-	
-	.add-verse-row button:hover:not(:disabled) {
-		opacity: 0.9;
-	}
-	
-	.add-verse-row button:disabled {
-		opacity: 0.5;
-		cursor: not-allowed;
 	}
 	
 	.verses-list {
@@ -524,15 +444,11 @@
 		max-width: 100%;
 	}
 	
+	/* Layout only — container look comes from .card in app.css */
 	.verse-item {
 		display: flex;
 		align-items: flex-start;
 		gap: 1rem;
-		padding: 1rem;
-		background: var(--panel-background);
-		border: 1px solid var(--file-border);
-		border-radius: 8px;
-		transition: all 0.3s;
 		min-width: 0;
 		max-width: 100%;
 	}
@@ -570,35 +486,23 @@
 		flex-shrink: 0;
 	}
 	
-	.icon-btn {
-		padding: 0.5rem;
-		border: 1px solid var(--file-border);
-		background: var(--nav-button-bg);
-		color: var(--nav-button-color);
-		border-radius: 4px;
-		cursor: pointer;
+	.btn-icon {
 		font-size: 0.9em;
-		transition: all 0.3s;
 		min-width: 2.5rem;
-		display: flex;
-		align-items: center;
-		justify-content: center;
 	}
 	
-	.icon-btn:hover:not(:disabled) {
+	.btn-icon:hover:not(:disabled) {
 		background: var(--accent-color);
 		color: white;
-		border-color: var(--accent-color);
+		opacity: 1;
 	}
 	
-	.icon-btn:disabled {
+	.btn-icon:disabled {
 		opacity: 0.3;
-		cursor: not-allowed;
 	}
 	
-	.icon-btn.danger:hover:not(:disabled) {
-		background: #dc3545;
-		border-color: #dc3545;
+	.btn-icon.danger:hover:not(:disabled) {
+		background: var(--danger-color);
 		color: white;
 	}
 	
@@ -643,14 +547,13 @@
 			flex-direction: column;
 			gap: 1rem;
 			padding: 0.75rem;
-			border-radius: 4px;
 		}
 		
 		.verse-actions {
 			width: 100%;
 		}
 		
-		.icon-btn {
+		.btn-icon {
 			flex: 1;
 		}
 		
