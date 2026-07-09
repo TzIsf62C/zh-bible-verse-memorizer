@@ -2,6 +2,7 @@
  "settings": {
   "hasCompletedOnboarding": true,
   "languagePreference": "english",
-  "themePreference": "system"
+  "themePreference": "system",
+  "backupReminderEnabled": false
  }
 }

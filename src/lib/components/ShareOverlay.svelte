@@ -75,11 +75,11 @@
 			<div class="share-header">
 				<div class="share-header-spacer"></div>
 				<h2 class="share-title">{t('share_app')}</h2>
-				<button class="share-close-btn" on:click={handleClose} aria-label={t('close')}>✕</button>
+				<button class="share-close-btn btn-ghost" on:click={handleClose} aria-label={t('close')}>✕</button>
 			</div>
 			<img src={qrImageSrc} alt="QR Code" class="share-qr" />
 			<div class="share-buttons">
-				<button class="share-btn primary" on:click={copyURL}>{t('copy_url')}</button>
+				<button class="share-btn" on:click={copyURL}>{t('copy_url')}</button>
 			</div>
 			
 			{#if showToast}
@@ -116,7 +116,7 @@
 	
 	.share-overlay-panel {
 		background: var(--panel-background);
-		border-radius: 20px;
+		border-radius: 16px;
 		padding: 2rem;
 		max-width: 600px;
 		width: 100%;
@@ -146,14 +146,11 @@
 		color: var(--text-color);
 	}
 
+	/* Sizing only — colors come from .btn-ghost in app.css */
 	.share-close-btn {
 		width: 40px;
 		height: 40px;
 		padding: 0;
-		border: none;
-		background: none;
-		color: var(--text-color);
-		cursor: pointer;
 		font-size: 1.5em;
 		display: flex;
 		align-items: center;
@@ -186,30 +183,9 @@
 		justify-content: center;
 	}
 
+	/* Layout only — the bare <button> is the primary accent pill from app.css */
 	.share-btn {
 		flex: 1;
-		padding: 0.75rem 1.5rem;
-		border: 1px solid var(--file-border);
-		background: var(--file-bg);
-		color: var(--text-color);
-		border-radius: 4px;
-		cursor: pointer;
-		font-size: 1em;
-		transition: all 0.3s;
-	}
-
-	.share-btn:hover {
-		background: var(--nav-button-bg);
-	}
-
-	.share-btn.primary {
-		background: var(--accent-color);
-		color: white;
-		border-color: var(--accent-color);
-	}
-
-	.share-btn.primary:hover {
-		opacity: 0.9;
 	}
 
 	.toast {

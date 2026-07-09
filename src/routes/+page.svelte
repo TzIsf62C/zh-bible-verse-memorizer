@@ -321,14 +321,12 @@
 		<p class="subtitle">{t('app_subtitle')}</p>
 	</header>
 
-	{#key `${currentPanel}:${reviewBadgeCount}`}
-		<IconNav
-			currentPanel={currentPanel}
-			badges={{ review: reviewBadgeCount }}
-			onMenuClick={handleMenuClick}
-			on:navigate={(e) => switchPanel(e.detail)}
-		/>
-	{/key}
+	<IconNav
+		currentPanel={currentPanel}
+		badges={{ review: reviewBadgeCount }}
+		onMenuClick={handleMenuClick}
+		on:navigate={(e) => switchPanel(e.detail)}
+	/>
 
 	<MenuOverlay
 		bind:show={showMenu}
