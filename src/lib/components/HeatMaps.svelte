@@ -751,9 +751,10 @@
 	
 	.heat-char {
 		padding: 0px 8px;
-		border-radius: 30px;
+		border-radius: 999px;
 		border: 2px solid transparent;
 		transition: all 0.2s ease;
+		/* Constant dark text: heat chip backgrounds are the same light palette in both themes */
 		color: #1b1b1f;
 	}
 	

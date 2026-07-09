@@ -734,7 +734,7 @@
 		gap: 0.4rem;
 		background: color-mix(in srgb, var(--app-background) 82%, transparent);
 		border: 1px solid var(--file-border);
-		border-radius: 10px;
+		border-radius: 12px;
 		padding: 0.25rem;
 		margin-top: 0.8rem;
 	}
@@ -811,7 +811,7 @@
 		width: 100%;
 		height: auto;
 		display: block;
-		border-radius: 10px;
+		border-radius: 8px;
 	}
 
 	.chart-bg {
@@ -849,15 +849,9 @@
 		margin-top: 0.45rem;
 	}
 
+	/* Shell comes from the shared modal classes; sits above the stats panel chrome */
 	.modal-overlay {
-		position: fixed;
-		inset: 0;
 		z-index: 2200;
-		background: rgba(0, 0, 0, 0.55);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		padding: 1rem;
 	}
 
 	.stats-category-modal {
@@ -866,7 +860,7 @@
 		color: var(--text-color);
 		width: min(92vw, 560px);
 		max-height: min(80vh, 640px);
-		border-radius: 12px;
+		border-radius: 16px;
 		padding: 1rem;
 		overflow: hidden;
 		box-shadow: 0 10px 28px rgba(0, 0, 0, 0.24);
