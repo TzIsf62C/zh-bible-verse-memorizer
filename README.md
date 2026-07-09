@@ -1,42 +1,39 @@
-# sv
+# Chinese Bible Verse Memorizer
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+A single-page PWA for memorizing Chinese Bible verses with spaced repetition. Entirely
+client-side — SvelteKit + localStorage, no backend. Works offline once installed.
 
-## Creating a project
+Three input methods (Pinyin / Zhuyin / Cangjie), three learning stages, individual and
+continuous-passage review, collections, and English / 简体 / 繁體 UI.
 
-If you're seeing this, you've probably already done this step. Congrats!
-
-```sh
-# create a new project
-npx sv create my-app
-```
-
-To recreate this project with the same configuration:
+## Develop
 
 ```sh
-# recreate this project
-npx sv create --template minimal --no-types --install npm zh-bible-sveltekit
+npm install
+npm run dev        # http://localhost:5173
+npm run build      # static build (adapter-static)
+npm run preview    # serve the production build
+npm test           # vitest units
+npm run look        # screenshot components for visual checks (tools/look)
 ```
 
-## Developing
+The whole app is one page (`src/routes/+page.svelte`) that switches between panels — there's
+no routing. Global state lives in `src/lib/stores/` (`verses`, `collections`, `settings`) and
+auto-syncs to localStorage.
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+## Working with an agent
 
-```sh
-npm run dev
+Read [`AGENTS.md`](AGENTS.md) first — it maps the repo and explains the `.issues/` (active
+work) and `.knowledge/` (durable notes) folders. The full architecture guide is
+[`.github/copilot-instructions.md`](.github/copilot-instructions.md), and the UI design system
+lives in [`.claude/skills/ui/`](.claude/skills/ui/SKILL.md).
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
+Quick orientation:
 
-## Building
+- **`src/lib/components/`** — all UI (practice, review, collections, settings, keyboard)
+- **`src/lib/utils/`** — spaced repetition, bible metadata, keyboard layouts, import/export
+- **`src/lib/i18n/`** — translations
+- **`legacy/`** — the original vanilla-JS app, kept as a porting reference (see
+  [`.knowledge/deployment.md`](.knowledge/deployment.md) for how it coexists on GitHub Pages)
 
-To create a production version of your app:
-
-```sh
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+Verify changes with `npm test` and `npm run look` before calling a task done.
