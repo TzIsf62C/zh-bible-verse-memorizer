@@ -8,6 +8,7 @@
 	import { triggerErrorFeedback } from '$lib/utils/feedback';
 	import { createVerseReferenceFormatter } from '$lib/utils/bibleBooks';
 	import { zhuyinKeyMap, cangjieKeyMap } from '$lib/utils/inputMaps';
+	import { icons } from '$lib/utils/icons.js';
 
 	export let verse;
 
@@ -426,26 +427,26 @@
 <svelte:document on:keydown={handlePhysicalKeyboard} />
 
 <div class="practice-classic-container">
-	<div class="header">
-		<button class="back-button" on:click={goBack} aria-label={t('back')}>
-			<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-				<path d="M19 12H5M5 12l7 7M5 12l7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+	<div class="mode-header">
+		<button class="back-btn" on:click={goBack} aria-label={t('back')}>
+			<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+				{@html icons.back}
 			</svg>
 		</button>
 		<h2>{t('classic')} - {t('practice')}</h2>
-		<button class="exit-button" on:click={closeToInitial} aria-label={t('exit')}>✕</button>
+		<button class="back-btn exit-button" on:click={closeToInitial} aria-label={t('exit')}>✕</button>
 	</div>
-	
+
 	<div class="stage-selector">
-		<button 
-			class="stage-button" 
+		<button
+			class="btn-secondary btn-sm stage-button"
 			class:active={currentStage === 'basic'}
 			on:click={() => selectStage('basic')}
 		>
 			{t('basic')}
 		</button>
-		<button 
-			class="stage-button" 
+		<button
+			class="btn-secondary btn-sm stage-button"
 			class:active={currentStage === 'intermediate'}
 			on:click={() => {
 				if (currentStage === 'intermediate') {
@@ -457,8 +458,8 @@
 		>
 			{t('intermediate')}
 		</button>
-		<button 
-			class="stage-button" 
+		<button
+			class="btn-secondary btn-sm stage-button"
 			class:active={currentStage === 'advanced'}
 			on:click={() => selectStage('advanced')}
 		>
@@ -534,59 +535,24 @@
 		overflow-y: auto;
 	}
 	
-	.header {
-		display: grid;
-		grid-template-columns: 40px 1fr 40px;
-		align-items: center;
-		gap: 0.5rem;
+	.mode-header {
 		margin-bottom: 1rem;
 	}
 
-	.back-button,
-	.exit-button {
-		width: 40px;
-		height: 40px;
-		padding: 0;
-		background: none;
-		border: none;
-		cursor: pointer;
-		color: var(--text-color);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-	
 	.exit-button {
 		font-size: 1.5em;
 	}
-	
-	h2 {
-		margin: 0;
-		font-size: 1.2em;
-		text-align: center;
-	}
-	
+
 	.stage-selector {
 		display: flex;
 		gap: 0.5rem;
 		justify-content: center;
 		margin-bottom: 1.5rem;
 	}
-	
-	.stage-button {
-		padding: 0.5rem 1rem;
-		background: var(--panel-background);
-		border: 2px solid var(--border-color);
-		border-radius: 6px;
-		cursor: pointer;
-		color: var(--text-color);
-		transition: all 0.2s;
-	}
-	
+
 	.stage-button.active {
 		background: var(--accent-color);
-		color: white;
-		border-color: var(--accent-color);
+		color: #fff;
 	}
 	
 	.verse-reference-header {
@@ -612,40 +578,41 @@
 		box-sizing: border-box;
 	}
 	
-	:global(.verse-character) {
+	/* Scoped under .verse-display so these rules can't leak into other modes */
+	.verse-display :global(.verse-character) {
 		display: inline;
 		transition: all 0.3s;
 		opacity: 0.5;
 	}
-	
-	:global(.verse-character.correct) {
+
+	.verse-display :global(.verse-character.correct) {
 		color: var(--correct-color);
 		opacity: 1;
 	}
-	
-	:global(.verse-character.incorrect) {
+
+	.verse-display :global(.verse-character.incorrect) {
 		color: var(--error-color);
 		opacity: 1;
 	}
-	
-	:global(.verse-character.punctuation) {
+
+	.verse-display :global(.verse-character.punctuation) {
 		/* Punctuation inherits opacity from preceding character */
 		opacity: 0.5;
 	}
-	
-	:global(.verse-character.punctuation.correct) {
+
+	.verse-display :global(.verse-character.punctuation.correct) {
 		/* When punctuation is revealed (preceding char typed), show as white */
 		color: var(--correct-color);
 		opacity: 1;
 	}
-	
-	:global(.verse-character.hidden) {
+
+	.verse-display :global(.verse-character.hidden) {
 		/* Advanced mode: completely invisible but still takes up space */
 		opacity: 0;
 		pointer-events: none;
 	}
-	
-	:global(.verse-character.intermediate-hidden) {
+
+	.verse-display :global(.verse-character.intermediate-hidden) {
 		/* Intermediate mode: show underscore placeholder */
 		visibility: visible;
 		opacity: 0.5;
@@ -669,14 +636,10 @@
 		color: var(--accent-color);
 	}
 	
+	/* Sizing only — accent pill look comes from the global button rule */
 	.retry-button {
 		padding: 0.5rem 0.75rem;
-		border: none;
-		border-radius: 6px;
 		font-size: 1.5em;
-		cursor: pointer;
-		background: var(--accent-color);
-		color: white;
 		line-height: 1;
 	}
 	
@@ -699,11 +662,6 @@
 		
 		.verse-display {
 			padding: 1rem;
-		}
-		
-		.stage-button {
-			padding: 0.4rem 0.75rem;
-			font-size: 0.9em;
 		}
 	}
 </style>
