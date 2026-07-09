@@ -45,7 +45,7 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'
 // ---------------------------------------------------------------------------
 const NAV_ORDER = ['menu', 'add', 'learn', 'practice', 'review', 'collections'];
 const MENU_ORDER = ['add', 'learn', 'practice', 'review', 'collections', 'data', 'stats', 'heat-maps', 'share', 'settings'];
-const PANELS = [...NAV_ORDER.slice(1), 'data', 'stats', 'heat-maps', 'settings'];
+const PANELS = [...NAV_ORDER.slice(1), 'data', 'stats', 'heat-maps', 'settings', 'menu', 'share'];
 
 // ---------------------------------------------------------------------------
 // CLI arg parsing
@@ -220,6 +220,9 @@ async function shootPanel(browser, base, panel, theme, args, outDir) {
 
 	if (NAV_ORDER.includes(panel) && panel !== 'menu') {
 		await domClick('.icon-nav button', NAV_ORDER.indexOf(panel));
+	} else if (panel === 'menu') {
+		await domClick('.icon-nav button', 0);
+		await page.waitForSelector('.menu-overlay-grid', { timeout: 5000 });
 	} else {
 		const idx = MENU_ORDER.indexOf(panel);
 		if (idx === -1) throw new Error(`Unknown panel: ${panel}. Known: ${PANELS.join(', ')}`);
