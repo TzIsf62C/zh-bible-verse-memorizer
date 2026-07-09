@@ -124,7 +124,11 @@
 		correctKey = null;
 		lastCorrectKey = null;
 		verseReadyToRender = false; // Prevent stale renderedChars computation
+		console.log('[SingleTextReview] Verse changed, feedback reset, verseReadyToRender = false');
 	}
+
+	// Track feedback changes for debugging
+	$: console.log('[SingleTextReview] Feedback state:', { pressedKey, correctKey, lastCorrectKey });
 
 	// Create reactive rendered characters array for progressive reveal
 	// Explicitly depend on reviewFullText, userInput, verseReadyToRender, AND currentVerse.id
@@ -141,8 +145,10 @@
 				char,
 				...renderCharacter(char, index)
 			}));
+			console.log('[SingleTextReview] renderedChars computed, length:', renderedChars.length, 'userInput:', _input, 'verseId:', _verseId);
 		} else {
 			renderedChars = [];
+			console.log('[SingleTextReview] renderedChars cleared (empty array)', 'reviewFullText.length:', _text.length, 'verseReadyToRender:', _ready, 'verseId:', _verseId);
 		}
 	}
 
@@ -187,6 +193,7 @@
 	// Auto-focus hidden input for physical keyboard
 	let hiddenInputElement;
 	$: if (currentVerse && !feedbackText && hiddenInputElement) {
+		console.log('[SingleTextReview] Auto-focusing hidden input');
 		setTimeout(() => hiddenInputElement?.focus(), 100);
 	}
 
@@ -204,9 +211,11 @@
 	}
 
 	function initializeVerse(verse) {
+		console.log('[SingleTextReview] initializeVerse called for verse:', verse.id);
 		
 		// Prevent rendering during initialization to avoid using stale mapping data
 		verseReadyToRender = false;
+		console.log('[SingleTextReview] Set verseReadyToRender = false');
 		userInput = '';
 		
 		// CRITICAL: Clear ALL state before setting new verse to prevent stale data
@@ -221,6 +230,8 @@
 		reviewFullText = verse.verseText;
 		reviewFullInitials = verse.verseInitials;
 
+		console.log('[SingleTextReview] reviewFullText:', reviewFullText);
+		console.log('[SingleTextReview] reviewFullInitials:', reviewFullInitials);
 
 		// Build character-to-input mapping for verse text only (Chinese chars only, no digits)
 		const chars = [...reviewFullText];
@@ -238,15 +249,18 @@
 				charToInputIndex[i] = null;
 			}
 		}
+		console.log('[SingleTextReview] Mapping complete. Total input chars:', inputIdx);
 		
 		// Now it's safe to render - mapping arrays are built
 		verseReadyToRender = true;
+		console.log('[SingleTextReview] Set verseReadyToRender = true');
 		
 		// Immediately compute initial renderedChars to show initial punctuation
 		renderedChars = [...reviewFullText].map((char, index) => ({
 			char,
 			...renderCharacter(char, index)
 		}));
+		console.log('[SingleTextReview] Initial renderedChars computed in initializeVerse, length:', renderedChars.length);
 	}
 
 	function renderCharacter(char, charIndex) {
@@ -308,13 +322,18 @@
 
 	function handleKeyInput(event) {
 		const key = event.detail;
+		console.log('[SingleTextReview] handleKeyInput called with key:', key);
+		console.log('[SingleTextReview] Current userInput:', userInput);
+		console.log('[SingleTextReview] Expected initials:', reviewFullInitials);
 
 		if (key === '⌫' || key === 'Backspace') {
+			console.log('[SingleTextReview] Backspace pressed - disabled in review');
 			// Backspace disabled in review
 			return;
 		}
 
 		if (key === '↵' || key === 'Enter') {
+			console.log('[SingleTextReview] Enter pressed');
 			if (userInput.length === reviewFullInitials.length) {
 				checkAnswer();
 			}
@@ -322,6 +341,7 @@
 		}
 
 		// Clear previous feedback
+		console.log('[SingleTextReview] Clearing previous feedback');
 		pressedKey = null;
 		correctKey = null;
 		lastCorrectKey = null;
@@ -332,20 +352,29 @@
 		const normalizedKey = inputMethod === 'pinyin' ? key.toLowerCase() : key;
 		const normalizedExpected = inputMethod === 'pinyin' ? (nextExpectedChar || '').toLowerCase() : (nextExpectedChar || '');
 		
+		console.log('[SingleTextReview] Next expected char:', nextExpectedChar, 'Normalized:', normalizedExpected);
+		console.log('[SingleTextReview] Key pressed:', key, 'Normalized:', normalizedKey);
 		
 		if (normalizedKey === normalizedExpected) {
+			console.log('[SingleTextReview] Key is CORRECT');
 			lastCorrectKey = key;
+			console.log('[SingleTextReview] Set lastCorrectKey to:', lastCorrectKey);
 		} else {
+			console.log('[SingleTextReview] Key is INCORRECT');
 			pressedKey = key;
 			correctKey = nextExpectedChar;
+			console.log('[SingleTextReview] Set pressedKey to:', pressedKey, 'correctKey to:', correctKey);
 		}
 
 		userInput += key;
+		console.log('[SingleTextReview] Updated userInput:', userInput);
+		console.log('[SingleTextReview] Feedback variables after update:', { pressedKey, correctKey, lastCorrectKey });
 		updateErrorFeedback();
 		scrollNextHiddenCharacterIntoViewIfNeeded();
 
 		// Auto-submit when complete
 		if (userInput.length === reviewFullInitials.length) {
+			console.log('[SingleTextReview] Input complete, checking answer');
 			checkAnswer();
 		}
 	}
@@ -648,14 +677,18 @@
 			type="text"
 			class="visually-hidden-input"
 			value=""
-			on:input={(e) => { e.target.value = ''; }}
-			on:keydown={(e) => { 
-				if (feedbackText) { 
-					e.preventDefault(); 
-					return; 
+			on:input={(e) => { e.target.value = ''; console.log('[SingleTextReview] Input event blocked'); }}
+			on:keydown={(e) => {
+				if (feedbackText) {
+					console.log('[SingleTextReview] Keyboard disabled during feedback');
+					e.preventDefault();
+					return;
 				}
-				handlePhysicalKeyboard(e); 
+				console.log('[SingleTextReview] Keydown event fired:', e.key);
+				handlePhysicalKeyboard(e);
 			}}
+			on:focus={() => console.log('[SingleTextReview] Input focused')}
+			on:blur={() => console.log('[SingleTextReview] Input blurred')}
 			autocomplete="off"
 			autocorrect="off"
 			autocapitalize="off"
@@ -682,7 +715,10 @@
 				correctKey={correctKey}
 				lastCorrectKey={lastCorrectKey}
 				on:key={(e) => {
-					if (feedbackText) return;
+					if (feedbackText) {
+						console.log('[SingleTextReview] Onscreen keyboard disabled during feedback');
+						return;
+					}
 					handleKeyInput(e);
 				}}
 			/>
