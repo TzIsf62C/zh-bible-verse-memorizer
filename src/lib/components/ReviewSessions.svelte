@@ -7,6 +7,7 @@
 	import { sortVersesByBibleOrder, createVerseReferenceFormatter } from '$lib/utils/bibleBooks';
 	import { getDaysUntilDue, countDueVerses, buildManualIntervalUpdate, getSharedReviewSchedule } from '$lib/utils/spacedRepetition';
 	import { keyboardLayouts } from '$lib/utils/keyboardLayouts';
+	import { icons } from '$lib/utils/icons.js';
 	import {
 		buildNeedsPracticeCollection,
 		findCollectionById
@@ -668,11 +669,11 @@
 
 	{:else if state === 'selectCollection'}
 		<div class="panel-header">
-			<button class="back-button" on:click={backToInitial} aria-label={t('back')}>
-				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-					<path d="M19 12H5M5 12l7 7M5 12l7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-				</svg>
-			</button>
+			<button class="back-btn" on:click={backToInitial} aria-label={t('back')}>
+			<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+				{@html icons.back}
+			</svg>
+		</button>
 			<h3>{t('review_collection_learned')}</h3>
 			<div class="spacer"></div>
 		</div>
@@ -770,7 +771,7 @@
 
 		{#if selectedCollectionIds.length > 0}
 			<div class="fixed-bottom-btn">
-				<button class="primary-btn large" on:click={proceedFromCollectionSelection}>
+				<button class="proceed-btn" on:click={proceedFromCollectionSelection}>
 					{t('review')} {selectedCollectionIds.length} {selectedCollectionIds.length === 1 ? t('collection') : t('collections')}
 				</button>
 			</div>
@@ -778,11 +779,11 @@
 
 	{:else if state === 'selectVerses'}
 		<div class="panel-header">
-			<button class="back-button" on:click={backToInitial} aria-label={t('back')}>
-				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-					<path d="M19 12H5M5 12l7 7M5 12l7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-				</svg>
-			</button>
+			<button class="back-btn" on:click={backToInitial} aria-label={t('back')}>
+			<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+				{@html icons.back}
+			</svg>
+		</button>
 			<h3>{t('or_select_individual')}</h3>
 			<div class="spacer"></div>
 		</div>
@@ -1072,7 +1073,7 @@
 
 		{#if selectedVerses.length > 0}
 			<div class="fixed-bottom-btn">
-				<button class="primary-btn large" on:click={proceedFromVerseSelection}>
+				<button class="proceed-btn" on:click={proceedFromVerseSelection}>
 					{t('review')} {selectedVerses.length} {selectedVerses.length === 1 ? t('verse') : t('verses')}
 				</button>
 			</div>
@@ -1080,11 +1081,11 @@
 
 	{:else if state === 'editInterval'}
 		<div class="panel-header">
-			<button class="back-button" on:click={backToInitial} aria-label={t('back')}>
-				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-					<path d="M19 12H5M5 12l7 7M5 12l7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-				</svg>
-			</button>
+			<button class="back-btn" on:click={backToInitial} aria-label={t('back')}>
+			<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+				{@html icons.back}
+			</svg>
+		</button>
 			<h3>{t('edit_review_interval')}</h3>
 			<div class="spacer"></div>
 		</div>
@@ -1209,7 +1210,7 @@
 
 		{#if selectedVerses.length > 0}
 			<div class="fixed-bottom-btn">
-				<button class="primary-btn large" on:click={openIntervalModal}>
+				<button class="proceed-btn" on:click={openIntervalModal}>
 					{t('change_interval')}
 				</button>
 			</div>
@@ -1220,13 +1221,13 @@
 		<div class="modal-overlay" on:click={(e) => e.target === e.currentTarget && cancelReview()} on:keydown={(e) => e.key === 'Escape' && cancelReview()} role="dialog" aria-modal="true" tabindex="0">
 			<div class="modal-content" role="document">
 				<div class="modal-header">
-					<button class="modal-icon-btn" on:click={backFromReviewMode} aria-label={t('back')}>
+					<button class="back-btn" on:click={backFromReviewMode} aria-label={t('back')}>
 						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
 							<path d="M19 12H5M5 12l7 7M5 12l7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
 						</svg>
 					</button>
 					<h3>{t('choose_review_mode')}</h3>
-					<button class="modal-close-btn" on:click={cancelReview} aria-label={t('exit')}>✕</button>
+					<button class="back-btn modal-close-btn" on:click={cancelReview} aria-label={t('exit')}>✕</button>
 				</div>
 				<div class="modal-buttons">
 					<button class="initial-btn" on:click={chooseIndividualReview}>
@@ -1254,7 +1255,7 @@
 		{#if showReviewModeInfoModal}
 			<div class="modal-overlay" on:click={(e) => e.target === e.currentTarget && (showReviewModeInfoModal = false)} on:keydown={(e) => e.key === 'Escape' && (showReviewModeInfoModal = false)} role="dialog" aria-modal="true" tabindex="0">
 				<div class="modal-content info-content" role="document">
-					<button class="modal-close-btn info-modal-close-btn" type="button" on:click={() => showReviewModeInfoModal = false} aria-label={t('close')}>✕</button>
+					<button class="back-btn modal-close-btn info-modal-close-btn" type="button" on:click={() => showReviewModeInfoModal = false} aria-label={t('close')}>✕</button>
 					<h3>{t('review_mode_info_title')}</h3>
 					<div class="info-description-list">
 						<div class="info-description-item">
@@ -1275,13 +1276,13 @@
 		<div class="modal-overlay" on:click={(e) => e.target === e.currentTarget && cancelReview()} on:keydown={(e) => e.key === 'Escape' && cancelReview()} role="dialog" aria-modal="true" tabindex="0">
 			<div class="modal-content" role="document">
 				<div class="modal-header">
-					<button class="modal-icon-btn" on:click={backFromReviewOrder} aria-label={t('back')}>
+					<button class="back-btn" on:click={backFromReviewOrder} aria-label={t('back')}>
 						<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
 							<path d="M19 12H5M5 12l7 7M5 12l7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
 						</svg>
 					</button>
 					<h3>{t('choose_review_order')}</h3>
-					<button class="modal-close-btn" on:click={cancelReview} aria-label={t('exit')}>✕</button>
+					<button class="back-btn modal-close-btn" on:click={cancelReview} aria-label={t('exit')}>✕</button>
 				</div>
 				<div class="modal-buttons">
 					{#if selectedCollectionIds.length > 0}
@@ -1350,8 +1351,8 @@
 			/>
 
 			<div class="modal-buttons-horizontal">
-				<button class="modal-btn secondary" on:click={closeIntervalModal}>{t('cancel')}</button>
-				<button class="modal-btn primary" on:click={confirmIntervalChange} disabled={!intervalDraftIsValid}>{t('confirm')}</button>
+				<button class="modal-btn btn-outline" on:click={closeIntervalModal}>{t('cancel')}</button>
+				<button class="modal-btn" on:click={confirmIntervalChange} disabled={!intervalDraftIsValid}>{t('confirm')}</button>
 			</div>
 		</div>
 	</div>
@@ -1415,14 +1416,14 @@
 	}
 
 	.initial-btn.due-btn {
-		background: #d32f2f;
+		background: var(--danger-color);
 		color: white;
-		border-color: #d32f2f;
+		border-color: var(--danger-color);
 	}
 
 	.initial-btn.due-btn:hover {
-		background: #b71c1c;
-		border-color: #b71c1c;
+		background: var(--danger-color);
+		border-color: var(--danger-color);
 	}
 
 	.btn-count {
@@ -1442,23 +1443,6 @@
 	.panel-header h3 {
 		margin: 0;
 		text-align: center;
-	}
-
-	.back-button {
-		width: 40px;
-		height: 40px;
-		padding: 0;
-		background: none;
-		border: none;
-		color: var(--text-color);
-		cursor: pointer;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-
-	.back-button:hover {
-		opacity: 0.85;
 	}
 
 	.spacer {
@@ -1483,11 +1467,6 @@
 
 	.sort-select {
 		flex: 1;
-		padding: 0.6rem 0.75rem;
-		border: 1px solid var(--file-border);
-		background: var(--file-bg);
-		color: var(--text-color);
-		border-radius: 6px;
 		font-size: 0.95em;
 	}
 
@@ -1505,7 +1484,8 @@
 		justify-content: center;
 	}
 
-	.primary-btn.large {
+	/* Sizing only — accent pill look comes from the global button rule */
+	.proceed-btn {
 		width: 100%;
 		max-width: 600px;
 		padding: 1.25rem 2rem;
@@ -1606,23 +1586,6 @@
 	
 	.last-reviewed-text {
 		margin-right: 0.5rem;
-	}
-
-	.primary-btn {
-		padding: 0.75rem 1.5rem;
-		border: none;
-		background: var(--accent-color);
-		color: white;
-		border-radius: 4px;
-		cursor: pointer;
-		font-size: 1em;
-		font-weight: 500;
-		transition: all 0.3s;
-		white-space: nowrap;
-	}
-
-	.primary-btn:hover {
-		opacity: 0.9;
 	}
 
 	.verse-list {
@@ -1728,44 +1691,10 @@
 		color: var(--text-color);
 	}
 
-	.overdue {
-		color: #ff4444;
-		font-weight: 500;
-	}
-	
-	.due-soon {
-		color: #ff9800;
-		font-weight: 500;
-	}
-	
-	.due-future {
-		color: #4caf50;
-	}
+	/* .overdue/.due-soon/.due-future come from app.css */
 
 	/* Modal Styles */
-	.modal-overlay {
-		position: fixed;
-		top: 0;
-		left: 0;
-		right: 0;
-		bottom: 0;
-		background: rgba(0, 0, 0, 0.5);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		z-index: 1000;
-		padding: 1rem;
-	}
-
-	.modal-content {
-		background: var(--panel-background);
-		border-radius: 12px;
-		padding: 2rem;
-		max-width: 500px;
-		width: 100%;
-		box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-	}
-
+	/* Overlay/content shells come from the shared modal classes in app.css */
 	.modal-content h3 {
 		margin-top: 0;
 		margin-bottom: 1.5rem;
@@ -1784,28 +1713,13 @@
 		margin: 0;
 	}
 
-	.modal-icon-btn,
-	.modal-close-btn {
-		width: 40px;
-		height: 40px;
-		padding: 0;
-		border: none;
-		background: none;
-		color: var(--text-color);
-		cursor: pointer;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-
 	.modal-close-btn {
 		font-size: 1.5em;
 	}
 
+	/* Review-mode options stack vertically inside the shared modal shell */
 	.modal-buttons {
-		display: flex;
 		flex-direction: column;
-		gap: 1rem;
 		margin-bottom: 0.75rem;
 	}
 
@@ -1960,45 +1874,15 @@
 		margin: 0;
 	}
 
-	.modal-btn:disabled {
-		opacity: 0.5;
-		cursor: not-allowed;
-	}
-
 	.modal-buttons-horizontal {
 		display: flex;
 		gap: 1rem;
 		margin-top: 1.5rem;
 	}
 
+	/* Sizing only — colors/shape/disabled come from the shared button classes */
 	.modal-btn {
 		flex: 1;
-		padding: 0.75rem 1.5rem;
-		border: none;
-		border-radius: 8px;
-		cursor: pointer;
-		font-size: 1em;
-		font-weight: 600;
-		transition: all 0.3s;
-	}
-
-	.modal-btn.primary {
-		background: var(--accent-color);
-		color: white;
-	}
-
-	.modal-btn.primary:hover {
-		opacity: 0.9;
-	}
-
-	.modal-btn.secondary {
-		background: var(--file-bg);
-		color: var(--text-color);
-		border: 1px solid var(--file-border);
-	}
-
-	.modal-btn.secondary:hover {
-		background: var(--nav-button-bg);
 	}
 
 	@media (max-width: 767px) {

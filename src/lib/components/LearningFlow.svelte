@@ -866,14 +866,14 @@
 	<!-- Stage Selection Buttons (Always Visible in Learn Mode) -->
 	<div class="difficulty-controls">
 		<button
-			class="mode-btn"
+			class="btn-secondary mode-btn"
 			class:active={currentStage === 'basic'}
 			on:click={() => setStage('basic')}
 		>
 			{t('basic')}
 		</button>
 		<button
-			class="mode-btn"
+			class="btn-secondary mode-btn"
 			class:active={currentStage === 'intermediate'}
 			on:click={() => {
 				console.log('[Learn] Intermediate button clicked, currentStage is:', currentStage);
@@ -889,7 +889,7 @@
 			{t('intermediate')}
 		</button>
 		<button
-			class="mode-btn"
+			class="btn-secondary mode-btn"
 			class:active={currentStage === 'advanced'}
 			on:click={() => setStage('advanced')}
 		>
@@ -1006,8 +1006,8 @@
 				<button class="modal-btn" on:click={retryFromModal}>{t('retry')}</button>
 			{:else if modalType === 'basic-success' || modalType === 'intermediate-success'}
 				<!-- Basic/intermediate success: allow retry same stage or continue -->
-				<div class="modal-btn-row">
-					<button class="modal-btn secondary" on:click={retryFromModal}>{t('retry')}</button>
+				<div class="modal-buttons">
+					<button class="modal-btn btn-outline" on:click={retryFromModal}>{t('retry')}</button>
 					<button class="modal-btn" on:click={closeModal}>{t('continue')}</button>
 				</div>
 			{:else}
@@ -1043,44 +1043,22 @@
   		width: 100%;
 	}
 
+	/* Layout only — quiet/active pill look comes from the shared classes */
 	.mode-btn {
 		flex: 1 1 auto;
 		min-width: min-content;
-		padding: 0.75rem 1rem;
-		border: 2px solid var(--accent-color);
-		background: var(--nav-button-bg);
-		color: var(--nav-button-color);
-		border-radius: 4px;
-		cursor: pointer;
-		font-size: 1em;
-		font-weight: 500;
-		transition: all 0.3s;
 		white-space: nowrap;
 		text-align: center;
 	}
 
 	.mode-btn.active {
 		background: var(--accent-color);
-		color: white;
-	}
-
-	.mode-btn:hover:not(.active) {
-		opacity: 0.8;
+		color: #fff;
 	}
 
 	.learning-controls {
 		display: grid;
 		gap: 0.5rem;
-	}
-
-	.learning-controls select {
-		padding: 0.75rem;
-		border: 1px solid var(--file-border);
-		background: var(--file-bg);
-		color: var(--text-color);
-		border-radius: 4px;
-		font-family: inherit;
-		font-size: 1em;
 	}
 
 	.learn-helper-text {
@@ -1170,23 +1148,9 @@
 		justify-content: center;
 	}
 
+	/* Sizing only — accent pill look comes from the global button rule */
 	.next-btn {
 		padding: 0.75rem 2rem;
-		border: none;
-		border-radius: 4px;
-		cursor: pointer;
-		font-size: 1em;
-		font-weight: 500;
-		transition: all 0.3s;
-	}
-
-	.next-btn {
-		background: var(--accent-color);
-		color: white;
-	}
-
-	.next-btn:hover {
-		opacity: 0.9;
 	}
 
 	.empty-state {
@@ -1202,59 +1166,15 @@
 		height: 1px;
 	}
 	
-	.modal-overlay {
-		position: fixed;
-		top: 0;
-		left: 0;
-		right: 0;
-		bottom: 0;
-		background: rgba(0, 0, 0, 0.5);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		z-index: 1000;
-	}
-	
-	.modal-content {
-		background: var(--panel-background);
-		padding: 2rem;
-		border-radius: 8px;
-		box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-		max-width: 500px;
-		text-align: center;
-	}
-	
+	/* Overlay/content/buttons shells come from the shared modal classes in app.css */
 	.modal-message {
 		font-size: 1.2em;
 		margin-bottom: 1.5rem;
 		color: var(--text-color);
 	}
 	
+	/* Sizing only — colors/shape come from the shared button classes in app.css */
 	.modal-btn {
-		padding: 0.75rem 2rem;
-		background: var(--accent-color);
-		color: white;
-		border: none;
-		border-radius: 4px;
-		cursor: pointer;
-		font-size: 1em;
-		font-weight: 500;
-		transition: all 0.3s;
-	}
-	
-	.modal-btn:hover {
-		opacity: 0.9;
-	}
-
-	.modal-btn-row {
-		display: flex;
-		gap: 0.6rem;
-		justify-content: center;
-	}
-
-	.modal-btn.secondary {
-		background: transparent;
-		border: 1px solid var(--file-border);
-		color: var(--text-color);
+		min-width: 100px;
 	}
 </style>

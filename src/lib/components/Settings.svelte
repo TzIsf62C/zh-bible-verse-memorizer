@@ -499,13 +499,7 @@
 		color: var(--text-color);
 		text-align: center;
 	}
-	
-	h3 {
-		margin: 0 0 1rem 0;
-		font-size: 1.1em;
-		color: var(--text-color);
-	}
-	
+
 	.settings-section {
 		margin-bottom: 2rem;
 		padding-bottom: 2rem;

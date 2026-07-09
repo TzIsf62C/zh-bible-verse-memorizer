@@ -554,7 +554,7 @@
 
 <div class="individual-review">
 	<div class="review-header">
-		<button class="exit-btn" on:click={exitReview} aria-label={t('exit')}>×</button>
+		<button class="back-btn exit-btn" on:click={exitReview} aria-label={t('exit')}>×</button>
 	</div>
 	
 	<div class="progress-bar">
@@ -618,10 +618,10 @@
 				{/if}
 			</div>
 			<div class="modal-buttons">
-				<button class="modal-btn primary" on:click={nextVerse}>
+				<button class="modal-btn" on:click={nextVerse}>
 					{currentIndex === verses.length - 1 ? t('finish') : t('next')}
 				</button>
-				<button class="modal-btn secondary" on:click={retry}>
+				<button class="modal-btn btn-outline" on:click={retry}>
 					{t('retry')}
 				</button>
 			</div>
@@ -655,26 +655,8 @@
 	}
 
 	.exit-btn {
-		padding: 0.5rem;
-		width: 2.5rem;
-		height: 2.5rem;
-		border: none;
-		background: transparent;
-		color: #000;
-		cursor: pointer;
 		font-size: 1.5em;
 		font-weight: 300;
-		line-height: 1;
-		transition: opacity 0.2s;
-		opacity: 0.6;
-	}
-
-	.exit-btn:hover {
-		opacity: 1;
-	}
-
-	:global([data-theme='dark']) .exit-btn {
-		color: #fff;
 	}
 
 	.progress-bar {
@@ -747,27 +729,6 @@
 		gap: 1.5rem;
 	}
 
-	.input-display {
-		background: var(--file-bg);
-		border: 2px solid var(--accent-color);
-		border-radius: 8px;
-		padding: 1.25rem;
-		font-size: 1.5em;
-		min-height: 60px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-weight: 600;
-		letter-spacing: 0.1em;
-		color: var(--text-color);
-	}
-
-	.input-display .placeholder {
-		color: var(--subtitle-color);
-		font-weight: normal;
-		letter-spacing: normal;
-	}
-
 	.result-display {
 		padding: 1.5rem;
 		border-radius: 8px;
@@ -776,25 +737,15 @@
 	}
 
 	.result-display.success {
-		background: #e8f5e9;
-		border-color: #4caf50;
-		color: #2e7d32;
+		background: color-mix(in srgb, var(--success-color) 12%, transparent);
+		border-color: var(--success-color);
+		color: var(--success-color);
 	}
 
 	.result-display.error {
-		background: #ffebee;
-		border-color: #f44336;
-		color: #c62828;
-	}
-
-	[data-theme='dark'] .result-display.success {
-		background: #1b5e20;
-		color: #81c784;
-	}
-
-	[data-theme='dark'] .result-display.error {
-		background: #b71c1c;
-		color: #ef5350;
+		background: color-mix(in srgb, var(--danger-color) 12%, transparent);
+		border-color: var(--danger-color);
+		color: var(--danger-color);
 	}
 
 	.accuracy-text {
@@ -807,65 +758,7 @@
 		font-size: 1.1em;
 	}
 
-	.button-group {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 1rem;
-	}
-
-	.primary-btn, .secondary-btn {
-		padding: 1rem 2rem;
-		border: none;
-		border-radius: 8px;
-		cursor: pointer;
-		font-size: 1.1em;
-		font-weight: 600;
-		transition: all 0.3s;
-	}
-
-	.primary-btn {
-		background: var(--accent-color);
-		color: white;
-	}
-
-	.primary-btn:hover {
-		opacity: 0.9;
-		transform: translateY(-2px);
-	}
-
-	.secondary-btn {
-		background: var(--nav-button-bg);
-		color: var(--nav-button-color);
-		border: 1px solid var(--file-border);
-	}
-
-	.secondary-btn:hover {
-		background: var(--file-bg);
-	}
-
-	/* Modal styling */
-	.modal-overlay {
-		position: fixed;
-		top: 0;
-		left: 0;
-		right: 0;
-		bottom: 0;
-		background: rgba(0, 0, 0, 0.5);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		z-index: 1000;
-	}
-
-	.modal-content {
-		background: var(--panel-background);
-		padding: 2rem;
-		border-radius: 8px;
-		box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-		max-width: 500px;
-		text-align: center;
-	}
-
+	/* Overlay/content/buttons shells come from the shared modal classes in app.css */
 	.modal-message {
 		margin-bottom: 1.5rem;
 	}
@@ -882,35 +775,9 @@
 		color: var(--subtitle-color);
 	}
 
-	.modal-buttons {
-		display: flex;
-		gap: 1rem;
-		justify-content: center;
-	}
-
+	/* Sizing only — colors/shape come from the shared button classes in app.css */
 	.modal-btn {
-		padding: 0.75rem 2rem;
-		border: none;
-		border-radius: 4px;
-		font-size: 1.1em;
-		font-weight: 500;
-		cursor: pointer;
-		transition: all 0.3s;
-	}
-
-	.modal-btn.primary {
-		background: var(--accent-color);
-		color: white;
-	}
-
-	.modal-btn.secondary {
-		background: var(--file-bg);
-		color: var(--text-color);
-		border: 1px solid var(--file-border);
-	}
-
-	.modal-btn:hover {
-		opacity: 0.9;
+		min-width: 100px;
 	}
 
 	/* Feedback styling */
@@ -922,36 +789,21 @@
 	}
 
 	.feedback.error {
-		background: #ffebee;
-		border-color: #f44336;
-		color: #c62828;
+		background: color-mix(in srgb, var(--danger-color) 12%, transparent);
+		border-color: var(--danger-color);
+		color: var(--danger-color);
 	}
 
 	.feedback.warning {
-		background: #fff3e0;
-		border-color: #ff9800;
-		color: #e65100;
+		background: color-mix(in srgb, var(--warning-color) 15%, transparent);
+		border-color: var(--warning-color);
+		color: var(--warning-color);
 	}
 
 	.feedback.success {
-		background: #e8f5e9;
-		border-color: #4caf50;
-		color: #2e7d32;
-	}
-
-	[data-theme='dark'] .feedback.error {
-		background: #b71c1c;
-		color: #ef5350;
-	}
-
-	[data-theme='dark'] .feedback.warning {
-		background: #e65100;
-		color: #ffb74d;
-	}
-
-	[data-theme='dark'] .feedback.success {
-		background: #1b5e20;
-		color: #81c784;
+		background: color-mix(in srgb, var(--success-color) 12%, transparent);
+		border-color: var(--success-color);
+		color: var(--success-color);
 	}
 
 	/* Viewport anchor for keyboard positioning */
@@ -962,42 +814,30 @@
 	}
 
 	/* Character styling */
-	:global(.verse-character) {
+	.verse-display :global(.verse-character) {
 		display: inline;
 		transition: all 0.15s ease;
 	}
 
-	:global(.verse-character.correct) {
+	.verse-display :global(.verse-character.correct) {
 		color: var(--text-color);
 	}
 
-	:global(.verse-character.incorrect) {
-		color: #f44336;
-		background: rgba(244, 67, 54, 0.1);
+	.verse-display :global(.verse-character.incorrect) {
+		color: var(--danger-color);
+		background: color-mix(in srgb, var(--danger-color) 12%, transparent);
 		padding: 0 2px;
 		border-radius: 2px;
 	}
 
-	:global(.verse-character.hidden) {
+	.verse-display :global(.verse-character.hidden) {
 		opacity: 0;
 		pointer-events: none;
 	}
 
 	@media (max-width: 768px) {
-		.single-text-review {
-			padding: 1rem 0.5rem;
-			padding-top: 0px;
-		}
 		.verse-display {
 			padding: 1.5rem;
-		}
-
-		.input-display {
-			font-size: 1.25rem;
-		}
-
-		.button-group {
-			grid-template-columns: 1fr;
 		}
 	}
 </style>

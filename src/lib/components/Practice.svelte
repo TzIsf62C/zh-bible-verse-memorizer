@@ -7,6 +7,7 @@
 	import { t } from '$lib/i18n';
 	import { sortVersesByBibleOrder, createVerseReferenceFormatter } from '$lib/utils/bibleBooks';
 	import { buildNeedsPracticeCollection } from '$lib/utils/computedCollections';
+	import { icons } from '$lib/utils/icons.js';
 	import Modal from './Modal.svelte';
 	import SpeedChallengeCollection from './SpeedChallengeCollection.svelte';
 	import SpeedChallengeVerse from './SpeedChallengeVerse.svelte';
@@ -420,10 +421,10 @@
 		</div>
 		
 		<div class="button-group">
-			<button class="primary-button" on:click={practiceCollection}>
+			<button class="choice-button" on:click={practiceCollection}>
 				{t('practice_a_collection')}
 			</button>
-			<button class="primary-button" on:click={practiceVerse}>
+			<button class="choice-button" on:click={practiceVerse}>
 				{t('practice_a_verse')}
 			</button>
 		</div>
@@ -432,11 +433,11 @@
 {:else if state === 'selectCollection'}
 	<div class="practice-panel">
 		<div class="panel-header">
-			<button class="back-button" on:click={goBack} aria-label={t('back')}>
-				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-					<path d="M19 12H5M5 12l7 7M5 12l7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-				</svg>
-			</button>
+			<button class="back-btn" on:click={goBack} aria-label={t('back')}>
+			<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+				{@html icons.back}
+			</svg>
+		</button>
 			<h3>{t('select_collection')}</h3>
 			<div class="spacer"></div>
 		</div>
@@ -462,20 +463,20 @@
 		{#if selectedCollection}
 			<div class="fixed-bottom-button">
 				{#if selectedCollectionLearnedCount === 0}
-					<button class="primary-button fixed-action-button" on:click={() => startCollectionPractice('all')}>
+					<button class="choice-button fixed-action-button" on:click={() => startCollectionPractice('all')}>
 						{t('next')}
 					</button>
 				{:else if selectedCollectionLearnedCount < selectedCollectionTotalCount}
 					<div class="fixed-bottom-actions two-up">
-						<button class="primary-button fixed-action-button collection-choice-pulse" on:click={() => startCollectionPractice('learned')}>
+						<button class="choice-button fixed-action-button collection-choice-pulse" on:click={() => startCollectionPractice('learned')}>
 							{t('practice')} {t('learned')}
 						</button>
-						<button class="primary-button fixed-action-button collection-choice-pulse" on:click={() => startCollectionPractice('all')}>
+						<button class="choice-button fixed-action-button collection-choice-pulse" on:click={() => startCollectionPractice('all')}>
 							{t('practice')} {t('all')}
 						</button>
 					</div>
 				{:else}
-					<button class="primary-button fixed-action-button" on:click={() => startCollectionPractice('all')}>
+					<button class="choice-button fixed-action-button" on:click={() => startCollectionPractice('all')}>
 						{t('next')}
 					</button>
 				{/if}
@@ -486,11 +487,11 @@
 {:else if state === 'selectVerse'}
 	<div class="practice-panel">
 		<div class="panel-header">
-			<button class="back-button" on:click={goBack} aria-label={t('back')}>
-				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-					<path d="M19 12H5M5 12l7 7M5 12l7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-				</svg>
-			</button>
+			<button class="back-btn" on:click={goBack} aria-label={t('back')}>
+			<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+				{@html icons.back}
+			</svg>
+		</button>
 			<h3>{t('select_verse')}</h3>
 			<div class="spacer"></div>
 		</div>
@@ -561,7 +562,7 @@
 		
 		<div class="fixed-bottom-button">
 			<button 
-				class="primary-button fixed-action-button"
+				class="choice-button fixed-action-button"
 				disabled={!selectedVerse}
 				on:click={proceedToActivitySelection}
 			>
@@ -573,13 +574,13 @@
 {:else if state === 'selectActivity'}
 	<div class="practice-panel">
 		<div class="panel-header">
-			<button class="back-button" on:click={goBack} aria-label={t('back')}>
-				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-					<path d="M19 12H5M5 12l7 7M5 12l7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-				</svg>
-			</button>
+			<button class="back-btn" on:click={goBack} aria-label={t('back')}>
+			<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+				{@html icons.back}
+			</svg>
+		</button>
 			<h2>{t('select_activity')}</h2>
-			<button class="close-button" on:click={closeToInitial} aria-label={t('exit')}>✕</button>
+			<button class="back-btn close-button" on:click={closeToInitial} aria-label={t('exit')}>✕</button>
 		</div>
 		
 		<div class="selected-target">
@@ -639,7 +640,7 @@
 	{#if showActivityInfoModal}
 		<div class="modal-overlay" on:click={(e) => e.target === e.currentTarget && (showActivityInfoModal = false)} on:keydown={(e) => e.key === 'Escape' && (showActivityInfoModal = false)} role="dialog" aria-modal="true" tabindex="0">
 			<div class="modal-content activity-info-modal" role="document">
-				<button class="modal-close-button activity-info-close" type="button" on:click={() => showActivityInfoModal = false} aria-label={t('close')}>✕</button>
+				<button class="back-btn close-button activity-info-close" type="button" on:click={() => showActivityInfoModal = false} aria-label={t('close')}>✕</button>
 				<h3>{t('activity_info_title')}</h3>
 				<div class="activity-info-list">
 					{#each activityInfoItems as infoItem}
@@ -662,13 +663,13 @@
 	<div class="modal-overlay" on:click={handlePracticeOrderOverlayClick} on:keydown={(e) => e.key === 'Escape' && goBack()} role="dialog" aria-modal="true" tabindex="0">
 		<div class="modal-content" role="document">
 			<div class="modal-header">
-				<button class="modal-back-button" on:click={goBack} aria-label={t('back')}>
-					<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-						<path d="M19 12H5M5 12l7 7M5 12l7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+				<button class="back-btn" on:click={goBack} aria-label={t('back')}>
+					<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+						{@html icons.back}
 					</svg>
 				</button>
 				<h3>{t('choose_practice_order')}</h3>
-				<button class="modal-close-button" on:click={closeToInitial} aria-label={t('exit')}>✕</button>
+				<button class="back-btn close-button" on:click={closeToInitial} aria-label={t('exit')}>✕</button>
 			</div>
 			<div class="modal-buttons">
 				<button class="modal-option" on:click={() => choosePracticeOrder('collection')}>
@@ -773,7 +774,6 @@
 		height: 100%;
 		padding: 1rem;
 		overflow-y: auto;
-		background: --var(--app-background);
 	}
 	
 	.panel-header {
@@ -783,28 +783,7 @@
 		margin-bottom: 1.5rem;
 	}
 	
-	.back-button {
-		padding: 0.5rem;
-		background: none;
-		border: none;
-		color: var(--text-color);
-		cursor: pointer;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-
 	.close-button {
-		width: 40px;
-		height: 40px;
-		padding: 0;
-		background: none;
-		border: none;
-		color: var(--text-color);
-		cursor: pointer;
-		display: flex;
-		align-items: center;
-		justify-content: center;
 		font-size: 1.5em;
 	}
 	
@@ -832,7 +811,7 @@
 		margin-top: 2rem;
 	}
 	
-	.primary-button {
+	.choice-button {
 		width: 100%;
 		padding: 1.5rem;
 		border: 2px solid var(--file-border);
@@ -846,12 +825,12 @@
 		text-align: center;
 	}
 	
-	.primary-button:hover:not(:disabled) {
+	.choice-button:hover:not(:disabled) {
 		border-color: var(--accent-color);
 		background: var(--nav-button-bg);
 	}
 	
-	.primary-button:disabled {
+	.choice-button:disabled {
 		opacity: 0.5;
 		cursor: not-allowed;
 	}
@@ -882,11 +861,6 @@
 
 	.sort-select {
 		flex: 1;
-		padding: 0.6rem 0.75rem;
-		border: 1px solid var(--file-border);
-		border-radius: 6px;
-		background: var(--file-bg);
-		color: var(--text-color);
 		font-size: 0.95em;
 	}
 	
@@ -927,7 +901,7 @@
 		flex-direction: column;
 		gap: 0.5rem;
 		padding: 0.5rem;
-		border-top: 1px solid var(--border-color);
+		border-top: 1px solid var(--file-border);
 	}
 
 	.group-meta {
@@ -951,7 +925,7 @@
 	.verse-item {
 		padding: 1rem;
 		background: var(--panel-background);
-		border: 2px solid var(--border-color);
+		border: 2px solid var(--file-border);
 		border-radius: 8px;
 		cursor: pointer;
 		display: flex;
@@ -994,7 +968,7 @@
 		right: 0;
 		padding: 1rem;
 		background: var(--app-background);
-		border-top: 1px solid var(--border-color);
+		border-top: 1px solid var(--file-border);
 		display: flex;
 		justify-content: center;
 	}
@@ -1094,7 +1068,7 @@
 	.activity-card {
 		padding: 2rem 1rem;
 		background: var(--panel-background);
-		border: 2px solid var(--border-color);
+		border: 2px solid var(--file-border);
 		border-radius: 16px;
 		cursor: pointer;
 		display: flex;
@@ -1130,26 +1104,7 @@
 		font-weight: 600;
 	}
 
-	.modal-overlay {
-		position: fixed;
-		inset: 0;
-		background: rgba(0, 0, 0, 0.5);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		z-index: 1000;
-		padding: 1rem;
-	}
-
-	.modal-content {
-		background: var(--panel-background);
-		border-radius: 12px;
-		padding: 2rem;
-		max-width: 500px;
-		width: 100%;
-		box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-	}
-
+	/* Overlay/content shells come from the shared modal classes in app.css */
 	.modal-content h3 {
 		margin-top: 0;
 		margin-bottom: 1.5rem;
@@ -1220,41 +1175,9 @@
 		text-align: center;
 	}
 
-	.modal-back-button {
-		width: 40px;
-		height: 40px;
-		padding: 0;
-		background: none;
-		border: none;
-		color: var(--text-color);
-		cursor: pointer;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-
-	.modal-back-button:hover {
-		opacity: 0.85;
-	}
-
-	.modal-close-button {
-		width: 40px;
-		height: 40px;
-		padding: 0;
-		background: none;
-		border: none;
-		color: var(--text-color);
-		cursor: pointer;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-size: 1.5em;
-	}
-
+	/* Practice-order options stack vertically inside the shared modal shell */
 	.modal-buttons {
-		display: flex;
 		flex-direction: column;
-		gap: 1rem;
 		margin-bottom: 1.5rem;
 	}
 
@@ -1294,7 +1217,7 @@
 			margin-top: 1rem;
 		}
 		
-		.primary-button {
+		.choice-button {
 			padding: 1.25rem;
 			font-size: 1em;
 		}
