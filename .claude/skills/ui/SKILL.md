@@ -5,7 +5,7 @@ description: Visual design system for this app (tokens, shared classes, patterns
 
 # UI Design System
 
-The app is a PWA built with SvelteKit + Svelte 5. Component styles live in scoped `<style>` blocks using plain CSS — **no Tailwind, no utility frameworks**. Global tokens and shared classes live in `src/app.css`.
+The app is a PWA built with SvelteKit + Svelte 5. Component styles live in scoped `<style>` blocks using plain CSS. Global tokens and shared classes live in `src/app.css`.
 
 ## Core Philosophy
 
@@ -154,12 +154,15 @@ Screenshots land in `tools/look/shots/` (gitignored). Default viewport is `400x7
 
 ---
 
-# Remaining cleanup (long tail)
+# Migration status
 
-The foundation + high-traffic surfaces are migrated (Modal, IconNav, MenuOverlay, ShareOverlay, Settings, Collections, CollectionDetail, AddVerseForm). When touching any file below, migrate its one-off styles onto the shared system as you go:
+All screens are on the shared system: the app shell/overlay surfaces, every practice/review mode, and the secondary surfaces (Stats, HeatMaps, AchievementsModal, ExportImport, Onboarding, toasts). Key patterns to preserve when editing:
 
-1. **Practice/review mode components** (`PracticeClassic`, `FirstAndLast`, `Reverse`, `ReverseByVerse`, `BlindChallenge`, `SpeedChallenge*`, `SingleText*`, `ReferenceQuiz`, `IndividualReview`, `ReviewSessions`, `LearningFlow`, `Practice`): each still defines its own `.exit-button` / `.submit-button` / `.retry-button` / `.primary-button` / `.modal-btn` variants and hardcoded status greens/reds/oranges (`#4caf50`, `#f44336`, `#ff9800`, material palette shades). Map onto shared button classes and `--success/--warning/--danger` tokens.
-2. **Stats / HeatMaps / AchievementsModal / ExportImport / Onboarding**: mostly consistent but still carry hardcoded status colors and some off-scale radii (`6px`, `10px`, `20px`).
-3. **`renameCollection`** in `Collections.svelte` still uses `prompt()` — convert to a `Modal` like other flows.
-4. **Toasts** (`AchievementToast`, `StreakToast`): unify their card look with `.card`/tokens.
-5. **Mixed Svelte patterns**: some components use `export let` + `createEventDispatcher`, newer ones use `$props()`/`$state` runes. Prefer runes for new code.
+- **Mode screens** use `.mode-header` + `.back-btn` (and `.back-btn exit-button` for the ✕), with the arrow from `icons.back`.
+- **Dialogs** (including completion modals) use the shared `.modal-overlay` / `.modal-content` / `.modal-buttons` shells; scoped CSS only adds sizing (e.g. a wider `max-width`) or stacking direction.
+- **`verse-character` feedback rules are wrapper-scoped** (e.g. `.verse-display :global(.verse-character.correct)`) per mode. Never write bare `:global(.verse-character…)` — those leak across modes and fight each other in cascade order.
+- **Status tints** use `color-mix(in srgb, var(--success-color) 12%, transparent)` (15% for warning) instead of hardcoded pale hexes, so they work in both themes without `[data-theme]` overrides.
+- **Chart palettes are not status colors**: Stats' timeline/bar fills (`#f5576c` etc.) are intentional data-vis colors; leave them.
+- **HeatMaps' `.heat-char` keeps constant dark text** (`#1b1b1f`) because the heat-color chip backgrounds are the same light palette in both themes.
+
+Remaining known inconsistency: mixed Svelte patterns — some components use `export let` + `createEventDispatcher`, newer ones use `$props()`/`$state` runes. Prefer runes for new code.
