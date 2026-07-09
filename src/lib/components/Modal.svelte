@@ -91,30 +91,7 @@
 {/if}
 
 <style>
-	.modal-overlay {
-		position: fixed;
-		top: 0;
-		left: 0;
-		right: 0;
-		bottom: 0;
-		background: rgba(0, 0, 0, 0.5);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		z-index: 1000;
-		padding: 1rem;
-	}
-
-	.modal-content {
-		background: var(--panel-background);
-		padding: 2rem;
-		border-radius: 16px;
-		box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-		max-width: 500px;
-		width: 100%;
-		text-align: center;
-	}
-
+	/* Overlay/content/buttons shells come from the shared classes in app.css */
 	.modal-title {
 		margin: 0 0 1rem 0;
 		color: var(--text-color);
@@ -138,13 +115,6 @@
 	.modal-message :global(li) {
 		text-align: left;
 		margin: 0.25rem 0;
-	}
-
-	.modal-buttons {
-		display: flex;
-		gap: 1rem;
-		justify-content: center;
-		flex-wrap: wrap;
 	}
 
 	/* Sizing only — colors/shape come from the shared button classes in app.css */

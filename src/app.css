@@ -128,6 +128,20 @@ main.app-shell {
 	transition: border-color 0.2s ease;
 }
 
+/* Full-screen mode header: back button | centered title | exit button */
+.mode-header {
+	display: grid;
+	grid-template-columns: 2.5rem 1fr 2.5rem;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.mode-header h2 {
+	margin: 0;
+	font-size: 1.2em;
+	text-align: center;
+}
+
 .panel-nav {
 	display: flex;
 	flex-wrap: wrap;
@@ -302,6 +316,57 @@ input[type='button'],
 input[type='submit'],
 [role='button'] {
 	touch-action: manipulation;
+}
+
+/* ==========================================================================
+   Modal overlay + content — the one dialog look for the whole app.
+   Modal.svelte uses these directly; custom dialogs (completion screens etc.)
+   reuse the same classes and only add scoped rules for their inner content.
+   ========================================================================== */
+.modal-overlay {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: rgba(0, 0, 0, 0.5);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 1000;
+	padding: 1rem;
+	animation: modal-fade-in 0.2s ease;
+}
+
+.modal-content {
+	background: var(--panel-background);
+	padding: 2rem;
+	border-radius: 16px;
+	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+	max-width: 500px;
+	width: 100%;
+	text-align: center;
+	animation: modal-slide-up 0.3s ease;
+}
+
+.modal-buttons {
+	display: flex;
+	gap: 1rem;
+	justify-content: center;
+	flex-wrap: wrap;
+}
+
+@keyframes modal-fade-in {
+	from {
+		opacity: 0;
+	}
+}
+
+@keyframes modal-slide-up {
+	from {
+		transform: translateY(16px);
+		opacity: 0;
+	}
 }
 
 /* ==========================================================================
