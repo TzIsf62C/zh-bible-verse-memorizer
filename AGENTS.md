@@ -35,3 +35,10 @@ tools/look/                screenshot CLI for visual checks — `npm run look`
 .github/copilot-instructions.md   full architecture & agent guide
 .issues/  .knowledge/      active work / durable knowledge (see above)
 ```
+
+## GitHub: `TzIsf62C/zh-bible-verse-memorizer` — on-stick auth
+This repo is already wired to the **thimble-buffin** GitHub account (on-stick `store` credential helper +
+`https://thimble-buffin@github.com/TzIsf62C/zh-bible-verse-memorizer.git` remote + local thimble-buffin identity), so plain
+`git commit`/`push`/`pull` just work — authored as thimble-buffin, **not** the machine-global `jacob-8`.
+For `gh`, call the on-stick wrapper `/run/media/jacob/USB/.secrets/gh` (plain `gh` = jacob-8).
+Full mechanism: `/run/media/jacob/USB/.secrets/README.md`.
