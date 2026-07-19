@@ -119,7 +119,7 @@
 		background: var(--accent-color);
 		color: #fff;
 		padding: 0.6rem 0.9rem;
-		border-radius: 10px;
+		border-radius: 12px;
 		box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
 		display: flex;
 		align-items: center;

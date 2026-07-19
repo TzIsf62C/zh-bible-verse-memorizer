@@ -477,8 +477,8 @@
 
 <!-- Conflict Resolution Modal -->
 {#if showConflictModal && conflicts.length > 0}
-	<div class="conflict-modal-overlay">
-		<div class="conflict-modal">
+	<div class="modal-overlay">
+		<div class="modal-content conflict-modal">
 			<h3>{t('verse_conflict_title')}</h3>
 			<p class="conflict-subtitle">
 				{t('conflict_progress').replace('{current}', currentConflictIndex + 1).replace('{total}', conflicts.length)}
@@ -741,29 +741,12 @@
 	}
 
 	/* Conflict Resolution Modal */
-	.conflict-modal-overlay {
-		position: fixed;
-		top: 0;
-		left: 0;
-		right: 0;
-		bottom: 0;
-		background: rgba(0, 0, 0, 0.5);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		z-index: 1000;
-		padding: 1rem;
-	}
-
+	/* Shell comes from the shared modal classes; this dialog is wider */
 	.conflict-modal {
-		background: var(--panel-background);
-		border-radius: 8px;
 		max-width: 900px;
-		width: 100%;
 		max-height: 90vh;
 		overflow-y: auto;
-		padding: 2rem;
-		box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+		text-align: left;
 	}
 
 	.conflict-modal h3 {
@@ -861,13 +844,13 @@
 	}
 
 	.keep-existing {
-		background: #2196F3;
-		color: white;
+		background: var(--accent-color);
+		color: #fff;
 	}
 
 	.use-imported {
-		background: #4CAF50;
-		color: white;
+		background: var(--success-color);
+		color: #fff;
 	}
 
 	.conflict-actions {
@@ -879,13 +862,13 @@
 	}
 
 	.keep-both {
-		background: #FF9800;
-		color: white;
+		background: var(--warning-color);
+		color: #fff;
 	}
 
 	.cancel-import {
-		background: #f44336;
-		color: white;
+		background: var(--danger-color);
+		color: #fff;
 	}
 
 	@media (max-width: 767px) {

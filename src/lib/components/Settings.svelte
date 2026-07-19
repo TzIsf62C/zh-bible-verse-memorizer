@@ -161,7 +161,7 @@
 	}
 </script>
 
-<div class="settings-container">
+<div class="settings-container panel">
 	<h2>{t('settings')}</h2>
 	
 	<div class="settings-section">
@@ -433,7 +433,7 @@
 		<div class="setting-group">
 			<label>{t('view_tutorial')}</label>
 			<p class="help-text">{t('view_tutorial_description')}</p>
-			<button class="secondary-btn" on:click={showTutorial}>
+			<button class="btn-secondary" on:click={showTutorial}>
 				{t('view_tutorial')}
 			</button>
 		</div>
@@ -444,8 +444,8 @@
 		<div class="setting-group">
 			<label>{t('check_for_updates')}</label>
 			<p class="help-text">{t('update_description')}</p>
-			<button 
-				class="secondary-btn" 
+			<button
+				class="btn-secondary"
 				on:click={waitingWorker ? applyUpdate : checkForUpdates}
 				disabled={checkingUpdate}
 			>
@@ -467,7 +467,7 @@
 		<div class="setting-group danger-zone">
 			<label>{t('clear_all_data')}</label>
 			<p class="help-text">{t('clear_data_warning')}</p>
-			<button class="danger-btn" on:click={clearAllData}>
+			<button class="btn-danger" on:click={clearAllData}>
 				{t('clear_all_data_btn')}
 			</button>
 		</div>
@@ -492,8 +492,6 @@
 	.settings-container {
 		max-width: 100%;
 		margin: 0 auto;
-		padding: 1.5rem;
-		background: var(--app-background, #ffffff);
 	}
 	
 	h2 {
@@ -501,13 +499,7 @@
 		color: var(--text-color);
 		text-align: center;
 	}
-	
-	h3 {
-		margin: 0 0 1rem 0;
-		font-size: 1.1em;
-		color: var(--text-color);
-	}
-	
+
 	.settings-section {
 		margin-bottom: 2rem;
 		padding-bottom: 2rem;
@@ -545,12 +537,12 @@
 		gap: 0.5rem;
 		cursor: pointer;
 		padding: 0.5rem;
-		border-radius: 4px;
+		border-radius: 8px;
 		transition: background 0.2s;
 	}
 	
 	.radio-option:hover {
-		background: var(--panel-background);
+		background: var(--file-bg);
 	}
 	
 	.radio-option input[type="radio"] {
@@ -567,13 +559,13 @@
 		gap: 0.75rem;
 		cursor: pointer;
 		padding: 0.75rem;
-		border-radius: 4px;
+		border-radius: 8px;
 		transition: background 0.2s;
 		align-items: flex-start;
 	}
 	
 	.checkbox-option:hover {
-		background: var(--panel-background);
+		background: var(--file-bg);
 	}
 	
 	.checkbox-option input[type="checkbox"] {
@@ -594,16 +586,10 @@
 		font-weight: 500;
 	}
 	
+	/* Look comes from the shared input styles in app.css */
 	input[type="text"],
 	input[type="number"] {
 		width: 100%;
-		padding: 0.75rem;
-		border: 1px solid var(--file-border);
-		background: var(--file-bg);
-		color: var(--text-color);
-		border-radius: 4px;
-		font-family: inherit;
-		font-size: 1em;
 	}
 	
 	.help-text {
@@ -611,43 +597,6 @@
 		color: var(--subtitle-color);
 		margin: 0.25rem 0 0 0;
 		line-height: 1.4;
-	}
-	
-	.secondary-btn {
-		padding: 0.75rem 1.5rem;
-		border: 1px solid var(--accent-color);
-		background: var(--nav-button-bg);
-		color: var(--nav-button-color);
-		border-radius: 4px;
-		cursor: pointer;
-		font-size: 1em;
-		font-weight: 500;
-		transition: all 0.3s;
-	}
-	
-	.secondary-btn:hover:not(:disabled) {
-		opacity: 0.8;
-	}
-	
-	.secondary-btn:disabled {
-		opacity: 0.5;
-		cursor: not-allowed;
-	}
-	
-	.danger-btn {
-		padding: 0.75rem 1.5rem;
-		border: none;
-		background: #dc3545;
-		color: white;
-		border-radius: 4px;
-		cursor: pointer;
-		font-size: 1em;
-		font-weight: 500;
-		transition: all 0.3s;
-	}
-	
-	.danger-btn:hover {
-		background: #c82333;
 	}
 	
 	.danger-zone {
@@ -663,11 +612,11 @@
 	}
 	
 	.update-status.success {
-		color: #28a745;
+		color: var(--success-color);
 	}
 	
 	.update-status.error {
-		color: #dc3545;
+		color: var(--danger-color);
 	}
 	
 	.app-info {

@@ -6,6 +6,7 @@
 	import { keyboardLayouts } from '$lib/utils/keyboardLayouts';
 	import { triggerErrorFeedback } from '$lib/utils/feedback';
 	import { zhuyinKeyMap, cangjieKeyMap } from '$lib/utils/inputMaps';
+	import { icons } from '$lib/utils/icons.js';
 
 	export let collection;
 	export let verses = [];
@@ -323,14 +324,14 @@
 <svelte:document on:keydown={handlePhysicalKeyboard} />
 
 <div class="single-text-practice-container">
-	<div class="header">
-		<button class="back-button" on:click={goBack} aria-label={t('back')}>
-			<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-				<path d="M19 12H5M5 12l7 7M5 12l7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+	<div class="mode-header">
+		<button class="back-btn" on:click={goBack} aria-label={t('back')}>
+			<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+				{@html icons.back}
 			</svg>
 		</button>
 		<h2>{t('single_text')}</h2>
-		<button class="exit-button" on:click={closeToInitial} aria-label={t('exit')}>✕</button>
+		<button class="back-btn exit-button" on:click={closeToInitial} aria-label={t('exit')}>✕</button>
 	</div>
 
 	<div class="collection-meta-row">
@@ -396,11 +397,11 @@
 				</div>
 			{/if}
 
-			<div class="button-group">
-				<button class="secondary-button" on:click={tryAgain}>
+			<div class="modal-buttons">
+				<button class="btn-outline" on:click={tryAgain}>
 					{t('try_again')}
 				</button>
-				<button class="primary-button" on:click={done}>
+				<button on:click={done}>
 					{t('done')}
 				</button>
 			</div>
@@ -418,35 +419,8 @@
 		gap: 1rem;
 	}
 
-	.header {
-		display: grid;
-		grid-template-columns: 40px 1fr 40px;
-		align-items: center;
-		gap: 0.5rem;
-	}
-
-	.back-button,
-	.exit-button {
-		width: 40px;
-		height: 40px;
-		padding: 0;
-		background: none;
-		border: none;
-		cursor: pointer;
-		color: var(--text-color);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-
 	.exit-button {
 		font-size: 1.5em;
-	}
-
-	h2 {
-		margin: 0;
-		font-size: 1.2em;
-		text-align: center;
 	}
 
 	.collection-meta-row {
@@ -502,7 +476,7 @@
 	}
 
 	.verse-display :global(.verse-character.incorrect) {
-		color: #f44336;
+		color: var(--danger-color);
 	}
 
 	.verse-display :global(.verse-punctuation) {
@@ -564,28 +538,7 @@
 		padding: 0;
 	}
 
-	.modal-overlay {
-		position: fixed;
-		top: 0;
-		left: 0;
-		right: 0;
-		bottom: 0;
-		background: rgba(0, 0, 0, 0.7);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		z-index: 1000;
-	}
-
-	.modal-content {
-		background: var(--app-background);
-		padding: 2rem;
-		border-radius: 12px;
-		max-width: 400px;
-		width: 90%;
-		text-align: center;
-	}
-
+	/* Overlay/content shells come from the shared modal classes in app.css */
 	.modal-content h3 {
 		margin: 0 0 1rem 0;
 		color: var(--accent-color);
@@ -596,38 +549,12 @@
 		color: var(--text-color);
 	}
 
-	.button-group {
-		display: flex;
-		gap: 1rem;
+	.modal-buttons {
 		margin-top: 1.5rem;
 	}
 
-	.primary-button,
-	.secondary-button {
+	.modal-buttons button {
 		flex: 1;
-		padding: 1rem;
-		border: none;
-		border-radius: 8px;
-		font-size: 1em;
-		font-weight: 600;
-		cursor: pointer;
-		transition: transform 0.1s;
-	}
-
-	.primary-button {
-		background: var(--accent-color);
-		color: white;
-	}
-
-	.secondary-button {
-		background: var(--panel-background);
-		color: var(--text-color);
-		border: 2px solid var(--accent-color);
-	}
-
-	.primary-button:active,
-	.secondary-button:active {
-		transform: scale(0.98);
 	}
 
 	.accuracy-display {

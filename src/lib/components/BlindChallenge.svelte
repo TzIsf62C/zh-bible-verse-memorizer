@@ -7,6 +7,7 @@
 	import { keyboardLayouts } from '$lib/utils/keyboardLayouts';
 	import { createVerseReferenceFormatter } from '$lib/utils/bibleBooks';
 	import { zhuyinKeyMap, cangjieKeyMap } from '$lib/utils/inputMaps';
+	import { icons } from '$lib/utils/icons.js';
 
 	export let verse;
 
@@ -391,14 +392,14 @@
 <svelte:document on:keydown={handlePhysicalKeyboard} />
 
 <div class="blind-challenge-container">
-	<div class="header">
-		<button class="back-button" on:click={goBack} aria-label={t('back')}>
-			<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-				<path d="M19 12H5M5 12l7 7M5 12l7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+	<div class="mode-header">
+		<button class="back-btn" on:click={goBack} aria-label={t('back')}>
+			<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+				{@html icons.back}
 			</svg>
 		</button>
 		<h2>{t('blind_challenge')}</h2>
-		<button class="exit-button" on:click={closeToInitial} aria-label={t('exit')}>✕</button>
+		<button class="back-btn exit-button" on:click={closeToInitial} aria-label={t('exit')}>✕</button>
 	</div>
 	
 	{#if verse && formatVerseRef}
@@ -483,35 +484,8 @@
 		gap: 1rem;
 	}
 	
-	.header {
-		display: grid;
-		grid-template-columns: 40px 1fr 40px;
-		align-items: center;
-		gap: 0.5rem;
-	}
-
-	.back-button,
-	.exit-button {
-		width: 40px;
-		height: 40px;
-		padding: 0;
-		background: none;
-		border: none;
-		cursor: pointer;
-		color: var(--text-color);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-	
 	.exit-button {
 		font-size: 1.5em;
-	}
-	
-	h2 {
-		margin: 0;
-		font-size: 1.2em;
-		text-align: center;
 	}
 	
 	.verse-selector-header {
@@ -612,25 +586,25 @@
 	
 	.verse-char.match,
 	.input-char.match {
-		color: #4CAF50;
+		color: var(--success-color);
 	}
 	
 	.verse-char.mismatch,
 	.input-char.mismatch {
-		color: #f44336;
+		color: var(--danger-color);
 		font-weight: 700;
 	}
 	
 	.verse-char.deletion {
-		color: #f44336;
+		color: var(--danger-color);
 		font-weight: 700;
-		background: rgba(244, 67, 54, 0.1);
+		background: color-mix(in srgb, var(--danger-color) 12%, transparent);
 	}
 	
 	.input-char.insertion {
-		color: #f44336;
+		color: var(--danger-color);
 		font-weight: 700;
-		background: rgba(244, 67, 54, 0.1);
+		background: color-mix(in srgb, var(--danger-color) 12%, transparent);
 	}
 	
 	.gap {
@@ -658,14 +632,10 @@
 		color: var(--accent-color);
 	}
 	
+	/* Sizing only — accent pill look comes from the global button rule */
 	.retry-button {
 		padding: 0.5rem 0.75rem;
-		border: none;
-		border-radius: 6px;
 		font-size: 1.5em;
-		cursor: pointer;
-		background: var(--accent-color);
-		color: white;
 		line-height: 1;
 	}
 	
@@ -673,25 +643,13 @@
 		margin-top: auto;
 	}
 	
+	/* Layout only — accent pill look and disabled state come from app.css */
 	.submit-button {
 		width: 100%;
 		padding: 0.875rem;
 		margin-top: 1rem;
 		margin-bottom: 0.5rem;
-		border: none;
-		border-radius: 8px;
-		font-size: 1em;
-		font-weight: 600;
-		cursor: pointer;
-		background: var(--accent-color);
-		color: white;
-		transition: opacity 0.2s;
 		position: relative;
-	}
-	
-	.submit-button:disabled {
-		opacity: 0.5;
-		cursor: not-allowed;
 	}
 	
 	@media (max-width: 767px) {

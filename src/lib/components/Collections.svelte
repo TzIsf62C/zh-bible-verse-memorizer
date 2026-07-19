@@ -120,7 +120,7 @@
 	}
 </script>
 
-<div class="collections-container">
+<div class="collections-container panel">
 	<h2>{t('collections_title')}</h2>
 
 	{#if !selectedCollection}
@@ -149,7 +149,7 @@
 				</div>
 			{:else}
 				{#each displayCollections as collection, index (collection.id)}
-					<div class="collection-item">
+					<div class="collection-item card">
 						<div class="collection-title">
 							{collection.title}
 							{#if collection.isComputed}
@@ -160,12 +160,12 @@
 							</span>
 						</div>
 						<div class="collection-actions">
-							<button class="icon-btn" on:click={() => viewCollection(collection.id)}>
+							<button class="btn-icon" on:click={() => viewCollection(collection.id)}>
 								{t('view')}
 							</button>
 							{#if !collection.isComputed}
 								<button
-									class="icon-btn"
+									class="btn-icon"
 									on:click={() => moveCollectionUp(collection.id)}
 									disabled={index === 0}
 									title={t('move_up')}
@@ -173,7 +173,7 @@
 									▲
 								</button>
 								<button
-									class="icon-btn"
+									class="btn-icon"
 									on:click={() => moveCollectionDown(collection.id)}
 									disabled={index === displayCollections.length - 1}
 									title={t('move_down')}
@@ -181,14 +181,14 @@
 									▼
 								</button>
 								<button
-									class="icon-btn"
+									class="btn-icon"
 									on:click={() => renameCollection(collection)}
 									title={t('rename')}
 								>
 									✏️
 								</button>
 								<button
-									class="icon-btn danger"
+									class="btn-icon danger"
 									on:click={() => deleteCollection(collection.id)}
 									title={t('delete')}
 								>
@@ -218,8 +218,6 @@
 	.collections-container {
 		max-width: 100%;
 		margin: 0 auto;
-		padding: 1.5rem;
-		background: var(--app-background, #ffffff);
 	}
 
 	h2 {
@@ -245,34 +243,15 @@
 		flex-wrap: wrap;
 	}
 
+	/* Looks come from the shared input/button styles in app.css */
 	.create-collection-row input {
 		flex: 1;
 		min-width: 0;
-		padding: 0.75rem;
-		border: 1px solid var(--file-border);
-		background: var(--file-bg);
-		color: var(--text-color);
-		border-radius: 4px;
-		font-family: inherit;
-		font-size: 1em;
 	}
 
 	.create-collection-row button {
-		padding: 0.75rem 1.5rem;
-		border: none;
-		background: var(--accent-color);
-		color: white;
-		border-radius: 4px;
-		cursor: pointer;
-		font-size: 1em;
-		font-weight: 500;
-		transition: all 0.3s;
 		white-space: nowrap;
 		flex-shrink: 0;
-	}
-
-	.create-collection-row button:hover {
-		opacity: 0.9;
 	}
 
 	.collections-list {
@@ -281,15 +260,11 @@
 		gap: 0.75rem;
 	}
 
+	/* Layout only — container look comes from .card in app.css */
 	.collection-item {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		padding: 1rem;
-		background: var(--panel-background);
-		border: 1px solid var(--file-border);
-		border-radius: 8px;
-		transition: all 0.3s;
 		min-width: 0;
 		max-width: 100%;
 	}
@@ -334,31 +309,22 @@
 		max-width: 100%;
 	}
 
-	.icon-btn {
-		padding: 0.5rem 0.75rem;
-		border: 1px solid var(--file-border);
-		background: var(--nav-button-bg);
-		color: var(--nav-button-color);
-		border-radius: 4px;
-		cursor: pointer;
+	.btn-icon {
 		font-size: 0.9em;
-		transition: all 0.3s;
 	}
 
-	.icon-btn:hover:not(:disabled) {
+	.btn-icon:hover:not(:disabled) {
 		background: var(--accent-color);
 		color: white;
-		border-color: var(--accent-color);
+		opacity: 1;
 	}
 
-	.icon-btn:disabled {
+	.btn-icon:disabled {
 		opacity: 0.3;
-		cursor: not-allowed;
 	}
 
-	.icon-btn.danger:hover:not(:disabled) {
-		background: #dc3545;
-		border-color: #dc3545;
+	.btn-icon.danger:hover:not(:disabled) {
+		background: var(--danger-color);
 		color: white;
 	}
 
@@ -409,7 +375,7 @@
 			max-width: 100%;
 		}
 
-		.icon-btn {
+		.btn-icon {
 			min-width: 44px;
 		}
 	}

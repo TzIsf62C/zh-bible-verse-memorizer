@@ -527,24 +527,6 @@
 		text-align: center;
 	}
 	
-	.back-btn {
-		width: 2.5rem;
-		height: 2.5rem;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		border: none;
-		background: transparent;
-		color: var(--nav-button-color);
-		cursor: pointer;
-		border-radius: 50%;
-		transition: background 0.2s ease;
-	}
-	
-	.back-btn:hover {
-		background: var(--nav-button-bg);
-	}
-	
 	.back-btn svg {
 		width: 24px;
 		height: 24px;
@@ -769,9 +751,10 @@
 	
 	.heat-char {
 		padding: 0px 8px;
-		border-radius: 30px;
+		border-radius: 999px;
 		border: 2px solid transparent;
 		transition: all 0.2s ease;
+		/* Constant dark text: heat chip backgrounds are the same light palette in both themes */
 		color: #1b1b1f;
 	}
 	

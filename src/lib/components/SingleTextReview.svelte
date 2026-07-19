@@ -624,7 +624,7 @@
 
 <div class="single-text-review">
 	<div class="review-header">
-		<button class="exit-btn" on:click={exitReview} aria-label={t('exit')}>×</button>
+		<button class="back-btn exit-btn" on:click={exitReview} aria-label={t('exit')}>×</button>
 	</div>
 	
 	<div class="progress-bar">
@@ -678,14 +678,14 @@
 			class="visually-hidden-input"
 			value=""
 			on:input={(e) => { e.target.value = ''; console.log('[SingleTextReview] Input event blocked'); }}
-			on:keydown={(e) => { 
-				if (feedbackText) { 
-					console.log('[SingleTextReview] Keyboard disabled during feedback'); 
-					e.preventDefault(); 
-					return; 
+			on:keydown={(e) => {
+				if (feedbackText) {
+					console.log('[SingleTextReview] Keyboard disabled during feedback');
+					e.preventDefault();
+					return;
 				}
-				console.log('[SingleTextReview] Keydown event fired:', e.key); 
-				handlePhysicalKeyboard(e); 
+				console.log('[SingleTextReview] Keydown event fired:', e.key);
+				handlePhysicalKeyboard(e);
 			}}
 			on:focus={() => console.log('[SingleTextReview] Input focused')}
 			on:blur={() => console.log('[SingleTextReview] Input blurred')}
@@ -752,26 +752,8 @@
 	}
 
 	.exit-btn {
-		padding: 0.5rem;
-		width: 2.5rem;
-		height: 2.5rem;
-		border: none;
-		background: transparent;
-		color: #000;
-		cursor: pointer;
 		font-size: 1.5em;
 		font-weight: 300;
-		line-height: 1;
-		transition: opacity 0.2s;
-		opacity: 0.6;
-	}
-
-	.exit-btn:hover {
-		opacity: 1;
-	}
-
-	:global([data-theme='dark']) .exit-btn {
-		color: #fff;
 	}
 
 	.progress-bar {
@@ -854,19 +836,11 @@
 	}
 
 	.feedback.success {
-		color: #4caf50;
+		color: var(--success-color);
 	}
 
 	.feedback.error {
-		color: #f44336;
-	}
-
-	:global([data-theme='dark']) .feedback.success {
-		color: #81c784;
-	}
-
-	:global([data-theme='dark']) .feedback.error {
-		color: #ef5350;
+		color: var(--danger-color);
 	}
 
 	.visually-hidden-input {
@@ -882,18 +856,12 @@
 	.warning-message {
 		text-align: center;
 		padding: 0.75rem;
-		background: #fff3e0;
-		color: #e65100;
+		background: color-mix(in srgb, var(--warning-color) 15%, transparent);
+		color: var(--warning-color);
 		border-radius: 8px;
 		margin-bottom: 1rem;
 		font-size: 0.9em;
-		border: 1px solid #ff9800;
-	}
-
-	:global([data-theme='dark']) .warning-message {
-		background: #e65100;
-		color: #ffb74d;
-		border-color: #ffb74d;
+		border: 1px solid var(--warning-color);
 	}
 
 	.keyboard-space {
@@ -908,28 +876,28 @@
 	}
 
 	/* Character styling */
-	:global(.verse-character) {
+	.passage-display :global(.verse-character) {
 		display: inline;
 		transition: all 0.15s ease;
 	}
 
-	:global(.verse-character.correct) {
+	.passage-display :global(.verse-character.correct) {
 		color: var(--text-color);
 	}
 
-	:global(.verse-character.incorrect) {
-		color: #f44336;
-		background: rgba(244, 67, 54, 0.1);
+	.passage-display :global(.verse-character.incorrect) {
+		color: var(--danger-color);
+		background: color-mix(in srgb, var(--danger-color) 12%, transparent);
 		padding: 0 2px;
 		border-radius: 2px;
 	}
 
-	:global(.verse-character.hidden) {
+	.passage-display :global(.verse-character.hidden) {
 		opacity: 0;
 		pointer-events: none;
 	}
 
-	:global(.verse-character.punctuation) {
+	.passage-display :global(.verse-character.punctuation) {
 		color: var(--text-color);
 	}
 

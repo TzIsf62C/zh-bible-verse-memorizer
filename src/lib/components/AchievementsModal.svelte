@@ -514,24 +514,13 @@
 {/if}
 
 <style>
-	.modal-overlay {
-		position: fixed;
-		inset: 0;
-		background: rgba(0, 0, 0, 0.5);
-		display: flex;
-		justify-content: center;
-		align-items: center;
-		z-index: 1000;
-		padding: 1rem;
-	}
-
+	/* Shell comes from the shared modal classes; this dialog is wider */
 	.modal-content {
-		background: var(--panel-background);
-		border-radius: 12px;
-		width: min(760px, 100%);
+		max-width: 760px;
 		max-height: 80vh;
 		overflow: auto;
 		padding: 1rem;
+		text-align: left;
 	}
 
 	.header-row {
@@ -639,7 +628,7 @@
 		border: 1px solid var(--file-border);
 		background: var(--panel-background);
 		color: var(--text-color);
-		border-radius: 6px;
+		border-radius: 8px;
 		font-size: 0.85em;
 		line-height: 1;
 		padding: 0.2rem 0.45rem;

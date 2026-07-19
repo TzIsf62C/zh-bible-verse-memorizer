@@ -109,7 +109,7 @@
 	}
 
 	function getBackupReminderMessage() {
-		return `${t('backup_reminder_message')}<div style="margin-top: 16px; padding: 12px; background: var(--card-background); border-radius: 4px; font-size: 0.9em;"><p style="margin: 0 0 8px 0;"><strong>${t('backup_reminder_how')}</strong></p><p style="margin: 0;">${t('backup_reminder_steps')}</p></div>`;
+		return `${t('backup_reminder_message')}<div style="margin-top: 16px; padding: 12px; background: var(--file-bg); border-radius: 4px; font-size: 0.9em;"><p style="margin: 0 0 8px 0;"><strong>${t('backup_reminder_how')}</strong></p><p style="margin: 0;">${t('backup_reminder_steps')}</p></div>`;
 	}
 
 	function checkBackupReminder() {
@@ -321,14 +321,12 @@
 		<p class="subtitle">{t('app_subtitle')}</p>
 	</header>
 
-	{#key `${currentPanel}:${reviewBadgeCount}`}
-		<IconNav
-			currentPanel={currentPanel}
-			badges={{ review: reviewBadgeCount }}
-			onMenuClick={handleMenuClick}
-			on:navigate={(e) => switchPanel(e.detail)}
-		/>
-	{/key}
+	<IconNav
+		currentPanel={currentPanel}
+		badges={{ review: reviewBadgeCount }}
+		onMenuClick={handleMenuClick}
+		on:navigate={(e) => switchPanel(e.detail)}
+	/>
 
 	<MenuOverlay
 		bind:show={showMenu}

@@ -734,7 +734,7 @@
 	}
 
 	.tutorial-start-btn {
-		background: var(--card-background);
+		background: var(--file-bg);
 		color: var(--text-color);
 	}
 
@@ -758,8 +758,8 @@
 	.backup-card {
 		margin: 1rem 0;
 		padding: 0.75rem;
-		background: var(--card-background);
-		border-radius: 6px;
+		background: var(--file-bg);
+		border-radius: 8px;
 		font-size: 0.9em;
 	}
 
@@ -774,7 +774,7 @@
 	.tutorial-example {
 		margin: 1rem 0;
 		padding: 1rem;
-		background: var(--card-background);
+		background: var(--file-bg);
 		border-radius: 8px;
 		display: flex;
 		justify-content: center;
@@ -836,7 +836,7 @@
 	.tutorial-stages-list {
 		margin: 1rem 0;
 		text-align: left;
-		background: var(--card-background);
+		background: var(--file-bg);
 		border-radius: 8px;
 		padding: 1rem;
 	}
