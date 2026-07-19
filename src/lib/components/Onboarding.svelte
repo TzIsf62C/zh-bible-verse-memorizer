@@ -1,6 +1,7 @@
 <script>
 	import { createEventDispatcher, onDestroy, tick } from 'svelte';
 	import { browser } from '$app/environment';
+	import { base } from '$app/paths';
 	import { settings } from '$lib/stores/settings';
 	import { verses } from '$lib/stores/verses';
 	import { collections } from '$lib/stores/collections';
@@ -132,7 +133,7 @@
 		const fileName = getSampleFileName(inputMethod, charset);
 		if (!fileName) return;
 
-		const response = await fetch(`/samples/${fileName}`);
+		const response = await fetch(`${base}/samples/${fileName}`);
 		if (!response.ok) {
 			throw new Error('Failed to load sample data');
 		}
@@ -403,7 +404,7 @@
 	<div class="onboarding-card" role="dialog" aria-modal="true">
 		{#if currentStep === STEPS.language}
 			<div class="modal-step">
-				<img src="/icons/icon-192x192.png" alt="App Icon" class="app-icon" />
+				<img src={`${base}/icons/icon-192x192.png`} alt="App Icon" class="app-icon" />
 				<div class="app-intro">
 					<div class="app-title">ZH Bible Verse Memorizer</div>
 					<div class="app-subtitle">聖經經文背誦 V1.0</div>
