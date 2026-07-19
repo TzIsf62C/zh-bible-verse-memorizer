@@ -73,6 +73,22 @@
 	let bookCaretVisible = false;
 	let bookCaretOffset = 0;
 	let bookCaretPaddingLeft = 12;
+	const DRAG_EDGE_ZONE_PX = 28;
+	const DRAG_HYSTERESIS_PX = 6;
+	const DRAG_MAX_SCROLL_STEP_PX = 18;
+	let fieldDragState = {
+		isDragging: false,
+		pointerId: null,
+		startClientX: 0,
+		startScrollLeft: 0,
+		latestClientX: 0,
+		activeField: null,
+		didScroll: false,
+		hasMovedEnough: false,
+		targetEl: null,
+		rafId: null,
+		suppressClickField: null
+	};
 
 	// Track original values for edit mode change detection
 	let originalFormState = null;
@@ -188,6 +204,11 @@
 	}
 
 	function handleVerseInitialsClick(event) {
+		if (fieldDragState.suppressClickField === 'verse') {
+			fieldDragState = { ...fieldDragState, suppressClickField: null };
+			return;
+		}
+
 		activeInput = event?.currentTarget || null;
 		if (activeInput && typeof event?.clientX === 'number') {
 			verseCursorPos = getCursorPositionFromClick(activeInput, event.clientX, verseInitials);
@@ -202,6 +223,11 @@
 	}
 
 	function handleBookInitialsClick(event) {
+		if (fieldDragState.suppressClickField === 'book') {
+			fieldDragState = { ...fieldDragState, suppressClickField: null };
+			return;
+		}
+
 		activeInput = event?.currentTarget || null;
 		if (activeInput && typeof event?.clientX === 'number') {
 			bookCursorPos = getCursorPositionFromClick(activeInput, event.clientX, bookInitials);
@@ -234,18 +260,23 @@
 	function setCursorPosition(inputEl, cursorPos, keepEndVisible = false) {
 		if (!inputEl) return;
 		setTimeout(() => {
-			inputEl.focus();
-			inputEl.setSelectionRange(cursorPos, cursorPos);
-			if (keepEndVisible) {
-				scrollCursorIntoView(inputEl, cursorPos);
-			}
-			if (inputEl === verseInitialsInputEl) {
-				updateVerseCaret();
-			}
-			if (inputEl === bookInitialsInputEl) {
-				updateBookCaret();
-			}
+			applyNativeCursorPosition(inputEl, cursorPos, keepEndVisible);
 		}, 0);
+	}
+
+	function applyNativeCursorPosition(inputEl, cursorPos, keepEndVisible = false) {
+		if (!inputEl) return;
+		inputEl.focus();
+		inputEl.setSelectionRange(cursorPos, cursorPos);
+		if (keepEndVisible) {
+			scrollCursorIntoView(inputEl, cursorPos);
+		}
+		if (inputEl === verseInitialsInputEl) {
+			updateVerseCaret();
+		}
+		if (inputEl === bookInitialsInputEl) {
+			updateBookCaret();
+		}
 	}
 
 	function measureTextWidth(inputEl, value) {
@@ -310,6 +341,249 @@
 		} else if (cursorX > right - edgePadding) {
 			inputEl.scrollLeft = Math.max(0, cursorX - inputEl.clientWidth + edgePadding);
 		}
+	}
+
+	function getFieldInputEl(field) {
+		return field === 'verse' ? verseInitialsInputEl : bookInitialsInputEl;
+	}
+
+	function getFieldValue(field) {
+		return field === 'verse' ? verseInitials : bookInitials;
+	}
+
+	function getFieldCursorPos(field) {
+		return field === 'verse' ? verseCursorPos : bookCursorPos;
+	}
+
+	function setFieldCursorPos(field, cursorPos) {
+		if (field === 'verse') {
+			verseCursorPos = cursorPos;
+		} else {
+			bookCursorPos = cursorPos;
+		}
+	}
+
+	function updateFieldCaret(field) {
+		if (field === 'verse') {
+			updateVerseCaret();
+		} else {
+			updateBookCaret();
+		}
+	}
+
+	function activateInitialsField(field, inputEl) {
+		activeInput = inputEl;
+		keyboardInput = getFieldValue(field);
+		showKeyboard = field;
+		scrollFieldAboveKeyboard(inputEl);
+	}
+
+	function setFieldCursorFromPointer(field, inputEl, clientX, keepEndVisible = false) {
+		if (!inputEl) return;
+		const value = getFieldValue(field);
+		const cursorPos = typeof clientX === 'number'
+			? getCursorPositionFromClick(inputEl, clientX, value)
+			: inputEl.selectionStart ?? value.length;
+		setFieldCursorPos(field, cursorPos);
+		keyboardInput = value;
+		applyNativeCursorPosition(inputEl, cursorPos, keepEndVisible);
+	}
+
+	function stopFieldDragLoop() {
+		if (fieldDragState.rafId !== null) {
+			cancelAnimationFrame(fieldDragState.rafId);
+		}
+		fieldDragState = { ...fieldDragState, rafId: null };
+	}
+
+	function isPointerInEdgeZone(inputEl, clientX) {
+		if (!inputEl) return false;
+		const rect = inputEl.getBoundingClientRect();
+		const localX = clientX - rect.left;
+		return localX <= DRAG_EDGE_ZONE_PX || localX >= rect.width - DRAG_EDGE_ZONE_PX;
+	}
+
+	function handleEdgeScroll(inputEl, clientX) {
+		if (!inputEl) return false;
+		const maxScrollLeft = Math.max(0, inputEl.scrollWidth - inputEl.clientWidth);
+		if (maxScrollLeft <= 0) return false;
+
+		const rect = inputEl.getBoundingClientRect();
+		const localX = clientX - rect.left;
+		let delta = 0;
+
+		if (localX <= DRAG_EDGE_ZONE_PX) {
+			const intensity = Math.min(1, Math.max(0, DRAG_EDGE_ZONE_PX - localX) / DRAG_EDGE_ZONE_PX);
+			delta = -Math.max(1, intensity * DRAG_MAX_SCROLL_STEP_PX);
+		} else if (localX >= rect.width - DRAG_EDGE_ZONE_PX) {
+			const distanceIntoZone = localX - (rect.width - DRAG_EDGE_ZONE_PX);
+			const intensity = Math.min(1, Math.max(0, distanceIntoZone) / DRAG_EDGE_ZONE_PX);
+			delta = Math.max(1, intensity * DRAG_MAX_SCROLL_STEP_PX);
+		}
+
+		if (!delta) return false;
+
+		const nextScrollLeft = Math.max(0, Math.min(maxScrollLeft, inputEl.scrollLeft + delta));
+		if (nextScrollLeft === inputEl.scrollLeft) return false;
+
+		inputEl.scrollLeft = nextScrollLeft;
+		return true;
+	}
+
+	function stepFieldDragScroll() {
+		if (!fieldDragState.isDragging || !fieldDragState.targetEl || fieldDragState.activeField === null) {
+			stopFieldDragLoop();
+			return;
+		}
+
+		const scrolled = handleEdgeScroll(fieldDragState.targetEl, fieldDragState.latestClientX);
+		if (scrolled) {
+			fieldDragState = { ...fieldDragState, didScroll: true };
+			applyNativeCursorPosition(
+				fieldDragState.targetEl,
+				getFieldCursorPos(fieldDragState.activeField),
+				false
+			);
+		} else {
+			updateFieldCaret(fieldDragState.activeField);
+		}
+
+		if (isPointerInEdgeZone(fieldDragState.targetEl, fieldDragState.latestClientX)) {
+			fieldDragState = {
+				...fieldDragState,
+				rafId: requestAnimationFrame(stepFieldDragScroll)
+			};
+		} else {
+			stopFieldDragLoop();
+		}
+	}
+
+	function ensureFieldDragLoop() {
+		if (fieldDragState.rafId !== null || !fieldDragState.targetEl) return;
+		if (!isPointerInEdgeZone(fieldDragState.targetEl, fieldDragState.latestClientX)) return;
+		fieldDragState = {
+			...fieldDragState,
+			rafId: requestAnimationFrame(stepFieldDragScroll)
+		};
+	}
+
+	function beginFieldDrag(field, event) {
+		const inputEl = event?.currentTarget;
+		if (!inputEl) return;
+
+		activateInitialsField(field, inputEl);
+		setFieldCursorFromPointer(field, inputEl, event.clientX, false);
+
+		if (typeof inputEl.setPointerCapture === 'function') {
+			inputEl.setPointerCapture(event.pointerId);
+		}
+
+		fieldDragState = {
+			...fieldDragState,
+			isDragging: true,
+			pointerId: event.pointerId,
+			startClientX: event.clientX,
+			startScrollLeft: inputEl.scrollLeft,
+			latestClientX: event.clientX,
+			activeField: field,
+			didScroll: false,
+			hasMovedEnough: false,
+			targetEl: inputEl,
+			suppressClickField: field
+		};
+	}
+
+	function updateFieldDrag(event) {
+		if (!fieldDragState.isDragging || fieldDragState.pointerId !== event.pointerId) return;
+
+		const nextHasMovedEnough =
+			fieldDragState.hasMovedEnough ||
+			Math.abs(event.clientX - fieldDragState.startClientX) >= DRAG_HYSTERESIS_PX;
+
+		fieldDragState = {
+			...fieldDragState,
+			latestClientX: event.clientX,
+			hasMovedEnough: nextHasMovedEnough
+		};
+
+		if (!nextHasMovedEnough) {
+			return;
+		}
+
+		ensureFieldDragLoop();
+		if (fieldDragState.didScroll || isPointerInEdgeZone(fieldDragState.targetEl, event.clientX)) {
+			event.preventDefault();
+		}
+	}
+
+	function endFieldDrag(event = null) {
+		if (!fieldDragState.isDragging) return;
+
+		stopFieldDragLoop();
+		const {
+			pointerId,
+			activeField,
+			didScroll,
+			targetEl,
+			hasMovedEnough
+		} = fieldDragState;
+
+		if (event && pointerId !== null && event.pointerId !== pointerId) {
+			return;
+		}
+
+		if (
+			targetEl &&
+			typeof targetEl.releasePointerCapture === 'function' &&
+			pointerId !== null &&
+			targetEl.hasPointerCapture?.(pointerId)
+		) {
+			targetEl.releasePointerCapture(pointerId);
+		}
+
+		if (activeField !== null && targetEl) {
+			if (!didScroll) {
+				setFieldCursorFromPointer(activeField, targetEl, event?.clientX, false);
+			} else {
+				applyNativeCursorPosition(targetEl, getFieldCursorPos(activeField), false);
+			}
+			updateFieldCaret(activeField);
+		}
+
+		fieldDragState = {
+			...fieldDragState,
+			isDragging: false,
+			pointerId: null,
+			startClientX: 0,
+			startScrollLeft: 0,
+			latestClientX: 0,
+			activeField: null,
+			didScroll: false,
+			hasMovedEnough: false,
+			targetEl: null,
+			rafId: null,
+			suppressClickField: didScroll || hasMovedEnough ? activeField : null
+		};
+	}
+
+	function handleVersePointerDown(event) {
+		beginFieldDrag('verse', event);
+	}
+
+	function handleBookPointerDown(event) {
+		beginFieldDrag('book', event);
+	}
+
+	function handleDocumentPointerMove(event) {
+		updateFieldDrag(event);
+	}
+
+	function handleDocumentPointerUp(event) {
+		endFieldDrag(event);
+	}
+
+	function handleDocumentPointerCancel(event) {
+		endFieldDrag(event);
 	}
 
 	function updateVerseCaret() {
@@ -1106,6 +1380,7 @@
 	});
 
 	onDestroy(() => {
+		stopFieldDragLoop();
 		if (typeof window !== 'undefined') {
 			window.removeEventListener('resize', handleResize);
 			window.removeEventListener('click', handleClickOutside, true);
@@ -1113,7 +1388,12 @@
 	});
 </script>
 
-<svelte:document on:keydown={handlePhysicalKey} />
+<svelte:document
+	on:keydown={handlePhysicalKey}
+	on:pointermove={handleDocumentPointerMove}
+	on:pointerup={handleDocumentPointerUp}
+	on:pointercancel={handleDocumentPointerCancel}
+/>
 
 <span class="visually-hidden" aria-hidden="true">{$settings.languagePreference}</span>
 
@@ -1260,6 +1540,7 @@
 							bind:value={verseInitials}
 							bind:this={verseInitialsInputEl}
 							readonly
+							on:pointerdown={handleVersePointerDown}
 							on:mouseup={(e) => {
 								verseCursorPos = e.currentTarget.selectionStart ?? verseInitials.length;
 								updateVerseCaret();
@@ -1291,6 +1572,7 @@
 							bind:value={verseInitials}
 							bind:this={verseInitialsInputEl}
 							readonly
+							on:pointerdown={handleVersePointerDown}
 							on:mouseup={(e) => {
 								verseCursorPos = e.currentTarget.selectionStart ?? verseInitials.length;
 								updateVerseCaret();
@@ -1322,6 +1604,7 @@
 							bind:value={verseInitials}
 							bind:this={verseInitialsInputEl}
 							readonly
+							on:pointerdown={handleVersePointerDown}
 							on:mouseup={(e) => {
 								verseCursorPos = e.currentTarget.selectionStart ?? verseInitials.length;
 								updateVerseCaret();
@@ -1355,6 +1638,7 @@
 							bind:value={bookInitials}
 							bind:this={bookInitialsInputEl}
 							readonly
+							on:pointerdown={handleBookPointerDown}
 							on:mouseup={(e) => {
 								bookCursorPos = e.currentTarget.selectionStart ?? bookInitials.length;
 								updateBookCaret();
@@ -1385,6 +1669,7 @@
 							bind:value={bookInitials}
 							bind:this={bookInitialsInputEl}
 							readonly
+							on:pointerdown={handleBookPointerDown}
 							on:mouseup={(e) => {
 								bookCursorPos = e.currentTarget.selectionStart ?? bookInitials.length;
 								updateBookCaret();
@@ -1415,6 +1700,7 @@
 							bind:value={bookInitials}
 							bind:this={bookInitialsInputEl}
 							readonly
+							on:pointerdown={handleBookPointerDown}
 							on:mouseup={(e) => {
 								bookCursorPos = e.currentTarget.selectionStart ?? bookInitials.length;
 								updateBookCaret();
@@ -2024,6 +2310,7 @@
 		cursor: text;
 		caret-color: transparent;
 		letter-spacing: 0.1em;
+		touch-action: pan-y;
 	}
 
 	.initials-input-shell {
