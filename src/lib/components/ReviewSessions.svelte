@@ -1,5 +1,6 @@
 <script>
 	import { createEventDispatcher } from 'svelte';
+	import { browser, dev } from '$app/environment';
 	import { verses } from '$lib/stores/verses';
 	import { collections } from '$lib/stores/collections';
 	import { settings } from '$lib/stores/settings';
@@ -110,6 +111,16 @@
 		if (!v.dueDate) return true;
 		return new Date(v.dueDate) <= new Date();
 	});
+
+	$: if (dev && browser) {
+		console.debug('[ReviewSessions] dueVerses recalculated', {
+			dueCount: dueVerses.length,
+			learnedCount: learnedVerses.length,
+			totalVerses: $verses.length,
+			isoNow: new Date().toISOString(),
+			state
+		});
+	}
 
 	// Helper functions
 	function sortByDueDate(verses) {
@@ -292,6 +303,13 @@
 	}
 
 	function handleReviewedVerse() {
+		if (dev && browser) {
+			console.debug('[ReviewSessions] handleReviewedVerse dispatch reviewupdated', {
+				isoNow: new Date().toISOString(),
+				state,
+				dueCount: dueVerses.length
+			});
+		}
 		dispatch('reviewupdated');
 		registerStreakActivity('review');
 	}

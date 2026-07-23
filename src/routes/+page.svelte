@@ -1,10 +1,9 @@
 <script>
 	import { onDestroy, onMount } from 'svelte';
-	import { browser } from '$app/environment';
+	import { browser, dev } from '$app/environment';
 	import { settings } from '$lib/stores/settings';
 	import { verses } from '$lib/stores/verses';
 	import { collections } from '$lib/stores/collections';
-	import { STORE_SYNC_EVENT } from '$lib/stores/localStorage.js';
 	import { keyboardLayouts } from '$lib/utils/keyboardLayouts.js';
 	import { zhuyinKeyMap, cangjieKeyMap } from '$lib/utils/inputMaps.js';
 	import Keyboard from '$lib/components/Keyboard.svelte';
@@ -38,55 +37,65 @@
 	let keyboardLayout = keyboardLayouts.pinyin;
 	let removeListener = () => {};
 	let reviewBadgeCount = 0;
-	let lastKnownVersesSnapshot = '';
+	let dueNowTimestamp = Date.now();
 	let showBackupReminder = false;
 	let tutorialOnlyMode = false;
 
 	$: keyboardLayout = keyboardLayouts[$settings.inputMethod] || keyboardLayouts.pinyin;
 
-	function countDueReviewVerses(verseList) {
-		return verseList.filter((verse) => {
-			if (!verse.lastReviewed) return false;
-			if (!verse.dueDate) return true;
-			return new Date(verse.dueDate) <= new Date();
-		}).length;
+	function debugReviewBadge(message, payload = {}) {
+		if (!dev || !browser) return;
+		console.debug('[ReviewBadge]', message, payload);
 	}
 
-	function refreshReviewBadgeCount(verseList = null) {
-		if (Array.isArray(verseList)) {
-			lastKnownVersesSnapshot = JSON.stringify(verseList);
-			reviewBadgeCount = countDueReviewVerses(verseList);
-			return;
-		}
-
-		if (!browser) {
-			return;
-		}
-
-		try {
-			const rawVerses = localStorage.getItem('verses') || '[]';
-			lastKnownVersesSnapshot = rawVerses;
-			const storedVerses = JSON.parse(rawVerses);
-			reviewBadgeCount = countDueReviewVerses(storedVerses);
-		} catch {
-			reviewBadgeCount = countDueReviewVerses($verses);
-		}
+	function isVerseDue(verse, now = new Date()) {
+		if (!verse.lastReviewed) return false;
+		if (!verse.dueDate) return true;
+		return new Date(verse.dueDate) <= now;
 	}
 
-	function syncReviewBadgeFromStorage() {
-		if (!browser) {
-			return;
-		}
-
-		const rawVerses = localStorage.getItem('verses') || '[]';
-		if (rawVerses === lastKnownVersesSnapshot) {
-			return;
-		}
-
-		refreshReviewBadgeCount();
+	function refreshDueNowTimestamp() {
+		dueNowTimestamp = Date.now();
+		debugReviewBadge('refreshDueNowTimestamp', {
+			dueNowTimestamp,
+			isoNow: new Date(dueNowTimestamp).toISOString()
+		});
 	}
 
-	$: reviewBadgeCount = countDueReviewVerses($verses);
+	function handleImportedData() {
+		debugReviewBadge('imported event received', {
+			versesTotal: $verses.length,
+			reviewedVerses: $verses.filter((verse) => Boolean(verse.lastReviewed)).length,
+			previewDueCount: $verses.filter((verse) => isVerseDue(verse, new Date(dueNowTimestamp))).length
+		});
+		refreshDueNowTimestamp();
+		queueMicrotask(() => {
+			debugReviewBadge('imported microtask snapshot', {
+				versesTotal: $verses.length,
+				reviewedVerses: $verses.filter((verse) => Boolean(verse.lastReviewed)).length,
+				previewDueCount: $verses.filter((verse) => isVerseDue(verse, new Date(dueNowTimestamp))).length
+			});
+		});
+		window.setTimeout(() => {
+			debugReviewBadge('imported timeout snapshot', {
+				versesTotal: $verses.length,
+				reviewedVerses: $verses.filter((verse) => Boolean(verse.lastReviewed)).length,
+				previewDueCount: $verses.filter((verse) => isVerseDue(verse, new Date(dueNowTimestamp))).length
+			});
+		}, 0);
+	}
+
+	$: reviewBadgeCount = $verses.filter((verse) => isVerseDue(verse, new Date(dueNowTimestamp))).length;
+	$: if (dev && browser) {
+		debugReviewBadge('reactive badge recompute', {
+			reviewBadgeCount,
+			versesTotal: $verses.length,
+			reviewedVerses: $verses.filter((verse) => Boolean(verse.lastReviewed)).length,
+			dueNowTimestamp,
+			isoNow: new Date(dueNowTimestamp).toISOString(),
+			panel: currentPanel
+		});
+	}
 
 	function scrollToTop() {
 		if (!browser) return;
@@ -195,6 +204,7 @@
 	}
 
 	function switchPanel(panelId) {
+		debugReviewBadge('switchPanel', { from: currentPanel, to: panelId });
 		if (panelId !== 'heat-maps') {
 			heatMapsSource = null;
 		}
@@ -277,35 +287,41 @@
 
 	onMount(() => {
 		if (!browser) return;
+		debugReviewBadge('onMount start', {
+			versesTotal: $verses.length,
+			reviewedVerses: $verses.filter((verse) => Boolean(verse.lastReviewed)).length
+		});
 		initializeDailyStreakOnOpen();
 		initializeAchievementsTracking();
 		initializeProgressTracking();
 		settings.update((value) => value);
-		refreshReviewBadgeCount();
+		refreshDueNowTimestamp();
 
-		const handleStoreSync = (event) => {
-			if (event.detail?.key !== 'verses') {
-				return;
+		const handleVisibilityChange = () => {
+			debugReviewBadge('visibilitychange', { hidden: document.hidden });
+			if (!document.hidden) {
+				refreshDueNowTimestamp();
 			}
-
-			refreshReviewBadgeCount(event.detail.value || []);
 		};
 
 		window.addEventListener('keydown', handlePhysicalKey);
-		window.addEventListener(STORE_SYNC_EVENT, handleStoreSync);
-		const badgePollId = window.setInterval(syncReviewBadgeFromStorage, 250);
+		document.addEventListener('visibilitychange', handleVisibilityChange);
+		const badgeTickId = window.setInterval(refreshDueNowTimestamp, 30000);
+		debugReviewBadge('badge tick interval registered', { intervalMs: 30000 });
 		const backupReminderTimer = window.setTimeout(() => {
 			checkBackupReminder();
 		}, 350);
 		removeListener = () => {
+			debugReviewBadge('removeListener cleanup');
 			window.removeEventListener('keydown', handlePhysicalKey);
-			window.removeEventListener(STORE_SYNC_EVENT, handleStoreSync);
-			window.clearInterval(badgePollId);
+			document.removeEventListener('visibilitychange', handleVisibilityChange);
+			window.clearInterval(badgeTickId);
 			window.clearTimeout(backupReminderTimer);
 		};
 	});
 
 	onDestroy(() => {
+		debugReviewBadge('onDestroy');
 		removeListener();
 	});
 </script>
@@ -323,7 +339,7 @@
 
 	<IconNav
 		currentPanel={currentPanel}
-		badges={{ review: reviewBadgeCount }}
+		reviewBadge={reviewBadgeCount}
 		onMenuClick={handleMenuClick}
 		on:navigate={(e) => switchPanel(e.detail)}
 	/>
@@ -344,7 +360,7 @@
 	{#if currentPanel === 'learn'}
 		<LearningFlow />
 	{:else if currentPanel === 'review'}
-		<ReviewSessions on:reviewupdated={() => refreshReviewBadgeCount()} />
+		<ReviewSessions />
 	{:else if currentPanel === 'add'}
 		<AddVerseForm />
 	{:else if currentPanel === 'collections'}
@@ -357,7 +373,7 @@
 		{/key}
 	{:else if currentPanel === 'data'}
 		{#key $settings.languagePreference}
-			<ExportImport on:imported={() => refreshReviewBadgeCount()} />
+			<ExportImport on:imported={handleImportedData} />
 		{/key}
 	{:else if currentPanel === 'stats'}
 		{#key $settings.languagePreference}

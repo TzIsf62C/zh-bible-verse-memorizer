@@ -1,11 +1,12 @@
 <script>
-	import { createEventDispatcher } from 'svelte';
+	import { createEventDispatcher, afterUpdate } from 'svelte';
+	import { browser, dev } from '$app/environment';
 	import { t } from '$lib/i18n/index.js';
 	import { icons } from '$lib/utils/icons.js';
 	
 	export let currentPanel = '';
 	export let onMenuClick = () => {};
-	export let badges = {}; // Object with nav item IDs as keys and badge counts as values
+	export let reviewBadge = 0;
 	
 	const dispatch = createEventDispatcher();
 	
@@ -25,11 +26,24 @@
 			dispatch('navigate', item.id);
 		}
 	}
-	
-	// Get badge count for a nav item
-	function getBadgeCount(itemId) {
-		return badges[itemId] || 0;
+
+	$: if (dev && browser) {
+		console.debug('[IconNav] badges updated', {
+			reviewBadge
+		});
 	}
+
+	afterUpdate(() => {
+		if (!dev || !browser) return;
+		const navButtons = document.querySelectorAll('.icon-nav-item');
+		const reviewButton = navButtons[4];
+		const reviewBadgeEl = reviewButton?.querySelector('.nav-badge');
+		console.debug('[IconNav] afterUpdate rendered review badge', {
+				expectedReviewBadge: reviewBadge,
+			renderedBadgeText: reviewBadgeEl ? reviewBadgeEl.textContent?.trim() : null,
+			hasBadgeElement: Boolean(reviewBadgeEl)
+		});
+	});
 	
 </script>
 
@@ -53,8 +67,10 @@
 				>
 					{@html icons[item.icon]}
 				</svg>
-				{#if getBadgeCount(item.id) > 0}
-					<span class="nav-badge">{getBadgeCount(item.id)}</span>
+				{#if item.id === 'review' && reviewBadge > 0}
+					{#key reviewBadge}
+						<span class="nav-badge">{reviewBadge}</span>
+					{/key}
 				{/if}
 			</div>
 		</button>
