@@ -563,8 +563,6 @@
 						</button>
 					</div>
 				</div>
-				<p class="feedback-help-text">{t('feedback_send_help')}</p>
-				<p class="feedback-help-text feedback-help-fallback">{t('feedback_send_fallback')}</p>
 				{#if feedbackCopied}
 					<p class="feedback-toast" role="status">{t('feedback_copied_toast')}</p>
 				{/if}
