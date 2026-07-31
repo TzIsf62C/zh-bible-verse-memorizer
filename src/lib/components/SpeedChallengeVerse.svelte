@@ -620,7 +620,7 @@
 		z-index: 1002;
 		background: var(--panel-background);
 		border: 1px solid var(--file-border);
-		border-radius: 999px;
+		border-radius: 8px;
 		padding: 0.45rem 0.95rem;
 		font-size: 0.9em;
 		cursor: pointer;

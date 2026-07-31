@@ -289,7 +289,7 @@
 		font-size: 0.75em;
 		font-weight: 600;
 		padding: 0.15rem 0.45rem;
-		border-radius: 999px;
+		border-radius: 8px;
 		background: color-mix(in srgb, var(--accent-color) 16%, transparent);
 		color: var(--accent-color);
 	}

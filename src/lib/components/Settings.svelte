@@ -773,7 +773,7 @@
 		align-items: center;
 		justify-content: center;
 		padding: 0.4rem 0.9rem;
-		border-radius: 999px;
+		border-radius: 8px;
 		font-size: 0.85em;
 		font-weight: 500;
 		text-decoration: none;
