@@ -2489,6 +2489,7 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
+		gap: 0.5rem;
 		padding: 1rem;
 		background: var(--file-bg);
 		cursor: pointer;
@@ -2515,6 +2516,8 @@
 	}
 
 	.toggle-icon {
+		min-width: 1.2em;
+		text-align: center;
 		color: var(--subtitle-color);
 		transition: transform 0.2s ease;
 	}
