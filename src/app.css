@@ -225,7 +225,7 @@ button {
 	background: var(--accent-color);
 	color: #fff;
 	padding: 0.7rem 1.5rem;
-	border-radius: 999px;
+	border-radius: 8px;
 	font-weight: 600;
 	cursor: pointer;
 	font-size: inherit;
