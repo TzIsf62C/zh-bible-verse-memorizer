@@ -1,5 +1,5 @@
 <script>
-	import { createEventDispatcher } from 'svelte';
+	import { createEventDispatcher, onDestroy } from 'svelte';
 	import { settings } from '$lib/stores/settings';
 	import { t } from '$lib/i18n';
 	import { browser } from '$app/environment';
@@ -16,6 +16,8 @@
 	let modalMessage = '';
 	let modalType = 'alert';
 	let confirmAction = null;
+	let feedbackCopied = false;
+	let feedbackCopyTimeout = null;
 	
 	function updateSetting(key, value) {
 		console.log('[Settings] Update', { key, value });
@@ -147,6 +149,74 @@
 		modalType = 'alert';
 		confirmAction = null;
 	}
+
+	function getFeedbackEmail() {
+		return t('feedback_email_value');
+	}
+
+	function getFeedbackSubject() {
+		return t('feedback_default_subject', {
+			appSubtitle: t('app_subtitle')
+		});
+	}
+
+	function getFeedbackMailtoHref() {
+		const email = getFeedbackEmail();
+		const rawSubject = getFeedbackSubject();
+		const subject = encodeURIComponent(rawSubject);
+		return `mailto:${email}?subject=${subject}`;
+	}
+
+	function sendFeedbackEmail() {
+		if (!browser) {
+			return;
+		}
+	}
+
+	async function copyFeedbackEmail() {
+		const email = getFeedbackEmail();
+
+		if (!browser) {
+			return;
+		}
+
+		try {
+			if (navigator.clipboard?.writeText) {
+				await navigator.clipboard.writeText(email);
+			} else {
+				const tempInput = document.createElement('input');
+				tempInput.value = email;
+				document.body.appendChild(tempInput);
+				tempInput.select();
+				const copied = document.execCommand('copy');
+				document.body.removeChild(tempInput);
+
+				if (!copied) {
+					throw new Error('Clipboard copy failed');
+				}
+			}
+
+			feedbackCopied = true;
+			if (feedbackCopyTimeout) {
+				clearTimeout(feedbackCopyTimeout);
+			}
+
+			feedbackCopyTimeout = setTimeout(() => {
+				feedbackCopied = false;
+			}, 2000);
+		} catch (error) {
+			console.error('Error copying feedback email:', error);
+			modalMessage = getFeedbackEmail();
+			modalType = 'alert';
+			showModal = true;
+		}
+	}
+
+	onDestroy(() => {
+		if (feedbackCopyTimeout) {
+			clearTimeout(feedbackCopyTimeout);
+		}
+	});
 	
 	// Check for updates silently on mount (once per week)
 	if (browser) {
@@ -473,6 +543,34 @@
 			</button>
 		</div>
 	</div>
+
+	<div class="settings-section feedback-section">
+		<div class="setting-group">
+			<h3 class="feedback-heading">{t('feedback_section_title')}</h3>
+			<p class="help-text feedback-intro">{t('feedback_section_intro')}</p>
+			<div class="feedback-card card">
+				<div class="feedback-email-row">
+					<div>
+						<p class="feedback-label">{t('feedback_email_label')}</p>
+						<a class="feedback-email-link" href={getFeedbackMailtoHref()}>{t('feedback_email_value')}</a>
+					</div>
+					<div class="feedback-actions">
+						<a class="feedback-send-link btn-secondary btn-sm" href={getFeedbackMailtoHref()} on:click={sendFeedbackEmail}>
+							{t('feedback_send_button')}
+						</a>
+						<button class="btn-outline btn-sm" on:click={copyFeedbackEmail}>
+							{t('feedback_copy_button')}
+						</button>
+					</div>
+				</div>
+				<p class="feedback-help-text">{t('feedback_send_help')}</p>
+				<p class="feedback-help-text feedback-help-fallback">{t('feedback_send_fallback')}</p>
+				{#if feedbackCopied}
+					<p class="feedback-toast" role="status">{t('feedback_copied_toast')}</p>
+				{/if}
+			</div>
+		</div>
+	</div>
 	
 	<div class="app-info">
 		<p>ZH Bible Verse Memorizer PWA</p>
@@ -619,6 +717,96 @@
 	.update-status.error {
 		color: var(--danger-color);
 	}
+
+	.feedback-section {
+		padding-bottom: 1.5rem;
+	}
+
+	.feedback-heading {
+		margin: 0;
+		font-size: 1em;
+		font-weight: 500;
+		color: var(--text-color);
+	}
+
+	.feedback-intro {
+		margin-bottom: 1rem;
+	}
+
+	.feedback-card {
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+	}
+
+	.feedback-email-row {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+		flex-wrap: wrap;
+	}
+
+	.feedback-label {
+		margin: 0 0 0.35rem 0;
+		font-size: 0.85em;
+		color: var(--subtitle-color);
+	}
+
+	.feedback-email-link {
+		color: var(--accent-color);
+		font-weight: 500;
+		text-decoration: none;
+		word-break: break-word;
+	}
+
+	.feedback-email-link:hover {
+		text-decoration: underline;
+	}
+
+	.feedback-actions {
+		display: flex;
+		gap: 0.5rem;
+		flex-wrap: wrap;
+	}
+
+	.feedback-send-link {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		padding: 0.4rem 0.9rem;
+		border-radius: 999px;
+		font-size: 0.85em;
+		font-weight: 500;
+		text-decoration: none;
+		transition: opacity 0.2s ease, background 0.2s ease, transform 0.15s ease;
+	}
+
+	.feedback-send-link:hover {
+		opacity: 0.92;
+	}
+
+	.feedback-send-link:active {
+		transform: scale(0.95);
+		transition-duration: 75ms;
+	}
+
+	.feedback-toast {
+		margin: 0;
+		font-size: 0.85em;
+		color: var(--success-color);
+	}
+
+	.feedback-help-text {
+		margin: 0;
+		font-size: 0.85em;
+		color: var(--subtitle-color);
+		line-height: 1.4;
+	}
+
+	.feedback-help-fallback {
+		margin-top: -0.25rem;
+	}
 	
 	.app-info {
 		text-align: center;
@@ -631,5 +819,16 @@
 	
 	.app-info p {
 		margin: 0.25em 0;
+	}
+
+	@media (max-width: 767px) {
+		.feedback-actions {
+			width: 100%;
+		}
+
+		.feedback-actions :global(button),
+		.feedback-send-link {
+			flex: 1;
+		}
 	}
 </style>
