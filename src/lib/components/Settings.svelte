@@ -342,6 +342,7 @@
 	
 	<div class="settings-section">
 		<div class="setting-group">
+			<label>{t('needs_practice_collection_settings')}</label>
 			<label for="needsPracticeIncludeBelow">{t('needs_practice_include_below_label')}</label>
 			<input
 				id="needsPracticeIncludeBelow"
