@@ -8,6 +8,7 @@
 	import { createVerseReferenceFormatter } from '$lib/utils/bibleBooks';
 	import { keyboardLayouts } from '$lib/utils/keyboardLayouts';
 	import { triggerErrorFeedback } from '$lib/utils/feedback';
+	import { shouldRevealPunctuationAtIndex } from '$lib/utils/speedChallengeReveal';
 	import { zhuyinKeyMap, cangjieKeyMap } from '$lib/utils/inputMaps';
 	import { icons } from '$lib/utils/icons.js';
 
@@ -30,6 +31,7 @@
 	let fullText = '';
 	let fullInitials = '';
 	let charToInputIndex = [];
+	let speedChallengeEl;
 	let passageDisplayEl;
 	let scrollTrigger = 0;
 	
@@ -297,6 +299,24 @@
 			clearInterval(timerInterval);
 			timerInterval = null;
 		}
+
+		if (passageDisplayEl) {
+			passageDisplayEl.scrollTop = 0;
+			if (typeof passageDisplayEl.scrollTo === 'function') {
+				passageDisplayEl.scrollTo({ top: 0, behavior: 'auto' });
+			}
+		}
+
+		if (speedChallengeEl) {
+			speedChallengeEl.scrollTop = 0;
+			if (typeof speedChallengeEl.scrollTo === 'function') {
+				speedChallengeEl.scrollTo({ top: 0, behavior: 'auto' });
+			}
+		}
+
+		if (typeof window !== 'undefined' && typeof window.scrollTo === 'function') {
+			window.scrollTo({ top: 0, behavior: 'auto' });
+		}
 	}
 	
 	function done() {
@@ -357,20 +377,7 @@
 			}
 			return { char, className: className + ' hidden', hidden: true };
 		} else {
-			// Punctuation/reference - reveal based on previous character
-			let prevCharInputIndex = null;
-			for (let i = charIndex - 1; i >= 0; i--) {
-				if (charToInputIndex[i] !== null) {
-					prevCharInputIndex = charToInputIndex[i];
-					break;
-				}
-			}
-			
-			// If no previous input char (start of text), always reveal
-			// Otherwise, reveal when past the previous input character
-			const shouldReveal = prevCharInputIndex === null 
-				? true 
-				: userInput.length > prevCharInputIndex;
+			const shouldReveal = shouldRevealPunctuationAtIndex(charToInputIndex, charIndex, userInput.length);
 			return {
 				char,
 				className: 'verse-punctuation' + (shouldReveal ? '' : ' hidden'),
@@ -470,7 +477,7 @@
 
 <svelte:document on:keydown={handlePhysicalKeyboard} />
 
-<div class="speed-challenge-container">
+<div class="speed-challenge-container" bind:this={speedChallengeEl}>
 	<div class="mode-header">
 		<button class="back-btn" on:click={back} aria-label={t('back')}>
 			<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
@@ -512,18 +519,20 @@
 		↺ {t('retry')}
 	</button>
 	
-	<div class="keyboard-space">
-		<Keyboard 
-			layout={keyboardLayout}
-			on:key={handleKeyInput}
-			showBackspace={false}
-			showEnter={false}
-			isNumeric={isNumericKeyboard}
-			pressedKey={pressedKey}
-			correctKey={correctKey}
-			lastCorrectKey={lastCorrectKey}
-		/>
-	</div>
+	{#if !showCompletionModal}
+		<div class="keyboard-space">
+			<Keyboard 
+				layout={keyboardLayout}
+				on:key={handleKeyInput}
+				showBackspace={false}
+				showEnter={false}
+				isNumeric={isNumericKeyboard}
+				pressedKey={pressedKey}
+				correctKey={correctKey}
+				lastCorrectKey={lastCorrectKey}
+			/>
+		</div>
+	{/if}
 </div>
 
 {#if showCompletionModal}
@@ -697,28 +706,28 @@
 		overflow-y: auto;
 	}
 	
-	.verse-display :global(.verse-character) {
+	.passage-display :global(.verse-character) {
 		transition: opacity 0.1s;
 	}
 	
-	.verse-display :global(.verse-character.correct) {
+	.passage-display :global(.verse-character.correct) {
 		color: var(--text-color);
 		opacity: 1;
 	}
 	
-	.verse-display :global(.verse-character.incorrect) {
+	.passage-display :global(.verse-character.incorrect) {
 		color: var(--danger-color);
 		background: color-mix(in srgb, var(--danger-color) 12%, transparent);
 		padding: 0 2px;
 		border-radius: 2px;
 	}
 	
-	.verse-display :global(.verse-character.hidden),
-	.verse-display :global(.verse-punctuation.hidden) {
+	.passage-display :global(.verse-character.hidden),
+	.passage-display :global(.verse-punctuation.hidden) {
 		opacity: 0;
 	}
 	
-	.verse-display :global(.verse-punctuation) {
+	.passage-display :global(.verse-punctuation) {
 		color: var(--text-color);
 	}
 	
