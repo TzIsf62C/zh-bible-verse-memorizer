@@ -7,6 +7,7 @@ const defaultSettings = {
 	themePreference: 'system',
 	bookNameCharset: 'traditional',
 	defaultBibleVersion: '',
+	hiddenAchievementSeriesIds: [],
 	vibrationEnabled: false,
 	buzzerEnabled: false,
 	backupReminderEnabled: true,
@@ -33,6 +34,9 @@ function mergeDefinedSettings(base, overrides) {
 function sanitizeSettings(settings) {
 	const merged = mergeDefinedSettings(defaultSettings, settings);
 	const textSizePreference = Number(merged.textSizePreference);
+	const hiddenAchievementSeriesIds = Array.isArray(merged.hiddenAchievementSeriesIds)
+		? [...new Set(merged.hiddenAchievementSeriesIds.filter((id) => typeof id === 'string' && id.trim()))]
+		: [];
 	const needsPracticeIncludeBelow = clampThreshold(
 		Number(merged.needsPracticeIncludeBelow),
 		defaultSettings.needsPracticeIncludeBelow
@@ -45,6 +49,7 @@ function sanitizeSettings(settings) {
 
 	return {
 		...merged,
+		hiddenAchievementSeriesIds,
 		textSizePreference: Number.isFinite(textSizePreference) && textSizePreference > 0
 			? textSizePreference
 			: defaultSettings.textSizePreference,

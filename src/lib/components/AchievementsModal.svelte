@@ -11,6 +11,7 @@
 	const dispatch = createEventDispatcher();
 	let carouselIndexBySeries = {};
 	let carouselInitialized = false;
+	let isSeriesVisibilityModalOpen = false;
 
 	const PASSAGE_BOOK_ALIASES = {
 		'约翰二书': '约翰贰书',
@@ -197,10 +198,20 @@
 	}
 
 	$: unlockedCount = Object.keys($achievementState?.unlocked || {}).length;
+	$: hiddenAchievementSeriesIds = Array.isArray($settings?.hiddenAchievementSeriesIds)
+		? $settings.hiddenAchievementSeriesIds
+		: [];
+	$: hiddenAchievementSeriesLookup = Object.fromEntries(
+		hiddenAchievementSeriesIds.map((seriesId) => [seriesId, true])
+	);
+	$: visibleAchievementSeries = ($achievementPanelSeries || []).filter(
+		(series) => !hiddenAchievementSeriesLookup[series.id]
+	);
 
 	$: if (!show) {
 		carouselInitialized = false;
 		carouselIndexBySeries = {};
+		isSeriesVisibilityModalOpen = false;
 	}
 
 	$: if (show && $achievementPanelSeries?.length && !carouselInitialized) {
@@ -414,9 +425,58 @@
 		if (!masteryLevel) return '';
 		return `${t('mastered')}: ${masteryLevel.current}/${masteryLevel.target}`;
 	}
+
+	function openSeriesVisibilityModal() {
+		isSeriesVisibilityModalOpen = true;
+	}
+
+	function closeSeriesVisibilityModal() {
+		isSeriesVisibilityModalOpen = false;
+	}
+
+	function handleSeriesModalOverlayClick(event) {
+		if (event.target === event.currentTarget) {
+			closeSeriesVisibilityModal();
+		}
+	}
+
+	function toggleSeriesHidden(seriesId) {
+		settings.update((currentSettings) => {
+			const hiddenIds = Array.isArray(currentSettings?.hiddenAchievementSeriesIds)
+				? currentSettings.hiddenAchievementSeriesIds
+				: [];
+			const isHidden = hiddenIds.includes(seriesId);
+			const nextHiddenIds = isHidden
+				? hiddenIds.filter((id) => id !== seriesId)
+				: [...hiddenIds, seriesId];
+
+			return {
+				...currentSettings,
+				hiddenAchievementSeriesIds: nextHiddenIds
+			};
+		});
+	}
+
+	function getSeriesDisplayTitle(series) {
+		if (!series) return '';
+		if (series.category === 'count' || series.category === 'streak') {
+			return t(`achievement_series_${series.id}`);
+		}
+
+		const level = series.levels?.[0] || series.currentLevel;
+		return t(level.titleKey, level.titleVars || {});
+	}
+
+	function getSeriesCategoryLabel(series) {
+		if (!series) return '';
+		if (series.category === 'book') return t('achievement_series_book');
+		if (series.category === 'passage') return t('achievement_series_passage');
+		if (series.category === 'streak') return t('achievement_series_streak_days');
+		return t('achievement_series_count');
+	}
 </script>
 
-{#if show}
+{#if show && !isSeriesVisibilityModalOpen}
 	<div class="modal-overlay" on:click={handleOverlayClick} on:keydown={(e) => e.key === 'Escape' && close()} role="dialog" aria-modal="true" tabindex="0">
 		<div class="modal-content" role="document" tabindex="-1">
 			<div class="header-row">
@@ -425,7 +485,10 @@
 			</div>
 
 			<div class="list">
-				{#each $achievementPanelSeries as series}
+				{#if visibleAchievementSeries.length === 0}
+					<div class="all-hidden-message">{t('achievement_all_series_hidden')}</div>
+				{/if}
+				{#each visibleAchievementSeries as series (series.id)}
 					{@const carouselIndex = carouselIndexBySeries[series.id] ?? getInitialCarouselIndex(series)}
 					{@const displayLevel = getDisplayLevel(series, carouselIndex)}
 					{#if isNumericSeries(series)}
@@ -532,6 +595,49 @@
 					{/if}
 				{/each}
 			</div>
+
+			<div class="modal-actions">
+				<button type="button" class="edit-series-btn" on:click={openSeriesVisibilityModal}>
+					{t('achievement_edit_series')}
+				</button>
+			</div>
+		</div>
+	</div>
+{/if}
+
+{#if show && isSeriesVisibilityModalOpen}
+	<div
+		class="modal-overlay"
+		on:click={handleSeriesModalOverlayClick}
+		on:keydown={(e) => e.key === 'Escape' && closeSeriesVisibilityModal()}
+		role="dialog"
+		aria-modal="true"
+		tabindex="0"
+	>
+		<div class="modal-content series-modal" role="document" tabindex="-1">
+			<div class="header-row">
+				<h3>{t('achievement_manage_visibility')}</h3>
+				<button class="close-btn" on:click={closeSeriesVisibilityModal} aria-label={t('close')}>×</button>
+			</div>
+
+			<div class="series-editor" role="region" aria-label={t('achievement_manage_visibility')}>
+				{#each $achievementPanelSeries as series (series.id)}
+					<div class="series-editor-row" class:hidden={Boolean(hiddenAchievementSeriesLookup[series.id])}>
+						<div class="series-editor-info">
+							<div class="series-editor-name">{getSeriesDisplayTitle(series)}</div>
+							<div class="series-editor-meta">{getSeriesCategoryLabel(series)} · {hiddenAchievementSeriesLookup[series.id] ? t('achievement_series_hidden') : t('achievement_series_visible')}</div>
+						</div>
+						<button
+							type="button"
+							class="series-editor-toggle"
+							class:hidden={Boolean(hiddenAchievementSeriesLookup[series.id])}
+							on:click={() => toggleSeriesHidden(series.id)}
+						>
+							{hiddenAchievementSeriesLookup[series.id] ? t('achievement_unhide_series') : t('achievement_hide_series')}
+						</button>
+					</div>
+				{/each}
+			</div>
 		</div>
 	</div>
 {/if}
@@ -570,6 +676,15 @@
 	.list {
 		display: grid;
 		gap: 0.5rem;
+	}
+
+	.all-hidden-message {
+		padding: 0.75rem;
+		border: 1px dashed var(--file-border);
+		border-radius: 8px;
+		font-size: 0.85em;
+		color: var(--subtitle-color);
+		text-align: center;
 	}
 
 	.achievement-item {
@@ -707,5 +822,78 @@
 
 	.progress-fill.mastery {
 		background: rgb(248, 174, 47);
+	}
+
+	.modal-actions {
+		display: flex;
+		justify-content: flex-end;
+		margin-top: 0.75rem;
+	}
+
+	.edit-series-btn {
+		border: 1px solid var(--file-border);
+		background: var(--panel-background);
+		color: var(--text-color);
+		border-radius: 8px;
+		font-size: 0.85em;
+		padding: 0.35rem 0.65rem;
+		cursor: pointer;
+	}
+
+	.series-editor {
+		display: grid;
+		gap: 0.45rem;
+	}
+
+	.series-modal {
+		max-width: 720px;
+	}
+
+	.series-editor-row {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: 0.6rem;
+		padding: 0.5rem;
+		border: 1px solid var(--file-border);
+		border-radius: 8px;
+		background: var(--file-bg);
+	}
+
+	.series-editor-row.hidden {
+		opacity: 0.7;
+	}
+
+	.series-editor-info {
+		min-width: 0;
+	}
+
+	.series-editor-name {
+		font-size: 0.82em;
+		font-weight: 600;
+	}
+
+	.series-editor-meta {
+		font-size: 0.74em;
+		color: var(--subtitle-color);
+		margin-top: 0.15rem;
+	}
+
+	.series-editor-toggle {
+		border: 1px solid color-mix(in srgb, var(--accent-color) 65%, var(--file-border));
+		background: var(--accent-color);
+		color: #fff;
+		border-radius: 7px;
+		font-size: 0.78em;
+		padding: 0.28rem 0.6rem;
+		cursor: pointer;
+		white-space: nowrap;
+		transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+	}
+
+	.series-editor-toggle.hidden {
+		border-color: var(--file-border);
+		background: var(--panel-background);
+		color: var(--text-color);
 	}
 </style>
