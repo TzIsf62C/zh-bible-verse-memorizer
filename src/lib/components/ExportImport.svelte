@@ -176,6 +176,25 @@
 		localStorage.setItem('lastExportDate', normalized);
 	}
 
+	function formatLastExportDate() {
+		const normalized = normalizeIsoDate($settings.lastExportDate);
+		if (!normalized) {
+			return t('last_export_never');
+		}
+
+		const locale = $settings.languagePreference === 'simplified'
+			? 'zh-CN'
+			: $settings.languagePreference === 'traditional'
+				? 'zh-TW'
+				: 'en-US';
+
+		return new Date(normalized).toLocaleString(locale, {
+			year: 'numeric',
+			month: 'short',
+			day: 'numeric'
+		});
+	}
+
 	function mergeImportedLastExportDate(importedLastExportDate) {
 		const importedNormalized = normalizeIsoDate(importedLastExportDate);
 		if (!importedNormalized) {
@@ -492,6 +511,7 @@
 		<button class="primary-btn" on:click={handleExport}>
 			{t('download_data')}
 		</button>
+		<p class="export-meta">{t('last_export_label')}: {formatLastExportDate()}</p>
 	</div>
 
 	<!-- Import Section -->
@@ -785,6 +805,12 @@
 
 	.primary-btn:active {
 		opacity: 0.7;
+	}
+
+	.export-meta {
+		margin: 0.6rem 0 0 0;
+		font-size: 0.85em;
+		color: var(--subtitle-color);
 	}
 
 	/* Mobile responsiveness */
