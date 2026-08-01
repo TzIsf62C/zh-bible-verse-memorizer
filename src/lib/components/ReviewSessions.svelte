@@ -18,6 +18,7 @@
 	import Keyboard from './Keyboard.svelte';
 	import { registerStreakActivity } from '$lib/stores/streak.js';
 	import Modal from './Modal.svelte';
+	import { scrollRootToTopLeft } from '$lib/utils/scroll';
 
 	const dispatch = createEventDispatcher();
 
@@ -300,6 +301,7 @@
 		selectedVerses = [];
 		selectedCollectionIds = [];
 		expandedCollections = new Set();
+		scrollRootToTopLeft();
 	}
 
 	function handleReviewedVerse() {
@@ -495,6 +497,7 @@
 		selectedCollectionIds = [];
 		reviewMode = null;
 		sortedVerses = [];
+		scrollRootToTopLeft();
 	}
 
 	function handleReviewExit() {
@@ -504,6 +507,7 @@
 		selectedCollectionIds = [];
 		reviewMode = null;
 		sortedVerses = [];
+		scrollRootToTopLeft();
 	}
 
 	function cancelReview() {
@@ -512,6 +516,7 @@
 		selectedVerses = [];
 		selectedCollectionIds = [];
 		reviewMode = null;
+		scrollRootToTopLeft();
 	}
 
 	function backFromReviewMode() {

@@ -22,6 +22,7 @@
 	import Onboarding from '$lib/components/Onboarding.svelte';
 	import Modal from '$lib/components/Modal.svelte';
 	import AchievementToast from '$lib/components/AchievementToast.svelte';
+	import { scrollRootToTopLeft } from '$lib/utils/scroll';
 	import { t } from '$lib/i18n/index.js';
 	import { initializeAchievementsTracking } from '$lib/stores/achievements';
 	import { initializeProgressTracking } from '$lib/stores/progressHistory.js';
@@ -99,7 +100,7 @@
 
 	function scrollToTop() {
 		if (!browser) return;
-		window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+		scrollRootToTopLeft();
 	}
 	
 	// Check if onboarding should be shown
@@ -234,9 +235,7 @@
 		if (panelId === 'heat-maps') {
 			openHeatMaps('menu');
 		} else {
-			heatMapsSource = null;
-			currentPanel = panelId;
-			scrollToTop();
+			switchPanel(panelId);
 		}
 		showMenu = false;
 	}
@@ -378,14 +377,14 @@
 	{:else if currentPanel === 'stats'}
 		{#key $settings.languagePreference}
 			<Stats 
-				on:exit={() => { currentPanel = 'learn'; }}
+				on:exit={() => switchPanel('learn')}
 				on:navigate-heat-maps={() => openHeatMaps('stats')}
 			/>
 		{/key}
 	{:else if currentPanel === 'heat-maps'}
 		{#key $settings.languagePreference}
 			<HeatMaps 
-				on:exit={() => { currentPanel = 'learn'; }}
+				on:exit={() => switchPanel('learn')}
 				showStatsBack={heatMapsSource === 'stats'}
 				on:back-to-stats={() => {
 					currentPanel = 'stats';
@@ -393,7 +392,7 @@
 				}}
 				on:practice={(e) => {
 					selectedPracticeVerseId = e.detail?.verseId || null;
-					currentPanel = 'practice';
+					switchPanel('practice');
 				}}
 			/>
 		{/key}
@@ -403,7 +402,7 @@
 			on:clearPreselection={() => { selectedPracticeVerseId = null; }}
 			on:exit={() => {
 				selectedPracticeVerseId = null;
-				currentPanel = 'learn';
+				switchPanel('learn');
 			}}
 		/>
 	{/if}

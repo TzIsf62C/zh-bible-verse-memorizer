@@ -19,6 +19,7 @@
 	import FirstAndLast from './FirstAndLast.svelte';
 	import SingleTextPractice from './SingleTextPractice.svelte';
 	import { registerStreakActivity } from '$lib/stores/streak.js';
+	import { scrollRootToTopLeft } from '$lib/utils/scroll';
 	
 	const dispatch = createEventDispatcher();
 	
@@ -274,6 +275,7 @@
 			selectedCollectionFilter = null;
 		}
 		state = 'selectActivity';
+		scrollRootToTopLeft();
 	}
 
 	function getOrderedCollectionVerses(order) {
@@ -335,12 +337,14 @@
 		// Return to activity selection
 		selectedActivity = null;
 		state = 'selectActivity';
+		scrollRootToTopLeft();
 	}
 
 	function handleActivityBack() {
 		showActivityInfoModal = false;
 		selectedActivity = null;
 		state = 'selectActivity';
+		scrollRootToTopLeft();
 	}
 
 	function handleClassicAdvancedComplete() {
@@ -351,6 +355,7 @@
 		showActivityInfoModal = false;
 		// Return to initial state
 		reset();
+		scrollRootToTopLeft();
 	}
 
 	function closeToInitial() {
@@ -359,6 +364,7 @@
 			dispatch('clearPreselection');
 		}
 		reset();
+		scrollRootToTopLeft();
 	}
 	
 	function goBack() {
@@ -370,13 +376,17 @@
 				dispatch('clearPreselection');
 			}
 			state = practiceType === 'collection' ? 'selectCollection' : 'selectVerse';
+			scrollRootToTopLeft();
 		} else if (state === 'selectCollection' || state === 'selectVerse') {
 			reset();
+			scrollRootToTopLeft();
 		} else if (state === 'selectPracticeOrder') {
 			state = 'selectActivity';
+			scrollRootToTopLeft();
 		} else if (state === 'practicing') {
 			selectedActivity = null;
 			state = 'selectActivity';
+			scrollRootToTopLeft();
 		}
 	}
 	
@@ -394,6 +404,7 @@
 	
 	function exitPractice() {
 		reset();
+		scrollRootToTopLeft();
 		dispatch('exit');
 	}
 	
