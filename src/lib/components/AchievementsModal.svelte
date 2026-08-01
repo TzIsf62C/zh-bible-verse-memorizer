@@ -404,6 +404,16 @@
 
 		return null;
 	}
+
+	function getSeriesMasteryLevel(series) {
+		if (series?.category !== 'book' && series?.category !== 'passage') return null;
+		return (series.levels || []).find((level) => level.tier === 2) || null;
+	}
+
+	function getMasteryProgressLabel(masteryLevel) {
+		if (!masteryLevel) return '';
+		return `${t('mastered')}: ${masteryLevel.current}/${masteryLevel.target}`;
+	}
 </script>
 
 {#if show}
@@ -477,6 +487,8 @@
 						</div>
 					{:else}
 						{@const progressLevel = getSeriesProgressLevel(series, displayLevel)}
+						{@const masteryLevel = getSeriesMasteryLevel(series)}
+						{@const showSecondaryMasteryProgress = Boolean(masteryLevel && progressLevel?.tier === 1)}
 						<div class="achievement-item" class:unlocked={displayLevel.isUnlocked}>
 							<div class="achievement-header">
 								<div class="icon-container" class:unlocked={displayLevel.isUnlocked}>
@@ -504,6 +516,17 @@
 								</div>
 							{:else}
 								<div class="meta">{t('achievement_progress_complete')}</div>
+							{/if}
+
+							{#if showSecondaryMasteryProgress}
+								<div class="progress-wrap mastery-progress">
+									<div class="progress-label">
+										{getMasteryProgressLabel(masteryLevel)}
+									</div>
+									<div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow={getProgressPercent(masteryLevel)}>
+										<div class="progress-fill mastery" style={`width: ${getProgressPercent(masteryLevel)}%`}></div>
+									</div>
+								</div>
 							{/if}
 						</div>
 					{/if}
@@ -676,5 +699,13 @@
 	.progress-fill {
 		height: 100%;
 		background: var(--accent-color);
+	}
+
+	.progress-wrap.mastery-progress {
+		margin-top: 0.35rem;
+	}
+
+	.progress-fill.mastery {
+		background: rgb(248, 174, 47);
 	}
 </style>
