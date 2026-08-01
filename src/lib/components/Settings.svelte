@@ -455,7 +455,7 @@
 				type="text" 
 				value={$settings.defaultBibleVersion}
 				on:input={(e) => updateSetting('defaultBibleVersion', e.currentTarget.value)}
-				placeholder="e.g., ESV, CUNP"
+				placeholder="e.g., RCUV, CCB"
 			/>
 		</div>
 	</div>

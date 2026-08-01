@@ -1729,7 +1729,7 @@
 					type="text"
 					id="bibleVersion"
 					bind:value={bibleVersion}
-					placeholder="e.g., ESV"
+					placeholder="e.g., CUV"
 					autocomplete="off"
 					on:input={() => updateVersionSuggestions(bibleVersion)}
 					on:focus={() => {
