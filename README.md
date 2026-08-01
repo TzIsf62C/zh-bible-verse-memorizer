@@ -6,6 +6,10 @@ client-side — SvelteKit + localStorage, no backend. Works offline once install
 Three input methods (Pinyin / Zhuyin / Cangjie), three learning stages, individual and
 continuous-passage review, collections, and English / 简体 / 繁體 UI.
 
+## Deployments
+
+[Live APP](https://tzisf62c.github.io/zh-bible-verse-memorizer/)
+
 ## Develop
 
 ```sh
