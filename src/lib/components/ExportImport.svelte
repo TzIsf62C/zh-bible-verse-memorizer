@@ -6,6 +6,7 @@
 	import { achievementState } from '$lib/stores/achievements';
 	import { progressTrackingState } from '$lib/stores/progressHistory.js';
 	import { streakData } from '$lib/stores/streak.js';
+	import { settings } from '$lib/stores/settings';
 	import { t } from '$lib/i18n';
 	import {
 		parseImportPayload,
@@ -138,9 +139,63 @@
 		return `${year}-${month}-${day}-verse-data.json`;
 	}
 
+	function normalizeIsoDate(value) {
+		if (typeof value !== 'string') {
+			return null;
+		}
+
+		const trimmed = value.trim();
+		if (!trimmed) {
+			return null;
+		}
+
+		const parsed = new Date(trimmed);
+		return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
+	}
+
+	function getTimestamp(value) {
+		const iso = normalizeIsoDate(value);
+		if (!iso) {
+			return 0;
+		}
+
+		const date = new Date(iso);
+		return Number.isNaN(date.getTime()) ? 0 : date.getTime();
+	}
+
+	function setLastExportDate(isoDate) {
+		const normalized = normalizeIsoDate(isoDate);
+		if (!normalized) {
+			return;
+		}
+
+		settings.update((current) => ({
+			...current,
+			lastExportDate: normalized
+		}));
+		localStorage.setItem('lastExportDate', normalized);
+	}
+
+	function mergeImportedLastExportDate(importedLastExportDate) {
+		const importedNormalized = normalizeIsoDate(importedLastExportDate);
+		if (!importedNormalized) {
+			return;
+		}
+
+		const currentSettingTime = getTimestamp($settings.lastExportDate);
+		const currentStorageTime = getTimestamp(localStorage.getItem('lastExportDate'));
+		const currentTime = Math.max(currentSettingTime, currentStorageTime);
+		const importedTime = getTimestamp(importedNormalized);
+
+		if (importedTime > currentTime) {
+			setLastExportDate(importedNormalized);
+		}
+	}
+
 	function handleExport() {
 		const allVerses = $verses;
 		const cols = $collections;
+		const exportedAt = new Date().toISOString();
 
 		// Determine verses to export based on selections
 		let versesToExport;
@@ -176,6 +231,7 @@
 			includeReview: includeUserData,
 			includeCollections,
 			collectionIds: collectionIdsToExport,
+			lastExportDate: exportedAt,
 			practiceData: includeUserData ? $practice : null,
 			achievementsData: includeUserData ? $achievementState : null,
 			progressHistoryData: includeUserData ? $progressTrackingState : null,
@@ -192,6 +248,7 @@
 		a.click();
 		document.body.removeChild(a);
 		URL.revokeObjectURL(url);
+		setLastExportDate(exportedAt);
 	}
 
 	function handleFileSelect(event) {
@@ -221,7 +278,8 @@
 					practiceData: importedPracticeData,
 					achievementsData: importedAchievementsData,
 					progressHistoryData: importedProgressHistoryData,
-					streakData: importedStreakData
+					streakData: importedStreakData,
+					lastExportDate: importedLastExportDate
 				} = parseImportPayload(
 					e.target.result
 				);
@@ -240,7 +298,8 @@
 						importedPracticeData,
 						importedAchievementsData,
 						importedProgressHistoryData,
-						importedStreakData
+						importedStreakData,
+						importedLastExportDate
 					};
 					conflicts = mergeResult.conflicts;
 					conflictResolutions = new Array(conflicts.length).fill(null);
@@ -254,7 +313,8 @@
 						importedPracticeData,
 						importedAchievementsData,
 						importedProgressHistoryData,
-						importedStreakData
+						importedStreakData,
+						importedLastExportDate
 					);
 				}
 			} catch (error) {
@@ -272,7 +332,8 @@
 		importedPracticeData,
 		importedAchievementsData,
 		importedProgressHistoryData,
-		importedStreakData
+		importedStreakData,
+		importedLastExportDate
 	) {
 		verses.set(mergedVerses);
 
@@ -301,6 +362,8 @@
 			const mergedStreak = mergeStreakData($streakData, importedStreakData);
 			streakData.set(mergedStreak);
 		}
+
+		mergeImportedLastExportDate(importedLastExportDate);
 
 		modalMessage = t('import_successful');
 		modalType = 'alert';
@@ -337,7 +400,8 @@
 				pendingImportData.importedPracticeData,
 				pendingImportData.importedAchievementsData,
 				pendingImportData.importedProgressHistoryData,
-				pendingImportData.importedStreakData
+				pendingImportData.importedStreakData,
+				pendingImportData.importedLastExportDate
 			);
 			
 			// Reset conflict state

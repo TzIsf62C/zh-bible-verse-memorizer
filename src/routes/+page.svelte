@@ -122,6 +122,15 @@
 		return `${t('backup_reminder_message')}<div style="margin-top: 16px; padding: 12px; background: var(--file-bg); border-radius: 4px; font-size: 0.9em;"><p style="margin: 0 0 8px 0;"><strong>${t('backup_reminder_how')}</strong></p><p style="margin: 0;">${t('backup_reminder_steps')}</p></div>`;
 	}
 
+	function toTimestamp(value) {
+		if (typeof value !== 'string' || !value.trim()) {
+			return 0;
+		}
+
+		const parsed = new Date(value);
+		return Number.isNaN(parsed.getTime()) ? 0 : parsed.getTime();
+	}
+
 	function checkBackupReminder() {
 		if (!browser || showOnboarding || !$settings.hasCompletedOnboarding) {
 			return;
@@ -132,31 +141,20 @@
 		}
 
 		const now = Date.now();
-		const lastReminderRaw = localStorage.getItem('lastBackupReminder');
+		const lastExportDate = $settings.lastExportDate || localStorage.getItem('lastExportDate') || '';
+		const lastExportTimestamp = toTimestamp(lastExportDate);
+		const reminderWeeks = Number.isFinite(Number($settings.backupReminderWeeks))
+			? Math.max(1, Math.min(52, Math.round(Number($settings.backupReminderWeeks))))
+			: 4;
 
-		if (!lastReminderRaw) {
-			localStorage.setItem('firstBackupReminder', String(now));
-			localStorage.setItem('lastBackupReminder', String(now));
+		if (!lastExportTimestamp) {
 			showBackupReminder = true;
 			return;
 		}
 
-		const firstReminderRaw = localStorage.getItem('firstBackupReminder') || lastReminderRaw;
-		const lastReminder = Number(lastReminderRaw);
-		const firstReminder = Number(firstReminderRaw);
-		if (!Number.isFinite(lastReminder) || !Number.isFinite(firstReminder)) {
-			localStorage.setItem('firstBackupReminder', String(now));
-			localStorage.setItem('lastBackupReminder', String(now));
-			showBackupReminder = true;
-			return;
-		}
+		const reminderIntervalMs = reminderWeeks * 7 * 24 * 60 * 60 * 1000;
 
-		const daysSinceLast = (now - lastReminder) / (1000 * 60 * 60 * 24);
-		const daysSinceFirst = (now - firstReminder) / (1000 * 60 * 60 * 24);
-		const intervalDays = daysSinceFirst < 30 ? 7 : 30;
-
-		if (daysSinceLast >= intervalDays) {
-			localStorage.setItem('lastBackupReminder', String(now));
+		if (now - lastExportTimestamp >= reminderIntervalMs) {
 			showBackupReminder = true;
 		}
 	}

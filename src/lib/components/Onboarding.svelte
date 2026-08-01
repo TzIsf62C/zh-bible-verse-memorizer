@@ -177,13 +177,6 @@
 		collections.set(mappedCollections);
 	}
 
-	function setBackupReminderTimestamps() {
-		if (!browser) return;
-		const now = Date.now().toString();
-		localStorage.setItem('firstBackupReminder', now);
-		localStorage.setItem('lastBackupReminder', now);
-	}
-
 	function markOnboardingComplete() {
 		clearTutorialAnimation();
 		if (!startAtTutorial) {
@@ -249,7 +242,6 @@
 
 			const sampleCharset = inputMethod === 'pinyin' && selectedLanguage === 'english' ? resolvedCharset : null;
 			await loadSampleVerses(inputMethod, sampleCharset);
-			setBackupReminderTimestamps();
 			currentStep = STEPS.backupReminder;
 		} catch (error) {
 			console.error('Onboarding setup failed:', error);

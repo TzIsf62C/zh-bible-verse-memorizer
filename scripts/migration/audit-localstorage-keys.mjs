@@ -34,7 +34,13 @@ const CATEGORY_MAP = {
     'hasSeenAddVerseTutorial',
     'onboardingInProgress'
   ]),
-  reminder: new Set(['firstBackupReminder', 'lastBackupReminder', 'backupReminderEnabled']),
+  reminder: new Set([
+    'firstBackupReminder',
+    'lastBackupReminder',
+    'backupReminderEnabled',
+    'backupReminderWeeks',
+    'lastExportDate'
+  ]),
   update: new Set(['lastUpdateCheck'])
 };
 

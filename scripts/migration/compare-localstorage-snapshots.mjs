@@ -12,6 +12,8 @@ const IMPORTANT_SETTINGS_KEYS = [
   'defaultBibleVersion',
   'vibrationEnabled',
   'backupReminderEnabled',
+  'backupReminderWeeks',
+  'lastExportDate',
   'textSizePreference',
   'lastUpdateCheck',
   'firstBackupReminder',

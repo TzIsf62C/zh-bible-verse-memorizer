@@ -52,6 +52,12 @@
 			};
 		});
 	}
+
+	function updateBackupReminderWeeks(rawValue) {
+		const parsed = Number(rawValue);
+		const clamped = Number.isFinite(parsed) ? Math.max(1, Math.min(52, Math.round(parsed))) : 4;
+		updateSetting('backupReminderWeeks', clamped);
+	}
 	
 	function showTutorial() {
 		dispatch('viewtutorial');
@@ -493,7 +499,17 @@
 				/>
 				<div>
 					<span>{t('enable_backup_reminders')}</span>
-					<p class="help-text">{t('backup_reminder_frequency')}</p>
+					<div class="backup-weeks-control">
+						<span>{t('backup_reminder_weeks_prefix')}</span>
+						<input
+							type="number"
+							min="1"
+							max="52"
+							value={$settings.backupReminderWeeks}
+							on:input={(e) => updateBackupReminderWeeks(e.currentTarget.value)}
+						/>
+						<span>{t('backup_reminder_weeks_suffix')}</span>
+					</div>
 				</div>
 			</label>
 		</div>
@@ -681,6 +697,24 @@
 		display: block;
 		color: var(--text-color);
 		font-weight: 500;
+	}
+
+	.backup-weeks-control {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		margin-top: 0.4rem;
+		flex-wrap: wrap;
+	}
+
+	.backup-weeks-control span {
+		font-size: 0.9em;
+		font-weight: 400;
+		color: var(--subtitle-color);
+	}
+
+	.backup-weeks-control input[type="number"] {
+		width: 5em;
 	}
 	
 	/* Look comes from the shared input styles in app.css */

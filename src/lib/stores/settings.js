@@ -11,6 +11,8 @@ const defaultSettings = {
 	vibrationEnabled: false,
 	buzzerEnabled: false,
 	backupReminderEnabled: true,
+	backupReminderWeeks: 4,
+	lastExportDate: '',
 	textSizePreference: 1,
 	needsPracticeIncludeBelow: 80,
 	needsPracticeIgnoreAbove: 94,
@@ -23,6 +25,28 @@ function clampThreshold(value, fallback) {
 	}
 
 	return Math.max(0, Math.min(99, value));
+}
+
+function clampReminderWeeks(value, fallback) {
+	if (!Number.isFinite(value)) {
+		return fallback;
+	}
+
+	return Math.max(1, Math.min(52, Math.round(value)));
+}
+
+function sanitizeLastExportDate(value) {
+	if (typeof value !== 'string') {
+		return '';
+	}
+
+	const trimmed = value.trim();
+	if (!trimmed) {
+		return '';
+	}
+
+	const parsed = new Date(trimmed);
+	return Number.isNaN(parsed.getTime()) ? '' : parsed.toISOString();
 }
 
 function mergeDefinedSettings(base, overrides) {
@@ -46,10 +70,17 @@ function sanitizeSettings(settings) {
 		defaultSettings.needsPracticeIgnoreAbove
 	);
 	const normalizedIgnoreAbove = Math.max(needsPracticeIgnoreAbove, needsPracticeIncludeBelow);
+	const backupReminderWeeks = clampReminderWeeks(
+		Number(merged.backupReminderWeeks),
+		defaultSettings.backupReminderWeeks
+	);
+	const lastExportDate = sanitizeLastExportDate(merged.lastExportDate);
 
 	return {
 		...merged,
 		hiddenAchievementSeriesIds,
+		backupReminderWeeks,
+		lastExportDate,
 		textSizePreference: Number.isFinite(textSizePreference) && textSizePreference > 0
 			? textSizePreference
 			: defaultSettings.textSizePreference,
@@ -79,6 +110,11 @@ function readLegacySettings() {
 			localStorage.getItem('backupReminderEnabled') !== null
 				? localStorage.getItem('backupReminderEnabled') === 'true'
 				: undefined,
+		backupReminderWeeks:
+			localStorage.getItem('backupReminderWeeks') !== null
+				? Number(localStorage.getItem('backupReminderWeeks'))
+				: undefined,
+		lastExportDate: localStorage.getItem('lastExportDate') || undefined,
 		textSizePreference:
 			localStorage.getItem('textSizePreference') !== null
 				? Number(localStorage.getItem('textSizePreference'))

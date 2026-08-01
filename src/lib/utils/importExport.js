@@ -7,7 +7,16 @@ function normalizeVerseNumbers(value) {
 export function parseImportPayload(payload) {
 	const parsed = typeof payload === 'string' ? JSON.parse(payload) : payload;
 	if (Array.isArray(parsed)) {
-		return { verses: parsed, collections: [], practiceData: null, achievementsData: null, progressHistoryData: null, streakData: null, raw: parsed };
+		return {
+			verses: parsed,
+			collections: [],
+			practiceData: null,
+			achievementsData: null,
+			progressHistoryData: null,
+			streakData: null,
+			lastExportDate: null,
+			raw: parsed
+		};
 	}
 
 	return {
@@ -17,6 +26,7 @@ export function parseImportPayload(payload) {
 		achievementsData: parsed?.achievementsData ?? null,
 		progressHistoryData: parsed?.progressHistoryData ?? null,
 		streakData: parsed?.streakData ?? null,
+		lastExportDate: parsed?.lastExportDate ?? null,
 		raw: parsed
 	};
 }
@@ -129,6 +139,7 @@ export function buildExportPayload(verses, collections, options = {}) {
 		includeReview = true,
 		includeCollections = false,
 		collectionIds = [],
+		lastExportDate = null,
 		practiceData = null,
 		achievementsData = null,
 		progressHistoryData = null,
@@ -151,10 +162,6 @@ export function buildExportPayload(verses, collections, options = {}) {
 	const shouldIncludeAchievementsData = includeReview && achievementsData;
 	const shouldIncludeProgressHistoryData = includeReview && progressHistoryData;
  	const shouldIncludeStreakData = includeReview && streakData;
-
-	if (!includeCollections && !shouldIncludePracticeData && !shouldIncludeAchievementsData && !shouldIncludeProgressHistoryData && !shouldIncludeStreakData) {
-		return cleaned;
-	}
 
 	const includeCols = collectionIds.length
 		? collections.filter((c) => collectionIds.includes(c.id))
@@ -180,6 +187,7 @@ export function buildExportPayload(verses, collections, options = {}) {
 		type: 'cbm-export',
 		version: 4,
 		generatedAt: new Date().toISOString(),
+		lastExportDate,
 		verses: cleaned,
 		collections: collectionsExport
 	};
