@@ -47,6 +47,7 @@
 	let currentConflictIndex = 0;
 	let conflictResolutions = [];
 	let pendingImportData = null; // Store import data while resolving conflicts
+	let lastExportDisplay = '';
 
 	// Computed values
 	$: uncollectedCount = $verses.filter(v => {
@@ -54,6 +55,10 @@
 		$collections.forEach(c => (c.verseIds || []).forEach(id => collectedIds.add(id)));
 		return !collectedIds.has(v.id);
 	}).length;
+	$: lastExportDisplay = formatLastExportDate(
+		$settings.lastExportDate,
+		$settings.languagePreference
+	);
 
 	// Initialize selected collections (all checked by default) - ONLY ONCE
 	$: if ($collections.length > 0 && selectedCollectionIds.length === 0 && !hasInitialized) {
@@ -176,15 +181,15 @@
 		localStorage.setItem('lastExportDate', normalized);
 	}
 
-	function formatLastExportDate() {
-		const normalized = normalizeIsoDate($settings.lastExportDate);
+	function formatLastExportDate(lastExportDate, languagePreference) {
+		const normalized = normalizeIsoDate(lastExportDate);
 		if (!normalized) {
 			return t('last_export_never');
 		}
 
-		const locale = $settings.languagePreference === 'simplified'
+		const locale = languagePreference === 'simplified'
 			? 'zh-CN'
-			: $settings.languagePreference === 'traditional'
+			: languagePreference === 'traditional'
 				? 'zh-TW'
 				: 'en-US';
 
@@ -511,7 +516,7 @@
 		<button class="primary-btn" on:click={handleExport}>
 			{t('download_data')}
 		</button>
-		<p class="export-meta">{t('last_export_label')}: {formatLastExportDate()}</p>
+		<p class="export-meta">{t('last_export_label')}: {lastExportDisplay}</p>
 	</div>
 
 	<!-- Import Section -->

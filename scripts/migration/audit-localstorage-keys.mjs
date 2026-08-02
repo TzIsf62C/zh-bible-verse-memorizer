@@ -39,7 +39,8 @@ const CATEGORY_MAP = {
     'lastBackupReminder',
     'backupReminderEnabled',
     'backupReminderWeeks',
-    'lastExportDate'
+    'lastExportDate',
+    'lastBackupReminderShownDate'
   ]),
   update: new Set(['lastUpdateCheck'])
 };

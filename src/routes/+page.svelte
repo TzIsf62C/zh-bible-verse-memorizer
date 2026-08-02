@@ -131,6 +131,14 @@
 		return Number.isNaN(parsed.getTime()) ? 0 : parsed.getTime();
 	}
 
+	function getLocalDateKey(timestamp = Date.now()) {
+		const date = new Date(timestamp);
+		const year = date.getFullYear();
+		const month = String(date.getMonth() + 1).padStart(2, '0');
+		const day = String(date.getDate()).padStart(2, '0');
+		return `${year}-${month}-${day}`;
+	}
+
 	function checkBackupReminder() {
 		if (!browser || showOnboarding || !$settings.hasCompletedOnboarding) {
 			return;
@@ -141,6 +149,12 @@
 		}
 
 		const now = Date.now();
+		const reminderShownTodayKey = localStorage.getItem('lastBackupReminderShownDate');
+		const todayKey = getLocalDateKey(now);
+		if (reminderShownTodayKey === todayKey) {
+			return;
+		}
+
 		const lastExportDate = $settings.lastExportDate || localStorage.getItem('lastExportDate') || '';
 		const lastExportTimestamp = toTimestamp(lastExportDate);
 		const reminderWeeks = Number.isFinite(Number($settings.backupReminderWeeks))
@@ -148,6 +162,7 @@
 			: 4;
 
 		if (!lastExportTimestamp) {
+			localStorage.setItem('lastBackupReminderShownDate', todayKey);
 			showBackupReminder = true;
 			return;
 		}
@@ -155,6 +170,7 @@
 		const reminderIntervalMs = reminderWeeks * 7 * 24 * 60 * 60 * 1000;
 
 		if (now - lastExportTimestamp >= reminderIntervalMs) {
+			localStorage.setItem('lastBackupReminderShownDate', todayKey);
 			showBackupReminder = true;
 		}
 	}

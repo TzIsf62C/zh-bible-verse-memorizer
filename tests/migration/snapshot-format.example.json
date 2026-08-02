@@ -14,5 +14,6 @@
   "hasVisitedBefore": "true",
   "firstBackupReminder": "0",
   "lastBackupReminder": "0",
+  "lastBackupReminderShownDate": "",
   "lastUpdateCheck": "0"
 }

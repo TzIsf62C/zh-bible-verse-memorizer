@@ -17,7 +17,8 @@ const IMPORTANT_SETTINGS_KEYS = [
   'textSizePreference',
   'lastUpdateCheck',
   'firstBackupReminder',
-  'lastBackupReminder'
+  'lastBackupReminder',
+  'lastBackupReminderShownDate'
 ];
 
 function usage() {
