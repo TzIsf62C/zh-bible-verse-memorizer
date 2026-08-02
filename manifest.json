@@ -1,9 +1,10 @@
 {
   "name": "ZH Bible Verse Memorizer",
   "short_name": "聖經背誦",
-  "version": "0.9.1",
+  "version": "1.0",
   "description": "Memorize Chinese Bible verses using spaced repetition. Supports Pinyin, Zhuyin, and Cangjie input methods.",
-  "start_url": "./index.html",
+  "id": "/zh-bible-verse-memorizer",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#1a1a1a",
   "theme_color": "#2d72d9",
@@ -58,9 +59,67 @@
       "purpose": "any maskable"
     }
   ],
+  "screenshots": [
+    {
+      "src": "/screenshots/desktop-1.png",
+      "sizes": "1191x792",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "桌面版畫面，顯示拼音輸入的中間階段。"
+    },
+    {
+      "src": "/screenshots/desktop-2.png",
+      "sizes": "1191x792",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "桌面版畫面，顯示注音輸入的高級階段。"
+    },
+    {
+      "src": "/screenshots/desktop-3.png",
+      "sizes": "1191x792",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "桌面版畫面，顯示選單項目。"
+    },
+    {
+      "src": "/screenshots/desktop-4.png",
+      "sizes": "1191x792",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "桌面版畫面，顯示經文熱力圖。"
+    },
+    {
+      "src": "/screenshots/mobile-1.png",
+      "sizes": "455x990",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "行動版畫面，顯示拼音輸入的中間階段。"
+    },
+    {
+      "src": "/screenshots/mobile-2.png",
+      "sizes": "455x990",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "行動版畫面，顯示注音輸入的高級階段。"
+    },
+    {
+      "src": "/screenshots/mobile-3.png",
+      "sizes": "455x990",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "行動版畫面，顯示選單項目。"
+    },
+    {
+      "src": "/screenshots/mobile-4.png",
+      "sizes": "455x990",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "行動版畫面，顯示經文熱力圖。"
+    }
+  ],
   "categories": ["education", "lifestyle", "utilities"],
   "lang": "zh",
   "dir": "ltr",
-  "scope": "./",
+  "scope": "/",
   "prefer_related_applications": false
 }
