@@ -243,7 +243,7 @@
 	<div class="settings-section">
 		
 		<div class="setting-group">
-			<label>{t('theme')}</label>
+			<h3 class="setting-heading">{t('theme')}</h3>
 			<div class="radio-group">
 				<label class="radio-option">
 					<input 
@@ -279,7 +279,7 @@
 		</div>
 		
 		<div class="setting-group">
-			<label>{t('text_size')}</label>
+			<h3 class="setting-heading">{t('text_size')}</h3>
 			<div class="radio-group">
 				<label class="radio-option">
 					<input 
@@ -318,7 +318,7 @@
 	<div class="settings-section">
 		
 		<div class="setting-group">
-			<label>{t('language')}</label>
+			<h3 class="setting-heading">{t('language')}</h3>
 			<div class="radio-group">
 				<label class="radio-option">
 					<input 
@@ -354,7 +354,7 @@
 		</div>
 		
 		<div class="setting-group">
-			<label>{t('input_method')}</label>
+			<h3 class="setting-heading">{t('input_method')}</h3>
 			<div class="radio-group">
 				<label class="radio-option">
 					<input 
@@ -390,7 +390,7 @@
 		</div>
 		
 		<div class="setting-group">
-			<label>{t('book_name_charset')}</label>
+			<h3 class="setting-heading">{t('book_name_charset')}</h3>
 			<div class="radio-group">
 				<label class="radio-option">
 					<input 
@@ -418,7 +418,7 @@
 	
 	<div class="settings-section">
 		<div class="setting-group">
-			<label>{t('needs_practice_collection_settings')}</label>
+			<h3 class="setting-heading">{t('needs_practice_collection_settings')}</h3>
 			<label for="needsPracticeIncludeBelow">{t('needs_practice_include_below_label')}</label>
 			<input
 				id="needsPracticeIncludeBelow"
@@ -518,7 +518,7 @@
 	<div class="settings-section">
 		
 		<div class="setting-group">
-			<label>{t('view_tutorial')}</label>
+			<h3 class="setting-heading">{t('view_tutorial')}</h3>
 			<p class="help-text">{t('view_tutorial_description')}</p>
 			<button class="btn-secondary" on:click={showTutorial}>
 				{t('view_tutorial')}
@@ -529,7 +529,7 @@
 	<div class="settings-section">
 		
 		<div class="setting-group">
-			<label>{t('check_for_updates')}</label>
+			<h3 class="setting-heading">{t('check_for_updates')}</h3>
 			<p class="help-text">{t('update_description')}</p>
 			<button
 				class="btn-secondary"
@@ -552,7 +552,7 @@
 		</div>
 		
 		<div class="setting-group danger-zone">
-			<label>{t('clear_all_data')}</label>
+			<h3 class="setting-heading">{t('clear_all_data')}</h3>
 			<p class="help-text">{t('clear_data_warning')}</p>
 			<button class="btn-danger" on:click={clearAllData}>
 				{t('clear_all_data_btn')}
@@ -629,6 +629,14 @@
 	
 	.setting-group:last-child {
 		margin-bottom: 0;
+	}
+
+	.setting-heading {
+		display: block;
+		font-size: 1em;
+		font-weight: 500;
+		margin: 0 0 0.5rem 0;
+		color: var(--text-color);
 	}
 	
 	.setting-group > label:first-child:not(.checkbox-option) {
@@ -827,17 +835,6 @@
 		margin: 0;
 		font-size: 0.85em;
 		color: var(--success-color);
-	}
-
-	.feedback-help-text {
-		margin: 0;
-		font-size: 0.85em;
-		color: var(--subtitle-color);
-		line-height: 1.4;
-	}
-
-	.feedback-help-fallback {
-		margin-top: -0.25rem;
 	}
 	
 	.app-info {
