@@ -587,9 +587,9 @@
 	</div>
 	
 	<div class="app-info">
-		<p>ZH Bible Verse Memorizer PWA</p>
-		<p>(Version 1.0 Beta)</p>
-		<p>Copyright © 2026 TzIsf62C</p>
+		<p>ZH Bible Verse Memorizer</p>
+		<p>(Version 1.0)</p>
+		<p>Copyright © 2026 ad.infinitum</p>
 	</div>
 </div>
 
