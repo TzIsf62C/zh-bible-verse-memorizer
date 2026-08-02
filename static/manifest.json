@@ -61,56 +61,56 @@
   ],
   "screenshots": [
     {
-      "src": "/screenshots/desktop-1.png",
+      "src": "/zh-bible-verse-memorizer/screenshots/desktop-1.png",
       "sizes": "1191x792",
       "type": "image/png",
       "form_factor": "wide",
       "label": "桌面版畫面，顯示拼音輸入的中間階段。"
     },
     {
-      "src": "/screenshots/desktop-2.png",
+      "src": "/zh-bible-verse-memorizer/screenshots/desktop-2.png",
       "sizes": "1191x792",
       "type": "image/png",
       "form_factor": "wide",
       "label": "桌面版畫面，顯示注音輸入的高級階段。"
     },
     {
-      "src": "/screenshots/desktop-3.png",
+      "src": "/zh-bible-verse-memorizer/screenshots/desktop-3.png",
       "sizes": "1191x792",
       "type": "image/png",
       "form_factor": "wide",
       "label": "桌面版畫面，顯示選單項目。"
     },
     {
-      "src": "/screenshots/desktop-4.png",
+      "src": "/zh-bible-verse-memorizer/screenshots/desktop-4.png",
       "sizes": "1191x792",
       "type": "image/png",
       "form_factor": "wide",
       "label": "桌面版畫面，顯示經文熱力圖。"
     },
     {
-      "src": "/screenshots/mobile-1.png",
+      "src": "/zh-bible-verse-memorizer/screenshots/mobile-1.png",
       "sizes": "455x990",
       "type": "image/png",
       "form_factor": "narrow",
       "label": "行動版畫面，顯示拼音輸入的中間階段。"
     },
     {
-      "src": "/screenshots/mobile-2.png",
+      "src": "/zh-bible-verse-memorizer/screenshots/mobile-2.png",
       "sizes": "455x990",
       "type": "image/png",
       "form_factor": "narrow",
       "label": "行動版畫面，顯示注音輸入的高級階段。"
     },
     {
-      "src": "/screenshots/mobile-3.png",
+      "src": "/zh-bible-verse-memorizer/screenshots/mobile-3.png",
       "sizes": "455x990",
       "type": "image/png",
       "form_factor": "narrow",
       "label": "行動版畫面，顯示選單項目。"
     },
     {
-      "src": "/screenshots/mobile-4.png",
+      "src": "/zh-bible-verse-memorizer/screenshots/mobile-4.png",
       "sizes": "455x990",
       "type": "image/png",
       "form_factor": "narrow",
