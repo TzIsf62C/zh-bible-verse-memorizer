@@ -489,21 +489,25 @@
 		{/key}
 	</div>
 
-	<button class="retry-fab" on:click={tryAgain} aria-label={t('try_again')}>
-		↺ {t('retry')}
-	</button>
+	{#if !showCompletionModal}
+		<button class="retry-fab" on:click={tryAgain} aria-label={t('try_again')}>
+			↺ {t('retry')}
+		</button>
+	{/if}
 	
 	<div class="keyboard-space">
-		<Keyboard 
-			layout={keyboardLayout}
-			on:key={handleKeyInput}
-			showBackspace={false}
-			showEnter={false}
-			isNumeric={isNumericKeyboard}
-			pressedKey={pressedKey}
-			correctKey={correctKey}
-			lastCorrectKey={lastCorrectKey}
-		/>
+		{#if !showCompletionModal}
+			<Keyboard 
+				layout={keyboardLayout}
+				on:key={handleKeyInput}
+				showBackspace={false}
+				showEnter={false}
+				isNumeric={isNumericKeyboard}
+				pressedKey={pressedKey}
+				correctKey={correctKey}
+				lastCorrectKey={lastCorrectKey}
+			/>
+		{/if}
 	</div>
 </div>
 
