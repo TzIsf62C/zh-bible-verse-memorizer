@@ -7,6 +7,7 @@
 	import Modal from './Modal.svelte';
 	import { keyboardLayouts } from '$lib/utils/keyboardLayouts';
 	import { spacedRepetitionBinary } from '$lib/utils/spacedRepetition';
+	import { appendCategoryHistory } from '$lib/utils/categoryHistory.js';
 	import { zhuyinKeyMap, cangjieKeyMap } from '$lib/utils/inputMaps';
 	import { triggerErrorFeedback } from '$lib/utils/feedback';
 	import { createVerseReferenceFormatter } from '$lib/utils/bibleBooks';
@@ -416,6 +417,7 @@
 					dueDate: v.dueDate ? (typeof v.dueDate === 'string' ? new Date(v.dueDate) : v.dueDate) : now
 				};
 				const updated = spacedRepetitionBinary(card, success, now);
+				const categoryHistory = appendCategoryHistory(v, updated.interval, now);
 				
 				// Initialize or update heatArray
 				let newHeatArray = v.heatArray;
@@ -438,7 +440,8 @@
 					repetitions: updated.repetitions,
 					dueDate: updated.dueDate,
 					lastReviewed: success ? now.toISOString() : v.lastReviewed,
-					heatArray: newHeatArray
+					heatArray: newHeatArray,
+					categoryHistory
 				};
 			}
 			return v;

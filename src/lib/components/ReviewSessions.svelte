@@ -7,6 +7,7 @@
 	import { t } from '$lib/i18n';
 	import { sortVersesByBibleOrder, createVerseReferenceFormatter } from '$lib/utils/bibleBooks';
 	import { getDaysUntilDue, countDueVerses, buildManualIntervalUpdate, getSharedReviewSchedule } from '$lib/utils/spacedRepetition';
+	import { applyManualCorrection, shouldTreatManualEditAsReview } from '$lib/utils/categoryHistory.js';
 	import { keyboardLayouts } from '$lib/utils/keyboardLayouts';
 	import { icons } from '$lib/utils/icons.js';
 	import {
@@ -634,19 +635,24 @@
 
 		const manualUpdate = buildManualIntervalUpdate(intervalDays, intervalModalBaseDate);
 		const selectedVerseIds = new Set(selectedVerses.map((verse) => verse.id));
+		const now = new Date();
 
 		verses.update((list) => list.map((verse) => {
 			if (!selectedVerseIds.has(verse.id)) {
 				return verse;
 			}
 
-			return {
+			const nextVerse = {
 				...verse,
 				isLearned: verse.isLearned || Boolean(verse.lastReviewed),
 				interval: manualUpdate.interval,
 				repetitions: manualUpdate.repetitions,
 				dueDate: manualUpdate.dueDate
 			};
+			if (shouldTreatManualEditAsReview(verse, now)) {
+				nextVerse.categoryHistory = applyManualCorrection(verse, manualUpdate.interval, now);
+			}
+			return nextVerse;
 		}));
 
 		// Close modal and return to edit interval panel
