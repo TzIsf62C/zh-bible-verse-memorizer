@@ -525,22 +525,33 @@
 				</div>
 			{/if}
 			{:else}
-				<div class="change-chart-header">
-					<span>{t('stats_gained')}</span>
-					<span>{t('stats_lost')}</span>
-				</div>
-				<div class="change-chart">
+				<div class="timeline-legend">
 					{#each CATEGORY_META as category}
-						{@const gained = changeStats?.[category.key]?.gained?.length || 0}
-						{@const lost = changeStats?.[category.key]?.lost?.length || 0}
-						<div class="change-row">
-							<div class="change-category-label">{t(category.labelKey)}</div>
-							<div class="change-track">
+						<div class="legend-item">
+							<span class="legend-dot" style="background: {category.fill};"></span>
+							<span>{t(category.labelKey)}</span>
+						</div>
+					{/each}
+				</div>
+				<div class="change-chart-layout">
+					<div class="change-chart-header">
+						<div class="change-header-track">
+							<span>{t('stats_lost')}</span>
+							<span>{t('stats_gained')}</span>
+						</div>
+						<span class="change-net-header">{t('stats_net_change')}</span>
+					</div>
+					<div class="change-chart">
+						{#each CATEGORY_META as category}
+							{@const gained = changeStats?.[category.key]?.gained?.length || 0}
+							{@const lost = changeStats?.[category.key]?.lost?.length || 0}
+							<div class="change-row">
+								<div class="change-track">
 								<div class="change-zero-line"></div>
 								<button
 									type="button"
 									class="change-bar change-bar-lost"
-									style={`width: ${(lost / getChangeScale()) * 50}%`}
+									style={`width: ${(lost / getChangeScale()) * 50}%; background: color-mix(in srgb, ${category.fill} 42%, transparent);`}
 									on:click={() => openChangeModal(category.key, 'lost')}
 									disabled={lost === 0}
 									aria-label={`${t('stats_lost')} ${t(category.labelKey)} ${lost}`}
@@ -550,21 +561,18 @@
 								<button
 									type="button"
 									class="change-bar change-bar-gained"
-									style={`width: ${(gained / getChangeScale()) * 50}%`}
+									style={`width: ${(gained / getChangeScale()) * 50}%; background: ${category.fill};`}
 									on:click={() => openChangeModal(category.key, 'gained')}
 									disabled={gained === 0}
 									aria-label={`${t('stats_gained')} ${t(category.labelKey)} ${gained}`}
 								>
 									{#if gained > 0}{gained}{/if}
 								</button>
+								</div>
+								<div class="change-net">{changeStats?.[category.key]?.net > 0 ? '+' : ''}{changeStats?.[category.key]?.net || 0}</div>
 							</div>
-							<div class="change-net">{changeStats?.[category.key]?.net > 0 ? '+' : ''}{changeStats?.[category.key]?.net || 0}</div>
+						{/each}
 						</div>
-					{/each}
-				</div>
-				<div class="change-chart-footer">
-					<span>{t('stats_last_period')}</span>
-					<span>{t('stats_net_change')}</span>
 				</div>
 				<div class="timeline-range-controls" role="tablist" aria-label={t('stats_timeline_range')}>
 					<button class="range-btn" class:active={timelineRange === 'all'} on:click={() => setTimelineRange('all')}>{t('stats_all_time')}</button>
@@ -984,39 +992,46 @@
 		margin-top: 0.45rem;
 	}
 
-	.change-chart-header,
-	.change-chart-footer {
-		display: flex;
-		justify-content: space-between;
-		padding: 0 3rem;
-		font-size: 0.78em;
-		color: var(--subtitle-color);
+	.change-chart-layout {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) max-content;
+		column-gap: 0.5rem;
 	}
 
 	.change-chart-header {
+		display: grid;
+		grid-column: 1 / -1;
+		grid-template-columns: subgrid;
+		align-items: end;
+		gap: 0.5rem;
+		font-size: 0.78em;
+		color: var(--subtitle-color);
 		margin-bottom: 0.75rem;
 	}
 
-	.change-chart-footer {
-		margin-top: 0.75rem;
+	.change-header-track {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		text-align: center;
+	}
+
+	.change-net-header {
+		text-align: center;
 	}
 
 	.change-chart {
 		display: grid;
+		grid-column: 1 / -1;
+		grid-template-columns: subgrid;
 		gap: 0.75rem;
 	}
 
 	.change-row {
 		display: grid;
-		grid-template-columns: 5.5rem minmax(0, 1fr) 2rem;
+		grid-template-columns: subgrid;
+		grid-column: 1 / -1;
 		align-items: center;
 		gap: 0.5rem;
-	}
-
-	.change-category-label {
-		font-size: 0.85em;
-		font-weight: 600;
-		text-align: right;
 	}
 
 	.change-track {
@@ -1047,7 +1062,7 @@
 		border: none;
 		border-radius: 4px;
 		color: #fff;
-		font-size: 0.78em;
+		font-size: 1em;
 		font-weight: 700;
 		line-height: 1.5rem;
 		cursor: pointer;
@@ -1059,18 +1074,16 @@
 
 	.change-bar-lost {
 		right: 50%;
-		background: var(--danger-color);
-		text-align: left;
+		text-align: center;
 	}
 
 	.change-bar-gained {
 		left: 50%;
-		background: var(--success-color);
-		text-align: right;
+		text-align: center;
 	}
 
 	.change-net {
-		font-size: 0.9em;
+		font-size: 1em;
 		font-weight: 700;
 		text-align: center;
 	}
@@ -1366,13 +1379,5 @@
 			font-size: 1.5em;
 		}
 
-		.change-chart-header,
-		.change-chart-footer {
-			padding: 0 2.5rem;
-		}
-
-		.change-row {
-			grid-template-columns: 4.5rem minmax(0, 1fr) 1.75rem;
-		}
 	}
 </style>
