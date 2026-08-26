@@ -31,6 +31,7 @@
 		solid: 'stats_interval_range_solid',
 		mastered: 'stats_interval_range_mastered'
 	};
+	const CATEGORY_ORDER = ['newLearning', 'developing', 'solid', 'mastered'];
 
 	const dispatch = createEventDispatcher();
 	let showAchievementsModal = false;
@@ -57,7 +58,7 @@
 	$: selectedCategoryMeta = CATEGORY_META.find((category) => category.key === selectedCategory) || null;
 	$: selectedCategoryVerses = getCategoryVerses(selectedCategory);
 	$: selectedChangeCategoryMeta = CATEGORY_META.find((category) => category.key === selectedChangeCategory) || null;
-	$: selectedChangeVerses = getChangeVerses(selectedChangeCategory, selectedChangeDirection);
+	$: selectedChangeEvents = getChangeEvents(selectedChangeCategory, selectedChangeDirection);
 	$: currentStreakDays = Math.max(0, Number($streakData?.current || 0));
 	$: streakDaysLabel = `${currentStreakDays} ${capitalizeLabel(currentStreakDays === 1 ? t('day') : t('days'))}`;
 	$: hasExtendedStreakToday = hasStreakExtendedToday($streakData?.lastActiveDate);
@@ -186,20 +187,43 @@
 		return computeCategoryChangeStats($verses, rangeStart, new Date());
 	}
 
-	function getChangeVerses(categoryKey, direction) {
+	function getChangeEvents(categoryKey, direction) {
 		if (!categoryKey || !direction) return [];
 		const events = changeStats?.[categoryKey]?.[direction] || [];
 		const verseList = Array.isArray($verses) ? $verses : [];
 		return events
-			.map((event) => verseList.find((verse) => verse.id === event.verseId))
-			.filter(Boolean)
+			.map((event) => ({
+				event,
+				verse: verseList.find((verse) => verse.id === event.verseId)
+			}))
+			.filter((item) => item.verse)
 			.sort((a, b) => {
-				const bookCmp = String(a.bookName || '').localeCompare(String(b.bookName || ''), 'zh');
+				const bookCmp = String(a.verse.bookName || '').localeCompare(String(b.verse.bookName || ''), 'zh');
 				if (bookCmp !== 0) return bookCmp;
-				const chapterCmp = Number(a.chapterNumber || 0) - Number(b.chapterNumber || 0);
+				const chapterCmp = Number(a.verse.chapterNumber || 0) - Number(b.verse.chapterNumber || 0);
 				if (chapterCmp !== 0) return chapterCmp;
-				return Number(a.verseNumber || 0) - Number(b.verseNumber || 0);
+				return Number(a.verse.verseNumber || 0) - Number(b.verse.verseNumber || 0);
 			});
+	}
+
+	function getCategoryMovement(event) {
+		if (!event?.from || !event?.to) return null;
+		return CATEGORY_ORDER.indexOf(event.to) > CATEGORY_ORDER.indexOf(event.from) ? 'up' : 'down';
+	}
+
+	function getChangeAnnotation(event, direction) {
+		if (direction === 'gained' && event?.from === null) {
+			return { icon: '+', labelKey: 'stats_new_verse', className: 'change-annotation-new' };
+		}
+		const movement = getCategoryMovement(event);
+		if (!movement) return null;
+		return {
+			icon: movement === 'up' ? '↑' : '↓',
+			labelKey: direction === 'lost'
+				? CATEGORY_META.find((category) => category.key === event.to)?.labelKey
+				: CATEGORY_META.find((category) => category.key === event.from)?.labelKey,
+			className: movement === 'up' ? 'change-annotation-up' : 'change-annotation-down'
+		};
 	}
 
 	function getChangeScale() {
@@ -542,7 +566,7 @@
 						<span class="change-net-header">{t('stats_net_change')}</span>
 					</div>
 					<div class="change-chart">
-						{#each CATEGORY_META as category}
+						{#each [...CATEGORY_META].reverse() as category}
 							{@const gained = changeStats?.[category.key]?.gained?.length || 0}
 							{@const lost = changeStats?.[category.key]?.lost?.length || 0}
 							<div class="change-row">
@@ -680,13 +704,20 @@
 					{t(selectedChangeDirection === 'gained' ? 'stats_gained' : 'stats_lost')} {t(selectedChangeCategoryMeta.labelKey)}
 				{/if}
 			</h3>
-			{#if selectedChangeVerses.length === 0}
+			{#if selectedChangeEvents.length === 0}
 				<p class="stats-modal-empty">{t('no_reviewed_verses')}</p>
 			{:else}
 				<div class="stats-modal-list" role="list">
-					{#each selectedChangeVerses as verse (verse.id)}
+					{#each selectedChangeEvents as item, index (`${item.event.at}-${item.event.verseId}-${index}`)}
+						{@const annotation = getChangeAnnotation(item.event, selectedChangeDirection)}
 						<div class="stats-modal-item" role="listitem">
-							<span class="stats-modal-ref">{formatVerseReference(verse)}</span>
+							<span class="stats-modal-ref">{formatVerseReference(item.verse)}</span>
+							{#if annotation}
+								<span class={`change-annotation ${annotation.className}`}>
+									<span class="change-annotation-icon" aria-hidden="true">{annotation.icon}</span>
+									{t(annotation.labelKey)}
+								</span>
+							{/if}
 						</div>
 					{/each}
 				</div>
@@ -1158,6 +1189,30 @@
 
 	.stats-modal-ref {
 		font-weight: 600;
+	}
+
+	.change-annotation {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.25rem;
+		font-size: 0.85em;
+		font-weight: 600;
+		white-space: nowrap;
+	}
+
+	.change-annotation-icon {
+		font-size: 1.25em;
+		font-weight: 700;
+		line-height: 1;
+	}
+
+	.change-annotation-up,
+	.change-annotation-new {
+		color: var(--success-color);
+	}
+
+	.change-annotation-down {
+		color: var(--danger-color);
 	}
 
 	.stats-modal-interval {
