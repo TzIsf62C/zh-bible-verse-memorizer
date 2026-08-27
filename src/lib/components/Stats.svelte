@@ -55,6 +55,14 @@
 		total: getProgressTotal(currentProgress),
 		max: getProgressMax(currentProgress)
 	};
+	$: activeMax = Math.max(
+		masteryData.newLearning || 0,
+		masteryData.developing || 0,
+		masteryData.solid || 0,
+		1
+	);
+	$: masteredScaled = scaleMasteredCappedLog(masteryData.mastered || 0);
+	$: globalMax = Math.max(masteredScaled, activeMax, 1);
 	$: graphData = buildGraphData(progressHistory, timelineRange);
 	$: changeStats = buildChangeStats(timelineRange);
 	$: selectedCategoryMeta = CATEGORY_META.find((category) => category.key === selectedCategory) || null;
@@ -286,6 +294,22 @@
 		return key ? t(key) : '';
 	}
 
+	/**
+	 * Scales the mastered count with a capped log curve so the bar
+	 * saturates visually once the user accumulates many mastered verses.
+	 *
+	 * @param {number} count
+	 * @param {number} [a=0.15]
+	 * @param {number} [cap=1.12]
+	 * @param {number} [targetMax=40]
+	 * @returns {number}
+	 */
+	function scaleMasteredCappedLog(count, a = 0.15, cap = 1.12, targetMax = 40) {
+		const value = Number(count) || 0;
+		if (value <= 0) return 0;
+		return Math.min(targetMax, targetMax * (Math.log10(1 + a * value) / cap));
+	}
+
 	function getPleasantStep(maxValue) {
 		const pleasantBases = [1, 2, 5, 10, 20, 25, 50];
 		const rawStep = Math.max(1, Number(maxValue || 0) / 4);
@@ -503,17 +527,22 @@
 	{:else if viewMode === 'totals'}
 		<div class="mastery-bars">
 			{#each CATEGORY_META as category}
+				{@const raw = masteryData[category.key] ?? 0}
+				{@const isMastered = category.key === 'mastered'}
+				{@const valueForScale = isMastered ? masteredScaled : raw}
+				{@const percent = globalMax > 0 ? (valueForScale / globalMax) * 100 : 0}
+
 				<div class="mastery-category">
 					<div class="category-label">{t(category.labelKey)}</div>
 					<div class="bar-container">
 						<button
 							type="button"
 							class={`bar ${category.className}`}
-							style="width: {masteryData.max > 0 ? (masteryData[category.key] / masteryData.max) * 100 : 0}%"
+							style="width: {percent}%"
 							on:click={() => openCategoryModal(category.key)}
-							aria-label={`${t(category.labelKey)} ${masteryData[category.key]}`}
+							aria-label={`${t(category.labelKey)} ${raw}`}
 						>
-							<span class="bar-count">{masteryData[category.key]}</span>
+							<span class="bar-count">{raw}</span>
 						</button>
 					</div>
 				</div>
