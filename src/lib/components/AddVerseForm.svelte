@@ -1051,6 +1051,7 @@
 			bookInitials: bookInitials.trim(),
 			bibleVersion: bibleVersion || 'Unknown',
 			lastReviewed: resetReviewData ? null : (existingVerse?.lastReviewed || null),
+			learnedDate: resetReviewData ? null : (existingVerse?.learnedDate || null),
 			dueDate: resetReviewData ? null : (existingVerse?.dueDate || null),
 			interval: resetReviewData ? 1 : (existingVerse?.interval || 1),
 			repetitions: resetReviewData ? 0 : (existingVerse?.repetitions || 0),

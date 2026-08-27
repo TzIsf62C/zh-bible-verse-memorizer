@@ -11,6 +11,7 @@
 		getProgressTotal
 	} from '$lib/utils/masteryProgress.js';
 	import { computeCategoryChangeStats } from '$lib/utils/categoryHistory.js';
+	import { computeNewStarts, getNewStartVerses } from '$lib/utils/learnedDate.js';
 	import { t } from '$lib/i18n';
 	import AchievementsModal from '$lib/components/AchievementsModal.svelte';
 
@@ -44,6 +45,7 @@
 	let selectedChangeDirection = null;
 	let showStreakModal = false;
 	let isEditingStreak = false;
+	let showNewStartsModal = false;
 
 	$: trackingState = $progressTrackingState || {};
 	$: currentProgress = trackingState.currentProgress || createEmptyProgress();
@@ -59,6 +61,8 @@
 	$: selectedCategoryVerses = getCategoryVerses(selectedCategory);
 	$: selectedChangeCategoryMeta = CATEGORY_META.find((category) => category.key === selectedChangeCategory) || null;
 	$: selectedChangeEvents = getChangeEvents(selectedChangeCategory, selectedChangeDirection);
+	$: newStartsCount = computeNewStartsForRange(timelineRange);
+	$: newStartVerses = getNewStartVersesForRange(timelineRange);
 	$: currentStreakDays = Math.max(0, Number($streakData?.current || 0));
 	$: streakDaysLabel = `${currentStreakDays} ${capitalizeLabel(currentStreakDays === 1 ? t('day') : t('days'))}`;
 	$: hasExtendedStreakToday = hasStreakExtendedToday($streakData?.lastActiveDate);
@@ -171,6 +175,26 @@
 		selectedChangeCategory = categoryKey;
 		selectedChangeDirection = direction;
 		showChangeModal = true;
+	}
+
+	function computeNewStartsForRange(range) {
+		const rangeStart = getTimelineRangeStart(range);
+		if (!rangeStart) return 0;
+		return computeNewStarts($verses, rangeStart, new Date());
+	}
+
+	function getNewStartVersesForRange(range) {
+		const rangeStart = getTimelineRangeStart(range);
+		if (!rangeStart) return [];
+		return getNewStartVerses($verses, rangeStart, new Date());
+	}
+
+	function openNewStartsModal() {
+		showNewStartsModal = true;
+	}
+
+	function closeNewStartsModal() {
+		showNewStartsModal = false;
 	}
 
 	function getTimelineRangeStart(range) {
@@ -598,6 +622,17 @@
 						{/each}
 						</div>
 				</div>
+				<button
+					type="button"
+					class="new-starts-row"
+					on:click={openNewStartsModal}
+					disabled={newStartsCount === 0}
+					aria-label={`${t('stats_new_starts')} ${newStartsCount}`}
+				>
+					<span class="new-starts-dot" aria-hidden="true"></span>
+					<span class="new-starts-label">{t('stats_new_starts')}</span>
+					<span class="new-starts-count">+ {newStartsCount}</span>
+				</button>
 				<div class="timeline-range-controls" role="tablist" aria-label={t('stats_timeline_range')}>
 					<button class="range-btn" class:active={timelineRange === 'all'} on:click={() => setTimelineRange('all')}>{t('stats_all_time')}</button>
 					<button class="range-btn" class:active={timelineRange === '30'} on:click={() => setTimelineRange('30')}>{t('stats_last_30_days')}</button>
@@ -718,6 +753,32 @@
 									{t(annotation.labelKey)}
 								</span>
 							{/if}
+						</div>
+					{/each}
+				</div>
+			{/if}
+		</div>
+	</div>
+{/if}
+
+{#if showNewStartsModal}
+	<div class="modal-overlay" on:click={(event) => event.target === event.currentTarget && closeNewStartsModal()} on:keydown={(event) => event.key === 'Escape' && closeNewStartsModal()} role="dialog" aria-modal="true" tabindex="0">
+		<div class="stats-category-modal" role="document">
+			<button type="button" class="stats-modal-close" on:click={closeNewStartsModal} aria-label={t('close')}>
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+					<path d="M6 6 L18 18"></path>
+					<path d="M18 6 L6 18"></path>
+				</svg>
+			</button>
+			<h3>{t('stats_new_starts')}</h3>
+			{#if newStartVerses.length === 0}
+				<p class="stats-modal-empty">{t('no_reviewed_verses')}</p>
+			{:else}
+				<div class="stats-modal-list" role="list">
+					{#each newStartVerses as verse (verse.id)}
+						<div class="stats-modal-item" role="listitem">
+							<span class="stats-modal-ref">{formatVerseReference(verse)}</span>
+							<span class="stats-modal-interval">{formatDateLabel(new Date(verse.learnedDate))}</span>
 						</div>
 					{/each}
 				</div>
@@ -1117,6 +1178,52 @@
 		font-size: 1em;
 		font-weight: 700;
 		text-align: center;
+	}
+
+	.new-starts-row {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.5rem;
+		width: 100%;
+		padding: 0.55rem 0.7rem;
+		margin-top: 0.75rem;
+		border: 1px solid var(--file-border);
+		border-radius: 10px;
+		background: color-mix(in srgb, var(--app-background) 82%, transparent);
+		color: var(--text-color);
+		font-size: 0.95em;
+		font-weight: 600;
+		cursor: pointer;
+		transition: all 0.2s ease;
+	}
+
+	.new-starts-row:hover:not(:disabled) {
+		background: color-mix(in srgb, var(--app-background) 65%, transparent);
+	}
+
+	.new-starts-row:disabled {
+		cursor: default;
+		opacity: 0.55;
+	}
+
+	.new-starts-dot {
+		width: 0.6rem;
+		height: 0.6rem;
+		border-radius: 999px;
+		background: #f5576c;
+		flex-shrink: 0;
+	}
+
+	.new-starts-label {
+		flex: 1;
+		text-align: left;
+	}
+
+	.new-starts-count {
+		font-weight: 700;
+		min-width: 1.5rem;
+		text-align: right;
 	}
 
 	/* Shell comes from the shared modal classes; sits above the stats panel chrome */

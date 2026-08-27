@@ -584,6 +584,7 @@
 				...updatedVerse,
 				isLearned: true,
 				lastReviewed: today.toISOString(),
+				learnedDate: v.learnedDate ?? today.toISOString(),
 				heatArray: newHeatArray,
 				categoryHistory
 			} : v))

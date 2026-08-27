@@ -40,6 +40,7 @@ export function mergeVerses(currentVerses, importedVerses, options = {}) {
 		const incoming = { ...importedVerse };
 		if (!includeReview) {
 			delete incoming.lastReviewed;
+			delete incoming.learnedDate;
 			delete incoming.interval;
 			delete incoming.repetitions;
 			delete incoming.dueDate;
