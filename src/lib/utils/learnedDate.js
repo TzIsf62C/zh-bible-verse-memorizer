@@ -1,3 +1,5 @@
+import { sortVersesByBibleOrder } from './bibleBooks.js';
+
 function getValidTimestamp(value) {
 	if (value === null || value === undefined || value === '') return null;
 	const timestamp = Date.parse(value);
@@ -51,18 +53,12 @@ export function getNewStartVerses(verseList, rangeStart, rangeEnd) {
 
 	if (Number.isNaN(startTime) || Number.isNaN(endTime)) return [];
 
-	return (Array.isArray(verseList) ? verseList : [])
-		.filter((verse) => {
+	return sortVersesByBibleOrder(
+		(Array.isArray(verseList) ? verseList : []).filter((verse) => {
 			const learnedTime = getValidTimestamp(verse?.learnedDate);
 			if (learnedTime === null) return false;
 			if (learnedTime > nowTime) return false;
 			return learnedTime >= startTime && learnedTime < endTime;
 		})
-		.sort((a, b) => {
-			const bookCmp = String(a.bookName || '').localeCompare(String(b.bookName || ''), 'zh');
-			if (bookCmp !== 0) return bookCmp;
-			const chapterCmp = Number(a.chapterNumber || 0) - Number(b.chapterNumber || 0);
-			if (chapterCmp !== 0) return chapterCmp;
-			return Number(a.verseNumber || 0) - Number(b.verseNumber || 0);
-		});
+	);
 }
