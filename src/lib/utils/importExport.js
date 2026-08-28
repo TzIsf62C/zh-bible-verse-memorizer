@@ -46,6 +46,7 @@ export function mergeVerses(currentVerses, importedVerses, options = {}) {
 			delete incoming.dueDate;
 			delete incoming.heatArray;
 			delete incoming.categoryHistory;
+			delete incoming.isLearned;
 		}
 
 		const existingIndex = merged.findIndex((v) =>
@@ -157,6 +158,7 @@ export function buildExportPayload(verses, collections, options = {}) {
 			delete entry.dueDate;
 			delete entry.heatArray;
 			delete entry.categoryHistory;
+			delete entry.isLearned;
 		}
 		return entry;
 	});
