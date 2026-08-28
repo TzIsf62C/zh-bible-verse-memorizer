@@ -307,7 +307,7 @@
 	function scaleMasteredCappedLog(count, a = 0.15, cap = 1.12, targetMax = 40) {
 		const value = Number(count) || 0;
 		if (value <= 0) return 0;
-		return Math.min(targetMax, targetMax * (Math.log10(1 + a * value) / cap));
+		return Math.min(value, targetMax, targetMax * (Math.log10(1 + a * value) / cap));
 	}
 
 	function getPleasantStep(maxValue) {
