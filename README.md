@@ -37,7 +37,6 @@ Quick orientation:
 - **`src/lib/components/`** — all UI (practice, review, collections, settings, keyboard)
 - **`src/lib/utils/`** — spaced repetition, bible metadata, keyboard layouts, import/export
 - **`src/lib/i18n/`** — translations
-- **`legacy/`** — the original vanilla-JS app, kept as a porting reference (see
-  [`.knowledge/deployment.md`](.knowledge/deployment.md) for how it coexists on GitHub Pages)
+- **`legacy/`** — the original vanilla-JS app
 
 Verify changes with `npm test` and `npm run look` before calling a task done.

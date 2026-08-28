@@ -399,7 +399,7 @@
 				<img src={`${base}/icons/icon-192x192.png`} alt="App Icon" class="app-icon" />
 				<div class="app-intro">
 					<div class="app-title">ZH Bible Verse Memorizer</div>
-					<div class="app-subtitle">聖經經文背誦 V1.0</div>
+					<div class="app-subtitle">聖經經文背誦 V1.1</div>
 				</div>
 				<h2>Set Language<br />设定语言 / 設定語言</h2>
 				<div class="onboarding-options">
