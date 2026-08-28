@@ -153,6 +153,7 @@ export function buildExportPayload(verses, collections, options = {}) {
 		const entry = { ...verse };
 		if (!includeReview) {
 			delete entry.lastReviewed;
+			delete entry.learnedDate;
 			delete entry.interval;
 			delete entry.repetitions;
 			delete entry.dueDate;
