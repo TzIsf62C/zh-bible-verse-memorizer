@@ -10,6 +10,8 @@
 		getProgressMax,
 		getProgressTotal
 	} from '$lib/utils/masteryProgress.js';
+	import { computeCategoryChangeStats } from '$lib/utils/categoryHistory.js';
+	import { computeNewStarts, getNewStartVerses } from '$lib/utils/learnedDate.js';
 	import { t } from '$lib/i18n';
 	import AchievementsModal from '$lib/components/AchievementsModal.svelte';
 
@@ -30,6 +32,7 @@
 		solid: 'stats_interval_range_solid',
 		mastered: 'stats_interval_range_mastered'
 	};
+	const CATEGORY_ORDER = ['newLearning', 'developing', 'solid', 'mastered'];
 
 	const dispatch = createEventDispatcher();
 	let showAchievementsModal = false;
@@ -37,8 +40,12 @@
 	let timelineRange = 'all'; // 'all' | '30' | '7'
 	let showCategoryModal = false;
 	let selectedCategory = null;
+	let showChangeModal = false;
+	let selectedChangeCategory = null;
+	let selectedChangeDirection = null;
 	let showStreakModal = false;
 	let isEditingStreak = false;
+	let showNewStartsModal = false;
 
 	$: trackingState = $progressTrackingState || {};
 	$: currentProgress = trackingState.currentProgress || createEmptyProgress();
@@ -48,9 +55,22 @@
 		total: getProgressTotal(currentProgress),
 		max: getProgressMax(currentProgress)
 	};
+	$: activeMax = Math.max(
+		masteryData.newLearning || 0,
+		masteryData.developing || 0,
+		masteryData.solid || 0,
+		1
+	);
+	$: masteredScaled = scaleMasteredCappedLog(masteryData.mastered || 0);
+	$: globalMax = Math.max(masteredScaled, activeMax, 1);
 	$: graphData = buildGraphData(progressHistory, timelineRange);
+	$: changeStats = buildChangeStats(timelineRange);
 	$: selectedCategoryMeta = CATEGORY_META.find((category) => category.key === selectedCategory) || null;
 	$: selectedCategoryVerses = getCategoryVerses(selectedCategory);
+	$: selectedChangeCategoryMeta = CATEGORY_META.find((category) => category.key === selectedChangeCategory) || null;
+	$: selectedChangeEvents = getChangeEvents(selectedChangeCategory, selectedChangeDirection);
+	$: newStartsCount = computeNewStartsForRange(timelineRange);
+	$: newStartVerses = getNewStartVersesForRange(timelineRange);
 	$: currentStreakDays = Math.max(0, Number($streakData?.current || 0));
 	$: streakDaysLabel = `${currentStreakDays} ${capitalizeLabel(currentStreakDays === 1 ? t('day') : t('days'))}`;
 	$: hasExtendedStreakToday = hasStreakExtendedToday($streakData?.lastActiveDate);
@@ -153,6 +173,99 @@
 		selectedCategory = null;
 	}
 
+	function closeChangeModal() {
+		showChangeModal = false;
+		selectedChangeCategory = null;
+		selectedChangeDirection = null;
+	}
+
+	function openChangeModal(categoryKey, direction) {
+		selectedChangeCategory = categoryKey;
+		selectedChangeDirection = direction;
+		showChangeModal = true;
+	}
+
+	function computeNewStartsForRange(range) {
+		const rangeStart = getTimelineRangeStart(range);
+		if (!rangeStart) return 0;
+		return computeNewStarts($verses, rangeStart, new Date());
+	}
+
+	function getNewStartVersesForRange(range) {
+		const rangeStart = getTimelineRangeStart(range);
+		if (!rangeStart) return [];
+		return getNewStartVerses($verses, rangeStart, new Date());
+	}
+
+	function openNewStartsModal() {
+		showNewStartsModal = true;
+	}
+
+	function closeNewStartsModal() {
+		showNewStartsModal = false;
+	}
+
+	function getTimelineRangeStart(range) {
+		if (range === 'all') return null;
+		const start = new Date();
+		start.setHours(0, 0, 0, 0);
+		start.setDate(start.getDate() - (range === '7' ? 6 : 29));
+		return start;
+	}
+
+	function buildChangeStats(range) {
+		const rangeStart = getTimelineRangeStart(range);
+		if (!rangeStart) return {};
+		return computeCategoryChangeStats($verses, rangeStart, new Date());
+	}
+
+	function getChangeEvents(categoryKey, direction) {
+		if (!categoryKey || !direction) return [];
+		const events = changeStats?.[categoryKey]?.[direction] || [];
+		const verseList = Array.isArray($verses) ? $verses : [];
+		return events
+			.map((event) => ({
+				event,
+				verse: verseList.find((verse) => verse.id === event.verseId)
+			}))
+			.filter((item) => item.verse)
+			.sort((a, b) => {
+				const bookCmp = String(a.verse.bookName || '').localeCompare(String(b.verse.bookName || ''), 'zh');
+				if (bookCmp !== 0) return bookCmp;
+				const chapterCmp = Number(a.verse.chapterNumber || 0) - Number(b.verse.chapterNumber || 0);
+				if (chapterCmp !== 0) return chapterCmp;
+				return Number(a.verse.verseNumber || 0) - Number(b.verse.verseNumber || 0);
+			});
+	}
+
+	function getCategoryMovement(event) {
+		if (!event?.from || !event?.to) return null;
+		return CATEGORY_ORDER.indexOf(event.to) > CATEGORY_ORDER.indexOf(event.from) ? 'up' : 'down';
+	}
+
+	function getChangeAnnotation(event, direction) {
+		if (direction === 'gained' && event?.from === null) {
+			return { icon: '+', labelKey: 'stats_new_verse', className: 'change-annotation-new' };
+		}
+		const movement = getCategoryMovement(event);
+		if (!movement) return null;
+		return {
+			icon: movement === 'up' ? '↑' : '↓',
+			labelKey: direction === 'lost'
+				? CATEGORY_META.find((category) => category.key === event.to)?.labelKey
+				: CATEGORY_META.find((category) => category.key === event.from)?.labelKey,
+			className: movement === 'up' ? 'change-annotation-up' : 'change-annotation-down'
+		};
+	}
+
+	function getChangeScale() {
+		const values = CATEGORY_META.flatMap((category) => [
+			Number(changeStats?.[category.key]?.gained?.length || 0),
+			Number(changeStats?.[category.key]?.lost?.length || 0)
+		]);
+		return Math.max(...values, 1);
+	}
+
 	function getCategoryVerses(categoryKey) {
 		if (!categoryKey) return [];
 		const verseList = Array.isArray($verses) ? $verses : [];
@@ -179,6 +292,22 @@
 	function getCategoryIntervalLabel(categoryKey) {
 		const key = CATEGORY_INTERVAL_LABEL_KEYS[categoryKey];
 		return key ? t(key) : '';
+	}
+
+	/**
+	 * Scales the mastered count with a capped log curve so the bar
+	 * saturates visually once the user accumulates many mastered verses.
+	 *
+	 * @param {number} count
+	 * @param {number} [a=0.15]
+	 * @param {number} [cap=1.12]
+	 * @param {number} [targetMax=40]
+	 * @returns {number}
+	 */
+	function scaleMasteredCappedLog(count, a = 0.15, cap = 1.12, targetMax = 40) {
+		const value = Number(count) || 0;
+		if (value <= 0) return 0;
+		return Math.min(value, targetMax, targetMax * (Math.log10(1 + a * value) / cap));
 	}
 
 	function getPleasantStep(maxValue) {
@@ -398,17 +527,22 @@
 	{:else if viewMode === 'totals'}
 		<div class="mastery-bars">
 			{#each CATEGORY_META as category}
+				{@const raw = masteryData[category.key] ?? 0}
+				{@const isMastered = category.key === 'mastered'}
+				{@const valueForScale = isMastered ? masteredScaled : raw}
+				{@const percent = globalMax > 0 ? (valueForScale / globalMax) * 100 : 0}
+
 				<div class="mastery-category">
 					<div class="category-label">{t(category.labelKey)}</div>
 					<div class="bar-container">
 						<button
 							type="button"
 							class={`bar ${category.className}`}
-							style="width: {masteryData.max > 0 ? (masteryData[category.key] / masteryData.max) * 100 : 0}%"
+							style="width: {percent}%"
 							on:click={() => openCategoryModal(category.key)}
-							aria-label={`${t(category.labelKey)} ${masteryData[category.key]}`}
+							aria-label={`${t(category.labelKey)} ${raw}`}
 						>
-							<span class="bar-count">{masteryData[category.key]}</span>
+							<span class="bar-count">{raw}</span>
 						</button>
 					</div>
 				</div>
@@ -416,6 +550,7 @@
 		</div>
 	{:else}
 		<div class="timeline-panel">
+			{#if timelineRange === 'all'}
 			{#if graphData.points.length === 0}
 				<div class="empty-state">
 					<p>{t('stats_progress_empty')}</p>
@@ -461,6 +596,73 @@
 					<span>{graphData.lastLabel}</span>
 				</div>
 					<div class="timeline-range-controls" role="tablist" aria-label={t('stats_timeline_range')}>
+					<button class="range-btn" class:active={timelineRange === 'all'} on:click={() => setTimelineRange('all')}>{t('stats_all_time')}</button>
+					<button class="range-btn" class:active={timelineRange === '30'} on:click={() => setTimelineRange('30')}>{t('stats_last_30_days')}</button>
+					<button class="range-btn" class:active={timelineRange === '7'} on:click={() => setTimelineRange('7')}>{t('stats_last_7_days')}</button>
+				</div>
+			{/if}
+			{:else}
+				<div class="timeline-legend">
+					{#each CATEGORY_META as category}
+						<div class="legend-item">
+							<span class="legend-dot" style="background: {category.fill};"></span>
+							<span>{t(category.labelKey)}</span>
+						</div>
+					{/each}
+				</div>
+				<div class="change-chart-layout">
+					<div class="change-chart-header">
+						<div class="change-header-track">
+							<span>{t('stats_lost')}</span>
+							<span>{t('stats_gained')}</span>
+						</div>
+						<span class="change-net-header">{t('stats_net_change')}</span>
+					</div>
+					<div class="change-chart">
+						{#each [...CATEGORY_META].reverse() as category}
+							{@const gained = changeStats?.[category.key]?.gained?.length || 0}
+							{@const lost = changeStats?.[category.key]?.lost?.length || 0}
+							<div class="change-row">
+								<div class="change-track">
+								<div class="change-zero-line"></div>
+								<button
+									type="button"
+									class="change-bar change-bar-lost"
+									style={`width: ${(lost / getChangeScale()) * 50}%; background: color-mix(in srgb, ${category.fill} 42%, transparent);`}
+									on:click={() => openChangeModal(category.key, 'lost')}
+									disabled={lost === 0}
+									aria-label={`${t('stats_lost')} ${t(category.labelKey)} ${lost}`}
+								>
+									{#if lost > 0}{lost}{/if}
+								</button>
+								<button
+									type="button"
+									class="change-bar change-bar-gained"
+									style={`width: ${(gained / getChangeScale()) * 50}%; background: ${category.fill};`}
+									on:click={() => openChangeModal(category.key, 'gained')}
+									disabled={gained === 0}
+									aria-label={`${t('stats_gained')} ${t(category.labelKey)} ${gained}`}
+								>
+									{#if gained > 0}{gained}{/if}
+								</button>
+								</div>
+								<div class="change-net">{changeStats?.[category.key]?.net > 0 ? '+' : ''}{changeStats?.[category.key]?.net || 0}</div>
+							</div>
+						{/each}
+						</div>
+				</div>
+				<button
+					type="button"
+					class="new-starts-row"
+					on:click={openNewStartsModal}
+					disabled={newStartsCount === 0}
+					aria-label={`${t('stats_new_starts')} ${newStartsCount}`}
+				>
+					<span class="new-starts-dot" aria-hidden="true"></span>
+					<span class="new-starts-label">{t('stats_new_starts')}</span>
+					<span class="new-starts-count">+ {newStartsCount}</span>
+				</button>
+				<div class="timeline-range-controls" role="tablist" aria-label={t('stats_timeline_range')}>
 					<button class="range-btn" class:active={timelineRange === 'all'} on:click={() => setTimelineRange('all')}>{t('stats_all_time')}</button>
 					<button class="range-btn" class:active={timelineRange === '30'} on:click={() => setTimelineRange('30')}>{t('stats_last_30_days')}</button>
 					<button class="range-btn" class:active={timelineRange === '7'} on:click={() => setTimelineRange('7')}>{t('stats_last_7_days')}</button>
@@ -544,6 +746,68 @@
 						<div class="stats-modal-item" role="listitem">
 							<span class="stats-modal-ref">{formatVerseReference(verse)}</span>
 							<span class="stats-modal-interval">{t('interval_label')} {Math.max(1, Number(verse.interval || 1))}</span>
+						</div>
+					{/each}
+				</div>
+			{/if}
+		</div>
+	</div>
+{/if}
+
+{#if showChangeModal}
+	<div class="modal-overlay" on:click={(event) => event.target === event.currentTarget && closeChangeModal()} on:keydown={(event) => event.key === 'Escape' && closeChangeModal()} role="dialog" aria-modal="true" tabindex="0">
+		<div class="stats-category-modal" role="document">
+			<button type="button" class="stats-modal-close" on:click={closeChangeModal} aria-label={t('close')}>
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+					<path d="M6 6 L18 18"></path>
+					<path d="M18 6 L6 18"></path>
+				</svg>
+			</button>
+			<h3>
+				{#if selectedChangeCategoryMeta}
+					{t(selectedChangeDirection === 'gained' ? 'stats_gained' : 'stats_lost')} {t(selectedChangeCategoryMeta.labelKey)}
+				{/if}
+			</h3>
+			{#if selectedChangeEvents.length === 0}
+				<p class="stats-modal-empty">{t('no_reviewed_verses')}</p>
+			{:else}
+				<div class="stats-modal-list" role="list">
+					{#each selectedChangeEvents as item, index (`${item.event.at}-${item.event.verseId}-${index}`)}
+						{@const annotation = getChangeAnnotation(item.event, selectedChangeDirection)}
+						<div class="stats-modal-item" role="listitem">
+							<span class="stats-modal-ref">{formatVerseReference(item.verse)}</span>
+							{#if annotation}
+								<span class={`change-annotation ${annotation.className}`}>
+									<span class="change-annotation-icon" aria-hidden="true">{annotation.icon}</span>
+									{t(annotation.labelKey)}
+								</span>
+							{/if}
+						</div>
+					{/each}
+				</div>
+			{/if}
+		</div>
+	</div>
+{/if}
+
+{#if showNewStartsModal}
+	<div class="modal-overlay" on:click={(event) => event.target === event.currentTarget && closeNewStartsModal()} on:keydown={(event) => event.key === 'Escape' && closeNewStartsModal()} role="dialog" aria-modal="true" tabindex="0">
+		<div class="stats-category-modal" role="document">
+			<button type="button" class="stats-modal-close" on:click={closeNewStartsModal} aria-label={t('close')}>
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+					<path d="M6 6 L18 18"></path>
+					<path d="M18 6 L6 18"></path>
+				</svg>
+			</button>
+			<h3>{t('stats_new_starts')}</h3>
+			{#if newStartVerses.length === 0}
+				<p class="stats-modal-empty">{t('no_reviewed_verses')}</p>
+			{:else}
+				<div class="stats-modal-list" role="list">
+					{#each newStartVerses as verse (verse.id)}
+						<div class="stats-modal-item" role="listitem">
+							<span class="stats-modal-ref">{formatVerseReference(verse)}</span>
+							<span class="stats-modal-interval">{formatDateLabel(new Date(verse.learnedDate))}</span>
 						</div>
 					{/each}
 				</div>
@@ -849,6 +1113,154 @@
 		margin-top: 0.45rem;
 	}
 
+	.change-chart-layout {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) max-content;
+		column-gap: 0.5rem;
+	}
+
+	.change-chart-header,
+	.change-chart,
+	.change-row {
+		display: grid;
+		grid-column: 1 / -1;
+		grid-template-columns: 1fr max-content;
+		gap: 0.5rem;
+	}
+
+	.change-chart-header {
+		align-items: end;
+		font-size: 0.78em;
+		color: var(--subtitle-color);
+		margin-bottom: 0.75rem;
+	}
+
+	.change-header-track {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		text-align: center;
+	}
+
+	.change-net-header {
+		text-align: center;
+	}
+
+	.change-chart {
+		gap: 0.75rem;
+	}
+
+	.change-row {
+		align-items: center;
+	}
+
+	@supports (grid-template-columns: subgrid) {
+		.change-chart-header,
+		.change-chart,
+		.change-row {
+			grid-template-columns: subgrid;
+		}
+	}
+
+	.change-track {
+		position: relative;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		min-height: 2rem;
+		background: color-mix(in srgb, var(--app-background) 75%, transparent);
+		border-radius: 8px;
+		overflow: hidden;
+	}
+
+	.change-zero-line {
+		position: absolute;
+		inset-block: 0;
+		left: 50%;
+		width: 1px;
+		background: color-mix(in srgb, var(--text-color) 28%, transparent);
+	}
+
+	.change-bar {
+		position: absolute;
+		z-index: 1;
+		min-width: 0;
+		height: 1.5rem;
+		padding: 0 0.35rem;
+		border: none;
+		border-radius: 4px;
+		color: #fff;
+		font-size: 1em;
+		font-weight: 700;
+		line-height: 1.5rem;
+		cursor: pointer;
+	}
+
+	.change-bar:disabled {
+		cursor: default;
+	}
+
+	.change-bar-lost {
+		right: 50%;
+		text-align: center;
+	}
+
+	.change-bar-gained {
+		left: 50%;
+		text-align: center;
+	}
+
+	.change-net {
+		font-size: 1em;
+		font-weight: 700;
+		text-align: center;
+	}
+
+	.new-starts-row {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.5rem;
+		width: 100%;
+		padding: 0.55rem 0.7rem;
+		margin-top: 0.75rem;
+		border: 1px solid var(--file-border);
+		border-radius: 10px;
+		background: color-mix(in srgb, var(--app-background) 82%, transparent);
+		color: var(--text-color);
+		font-size: 0.95em;
+		font-weight: 600;
+		cursor: pointer;
+		transition: all 0.2s ease;
+	}
+
+	.new-starts-row:hover:not(:disabled) {
+		background: color-mix(in srgb, var(--app-background) 65%, transparent);
+	}
+
+	.new-starts-row:disabled {
+		cursor: default;
+		opacity: 0.55;
+	}
+
+	.new-starts-dot {
+		width: 0.6rem;
+		height: 0.6rem;
+		border-radius: 999px;
+		background: #f5576c;
+		flex-shrink: 0;
+	}
+
+	.new-starts-label {
+		flex: 1;
+		text-align: left;
+	}
+
+	.new-starts-count {
+		font-weight: 700;
+		min-width: 1.5rem;
+		text-align: right;
+	}
+
 	/* Shell comes from the shared modal classes; sits above the stats panel chrome */
 	.modal-overlay {
 		z-index: 2200;
@@ -919,6 +1331,30 @@
 
 	.stats-modal-ref {
 		font-weight: 600;
+	}
+
+	.change-annotation {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.25rem;
+		font-size: 0.85em;
+		font-weight: 600;
+		white-space: nowrap;
+	}
+
+	.change-annotation-icon {
+		font-size: 1.25em;
+		font-weight: 700;
+		line-height: 1;
+	}
+
+	.change-annotation-up,
+	.change-annotation-new {
+		color: var(--success-color);
+	}
+
+	.change-annotation-down {
+		color: var(--danger-color);
 	}
 
 	.stats-modal-interval {
@@ -1139,5 +1575,6 @@
 		.stats-title {
 			font-size: 1.5em;
 		}
+
 	}
 </style>

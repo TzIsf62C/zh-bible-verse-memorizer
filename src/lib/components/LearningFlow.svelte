@@ -5,6 +5,7 @@
 	import Keyboard from './Keyboard.svelte';
 	import { keyboardLayouts } from '$lib/utils/keyboardLayouts';
 	import { spacedRepetitionBinary } from '$lib/utils/spacedRepetition';
+	import { appendCategoryHistory } from '$lib/utils/categoryHistory.js';
 	import { zhuyinKeyMap, cangjieKeyMap } from '$lib/utils/inputMaps';
 	import { triggerErrorFeedback } from '$lib/utils/feedback';
 	import { createVerseReferenceFormatter } from '$lib/utils/bibleBooks';
@@ -548,6 +549,7 @@
 	function updateVerseProgress(verse, userInput) {
 		const today = new Date();
 		const updatedVerse = spacedRepetitionBinary(verse, true, today);
+		const categoryHistory = appendCategoryHistory(verse, updatedVerse.interval, today);
 
 		// Build correctness map for heat tracking (only in Advanced stage)
 		const inputMethod = $settings.inputMethod || 'pinyin';
@@ -582,7 +584,9 @@
 				...updatedVerse,
 				isLearned: true,
 				lastReviewed: today.toISOString(),
-				heatArray: newHeatArray
+				learnedDate: v.learnedDate ?? today.toISOString(),
+				heatArray: newHeatArray,
+				categoryHistory
 			} : v))
 		);
 	}

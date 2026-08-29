@@ -4,6 +4,7 @@
 	import { settings } from '$lib/stores/settings';
 	import { t } from '$lib/i18n';
 	import { spacedRepetitionBinary } from '$lib/utils/spacedRepetition';
+	import { appendCategoryHistory } from '$lib/utils/categoryHistory.js';
 	import Modal from './Modal.svelte';
 	import Keyboard from './Keyboard.svelte';
 	import { createVerseReferenceFormatter } from '$lib/utils/bibleBooks';
@@ -549,6 +550,7 @@
 					dueDate: v.dueDate
 				};
 				const updated = spacedRepetitionBinary(card, success, now);
+				const categoryHistory = appendCategoryHistory(v, updated.interval, now);
 				
 				// Initialize or update heatArray (verse text only)
 				let newHeatArray = v.heatArray;
@@ -572,7 +574,8 @@
 					// dueDate from spacedRepetitionBinary is a Date object
 					dueDate: updated.dueDate instanceof Date ? updated.dueDate.toISOString() : updated.dueDate,
 					lastReviewed: success ? now.toISOString() : v.lastReviewed,
-					heatArray: newHeatArray
+					heatArray: newHeatArray,
+					categoryHistory
 				};
 			}
 			return v;

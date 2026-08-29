@@ -40,10 +40,13 @@ export function mergeVerses(currentVerses, importedVerses, options = {}) {
 		const incoming = { ...importedVerse };
 		if (!includeReview) {
 			delete incoming.lastReviewed;
+			delete incoming.learnedDate;
 			delete incoming.interval;
 			delete incoming.repetitions;
 			delete incoming.dueDate;
 			delete incoming.heatArray;
+			delete incoming.categoryHistory;
+			delete incoming.isLearned;
 		}
 
 		const existingIndex = merged.findIndex((v) =>
@@ -150,10 +153,13 @@ export function buildExportPayload(verses, collections, options = {}) {
 		const entry = { ...verse };
 		if (!includeReview) {
 			delete entry.lastReviewed;
+			delete entry.learnedDate;
 			delete entry.interval;
 			delete entry.repetitions;
 			delete entry.dueDate;
 			delete entry.heatArray;
+			delete entry.categoryHistory;
+			delete entry.isLearned;
 		}
 		return entry;
 	});

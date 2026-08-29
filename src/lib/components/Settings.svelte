@@ -588,7 +588,7 @@
 	
 	<div class="app-info">
 		<p>ZH Bible Verse Memorizer</p>
-		<p>(Version 1.0)</p>
+		<p>(Version 1.1)</p>
 		<p>Copyright © 2026 ad.infinitum</p>
 	</div>
 </div>
