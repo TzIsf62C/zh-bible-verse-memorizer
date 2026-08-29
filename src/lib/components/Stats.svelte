@@ -1119,12 +1119,17 @@
 		column-gap: 0.5rem;
 	}
 
-	.change-chart-header {
+	.change-chart-header,
+	.change-chart,
+	.change-row {
 		display: grid;
 		grid-column: 1 / -1;
-		grid-template-columns: subgrid;
-		align-items: end;
+		grid-template-columns: 1fr max-content;
 		gap: 0.5rem;
+	}
+
+	.change-chart-header {
+		align-items: end;
 		font-size: 0.78em;
 		color: var(--subtitle-color);
 		margin-bottom: 0.75rem;
@@ -1141,18 +1146,19 @@
 	}
 
 	.change-chart {
-		display: grid;
-		grid-column: 1 / -1;
-		grid-template-columns: subgrid;
 		gap: 0.75rem;
 	}
 
 	.change-row {
-		display: grid;
-		grid-template-columns: subgrid;
-		grid-column: 1 / -1;
 		align-items: center;
-		gap: 0.5rem;
+	}
+
+	@supports (grid-template-columns: subgrid) {
+		.change-chart-header,
+		.change-chart,
+		.change-row {
+			grid-template-columns: subgrid;
+		}
 	}
 
 	.change-track {
