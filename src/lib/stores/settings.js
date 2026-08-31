@@ -12,6 +12,7 @@ const defaultSettings = {
 	buzzerEnabled: false,
 	backupReminderEnabled: true,
 	backupReminderWeeks: 4,
+	secondChanceRecoveryPercent: 60,
 	lastExportDate: '',
 	textSizePreference: 1,
 	needsPracticeIncludeBelow: 80,
@@ -33,6 +34,14 @@ function clampReminderWeeks(value, fallback) {
 	}
 
 	return Math.max(1, Math.min(52, Math.round(value)));
+}
+
+function clampRecoveryPercent(value, fallback) {
+	if (!Number.isFinite(value)) {
+		return fallback;
+	}
+
+	return Math.max(10, Math.min(100, Math.round(value)));
 }
 
 function sanitizeLastExportDate(value) {
@@ -74,12 +83,17 @@ function sanitizeSettings(settings) {
 		Number(merged.backupReminderWeeks),
 		defaultSettings.backupReminderWeeks
 	);
+	const secondChanceRecoveryPercent = clampRecoveryPercent(
+		Number(merged.secondChanceRecoveryPercent),
+		defaultSettings.secondChanceRecoveryPercent
+	);
 	const lastExportDate = sanitizeLastExportDate(merged.lastExportDate);
 
 	return {
 		...merged,
 		hiddenAchievementSeriesIds,
 		backupReminderWeeks,
+		secondChanceRecoveryPercent,
 		lastExportDate,
 		textSizePreference: Number.isFinite(textSizePreference) && textSizePreference > 0
 			? textSizePreference
@@ -113,6 +127,10 @@ function readLegacySettings() {
 		backupReminderWeeks:
 			localStorage.getItem('backupReminderWeeks') !== null
 				? Number(localStorage.getItem('backupReminderWeeks'))
+				: undefined,
+		secondChanceRecoveryPercent:
+			localStorage.getItem('secondChanceRecoveryPercent') !== null
+				? Number(localStorage.getItem('secondChanceRecoveryPercent'))
 				: undefined,
 		lastExportDate: localStorage.getItem('lastExportDate') || undefined,
 		textSizePreference:

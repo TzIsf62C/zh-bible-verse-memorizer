@@ -549,7 +549,7 @@
 					repetitions: v.repetitions || 0,
 					dueDate: v.dueDate
 				};
-				const updated = spacedRepetitionBinary(card, success, now);
+				const updated = spacedRepetitionBinary(card, success, now, $settings.secondChanceRecoveryPercent ?? 60);
 				const categoryHistory = appendCategoryHistory(v, updated.interval, now);
 				
 				// Initialize or update heatArray (verse text only)
@@ -795,6 +795,7 @@
 		width: 100%;
 		background: var(--panel-background);
 		padding: 2rem;
+		border: 1px solid var(--file-border);
 		border-radius: 8px;
 		margin-bottom: 1.5rem;
 		font-size: 1.5em;
@@ -806,6 +807,11 @@
 		word-break: break-word;
 		overflow-x: hidden;
 		position: relative;
+	}
+
+	.passage-display.is-second-chance {
+		border-color: var(--warning-color);
+		box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--warning-color) 30%, transparent);
 	}
 
 	.completed-verse {

@@ -21,12 +21,40 @@ function parseDateValue(value) {
 }
 
 function normalizeSpacingCard(card = {}) {
+	const secondChanceActive = Boolean(card.secondChanceActive);
+	const originalInterval = Number.isFinite(Number(card.secondChanceOriginalInterval))
+		? Math.max(1, Math.floor(Number(card.secondChanceOriginalInterval)))
+		: null;
+	const failureDate = parseDateValue(card.secondChanceFailureDate);
+	const dueDate = parseDateValue(card.secondChanceDueDate);
+
 	return {
 		...card,
 		interval: toPositiveInteger(card.interval, 1),
 		repetitions: toNonNegativeInteger(card.repetitions, 0),
-		dueDate: parseDateValue(card.dueDate)
+		dueDate: parseDateValue(card.dueDate),
+		secondChanceActive,
+		secondChanceOriginalInterval: secondChanceActive ? originalInterval : null,
+		secondChanceFailureDate: secondChanceActive && failureDate ? failureDate.toISOString() : null,
+		secondChanceDueDate: secondChanceActive && dueDate ? dueDate.toISOString() : null
 	};
+}
+
+export function clearSecondChanceState(card = {}) {
+	return {
+		...card,
+		secondChanceActive: false,
+		secondChanceOriginalInterval: null,
+		secondChanceFailureDate: null,
+		secondChanceDueDate: null
+	};
+}
+
+function clampRecoveryPercent(value, fallback = 60) {
+	const parsed = Number(value);
+	if (!Number.isFinite(parsed)) return fallback;
+	const clamped = Math.min(100, Math.max(10, parsed));
+	return Math.round(clamped);
 }
 
 export function getRepetitionsForInterval(interval) {
@@ -101,42 +129,73 @@ export function getSharedReviewSchedule(verses = [], currentDate = new Date()) {
 	};
 }
 
-export function spacedRepetitionBinary(card, success, currentDate) {
+export function spacedRepetitionBinary(card, success, currentDate, recoveryPercent = 60) {
 	const updated = normalizeSpacingCard(card);
+	const secondChanceDueDate = parseDateValue(updated.secondChanceDueDate);
+	const isSecondChanceReviewDue = secondChanceDueDate && currentDate >= secondChanceDueDate;
 
-	if (!success) {
-		updated.repetitions = 0;
-		updated.interval = 1;
-	} else {
-		updated.repetitions = (updated.repetitions || 0) + 1;
+	if (updated.secondChanceActive && secondChanceDueDate && !isSecondChanceReviewDue) {
+		return updated;
+	}
 
-		let baseInterval;
-		if (updated.repetitions === 1) {
-			baseInterval = 1;
-		} else if (updated.repetitions === 2) {
-			baseInterval = 6;
-		} else {
-			baseInterval = Math.round((updated.interval || 1) * 2);
+	if (updated.secondChanceActive && isSecondChanceReviewDue) {
+		if (success) {
+			const originalInterval = Number.isFinite(Number(updated.secondChanceOriginalInterval))
+				? Math.max(1, Number(updated.secondChanceOriginalInterval))
+				: Math.max(1, updated.interval || 1);
+			const recoveryRate = clampRecoveryPercent(recoveryPercent, 60);
+			updated.interval = Math.max(1, Math.floor((originalInterval * recoveryRate) / 100));
+			updated.repetitions = (updated.repetitions || 0) + 1;
+			updated.dueDate = new Date(currentDate.getTime() + updated.interval * DAY_MS).toISOString();
+			return clearSecondChanceState(updated);
 		}
 
-		if (updated.dueDate) {
-			const dueDate = new Date(updated.dueDate);
-			const daysSinceDue = (currentDate.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24);
+		updated.repetitions = 0;
+		updated.interval = 1;
+		updated.dueDate = new Date(currentDate.getTime() + updated.interval * DAY_MS).toISOString();
+		return clearSecondChanceState(updated);
+	}
 
-			if (daysSinceDue < 0) {
-				const previousInterval = updated.interval || 1;
-				const daysWaited = Math.max(0, previousInterval + daysSinceDue);
-				const earlyReviewFactor = Math.max(0.5, daysWaited / previousInterval);
-				updated.interval = Math.round(baseInterval * earlyReviewFactor);
-			} else {
-				updated.interval = baseInterval;
-			}
+	if (!success) {
+		updated.secondChanceActive = true;
+		updated.secondChanceOriginalInterval = Math.max(1, updated.interval || 1);
+		updated.secondChanceFailureDate = currentDate.toISOString();
+		updated.secondChanceDueDate = new Date(currentDate.getTime() + DAY_MS).toISOString();
+		return updated;
+	}
+
+	updated.repetitions = (updated.repetitions || 0) + 1;
+
+	let baseInterval;
+	if (updated.repetitions === 1) {
+		baseInterval = 1;
+	} else if (updated.repetitions === 2) {
+		baseInterval = 6;
+	} else {
+		baseInterval = Math.round((updated.interval || 1) * 2);
+	}
+
+	if (updated.dueDate) {
+		const dueDate = new Date(updated.dueDate);
+		const daysSinceDue = (currentDate.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24);
+
+		if (daysSinceDue < 0) {
+			const previousInterval = updated.interval || 1;
+			const daysWaited = Math.max(0, previousInterval + daysSinceDue);
+			const earlyReviewFactor = Math.max(0.5, daysWaited / previousInterval);
+			updated.interval = Math.round(baseInterval * earlyReviewFactor);
 		} else {
 			updated.interval = baseInterval;
 		}
+	} else {
+		updated.interval = baseInterval;
 	}
 
 	updated.dueDate = new Date(currentDate.getTime() + updated.interval * DAY_MS).toISOString();
+	updated.secondChanceActive = false;
+	updated.secondChanceOriginalInterval = null;
+	updated.secondChanceFailureDate = null;
+	updated.secondChanceDueDate = null;
 	return updated;
 }
 
@@ -157,6 +216,20 @@ export function getDaysUntilDue(dueDate) {
 	const hours = Math.floor(diffTime / msPerHour);
 	const minutes = Math.floor(diffTime / msPerMinute);
 	return { days, hours, minutes, milliseconds: diffTime };
+}
+
+export function countSecondChanceScheduledVerses(verses = [], now = new Date()) {
+	if (!Array.isArray(verses)) return 0;
+
+	const start = new Date(now.getTime());
+	const cutoff = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+	return verses.filter((verse) => {
+		if (!verse || !verse.secondChanceActive || !verse.secondChanceDueDate) {
+			return false;
+		}
+		const dueDate = new Date(verse.secondChanceDueDate);
+		return dueDate >= start && dueDate <= cutoff;
+	}).length;
 }
 
 /**

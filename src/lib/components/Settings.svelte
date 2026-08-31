@@ -58,6 +58,12 @@
 		const clamped = Number.isFinite(parsed) ? Math.max(1, Math.min(52, Math.round(parsed))) : 4;
 		updateSetting('backupReminderWeeks', clamped);
 	}
+
+	function updateSecondChanceRecoveryPercent(rawValue) {
+		const parsed = Number(rawValue);
+		const clamped = Number.isFinite(parsed) ? Math.max(10, Math.min(100, Math.round(parsed))) : 60;
+		updateSetting('secondChanceRecoveryPercent', clamped);
+	}
 	
 	function showTutorial() {
 		dispatch('viewtutorial');
@@ -512,6 +518,22 @@
 					</div>
 				</div>
 			</label>
+		</div>
+
+		<div class="setting-group">
+			<label for="secondChanceRecoveryPercent">Second-chance recovery percent</label>
+			<div class="backup-weeks-control">
+				<input
+					id="secondChanceRecoveryPercent"
+					type="number"
+					min="10"
+					max="100"
+					value={$settings.secondChanceRecoveryPercent ?? 60}
+					on:input={(e) => updateSecondChanceRecoveryPercent(e.currentTarget.value)}
+				/>
+				<span>%</span>
+			</div>
+			<p class="help-text">Applies to the previous interval when a second-chance review is passed. Example: 24-day interval × 60% = 14-day recovery interval.</p>
 		</div>
 	</div>
 	

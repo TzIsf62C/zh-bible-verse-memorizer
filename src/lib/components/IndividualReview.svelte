@@ -416,7 +416,7 @@
 					repetitions: v.repetitions || 0,
 					dueDate: v.dueDate ? (typeof v.dueDate === 'string' ? new Date(v.dueDate) : v.dueDate) : now
 				};
-				const updated = spacedRepetitionBinary(card, success, now);
+				const updated = spacedRepetitionBinary(card, success, now, $settings.secondChanceRecoveryPercent ?? 60);
 				const categoryHistory = appendCategoryHistory(v, updated.interval, now);
 				
 				// Initialize or update heatArray
@@ -572,7 +572,7 @@
 			<h3>{formatVerseRef(currentVerse)}</h3>
 		</div>
 
-		<div class="verse-display" bind:this={verseDisplayEl}>
+		<div class="verse-display" class:is-second-chance={currentVerse?.secondChanceActive} bind:this={verseDisplayEl}>
 			{#each [...reviewFullText] as char, i}
 				{@const rendered = renderCharacter(char, i, userInput, $settings.inputMethod || 'pinyin')}
 				<span class={rendered.className}>{rendered.char}</span>
@@ -717,14 +717,20 @@
 		margin-bottom: 2rem;
 		padding: 2rem;
 		background: var(--panel-background);
+		border: 1px solid var(--file-border);
 		border-radius: 8px;
 		min-height: 120px;
 		max-height: clamp(240px, 44vh, 560px);
 		width: 100%;
 		box-sizing: border-box;
 		overflow-y: auto;
-		overscroll-behavior: contain;
+		overflow-scrolling: touch;
 		-webkit-overflow-scrolling: touch;
+	}
+
+	.verse-display.is-second-chance {
+		border-color: var(--warning-color);
+		box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--warning-color) 30%, transparent);
 	}
 
 	.input-section {

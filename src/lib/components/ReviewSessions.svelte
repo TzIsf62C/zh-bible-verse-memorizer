@@ -6,7 +6,7 @@
 	import { settings } from '$lib/stores/settings';
 	import { t } from '$lib/i18n';
 	import { sortVersesByBibleOrder, createVerseReferenceFormatter } from '$lib/utils/bibleBooks';
-	import { getDaysUntilDue, countDueVerses, buildManualIntervalUpdate, getSharedReviewSchedule } from '$lib/utils/spacedRepetition';
+	import { getDaysUntilDue, countDueVerses, buildManualIntervalUpdate, getSharedReviewSchedule, countSecondChanceScheduledVerses } from '$lib/utils/spacedRepetition';
 	import { applyManualCorrection, shouldTreatManualEditAsReview } from '$lib/utils/categoryHistory.js';
 	import { keyboardLayouts } from '$lib/utils/keyboardLayouts';
 	import { icons } from '$lib/utils/icons.js';
@@ -114,6 +114,8 @@
 		return new Date(v.dueDate) <= new Date();
 	});
 
+	$: secondChanceScheduledIn24Hours = countSecondChanceScheduledVerses($verses, new Date());
+
 	$: if (dev && browser) {
 		console.debug('[ReviewSessions] dueVerses recalculated', {
 			dueCount: dueVerses.length,
@@ -125,6 +127,62 @@
 	}
 
 	// Helper functions
+	function getSecondChanceStatus(verse) {
+		if (!verse || !verse.secondChanceActive || !verse.secondChanceDueDate) {
+			return null;
+		}
+
+		const dueDate = new Date(verse.secondChanceDueDate);
+		const now = new Date();
+		const diffMs = dueDate.getTime() - now.getTime();
+		if (diffMs <= 0) {
+			return { kind: 'due-now' };
+		}
+
+		const diffHours = Math.ceil(diffMs / (1000 * 60 * 60));
+		return { kind: 'pending', hours: diffHours };
+	}
+
+	function getDueStatusMeta(verse, dueInfo) {
+		if (verse?.secondChanceActive && verse.secondChanceDueDate) {
+			const secondChanceStatus = getSecondChanceStatus(verse);
+			if (secondChanceStatus?.kind === 'due-now') {
+				return { className: 'warning-text', label: t('second_chance_due_now') };
+			}
+			if (secondChanceStatus?.kind === 'pending') {
+				const hours = secondChanceStatus.hours;
+				const label = hours <= 1
+					? t('second_chance_in_hour')
+					: t('second_chance_in_hours', { count: hours });
+				return { className: 'warning-text', label };
+			}
+		}
+
+		if (dueInfo === null) return null;
+		if (dueInfo.milliseconds < 0) {
+			if (dueInfo.days <= -2) {
+				return { className: 'overdue', label: t('days_overdue', { count: Math.abs(dueInfo.days) }) };
+			}
+			return { className: 'due-soon', label: t('due_today') };
+		}
+		if (dueInfo.days >= 1) {
+			if (dueInfo.days === 1) {
+				return { className: 'due-future', label: t('due_in_day') };
+			}
+			return { className: 'due-future', label: t('due_in_days', { count: dueInfo.days }) };
+		}
+		if (dueInfo.hours >= 2) {
+			return { className: 'due-soon', label: t('due_in_hours', { count: dueInfo.hours }) };
+		}
+		if (dueInfo.hours === 1) {
+			return { className: 'due-soon', label: t('due_in_hour') };
+		}
+		if (dueInfo.minutes >= 1) {
+			return { className: 'due-soon', label: t('due_in_minutes', { count: dueInfo.minutes }) };
+		}
+		return { className: 'due-soon', label: t('due_today') };
+	}
+
 	function sortByDueDate(verses) {
 		return [...verses].sort((a, b) => {
 			const dateA = a.dueDate ? new Date(a.dueDate) : new Date(0);
@@ -647,7 +705,11 @@
 				isLearned: verse.isLearned || Boolean(verse.lastReviewed),
 				interval: manualUpdate.interval,
 				repetitions: manualUpdate.repetitions,
-				dueDate: manualUpdate.dueDate
+				dueDate: manualUpdate.dueDate,
+				secondChanceActive: false,
+				secondChanceOriginalInterval: null,
+				secondChanceFailureDate: null,
+				secondChanceDueDate: null
 			};
 			if (shouldTreatManualEditAsReview(verse, now)) {
 				nextVerse.categoryHistory = applyManualCorrection(verse, manualUpdate.interval, now);
@@ -678,6 +740,11 @@
 						{t('review_due_verses')}
 						<span class="btn-count">({dueVerses.length})</span>
 					</button>
+				{/if}
+				{#if secondChanceScheduledIn24Hours > 0}
+					<div class="second-chance-summary">
+						{t('second_chance_review_summary', { count: secondChanceScheduledIn24Hours })}
+					</div>
 				{/if}
 				
 				{#if selectableCollections.length > 0}
@@ -763,29 +830,10 @@
 										{#if verse.lastReviewed}
 											{@const date = new Date(verse.lastReviewed)}
 											<span class="last-reviewed-text">{t('last_reviewed')}: {date.toLocaleDateString()}</span>
-											{#if dueInfo !== null}
-												{#if dueInfo.milliseconds < 0}
-													{#if dueInfo.days <= -2}
-														<span class="overdue">({t('days_overdue', { count: Math.abs(dueInfo.days) })})</span>
-													{:else}
-														<span class="due-soon">({t('due_today')})</span>
-													{/if}
-												{:else if dueInfo.days >= 1}
-													{#if dueInfo.days === 1}
-														<span class="due-future">({t('due_in_day')})</span>
-													{:else}
-														<span class="due-future">({t('due_in_days', { count: dueInfo.days })})</span>
-													{/if}
-												{:else if dueInfo.hours >= 2}
-													<span class="due-soon">({t('due_in_hours', { count: dueInfo.hours })})</span>
-												{:else if dueInfo.hours === 1}
-													<span class="due-soon">({t('due_in_hour')})</span>
-												{:else if dueInfo.minutes >= 1}
-													<span class="due-soon">({t('due_in_minutes', { count: dueInfo.minutes })})</span>
-												{:else}
-													<span class="due-soon">({t('due_today')})</span>
-												{/if}
-											{/if}
+											{@const dueStatus = getDueStatusMeta(verse, dueInfo)}
+																														{#if dueStatus}
+																															<span class={dueStatus.className}>({dueStatus.label})</span>
+																														{/if}
 										{:else}
 											{t('not_reviewed_yet')}
 										{/if}
@@ -851,29 +899,10 @@
 											{#if verse.lastReviewed}
 												{@const date = new Date(verse.lastReviewed)}
 												<span class="last-reviewed-text">{t('last_reviewed')}: {date.toLocaleDateString()}</span>
-												{#if dueInfo !== null}
-													{#if dueInfo.milliseconds < 0}
-														{#if dueInfo.days <= -2}
-															<span class="overdue">({t('days_overdue', { count: Math.abs(dueInfo.days) })})</span>
-														{:else}
-															<span class="due-soon">({t('due_today')})</span>
-														{/if}
-													{:else if dueInfo.days >= 1}
-														{#if dueInfo.days === 1}
-															<span class="due-future">({t('due_in_day')})</span>
-														{:else}
-															<span class="due-future">({t('due_in_days', { count: dueInfo.days })})</span>
-														{/if}
-													{:else if dueInfo.hours >= 2}
-														<span class="due-soon">({t('due_in_hours', { count: dueInfo.hours })})</span>
-													{:else if dueInfo.hours === 1}
-														<span class="due-soon">({t('due_in_hour')})</span>
-													{:else if dueInfo.minutes >= 1}
-														<span class="due-soon">({t('due_in_minutes', { count: dueInfo.minutes })})</span>
-													{:else}
-														<span class="due-soon">({t('due_today')})</span>
-													{/if}
-												{/if}
+												{@const dueStatus = getDueStatusMeta(verse, dueInfo)}
+																														{#if dueStatus}
+																															<span class={dueStatus.className}>({dueStatus.label})</span>
+																														{/if}
 											{:else}
 												{t('not_reviewed_yet')}
 											{/if}
@@ -904,29 +933,10 @@
 									{#if verse.lastReviewed}
 										{@const date = new Date(verse.lastReviewed)}
 										<span class="last-reviewed-text">{t('last_reviewed')}: {date.toLocaleDateString()}</span>
-										{#if dueInfo !== null}
-											{#if dueInfo.milliseconds < 0}
-												{#if dueInfo.days <= -2}
-													<span class="overdue">({t('days_overdue', { count: Math.abs(dueInfo.days) })})</span>
-												{:else}
-													<span class="due-soon">({t('due_today')})</span>
-												{/if}
-											{:else if dueInfo.days >= 1}
-												{#if dueInfo.days === 1}
-													<span class="due-future">({t('due_in_day')})</span>
-												{:else}
-													<span class="due-future">({t('due_in_days', { count: dueInfo.days })})</span>
-												{/if}
-											{:else if dueInfo.hours >= 2}
-												<span class="due-soon">({t('due_in_hours', { count: dueInfo.hours })})</span>
-											{:else if dueInfo.hours === 1}
-												<span class="due-soon">({t('due_in_hour')})</span>
-											{:else if dueInfo.minutes >= 1}
-												<span class="due-soon">({t('due_in_minutes', { count: dueInfo.minutes })})</span>
-											{:else}
-												<span class="due-soon">({t('due_today')})</span>
-											{/if}
-										{/if}
+										{@const dueStatus = getDueStatusMeta(verse, dueInfo)}
+																														{#if dueStatus}
+																															<span class={dueStatus.className}>({dueStatus.label})</span>
+																														{/if}
 									{:else}
 										{t('not_reviewed_yet')}
 									{/if}
@@ -965,28 +975,9 @@
 																{#if verse.lastReviewed}
 																	{@const date = new Date(verse.lastReviewed)}
 																	<span class="last-reviewed-text">{t('last_reviewed')}: {date.toLocaleDateString()}</span>
-																	{#if dueInfo !== null}
-																		{#if dueInfo.milliseconds < 0}
-																			{#if dueInfo.days <= -2}
-																				<span class="overdue">({t('days_overdue', { count: Math.abs(dueInfo.days) })})</span>
-																			{:else}
-																				<span class="due-soon">({t('due_today')})</span>
-																			{/if}
-																		{:else if dueInfo.days >= 1}
-																			{#if dueInfo.days === 1}
-																				<span class="due-future">({t('due_in_day')})</span>
-																			{:else}
-																				<span class="due-future">({t('due_in_days', { count: dueInfo.days })})</span>
-																			{/if}
-																		{:else if dueInfo.hours >= 2}
-																			<span class="due-soon">({t('due_in_hours', { count: dueInfo.hours })})</span>
-																		{:else if dueInfo.hours === 1}
-																			<span class="due-soon">({t('due_in_hour')})</span>
-																		{:else if dueInfo.minutes >= 1}
-																			<span class="due-soon">({t('due_in_minutes', { count: dueInfo.minutes })})</span>
-																		{:else}
-																			<span class="due-soon">({t('due_today')})</span>
-																		{/if}
+																	{@const dueStatus = getDueStatusMeta(verse, dueInfo)}
+																	{#if dueStatus}
+																		<span class={dueStatus.className}>({dueStatus.label})</span>
 																	{/if}
 																{:else}
 																	{t('not_reviewed_yet')}
@@ -1014,29 +1005,10 @@
 													{#if verse.lastReviewed}
 														{@const date = new Date(verse.lastReviewed)}
 														<span class="last-reviewed-text">{t('last_reviewed')}: {date.toLocaleDateString()}</span>
-														{#if dueInfo !== null}
-															{#if dueInfo.milliseconds < 0}
-																{#if dueInfo.days <= -2}
-																	<span class="overdue">({t('days_overdue', { count: Math.abs(dueInfo.days) })})</span>
-																{:else}
-																	<span class="due-soon">({t('due_today')})</span>
-																{/if}
-															{:else if dueInfo.days >= 1}
-																{#if dueInfo.days === 1}
-																	<span class="due-future">({t('due_in_day')})</span>
-																{:else}
-																	<span class="due-future">({t('due_in_days', { count: dueInfo.days })})</span>
-																{/if}
-															{:else if dueInfo.hours >= 2}
-																<span class="due-soon">({t('due_in_hours', { count: dueInfo.hours })})</span>
-															{:else if dueInfo.hours === 1}
-																<span class="due-soon">({t('due_in_hour')})</span>
-															{:else if dueInfo.minutes >= 1}
-																<span class="due-soon">({t('due_in_minutes', { count: dueInfo.minutes })})</span>
-															{:else}
-																<span class="due-soon">({t('due_today')})</span>
-															{/if}
-														{/if}
+														{@const dueStatus = getDueStatusMeta(verse, dueInfo)}
+																														{#if dueStatus}
+																															<span class={dueStatus.className}>({dueStatus.label})</span>
+																														{/if}
 													{:else}
 														{t('not_reviewed_yet')}
 													{/if}
@@ -1067,29 +1039,10 @@
 								{#if verse.lastReviewed}
 									{@const date = new Date(verse.lastReviewed)}
 									<span class="last-reviewed-text">{t('last_reviewed')}: {date.toLocaleDateString()}</span>
-									{#if dueInfo !== null}
-										{#if dueInfo.milliseconds < 0}
-											{#if dueInfo.days <= -2}
-												<span class="overdue">({t('days_overdue', { count: Math.abs(dueInfo.days) })})</span>
-											{:else}
-												<span class="due-soon">({t('due_today')})</span>
-											{/if}
-										{:else if dueInfo.days >= 1}
-											{#if dueInfo.days === 1}
-												<span class="due-future">({t('due_in_day')})</span>
-											{:else}
-												<span class="due-future">({t('due_in_days', { count: dueInfo.days })})</span>
-											{/if}
-										{:else if dueInfo.hours >= 2}
-											<span class="due-soon">({t('due_in_hours', { count: dueInfo.hours })})</span>
-										{:else if dueInfo.hours === 1}
-											<span class="due-soon">({t('due_in_hour')})</span>
-										{:else if dueInfo.minutes >= 1}
-											<span class="due-soon">({t('due_in_minutes', { count: dueInfo.minutes })})</span>
-										{:else}
-											<span class="due-soon">({t('due_today')})</span>
-										{/if}
-									{/if}
+									{@const dueStatus = getDueStatusMeta(verse, dueInfo)}
+																														{#if dueStatus}
+																															<span class={dueStatus.className}>({dueStatus.label})</span>
+																														{/if}
 								{:else}
 									{t('not_reviewed_yet')}
 								{/if}
@@ -1153,29 +1106,10 @@
 											{#if verse.lastReviewed}
 												{@const date = new Date(verse.lastReviewed)}
 												<span class="last-reviewed-text">{t('last_reviewed')}: {date.toLocaleDateString()}</span>
-												{#if dueInfo !== null}
-													{#if dueInfo.milliseconds < 0}
-														{#if dueInfo.days <= -2}
-															<span class="overdue">({t('days_overdue', { count: Math.abs(dueInfo.days) })})</span>
-														{:else}
-															<span class="due-soon">({t('due_today')})</span>
-														{/if}
-													{:else if dueInfo.days >= 1}
-														{#if dueInfo.days === 1}
-															<span class="due-future">({t('due_in_day')})</span>
-														{:else}
-															<span class="due-future">({t('due_in_days', { count: dueInfo.days })})</span>
-														{/if}
-													{:else if dueInfo.hours >= 2}
-														<span class="due-soon">({t('due_in_hours', { count: dueInfo.hours })})</span>
-													{:else if dueInfo.hours === 1}
-														<span class="due-soon">({t('due_in_hour')})</span>
-													{:else if dueInfo.minutes >= 1}
-														<span class="due-soon">({t('due_in_minutes', { count: dueInfo.minutes })})</span>
-													{:else}
-														<span class="due-soon">({t('due_today')})</span>
-													{/if}
-												{/if}
+												{@const dueStatus = getDueStatusMeta(verse, dueInfo)}
+																														{#if dueStatus}
+																															<span class={dueStatus.className}>({dueStatus.label})</span>
+																														{/if}
 											{:else}
 												{t('not_reviewed_yet')}
 											{/if}
@@ -1204,29 +1138,10 @@
 								{#if verse.lastReviewed}
 									{@const date = new Date(verse.lastReviewed)}
 									<span class="last-reviewed-text">{t('last_reviewed')}: {date.toLocaleDateString()}</span>
-									{#if dueInfo !== null}
-										{#if dueInfo.milliseconds < 0}
-											{#if dueInfo.days <= -2}
-												<span class="overdue">({t('days_overdue', { count: Math.abs(dueInfo.days) })})</span>
-											{:else}
-												<span class="due-soon">({t('due_today')})</span>
-											{/if}
-										{:else if dueInfo.days >= 1}
-											{#if dueInfo.days === 1}
-												<span class="due-future">({t('due_in_day')})</span>
-											{:else}
-												<span class="due-future">({t('due_in_days', { count: dueInfo.days })})</span>
-											{/if}
-										{:else if dueInfo.hours >= 2}
-											<span class="due-soon">({t('due_in_hours', { count: dueInfo.hours })})</span>
-										{:else if dueInfo.hours === 1}
-											<span class="due-soon">({t('due_in_hour')})</span>
-										{:else if dueInfo.minutes >= 1}
-											<span class="due-soon">({t('due_in_minutes', { count: dueInfo.minutes })})</span>
-										{:else}
-											<span class="due-soon">({t('due_today')})</span>
-										{/if}
-									{/if}
+									{@const dueStatus = getDueStatusMeta(verse, dueInfo)}
+																														{#if dueStatus}
+																															<span class={dueStatus.className}>({dueStatus.label})</span>
+																														{/if}
 								{:else}
 									{t('not_reviewed_yet')}
 								{/if}
@@ -1258,6 +1173,11 @@
 					<h3>{t('choose_review_mode')}</h3>
 					<button class="back-btn modal-close-btn" on:click={cancelReview} aria-label={t('exit')}>✕</button>
 				</div>
+				{#if countSecondChanceScheduledVerses(selectedVerses, new Date()) > 0}
+					<div class="second-chance-summary">
+						{t('second_chance_review_summary', { count: countSecondChanceScheduledVerses(selectedVerses, new Date()) })}
+					</div>
+				{/if}
 				<div class="modal-buttons">
 					<button class="initial-btn" on:click={chooseIndividualReview}>
 						{t('review_individually')}
@@ -1612,7 +1532,22 @@
 		color: var(--subtitle-color);
 		margin-top: 0.25rem;
 	}
-	
+
+	.second-chance-summary {
+		padding: 0.75rem 1rem;
+		border: 1px solid color-mix(in srgb, var(--warning-color) 35%, transparent);
+		background: color-mix(in srgb, var(--warning-color) 10%, transparent);
+		color: var(--warning-color);
+		border-radius: 8px;
+		font-weight: 600;
+		text-align: center;
+	}
+
+	.warning-text {
+		color: var(--warning-color);
+		font-weight: 600;
+	}
+
 	.last-reviewed-text {
 		margin-right: 0.5rem;
 	}
