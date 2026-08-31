@@ -26,6 +26,8 @@
 	let accuracy = 0;
 	let successCount = 0;
 	let reviewedVerseIds = new Set(); // Track which verses have been successfully reviewed (prevents double-counting on retry)
+	let secondChanceScheduledIds = new Set(); // Track which verses newly entered second-chance mode this session
+	let secondChanceScheduledCount = 0;
 	let feedbackMessage = '';
 	let feedbackType = '';
 	let lastErrorIndex = null;
@@ -414,10 +416,19 @@
 				const card = {
 					interval: v.interval || 0,
 					repetitions: v.repetitions || 0,
-					dueDate: v.dueDate ? (typeof v.dueDate === 'string' ? new Date(v.dueDate) : v.dueDate) : now
+					dueDate: v.dueDate ? (typeof v.dueDate === 'string' ? new Date(v.dueDate) : v.dueDate) : now,
+					secondChanceActive: v.secondChanceActive,
+					secondChanceOriginalInterval: v.secondChanceOriginalInterval,
+					secondChanceFailureDate: v.secondChanceFailureDate,
+					secondChanceDueDate: v.secondChanceDueDate
 				};
 				const updated = spacedRepetitionBinary(card, success, now, $settings.secondChanceRecoveryPercent ?? 60);
 				const categoryHistory = appendCategoryHistory(v, updated.interval, now);
+
+				if (updated.secondChanceActive && !card.secondChanceActive && !secondChanceScheduledIds.has(v.id)) {
+					secondChanceScheduledIds.add(v.id);
+					secondChanceScheduledCount++;
+				}
 				
 				// Initialize or update heatArray
 				let newHeatArray = v.heatArray;
@@ -441,7 +452,11 @@
 					dueDate: updated.dueDate,
 					lastReviewed: success ? now.toISOString() : v.lastReviewed,
 					heatArray: newHeatArray,
-					categoryHistory
+					categoryHistory,
+					secondChanceActive: updated.secondChanceActive,
+					secondChanceOriginalInterval: updated.secondChanceOriginalInterval,
+					secondChanceFailureDate: updated.secondChanceFailureDate,
+					secondChanceDueDate: updated.secondChanceDueDate
 				};
 			}
 			return v;
@@ -481,7 +496,11 @@
 	}
 
 	function showCompletionModal() {
-		completionMessage = t('congratulations_reviewed_count', { count: successCount });
+		let message = t('congratulations_reviewed_count', { count: successCount });
+		if (secondChanceScheduledCount > 0) {
+			message += ' ' + t('second_chance_review_summary', { count: secondChanceScheduledCount });
+		}
+		completionMessage = message;
 		showCompletionMsg = true;
 	}
 

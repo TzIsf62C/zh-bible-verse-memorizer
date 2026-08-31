@@ -6,7 +6,7 @@
 	import { settings } from '$lib/stores/settings';
 	import { t } from '$lib/i18n';
 	import { sortVersesByBibleOrder, createVerseReferenceFormatter } from '$lib/utils/bibleBooks';
-	import { getDaysUntilDue, countDueVerses, buildManualIntervalUpdate, getSharedReviewSchedule, countSecondChanceScheduledVerses } from '$lib/utils/spacedRepetition';
+	import { getDaysUntilDue, countDueVerses, buildManualIntervalUpdate, getSharedReviewSchedule } from '$lib/utils/spacedRepetition';
 	import { applyManualCorrection, shouldTreatManualEditAsReview } from '$lib/utils/categoryHistory.js';
 	import { keyboardLayouts } from '$lib/utils/keyboardLayouts';
 	import { icons } from '$lib/utils/icons.js';
@@ -110,11 +110,13 @@
 	// Get due verses
 	$: dueVerses = $verses.filter(v => {
 		if (!v.lastReviewed) return false;
+		if (v.secondChanceActive) {
+			if (!v.secondChanceDueDate) return true;
+			return new Date(v.secondChanceDueDate) <= new Date();
+		}
 		if (!v.dueDate) return true;
 		return new Date(v.dueDate) <= new Date();
 	});
-
-	$: secondChanceScheduledIn24Hours = countSecondChanceScheduledVerses($verses, new Date());
 
 	$: if (dev && browser) {
 		console.debug('[ReviewSessions] dueVerses recalculated', {
@@ -741,11 +743,6 @@
 						<span class="btn-count">({dueVerses.length})</span>
 					</button>
 				{/if}
-				{#if secondChanceScheduledIn24Hours > 0}
-					<div class="second-chance-summary">
-						{t('second_chance_review_summary', { count: secondChanceScheduledIn24Hours })}
-					</div>
-				{/if}
 				
 				{#if selectableCollections.length > 0}
 					<button class="initial-btn" on:click={showCollectionSelection}>
@@ -1173,11 +1170,6 @@
 					<h3>{t('choose_review_mode')}</h3>
 					<button class="back-btn modal-close-btn" on:click={cancelReview} aria-label={t('exit')}>✕</button>
 				</div>
-				{#if countSecondChanceScheduledVerses(selectedVerses, new Date()) > 0}
-					<div class="second-chance-summary">
-						{t('second_chance_review_summary', { count: countSecondChanceScheduledVerses(selectedVerses, new Date()) })}
-					</div>
-				{/if}
 				<div class="modal-buttons">
 					<button class="initial-btn" on:click={chooseIndividualReview}>
 						{t('review_individually')}
@@ -1531,16 +1523,6 @@
 		font-size: 0.85em;
 		color: var(--subtitle-color);
 		margin-top: 0.25rem;
-	}
-
-	.second-chance-summary {
-		padding: 0.75rem 1rem;
-		border: 1px solid color-mix(in srgb, var(--warning-color) 35%, transparent);
-		background: color-mix(in srgb, var(--warning-color) 10%, transparent);
-		color: var(--warning-color);
-		border-radius: 8px;
-		font-weight: 600;
-		text-align: center;
 	}
 
 	.warning-text {

@@ -243,6 +243,10 @@ export function countDueVerses(verseIds, verses) {
 	return verseIds.filter(vid => {
 		const v = verses.find(x => x.id === vid);
 		if (!v || !v.lastReviewed) return false;
+		if (v.secondChanceActive) {
+			if (!v.secondChanceDueDate) return true;
+			return new Date(v.secondChanceDueDate) <= now;
+		}
 		if (!v.dueDate) return true; // Consider verses without dueDate as due
 		return new Date(v.dueDate) <= now;
 	}).length;

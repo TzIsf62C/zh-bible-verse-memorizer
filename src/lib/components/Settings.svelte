@@ -18,7 +18,10 @@
 	let confirmAction = null;
 	let feedbackCopied = false;
 	let feedbackCopyTimeout = null;
-	
+	let showSecondChanceInfoModal = false;
+
+	const infoIconPath = '<path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"></path>';
+
 	function updateSetting(key, value) {
 		console.log('[Settings] Update', { key, value });
 		settings.update((current) => ({
@@ -420,6 +423,17 @@
 				</label>
 			</div>
 		</div>
+
+		<div class="setting-group">
+			<label for="defaultBibleVersion">{t('default_bible_version')}</label>
+			<input 
+				id="defaultBibleVersion"
+				type="text" 
+				value={$settings.defaultBibleVersion}
+				on:input={(e) => updateSetting('defaultBibleVersion', e.currentTarget.value)}
+				placeholder="e.g., RCUV, CCB"
+			/>
+		</div>
 	</div>
 	
 	<div class="settings-section">
@@ -453,19 +467,34 @@
 	</div>
 
 	<div class="settings-section">
-		
 		<div class="setting-group">
-			<label for="defaultBibleVersion">{t('default_bible_version')}</label>
-			<input 
-				id="defaultBibleVersion"
-				type="text" 
-				value={$settings.defaultBibleVersion}
-				on:input={(e) => updateSetting('defaultBibleVersion', e.currentTarget.value)}
-				placeholder="e.g., RCUV, CCB"
-			/>
+			<div class="label-with-info">
+				<label for="secondChanceRecoveryPercent">Second-chance recovery percent</label>
+				<button
+					type="button"
+					class="info-icon-btn"
+					on:click={() => showSecondChanceInfoModal = true}
+					aria-label={t('second_chance_recovery_info_aria')}
+				>
+					<svg class="activity-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+						{@html infoIconPath}
+					</svg>
+				</button>
+			</div>
+			<div class="backup-weeks-control">
+				<input
+					id="secondChanceRecoveryPercent"
+					type="number"
+					min="10"
+					max="100"
+					value={$settings.secondChanceRecoveryPercent ?? 60}
+					on:input={(e) => updateSecondChanceRecoveryPercent(e.currentTarget.value)}
+				/>
+				<span>%</span>
+			</div>
 		</div>
 	</div>
-	
+
 	<div class="settings-section">
 		
 		<div class="setting-group">
@@ -518,22 +547,6 @@
 					</div>
 				</div>
 			</label>
-		</div>
-
-		<div class="setting-group">
-			<label for="secondChanceRecoveryPercent">Second-chance recovery percent</label>
-			<div class="backup-weeks-control">
-				<input
-					id="secondChanceRecoveryPercent"
-					type="number"
-					min="10"
-					max="100"
-					value={$settings.secondChanceRecoveryPercent ?? 60}
-					on:input={(e) => updateSecondChanceRecoveryPercent(e.currentTarget.value)}
-				/>
-				<span>%</span>
-			</div>
-			<p class="help-text">Applies to the previous interval when a second-chance review is passed. Example: 24-day interval × 60% = 14-day recovery interval.</p>
 		</div>
 	</div>
 	
@@ -621,6 +634,15 @@
 	type={modalType}
 	on:confirm={handleModalConfirm}
 	on:cancel={closeModal}
+/>
+
+<Modal
+	show={showSecondChanceInfoModal}
+	title={t('second_chance_recovery_info_title')}
+	message={t('second_chance_recovery_info_body')}
+	type="info"
+	on:close={() => showSecondChanceInfoModal = false}
+	on:cancel={() => showSecondChanceInfoModal = false}
 />
 
 <style>
@@ -758,6 +780,38 @@
 		color: var(--subtitle-color);
 		margin: 0.25rem 0 0 0;
 		line-height: 1.4;
+	}
+
+	.label-with-info {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+	}
+
+	.info-icon-btn {
+		width: 28px;
+		height: 28px;
+		padding: 0;
+		border: none;
+		border-radius: 999px;
+		background: transparent;
+		color: var(--subtitle-color);
+		cursor: pointer;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.info-icon-btn:hover,
+	.info-icon-btn:focus-visible {
+		background: var(--nav-button-bg);
+		color: var(--accent-color);
+		outline: none;
+	}
+
+	.info-icon-btn .activity-icon {
+		width: 1.1em;
+		height: 1.1em;
 	}
 	
 	.danger-zone {
