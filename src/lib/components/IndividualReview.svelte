@@ -591,7 +591,7 @@
 			<h3>{formatVerseRef(currentVerse)}</h3>
 		</div>
 
-		<div class="verse-display" class:is-second-chance={currentVerse?.secondChanceActive} bind:this={verseDisplayEl}>
+		<div class="verse-display" class:is-second-chance={$settings.secondChanceIndicatorEnabled !== false && currentVerse?.secondChanceActive} bind:this={verseDisplayEl}>
 			{#each [...reviewFullText] as char, i}
 				{@const rendered = renderCharacter(char, i, userInput, $settings.inputMethod || 'pinyin')}
 				<span class={rendered.className}>{rendered.char}</span>

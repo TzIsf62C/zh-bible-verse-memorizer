@@ -12,6 +12,7 @@ const defaultSettings = {
 	buzzerEnabled: false,
 	backupReminderEnabled: true,
 	backupReminderWeeks: 4,
+	secondChanceIndicatorEnabled: true,
 	secondChanceRecoveryPercent: 60,
 	lastExportDate: '',
 	textSizePreference: 1,
@@ -87,12 +88,16 @@ function sanitizeSettings(settings) {
 		Number(merged.secondChanceRecoveryPercent),
 		defaultSettings.secondChanceRecoveryPercent
 	);
+	const secondChanceIndicatorEnabled = merged.secondChanceIndicatorEnabled !== undefined
+		? Boolean(merged.secondChanceIndicatorEnabled)
+		: defaultSettings.secondChanceIndicatorEnabled;
 	const lastExportDate = sanitizeLastExportDate(merged.lastExportDate);
 
 	return {
 		...merged,
 		hiddenAchievementSeriesIds,
 		backupReminderWeeks,
+		secondChanceIndicatorEnabled,
 		secondChanceRecoveryPercent,
 		lastExportDate,
 		textSizePreference: Number.isFinite(textSizePreference) && textSizePreference > 0
@@ -127,6 +132,10 @@ function readLegacySettings() {
 		backupReminderWeeks:
 			localStorage.getItem('backupReminderWeeks') !== null
 				? Number(localStorage.getItem('backupReminderWeeks'))
+				: undefined,
+		secondChanceIndicatorEnabled:
+			localStorage.getItem('secondChanceIndicatorEnabled') !== null
+				? localStorage.getItem('secondChanceIndicatorEnabled') === 'true'
 				: undefined,
 		secondChanceRecoveryPercent:
 			localStorage.getItem('secondChanceRecoveryPercent') !== null

@@ -92,6 +92,13 @@
 
 <style>
 	/* Overlay/content/buttons shells come from the shared classes in app.css */
+	.modal-content {
+		position: relative;
+		max-width: 760px;
+		max-height: min(88vh, 760px);
+		overflow-y: auto;
+	}
+
 	.modal-title {
 		margin: 0 0 1rem 0;
 		color: var(--text-color);
