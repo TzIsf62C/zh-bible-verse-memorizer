@@ -655,7 +655,7 @@
 		<div class="progress-fill" style="width: {((currentIndex) / verses.length) * 100}%"></div>
 	</div>
 
-	<div class="passage-display">
+	<div class="passage-display" class:is-second-chance={currentVerse?.secondChanceActive}>
 		<!-- Completed verses with preserved styling -->
 		{#each completedVerses as {verse, renderedChars}, i (verse.id)}
 			<div class="completed-verse">
