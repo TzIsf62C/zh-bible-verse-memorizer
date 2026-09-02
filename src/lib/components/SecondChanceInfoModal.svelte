@@ -14,7 +14,7 @@
 		: t('second_chance_preview_reference');
 	$: previewVerseText = firstUserVerse?.verseText ?? '';
 	$: recoveryPercent = $settings.secondChanceRecoveryPercent ?? 60;
-	$: recoveredDays = Math.round(24 * (recoveryPercent / 100));
+	$: recoveredDays = Math.floor(24 * (recoveryPercent / 100));
 
 	function close() {
 		dispatch('close');
