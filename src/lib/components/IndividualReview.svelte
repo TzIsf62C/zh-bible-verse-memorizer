@@ -750,7 +750,7 @@
 		width: 100%;
 		box-sizing: border-box;
 		overflow-y: auto;
-		overflow-scrolling: touch;
+		overscroll-behavior: contain;
 		-webkit-overflow-scrolling: touch;
 	}
 
