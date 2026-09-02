@@ -141,7 +141,7 @@
 			return { kind: 'due-now' };
 		}
 
-		const diffHours = Math.ceil(diffMs / (1000 * 60 * 60));
+		const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
 		return { kind: 'pending', hours: diffHours };
 	}
 
@@ -187,8 +187,10 @@
 
 	function sortByDueDate(verses) {
 		return [...verses].sort((a, b) => {
-			const dateA = a.dueDate ? new Date(a.dueDate) : new Date(0);
-			const dateB = b.dueDate ? new Date(b.dueDate) : new Date(0);
+			const dueDateA = a.secondChanceActive && a.secondChanceDueDate ? a.secondChanceDueDate : a.dueDate;
+			const dueDateB = b.secondChanceActive && b.secondChanceDueDate ? b.secondChanceDueDate : b.dueDate;
+			const dateA = dueDateA ? new Date(dueDateA) : new Date(0);
+			const dateB = dueDateB ? new Date(dueDateB) : new Date(0);
 			return dateA - dateB;
 		});
 	}
