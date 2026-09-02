@@ -5,6 +5,7 @@
 	import { t } from '$lib/i18n';
 	import { browser } from '$app/environment';
 	import Modal from './Modal.svelte';
+	import SecondChanceInfoModal from './SecondChanceInfoModal.svelte';
 
 	const dispatch = createEventDispatcher();
 	
@@ -22,42 +23,6 @@
 	let showSecondChanceInfoModal = false;
 
 	const infoIconPath = '<path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"></path>';
-
-	const escapeHtml = (value) =>
-		String(value ?? '')
-			.replace(/&/g, '&amp;')
-			.replace(/</g, '&lt;')
-			.replace(/>/g, '&gt;')
-			.replace(/"/g, '&quot;')
-			.replace(/'/g, '&#39;');
-
-	$: firstUserVerse = $verses?.[0] ?? null;
-	$: previewVerseReference = firstUserVerse
-		? `${firstUserVerse.bookName ?? ''} ${firstUserVerse.chapterNumber ?? ''}:${firstUserVerse.verseNumber ?? ''}`.trim()
-		: '馬太福音 7:18';
-	$: previewVerseText = firstUserVerse?.verseText || '求，就給你們；尋找，就尋見；叩門，就給你們開門。';
-	$: secondChanceSectionHelpMessage = `
-		<div class="second-chance-help-modal">
-			<section class="second-chance-help-section">
-				<p>When a review is failed, the verse is not reset to a brand-new interval. Instead, it is scheduled for a second-chance review so you can retry it again soon without wiping out the previous progress.</p>
-			</section>
-			<section class="second-chance-help-section">
-				<p>When a second-chance review is in progress, the review border changes color to warn you that the verse is being retried.</p>
-				<div class="second-chance-preview-screen">
-					<div class="second-chance-preview-progress-bar">
-						<div class="second-chance-preview-progress-text">0 / 1</div>
-					</div>
-					<div class="second-chance-preview-reference">${escapeHtml(previewVerseReference)}</div>
-					<div class="second-chance-preview-display is-second-chance">
-						<div class="second-chance-preview-verse-text">${escapeHtml(previewVerseText)}</div>
-					</div>
-				</div>
-			</section>
-			<section class="second-chance-help-section">
-				<p><strong>Second-chance recovery percent</strong> applies to the previous interval when a second-chance review is passed. Example: a 24-day interval × 60% = a 14-day recovery interval.</p>
-			</section>
-		</div>
-	`;
 
 	function updateSetting(key, value) {
 		console.log('[Settings] Update', { key, value });
@@ -506,7 +471,7 @@
 	<div class="settings-section">
 		<div class="setting-group">
 			<div class="label-with-info">
-				<h3 class="setting-heading">Second Chance Review</h3>
+				<h3 class="setting-heading">{t('second_chance_review_title')}</h3>
 				<button
 					type="button"
 					class="info-icon-btn"
@@ -531,7 +496,7 @@
 		</div>
 
 		<div class="setting-group">
-			<label for="secondChanceRecoveryPercent">Second-chance recovery percent</label>
+			<label for="secondChanceRecoveryPercent">{t('second_chance_recovery_percent_label')}</label>
 			<div class="backup-weeks-control">
 				<input
 					id="secondChanceRecoveryPercent"
@@ -687,13 +652,9 @@
 	on:cancel={closeModal}
 />
 
-<Modal
+<SecondChanceInfoModal
 	show={showSecondChanceInfoModal}
-	title="Second Chance Review"
-	message={secondChanceSectionHelpMessage}
-	type="info"
 	on:close={() => showSecondChanceInfoModal = false}
-	on:cancel={() => showSecondChanceInfoModal = false}
 />
 
 <style>
