@@ -1,7 +1,6 @@
 <script>
 	import { createEventDispatcher, onDestroy } from 'svelte';
 	import { settings } from '$lib/stores/settings';
-	import { verses } from '$lib/stores/verses';
 	import { t } from '$lib/i18n';
 	import { browser } from '$app/environment';
 	import Modal from './Modal.svelte';
@@ -803,7 +802,10 @@
 	}
 	
 	/* Look comes from the shared input styles in app.css */
-	input[type="text"],
+	input[type="text"] {
+		width: 10em;
+	}
+
 	input[type="number"] {
 		width: 5em;
 	}
@@ -819,85 +821,6 @@
 		display: flex;
 		align-items: center;
 		gap: 0.4rem;
-	}
-
-	:global(.second-chance-help-modal) {
-		display: flex;
-		flex-direction: column;
-		gap: 0.75rem;
-		text-align: left;
-	}
-
-	:global(.second-chance-help-section) {
-		display: block;
-		margin: 0;
-	}
-
-	:global(.second-chance-help-section + .second-chance-help-section) {
-		margin-top: 1rem;
-	}
-
-	:global(.second-chance-help-modal p) {
-		margin: 0;
-		color: var(--text-color);
-		line-height: 1.5;
-	}
-
-	:global(.second-chance-preview-screen) {
-		display: grid;
-		gap: 0.75rem;
-		padding: 1rem;
-		border-radius: 12px;
-		background: var(--app-background);
-		border: 1px solid var(--file-border);
-		box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
-	}
-
-	:global(.second-chance-preview-progress-bar) {
-		position: relative;
-		height: 32px;
-		background: var(--file-bg);
-		border-radius: 8px;
-		overflow: hidden;
-		border: 1px solid var(--file-border);
-	}
-
-	:global(.second-chance-preview-progress-text) {
-		position: absolute;
-		inset: 0;
-		display: grid;
-		place-items: center;
-		font-weight: 600;
-		color: var(--text-color);
-	}
-
-	:global(.second-chance-preview-reference) {
-		margin: 0;
-		font-size: 1.2em;
-		font-weight: 700;
-		color: var(--text-color);
-	}
-
-	:global(.second-chance-preview-display) {
-		border-radius: 10px;
-		background: var(--app-background);
-		border: 1px solid var(--file-border);
-		padding: 1.25rem;
-		min-height: 120px;
-		display: flex;
-		align-items: center;
-	}
-
-	:global(.second-chance-preview-display.is-second-chance) {
-		border-color: var(--warning-color);
-		box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--warning-color) 40%, transparent);
-		background: var(--panel-background);
-	}
-
-	:global(.second-chance-preview-verse-text) {
-		font-size: 1.3em;
-		line-height: 1.8;
-		color: var(--text-color);
 	}
 
 	.info-icon-btn {
