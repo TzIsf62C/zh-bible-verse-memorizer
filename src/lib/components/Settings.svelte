@@ -69,6 +69,12 @@
 		const clamped = Number.isFinite(parsed) ? Math.max(10, Math.min(100, Math.round(parsed))) : 60;
 		updateSetting('secondChanceRecoveryPercent', clamped);
 	}
+
+	function updateSecondChanceMinimumScore(rawValue) {
+		const parsed = Number(rawValue);
+		const clamped = Number.isFinite(parsed) ? Math.max(0, Math.min(90, Math.round(parsed))) : 0;
+		updateSetting('secondChanceMinimumScore', clamped);
+	}
 	
 	function showTutorial() {
 		dispatch('viewtutorial');
@@ -483,6 +489,21 @@
 					</svg>
 				</button>
 			</div>
+			<label for="secondChanceMinimumScore">{t('second_chance_minimum_score_label')}</label>
+			<div class="backup-weeks-control">
+				<input
+					id="secondChanceMinimumScore"
+					type="number"
+					min="0"
+					max="90"
+					value={$settings.secondChanceMinimumScore ?? 0}
+					on:input={(e) => updateSecondChanceMinimumScore(e.currentTarget.value)}
+				/>
+				<span>%</span>
+			</div>
+			<p class="help-text">{t('second_chance_minimum_score_help')}</p>
+		</div>
+		<div class="setting-group">
 			<label class="checkbox-option">
 				<input
 					type="checkbox"
@@ -689,8 +710,8 @@
 
 	.setting-heading {
 		display: block;
-		font-size: 1em;
-		font-weight: 500;
+		font-size: 1.2em;
+		font-weight: 600;
 		margin: 0 0 0.5rem 0;
 		color: var(--text-color);
 	}
@@ -784,7 +805,7 @@
 	/* Look comes from the shared input styles in app.css */
 	input[type="text"],
 	input[type="number"] {
-		width: 100%;
+		width: 5em;
 	}
 	
 	.help-text {

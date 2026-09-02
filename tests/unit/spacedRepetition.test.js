@@ -89,6 +89,54 @@ describe('spacedRepetition helpers', () => {
 		expect(updated.secondChanceDueDate).toBe('2026-05-26T00:00:00.000Z');
 	});
 
+	it('resets below the configured minimum score instead of scheduling second chance', () => {
+		const currentDate = new Date('2026-05-25T00:00:00.000Z');
+		const updated = spacedRepetitionBinary(
+			{ interval: 24, repetitions: 3, dueDate: '2026-05-25T00:00:00.000Z' },
+			false,
+			currentDate,
+			60,
+			70,
+			69
+		);
+
+		expect(updated.interval).toBe(1);
+		expect(updated.repetitions).toBe(0);
+		expect(updated.dueDate).toBe('2026-05-26T00:00:00.000Z');
+		expect(updated.secondChanceActive).toBe(false);
+	});
+
+	it('schedules second chance when the score equals the configured minimum', () => {
+		const currentDate = new Date('2026-05-25T00:00:00.000Z');
+		const updated = spacedRepetitionBinary(
+			{ interval: 24, repetitions: 3, dueDate: '2026-05-25T00:00:00.000Z' },
+			false,
+			currentDate,
+			60,
+			70,
+			70
+		);
+
+		expect(updated.interval).toBe(24);
+		expect(updated.repetitions).toBe(3);
+		expect(updated.secondChanceActive).toBe(true);
+	});
+
+	it('keeps a zero minimum compatible with all failed scores below 90', () => {
+		const currentDate = new Date('2026-05-25T00:00:00.000Z');
+		const updated = spacedRepetitionBinary(
+			{ interval: 24, repetitions: 3, dueDate: '2026-05-25T00:00:00.000Z' },
+			false,
+			currentDate,
+			60,
+			0,
+			0
+		);
+
+		expect(updated.secondChanceActive).toBe(true);
+		expect(updated.interval).toBe(24);
+	});
+
 	it('returns a recovered interval after a successful second-chance review', () => {
 		const reviewDate = new Date('2026-05-26T00:00:00.000Z');
 		const updated = spacedRepetitionBinary(

@@ -422,7 +422,14 @@
 					secondChanceFailureDate: v.secondChanceFailureDate,
 					secondChanceDueDate: v.secondChanceDueDate
 				};
-				const updated = spacedRepetitionBinary(card, success, now, $settings.secondChanceRecoveryPercent ?? 60);
+				const updated = spacedRepetitionBinary(
+					card,
+					success,
+					now,
+					$settings.secondChanceRecoveryPercent ?? 60,
+					$settings.secondChanceMinimumScore ?? 0,
+					accuracy
+				);
 				const categoryHistory = appendCategoryHistory(v, updated.interval, now);
 
 				if (updated.secondChanceActive && !card.secondChanceActive && !secondChanceScheduledIds.has(v.id)) {

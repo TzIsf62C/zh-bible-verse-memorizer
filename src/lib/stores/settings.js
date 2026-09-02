@@ -13,6 +13,7 @@ const defaultSettings = {
 	backupReminderEnabled: true,
 	backupReminderWeeks: 4,
 	secondChanceIndicatorEnabled: true,
+	secondChanceMinimumScore: 0,
 	secondChanceRecoveryPercent: 60,
 	lastExportDate: '',
 	textSizePreference: 1,
@@ -43,6 +44,14 @@ function clampRecoveryPercent(value, fallback) {
 	}
 
 	return Math.max(10, Math.min(100, Math.round(value)));
+}
+
+function clampMinimumScore(value, fallback) {
+	if (!Number.isFinite(value)) {
+		return fallback;
+	}
+
+	return Math.max(0, Math.min(90, Math.round(value)));
 }
 
 function sanitizeLastExportDate(value) {
@@ -88,6 +97,10 @@ function sanitizeSettings(settings) {
 		Number(merged.secondChanceRecoveryPercent),
 		defaultSettings.secondChanceRecoveryPercent
 	);
+	const secondChanceMinimumScore = clampMinimumScore(
+		Number(merged.secondChanceMinimumScore),
+		defaultSettings.secondChanceMinimumScore
+	);
 	const secondChanceIndicatorEnabled = merged.secondChanceIndicatorEnabled !== undefined
 		? Boolean(merged.secondChanceIndicatorEnabled)
 		: defaultSettings.secondChanceIndicatorEnabled;
@@ -98,6 +111,7 @@ function sanitizeSettings(settings) {
 		hiddenAchievementSeriesIds,
 		backupReminderWeeks,
 		secondChanceIndicatorEnabled,
+		secondChanceMinimumScore,
 		secondChanceRecoveryPercent,
 		lastExportDate,
 		textSizePreference: Number.isFinite(textSizePreference) && textSizePreference > 0
@@ -140,6 +154,10 @@ function readLegacySettings() {
 		secondChanceRecoveryPercent:
 			localStorage.getItem('secondChanceRecoveryPercent') !== null
 				? Number(localStorage.getItem('secondChanceRecoveryPercent'))
+				: undefined,
+		secondChanceMinimumScore:
+			localStorage.getItem('secondChanceMinimumScore') !== null
+				? Number(localStorage.getItem('secondChanceMinimumScore'))
 				: undefined,
 		lastExportDate: localStorage.getItem('lastExportDate') || undefined,
 		textSizePreference:

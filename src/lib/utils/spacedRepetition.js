@@ -57,6 +57,13 @@ function clampRecoveryPercent(value, fallback = 60) {
 	return Math.round(clamped);
 }
 
+function clampMinimumScore(value, fallback = 0) {
+	const parsed = Number(value);
+	if (!Number.isFinite(parsed)) return fallback;
+	const clamped = Math.min(90, Math.max(0, parsed));
+	return Math.round(clamped);
+}
+
 export function getRepetitionsForInterval(interval) {
 	const normalizedInterval = Math.max(1, toPositiveInteger(interval, 1));
 	if (normalizedInterval <= 1) return 1;
@@ -129,10 +136,21 @@ export function getSharedReviewSchedule(verses = [], currentDate = new Date()) {
 	};
 }
 
-export function spacedRepetitionBinary(card, success, currentDate, recoveryPercent = 60) {
+export function spacedRepetitionBinary(
+	card,
+	success,
+	currentDate,
+	recoveryPercent = 60,
+	minimumScore = 0,
+	reviewScore = success ? 100 : 0
+) {
 	const updated = normalizeSpacingCard(card);
 	const secondChanceDueDate = parseDateValue(updated.secondChanceDueDate);
 	const isSecondChanceReviewDue = secondChanceDueDate && currentDate >= secondChanceDueDate;
+	const normalizedMinimumScore = clampMinimumScore(minimumScore);
+	const normalizedReviewScore = Number.isFinite(Number(reviewScore))
+		? Math.max(0, Math.min(100, Number(reviewScore)))
+		: (success ? 100 : 0);
 
 	if (updated.secondChanceActive && secondChanceDueDate && !isSecondChanceReviewDue) {
 		return updated;
@@ -157,6 +175,13 @@ export function spacedRepetitionBinary(card, success, currentDate, recoveryPerce
 	}
 
 	if (!success) {
+		if (normalizedReviewScore < normalizedMinimumScore) {
+			updated.repetitions = 0;
+			updated.interval = 1;
+			updated.dueDate = new Date(currentDate.getTime() + DAY_MS).toISOString();
+			return clearSecondChanceState(updated);
+		}
+
 		updated.secondChanceActive = true;
 		updated.secondChanceOriginalInterval = Math.max(1, updated.interval || 1);
 		updated.secondChanceFailureDate = currentDate.toISOString();
