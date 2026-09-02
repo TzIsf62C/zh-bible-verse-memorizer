@@ -56,9 +56,16 @@
 					<h4>{t('enable_second_chance_indicator_in_reviews')}</h4>
 					<p>{t('second_chance_indicator_info_body')}</p>
 					<div class="review-preview" aria-label={t('second_chance_indicator_info_aria')}>
-						<div class="preview-progress">0 / 1</div>
-						<div class="preview-reference">{previewVerseReference}</div>
-						<div class="preview-verse is-second-chance">
+						<div class="preview-header">
+						</div>
+						<div class="preview-progress-bar">
+							<div class="preview-progress-fill"></div>
+							<div class="preview-progress-text">1 / 2</div>
+						</div>
+						<div class="preview-verse-header">
+							<h3>{previewVerseReference}</h3>
+						</div>
+						<div class="preview-verse-display is-second-chance">
 							{#if previewVerseText}
 								{previewVerseText}
 							{:else}
@@ -131,34 +138,77 @@
 	.review-preview {
 		margin-top: 1rem;
 		padding: 0.75rem;
-		border: 2px solid var(--warning-color);
 		border-radius: 8px;
 		background: var(--panel-background);
 	}
 
-	.preview-progress {
-		padding-bottom: 0.5rem;
-		border-bottom: 1px solid var(--file-border);
-		color: var(--subtitle-color);
-		font-size: 0.85em;
-		text-align: right;
+	.preview-header {
+		display: flex;
+		justify-content: flex-end;
+		margin-bottom: -0.5rem;
 	}
 
-	.preview-reference {
-		margin: 0.75rem 0;
-		color: var(--subtitle-color);
-		font-size: 0.9em;
+	.preview-exit {
+		font-size: 1.25em;
+	}
+
+	.preview-progress-bar {
+		position: relative;
+		height: 1.75rem;
+		border: 1px solid var(--file-border);
+		border-radius: 8px;
+		background: var(--file-bg);
+		overflow: hidden;
+	}
+
+	.preview-progress-fill {
+		position: absolute;
+		inset: 0 auto 0 0;
+		width: 50%;
+		background: var(--accent-color);
+	}
+
+	.preview-progress-text {
+		position: absolute;
+		inset: 0;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		color: var(--text-color);
+		font-weight: 600;
+		font-size: 0.85em;
+	}
+
+	.preview-verse-header {
+		display: flex;
+		align-items: center;
+		min-height: 2rem;
+		margin-top: 0.75rem;
+	}
+
+	.preview-verse-header h3 {
+		margin: 0;
 		font-weight: 600;
 	}
 
-	.preview-verse {
-		min-height: 5rem;
+	.preview-verse-display {
+		min-height: 7rem;
+		max-height: 14rem;
+		margin-top: 0.5rem;
 		padding: 1rem;
-		border: 2px solid var(--warning-color);
+		background: var(--panel-background);
+		border: 1px solid var(--file-border);
 		border-radius: 8px;
 		color: var(--text-color);
-		font-size: 1.25em;
-		line-height: 1.7;
+		font-size: 1.15em;
+		line-height: 1.8;
+		overflow-y: auto;
+        text-align:left;
+	}
+
+	.preview-verse-display.is-second-chance {
+		border-color: var(--warning-color);
+		box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--warning-color) 30%, transparent);
 	}
 
 	.preview-placeholder {
