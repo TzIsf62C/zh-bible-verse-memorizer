@@ -3,7 +3,9 @@
 	import { settings } from '$lib/stores/settings';
 	import { t } from '$lib/i18n';
 	import { browser } from '$app/environment';
+	import { icons } from '$lib/utils/icons.js';
 	import Modal from './Modal.svelte';
+	import SecondChanceInfoModal from './SecondChanceInfoModal.svelte';
 
 	const dispatch = createEventDispatcher();
 	
@@ -18,7 +20,8 @@
 	let confirmAction = null;
 	let feedbackCopied = false;
 	let feedbackCopyTimeout = null;
-	
+	let showSecondChanceInfoModal = false;
+
 	function updateSetting(key, value) {
 		console.log('[Settings] Update', { key, value });
 		settings.update((current) => ({
@@ -57,6 +60,18 @@
 		const parsed = Number(rawValue);
 		const clamped = Number.isFinite(parsed) ? Math.max(1, Math.min(52, Math.round(parsed))) : 4;
 		updateSetting('backupReminderWeeks', clamped);
+	}
+
+	function updateSecondChanceRecoveryPercent(rawValue) {
+		const parsed = Number(rawValue);
+		const clamped = Number.isFinite(parsed) ? Math.max(10, Math.min(100, Math.round(parsed))) : 60;
+		updateSetting('secondChanceRecoveryPercent', clamped);
+	}
+
+	function updateSecondChanceMinimumScore(rawValue) {
+		const parsed = Number(rawValue);
+		const clamped = Number.isFinite(parsed) ? Math.max(0, Math.min(90, Math.round(parsed))) : 0;
+		updateSetting('secondChanceMinimumScore', clamped);
 	}
 	
 	function showTutorial() {
@@ -414,6 +429,17 @@
 				</label>
 			</div>
 		</div>
+
+		<div class="setting-group">
+			<label for="defaultBibleVersion">{t('default_bible_version')}</label>
+			<input 
+				id="defaultBibleVersion"
+				type="text" 
+				value={$settings.defaultBibleVersion}
+				on:input={(e) => updateSetting('defaultBibleVersion', e.currentTarget.value)}
+				placeholder="e.g., RCUV, CCB"
+			/>
+		</div>
 	</div>
 	
 	<div class="settings-section">
@@ -447,19 +473,63 @@
 	</div>
 
 	<div class="settings-section">
-		
 		<div class="setting-group">
-			<label for="defaultBibleVersion">{t('default_bible_version')}</label>
-			<input 
-				id="defaultBibleVersion"
-				type="text" 
-				value={$settings.defaultBibleVersion}
-				on:input={(e) => updateSetting('defaultBibleVersion', e.currentTarget.value)}
-				placeholder="e.g., RCUV, CCB"
-			/>
+			<div class="label-with-info">
+				<h3 class="setting-heading">{t('second_chance_review_title')}</h3>
+				<button
+					type="button"
+					class="info-icon-btn"
+					on:click={() => showSecondChanceInfoModal = true}
+					aria-label={t('second_chance_recovery_info_aria')}
+				>
+					<svg class="activity-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+						{@html icons.info}
+					</svg>
+				</button>
+			</div>
+			<label for="secondChanceMinimumScore">{t('second_chance_minimum_score_label')}</label>
+			<div class="backup-weeks-control">
+				<input
+					id="secondChanceMinimumScore"
+					type="number"
+					min="0"
+					max="90"
+					value={$settings.secondChanceMinimumScore ?? 0}
+					on:input={(e) => updateSecondChanceMinimumScore(e.currentTarget.value)}
+				/>
+				<span>%</span>
+			</div>
+			<p class="help-text">{t('second_chance_minimum_score_help')}</p>
+		</div>
+		<div class="setting-group">
+			<label class="checkbox-option">
+				<input
+					type="checkbox"
+					checked={$settings.secondChanceIndicatorEnabled ?? true}
+					on:change={(e) => updateSetting('secondChanceIndicatorEnabled', e.currentTarget.checked)}
+				/>
+				<div>
+					<span>{t('enable_second_chance_indicator_in_reviews')}</span>
+				</div>
+			</label>
+		</div>
+
+		<div class="setting-group">
+			<label for="secondChanceRecoveryPercent">{t('second_chance_recovery_percent_label')}</label>
+			<div class="backup-weeks-control">
+				<input
+					id="secondChanceRecoveryPercent"
+					type="number"
+					min="10"
+					max="100"
+					value={$settings.secondChanceRecoveryPercent ?? 60}
+					on:input={(e) => updateSecondChanceRecoveryPercent(e.currentTarget.value)}
+				/>
+				<span>%</span>
+			</div>
 		</div>
 	</div>
-	
+
 	<div class="settings-section">
 		
 		<div class="setting-group">
@@ -588,7 +658,7 @@
 	
 	<div class="app-info">
 		<p>ZH Bible Verse Memorizer</p>
-		<p>(Version 1.1)</p>
+		<p>(Version 1.2)</p>
 		<p>Copyright © 2026 ad.infinitum</p>
 	</div>
 </div>
@@ -599,6 +669,11 @@
 	type={modalType}
 	on:confirm={handleModalConfirm}
 	on:cancel={closeModal}
+/>
+
+<SecondChanceInfoModal
+	show={showSecondChanceInfoModal}
+	on:close={() => showSecondChanceInfoModal = false}
 />
 
 <style>
@@ -633,8 +708,8 @@
 
 	.setting-heading {
 		display: block;
-		font-size: 1em;
-		font-weight: 500;
+		font-size: 1.2em;
+		font-weight: 600;
 		margin: 0 0 0.5rem 0;
 		color: var(--text-color);
 	}
@@ -726,9 +801,12 @@
 	}
 	
 	/* Look comes from the shared input styles in app.css */
-	input[type="text"],
+	input[type="text"] {
+		width: 10em;
+	}
+
 	input[type="number"] {
-		width: 100%;
+		width: 5em;
 	}
 	
 	.help-text {
@@ -736,6 +814,38 @@
 		color: var(--subtitle-color);
 		margin: 0.25rem 0 0 0;
 		line-height: 1.4;
+	}
+
+	.label-with-info {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+	}
+
+	.info-icon-btn {
+		width: 28px;
+		height: 28px;
+		padding: 0;
+		border: none;
+		border-radius: 999px;
+		background: transparent;
+		color: var(--subtitle-color);
+		cursor: pointer;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.info-icon-btn:hover,
+	.info-icon-btn:focus-visible {
+		background: var(--nav-button-bg);
+		color: var(--accent-color);
+		outline: none;
+	}
+
+	.info-icon-btn .activity-icon {
+		width: 1.1em;
+		height: 1.1em;
 	}
 	
 	.danger-zone {
