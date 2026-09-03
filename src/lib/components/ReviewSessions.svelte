@@ -137,12 +137,13 @@
 		const dueDate = new Date(verse.secondChanceDueDate);
 		const now = new Date();
 		const diffMs = dueDate.getTime() - now.getTime();
-		if (diffMs <= 0) {
+		if (diffMs <= 0 || diffMs <= 60 * 1000) {
 			return { kind: 'due-now' };
 		}
 
-		const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-		return { kind: 'pending', hours: diffHours };
+		const diffMinutes = Math.floor(diffMs / (1000 * 60));
+		const diffHours = Math.floor(diffMinutes / 60);
+		return { kind: 'pending', hours: diffHours, minutes: diffMinutes };
 	}
 
 	function getDueStatusMeta(verse, dueInfo) {
@@ -152,11 +153,15 @@
 				return { className: 'warning-text', label: t('second_chance_due_now') };
 			}
 			if (secondChanceStatus?.kind === 'pending') {
-				const hours = secondChanceStatus.hours;
-				const label = hours <= 1
-					? t('second_chance_in_hour')
-					: t('second_chance_in_hours', { count: hours });
-				return { className: 'warning-text', label };
+				if (secondChanceStatus.hours >= 1) {
+					const hours = secondChanceStatus.hours;
+					const label = hours <= 1
+						? t('second_chance_in_hour')
+						: t('second_chance_in_hours', { count: hours });
+					return { className: 'warning-text', label };
+				}
+				const minutes = Math.max(1, secondChanceStatus.minutes || 1);
+				return { className: 'warning-text', label: t('second_chance_in_minutes', { count: minutes }) };
 			}
 		}
 
