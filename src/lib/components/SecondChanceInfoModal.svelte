@@ -148,10 +148,6 @@
 		margin-bottom: -0.5rem;
 	}
 
-	.preview-exit {
-		font-size: 1.25em;
-	}
-
 	.preview-progress-bar {
 		position: relative;
 		height: 1.75rem;
