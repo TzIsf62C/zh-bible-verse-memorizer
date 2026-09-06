@@ -51,6 +51,10 @@
 
 	function isVerseDue(verse, now = new Date()) {
 		if (!verse.lastReviewed) return false;
+		if (verse.secondChanceActive) {
+			if (!verse.secondChanceDueDate) return true;
+			return new Date(verse.secondChanceDueDate) <= now;
+		}
 		if (!verse.dueDate) return true;
 		return new Date(verse.dueDate) <= now;
 	}

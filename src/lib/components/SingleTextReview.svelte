@@ -26,6 +26,8 @@
 	let currentIndex = 0;
 	let userInput = '';
 	let successCount = 0;
+	let secondChanceScheduledIds = new Set(); // Track which verses newly entered second-chance mode this session
+	let secondChanceScheduledCount = 0;
 	let feedbackText = '';
 	let feedbackClass = '';
 	let isTransitioningToFeedback = false;
@@ -547,10 +549,26 @@
 				const card = {
 					interval: v.interval || 0,
 					repetitions: v.repetitions || 0,
-					dueDate: v.dueDate
+					dueDate: v.dueDate,
+					secondChanceActive: v.secondChanceActive,
+					secondChanceOriginalInterval: v.secondChanceOriginalInterval,
+					secondChanceFailureDate: v.secondChanceFailureDate,
+					secondChanceDueDate: v.secondChanceDueDate
 				};
-				const updated = spacedRepetitionBinary(card, success, now);
+				const updated = spacedRepetitionBinary(
+					card,
+					success,
+					now,
+					$settings.secondChanceRecoveryPercent ?? 60,
+					$settings.secondChanceMinimumScore ?? 0,
+					accuracy
+				);
 				const categoryHistory = appendCategoryHistory(v, updated.interval, now);
+
+				if (updated.secondChanceActive && !card.secondChanceActive && !secondChanceScheduledIds.has(v.id)) {
+					secondChanceScheduledIds.add(v.id);
+					secondChanceScheduledCount++;
+				}
 				
 				// Initialize or update heatArray (verse text only)
 				let newHeatArray = v.heatArray;
@@ -575,7 +593,11 @@
 					dueDate: updated.dueDate instanceof Date ? updated.dueDate.toISOString() : updated.dueDate,
 					lastReviewed: success ? now.toISOString() : v.lastReviewed,
 					heatArray: newHeatArray,
-					categoryHistory
+					categoryHistory,
+					secondChanceActive: updated.secondChanceActive,
+					secondChanceOriginalInterval: updated.secondChanceOriginalInterval,
+					secondChanceFailureDate: updated.secondChanceFailureDate,
+					secondChanceDueDate: updated.secondChanceDueDate
 				};
 			}
 			return v;
@@ -607,9 +629,12 @@
 
 	function showCompletionModal() {
 		isTransitioningToFeedback = false;
-		const msg = successCount > 0
+		let msg = successCount > 0
 			? t('congratulations_reviewed_count', { count: successCount })
 			: t('congratulations_reviewed');
+		if (secondChanceScheduledCount > 0) {
+			msg += ' ' + t('second_chance_review_summary', { count: secondChanceScheduledCount });
+		}
 		completionMessage = msg;
 		showCompletionMsg = true;
 	}
@@ -637,7 +662,7 @@
 		<div class="progress-fill" style="width: {((currentIndex) / verses.length) * 100}%"></div>
 	</div>
 
-	<div class="passage-display">
+	<div class="passage-display" class:is-second-chance={$settings.secondChanceIndicatorEnabled !== false && currentVerse?.secondChanceActive}>
 		<!-- Completed verses with preserved styling -->
 		{#each completedVerses as {verse, renderedChars}, i (verse.id)}
 			<div class="completed-verse">
@@ -795,6 +820,7 @@
 		width: 100%;
 		background: var(--panel-background);
 		padding: 2rem;
+		border: 1px solid var(--file-border);
 		border-radius: 8px;
 		margin-bottom: 1.5rem;
 		font-size: 1.5em;
@@ -806,6 +832,11 @@
 		word-break: break-word;
 		overflow-x: hidden;
 		position: relative;
+	}
+
+	.passage-display.is-second-chance {
+		border-color: var(--warning-color);
+		box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--warning-color) 30%, transparent);
 	}
 
 	.completed-verse {

@@ -26,6 +26,8 @@
 	let accuracy = 0;
 	let successCount = 0;
 	let reviewedVerseIds = new Set(); // Track which verses have been successfully reviewed (prevents double-counting on retry)
+	let secondChanceScheduledIds = new Set(); // Track which verses newly entered second-chance mode this session
+	let secondChanceScheduledCount = 0;
 	let feedbackMessage = '';
 	let feedbackType = '';
 	let lastErrorIndex = null;
@@ -414,10 +416,26 @@
 				const card = {
 					interval: v.interval || 0,
 					repetitions: v.repetitions || 0,
-					dueDate: v.dueDate ? (typeof v.dueDate === 'string' ? new Date(v.dueDate) : v.dueDate) : now
+					dueDate: v.dueDate ? (typeof v.dueDate === 'string' ? new Date(v.dueDate) : v.dueDate) : now,
+					secondChanceActive: v.secondChanceActive,
+					secondChanceOriginalInterval: v.secondChanceOriginalInterval,
+					secondChanceFailureDate: v.secondChanceFailureDate,
+					secondChanceDueDate: v.secondChanceDueDate
 				};
-				const updated = spacedRepetitionBinary(card, success, now);
+				const updated = spacedRepetitionBinary(
+					card,
+					success,
+					now,
+					$settings.secondChanceRecoveryPercent ?? 60,
+					$settings.secondChanceMinimumScore ?? 0,
+					accuracy
+				);
 				const categoryHistory = appendCategoryHistory(v, updated.interval, now);
+
+				if (updated.secondChanceActive && !card.secondChanceActive && !secondChanceScheduledIds.has(v.id)) {
+					secondChanceScheduledIds.add(v.id);
+					secondChanceScheduledCount++;
+				}
 				
 				// Initialize or update heatArray
 				let newHeatArray = v.heatArray;
@@ -441,7 +459,11 @@
 					dueDate: updated.dueDate,
 					lastReviewed: success ? now.toISOString() : v.lastReviewed,
 					heatArray: newHeatArray,
-					categoryHistory
+					categoryHistory,
+					secondChanceActive: updated.secondChanceActive,
+					secondChanceOriginalInterval: updated.secondChanceOriginalInterval,
+					secondChanceFailureDate: updated.secondChanceFailureDate,
+					secondChanceDueDate: updated.secondChanceDueDate
 				};
 			}
 			return v;
@@ -481,7 +503,11 @@
 	}
 
 	function showCompletionModal() {
-		completionMessage = t('congratulations_reviewed_count', { count: successCount });
+		let message = t('congratulations_reviewed_count', { count: successCount });
+		if (secondChanceScheduledCount > 0) {
+			message += ' ' + t('second_chance_review_summary', { count: secondChanceScheduledCount });
+		}
+		completionMessage = message;
 		showCompletionMsg = true;
 	}
 
@@ -572,7 +598,7 @@
 			<h3>{formatVerseRef(currentVerse)}</h3>
 		</div>
 
-		<div class="verse-display" bind:this={verseDisplayEl}>
+		<div class="verse-display" class:is-second-chance={$settings.secondChanceIndicatorEnabled !== false && currentVerse?.secondChanceActive} bind:this={verseDisplayEl}>
 			{#each [...reviewFullText] as char, i}
 				{@const rendered = renderCharacter(char, i, userInput, $settings.inputMethod || 'pinyin')}
 				<span class={rendered.className}>{rendered.char}</span>
@@ -717,6 +743,7 @@
 		margin-bottom: 2rem;
 		padding: 2rem;
 		background: var(--panel-background);
+		border: 1px solid var(--file-border);
 		border-radius: 8px;
 		min-height: 120px;
 		max-height: clamp(240px, 44vh, 560px);
@@ -725,6 +752,11 @@
 		overflow-y: auto;
 		overscroll-behavior: contain;
 		-webkit-overflow-scrolling: touch;
+	}
+
+	.verse-display.is-second-chance {
+		border-color: var(--warning-color);
+		box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--warning-color) 30%, transparent);
 	}
 
 	.input-section {

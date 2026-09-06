@@ -44,6 +44,10 @@ export function mergeVerses(currentVerses, importedVerses, options = {}) {
 			delete incoming.interval;
 			delete incoming.repetitions;
 			delete incoming.dueDate;
+			delete incoming.secondChanceActive;
+			delete incoming.secondChanceOriginalInterval;
+			delete incoming.secondChanceFailureDate;
+			delete incoming.secondChanceDueDate;
 			delete incoming.heatArray;
 			delete incoming.categoryHistory;
 			delete incoming.isLearned;
@@ -157,6 +161,10 @@ export function buildExportPayload(verses, collections, options = {}) {
 			delete entry.interval;
 			delete entry.repetitions;
 			delete entry.dueDate;
+			delete entry.secondChanceActive;
+			delete entry.secondChanceOriginalInterval;
+			delete entry.secondChanceFailureDate;
+			delete entry.secondChanceDueDate;
 			delete entry.heatArray;
 			delete entry.categoryHistory;
 			delete entry.isLearned;
